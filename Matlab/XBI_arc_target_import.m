@@ -1,7 +1,7 @@
 function d = XBI_arc_target_import(monk, fname, d)
 
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Documents/Matlab/XBI
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 
 cd('/Users/fschneider/Documents/MWorks/XBI')

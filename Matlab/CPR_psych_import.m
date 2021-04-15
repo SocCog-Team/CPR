@@ -1,7 +1,7 @@
 function [t,d, out] = CPR_psych_import(subj, pth, fname, d)
 
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Documents/Matlab/CPR
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab

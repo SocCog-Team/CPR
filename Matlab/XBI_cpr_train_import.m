@@ -1,7 +1,7 @@
 function [t,d] = XBI_cpr_train_import(monk, fname, d)
 
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Documents/Matlab/XBI
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a

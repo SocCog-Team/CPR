@@ -1,7 +1,7 @@
 %% Concatenate subject tables
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
-addpath /Users/fschneider/ownCloud/Documents/Matlab/CPR
-addpath /Users/fschneider/ownCloud/Documents/Matlab/Helper_functions/
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 

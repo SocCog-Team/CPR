@@ -1,5 +1,5 @@
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
-addpath /Users/fschneider/ownCloud/Documents/Matlab/CPR
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 
 % Import 4AFC data
 var_import = {

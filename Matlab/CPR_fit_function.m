@@ -1,6 +1,6 @@
 function [] = CPR_fit_function(t,d)
 
-addpath /Users/fschneider/ownCloud/Documents/Matlab/Helper_functions
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes

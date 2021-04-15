@@ -1,7 +1,7 @@
 clear all 
 close all
 
-addpath /Users/fschneider/ownCloud/Documents/Matlab/CPR
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 

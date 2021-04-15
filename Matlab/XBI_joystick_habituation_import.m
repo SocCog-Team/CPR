@@ -1,10 +1,9 @@
 function [d, idx, trl] = XBI_joystick_habituation_import(fname, d)
 
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Documents/Matlab/MW/Import
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
+addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/ownCloud/Documents/Matlab/Helper_functions
-addpath /Users/fschneider/ownCloud/Documents/Matlab/XBI
-addpath /Users/fschneider/ownCloud/Documents/Matlab/MW
 
 cd('/Users/fschneider/Documents/MWorks/XBI')
 
