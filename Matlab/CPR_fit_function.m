@@ -5,7 +5,7 @@ addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes
 
-%% CONTINUOUS DATA
+%% CONTINUOUS DATA: Binary
 
 sub                     = unique(t.ID);                                   	% Subject ID
 snr                     = unique(t.trl_coh);                                % Stimulus coherence level
@@ -32,6 +32,32 @@ for iCoh = 1:length(snr)
     OutOfNum(1,iCoh)    = length(tdff(cIdx));
     hir(1,iCoh)         = HitNo(1,iCoh) / OutOfNum(1,iCoh);
 end
+
+%% CONTINUOUS DATA: Precision-based
+
+sub                     = unique(t.ID);                                   	% Subject ID
+snr                     = unique(t.trl_coh);                                % Stimulus coherence level
+snr(snr == 0)           = [];
+nSamples                = 9;                                               	% Integration period [1 sample == 10ms]
+
+for iSS = 2:size(t.js_dir,1)
+    if isnan(t.js_dir{iSS})
+        js_dir(iSS,:)   = nan;
+        continue
+    else
+        js_dir(iSS,:)	= median(t.js_dir{iSS}(end-nSamples:end));
+    end
+end
+
+dff                     = rad2deg(circ_dist(deg2rad(t.rdp_dir),deg2rad(js_dir)));  % Raw RDP-Joystick difference
+
+for iCoh = 1:length(snr)
+    clear cIdx
+    cIdx                = t.trl_coh == snr(iCoh);
+    mdiff(iCoh)         = mean(abs(dff(cIdx)));
+end
+
+mprc                    = 1-mdiff./180;
 
 %% 4AFC DATA
 
@@ -75,7 +101,7 @@ for iExp = 1:2
     if iExp == 1
         vec = snr';
         cl = [0 0 0];
-        disp('CPR Fit')
+        disp('CPR Fit: Binary')
     else
         vec = snr_4afc;
         cl = [1 0 0];
@@ -153,10 +179,24 @@ for iExp = 1:2
     plot(StimLevelsFineGrain,ProportionCorrectModel,'-','color',cl,'linewidth',4);
     plot(vec,ProportionCorrectObserved,'color',cl,'marker', '.','LineStyle','none','markersize',40);
     set(gca, 'fontsize',16);
-    set(gca, 'Xtick',[0 .1 .2 .3 .4 .5 .6 .7 .8]);
+    set(gca, 'Xtick',[0:.2:.8]);
     xlabel('Coherence');
     ylabel('% correct'); 
     ylim([0 1])
     xlim([0 .8])
 end
+
+%%% Precision-based addition to plot %%%
+yyaxis right
+ft                  = fit(snr,mprc','1./(1+exp(b1+b2*x))');
+rnge                = 0:.01:.8;
+p                   = plot(rnge,ft(rnge), 'LineStyle', '-','linewidth',4, 'color',[.5 .5 .5]);
+sc                  = scatter(snr,mprc);
+sc.MarkerFaceColor  = [.5 .5 .5];
+sc.MarkerEdgeColor  = [.5 .5 .5];
+ax                  = gca;
+ax.YAxis(1).Color   = [0 0 0];
+ax.YAxis(2).Color   = [.5 .5 .5];
+ax.YLabel.String    = 'Precision'; 
+
 end

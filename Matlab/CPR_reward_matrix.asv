@@ -1,6 +1,6 @@
-% clear all
+[% clear all
 close all
-cd '/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/'
+cd '/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/')
 
 % Load experimental data
 load('/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/pop_tbl.mat')
@@ -16,7 +16,7 @@ dest_dir    = '/Users/fschneider/ownCloud/Shared/SFB_1528_A1_Project - @SFB1528 
 % u{1}   	= uipanel('position',[0,0,.5,1],'BackgroundColor', [1 1 1]);
 % u{2}  	= uipanel('position',[.5,0,.5,1],'BackgroundColor', [1 1 1]);
 
-for iSub = 1:3
+for iSub = 1:2
     
     % Extract subject data
     if iSub < 3
@@ -91,14 +91,14 @@ for iSub = 1:3
     
     % Plot target-wise subject performance
     snr                 = unique(trg_coh);
-    cl                  = linspace(0,1,size(snr,1));
+    cl                  = linspace(.5,1,size(snr,1));
     for iCoh = 1:size(snr,1)
         cIdx                = trg_coh == snr(iCoh);
         sc                  = scatter(acc_exp(trg_hit&cIdx),conf_exp(trg_hit&cIdx));
         sc.Marker           = '.';
         sc.SizeData         = 75;
-        sc.MarkerFaceColor  = [1 cl(length(snr)+1-iCoh) 0];
-        sc.MarkerEdgeColor  = [1 cl(length(snr)+1-iCoh) 0];
+        sc.MarkerFaceColor  = [cl(iCoh) 0 0];
+        sc.MarkerEdgeColor  = [cl(iCoh) 0 0];
         sc.MarkerEdgeAlpha  = .5;
         sc.MarkerFaceAlpha  = .5;
         hdl(iCoh)           = sc;
@@ -108,8 +108,8 @@ for iSub = 1:3
         sc.SizeData         = 40;
 %         sc.MarkerFaceColor  = [cl(iCoh) cl(size(cl,2)+1-iCoh) 0];
 %         sc.MarkerEdgeColor  = [cl(iCoh) cl(size(cl,2)+1-iCoh) 0];
-        sc.MarkerFaceColor  = [1 cl(length(snr)+1-iCoh) 0];
-        sc.MarkerEdgeColor  = [1 cl(length(snr)+1-iCoh) 0];
+        sc.MarkerFaceColor  = [cl(iCoh) 0 0];
+        sc.MarkerEdgeColor  = [cl(iCoh) 0 0];
         sc.MarkerEdgeAlpha  = .5;
         sc.MarkerFaceAlpha  = .5;
     end
@@ -117,23 +117,8 @@ for iSub = 1:3
     ax.XLim             = [0 1];
     ax.XTick            = [0:.2:1];
     ax.YTick            = [0:.2:1];
+    
     colormap(cmap)
-
-    [lg,obj]         	= legend(hdl, {num2str(round(snr,2))});
-    lg.Box            	= 'off';
-    lg.Title.String  	= 'SNR';
-    lg.Position(1:2)  	= [0 .05];
-    
-    if iSub < 3
-        indx = 6:10;
-    else
-        indx = 5:8;
-    end
-    
-    for i = indx
-        obj(i).Children.MarkerSize = 20;
-    end
-
     print(f_tmp, [dest_dir 'rewMatrix_subj' num2str(iSub)], '-r300', '-dpng');
 
     %     set(sch,'parent',u{iSub})
@@ -243,6 +228,21 @@ for iSub = 1:3
     axis square
     print(f, [dest_dir 'AvgAccBins_subj' num2str(iSub)], '-r300', '-dpng');
     
+end
+
+[lg,obj]                = legend(hdl, {num2str(round(snr,2))});
+lg.Box                  = 'off';
+lg.Title.String         = 'SNR';
+lg.Position(1:2)        = [0 .05];
+
+if iSub < 3
+    indx = 6:10;
+else
+    indx = 5:8;
+end
+
+for i = indx
+    obj(i).Children.MarkerSize = 20;
 end
 
 % dest_dir = '/Users/fschneider/ownCloud/Shared/SFB_1528_A1_Project - @SFB1528 [ownCloud, FS, ST]/Summary_plots/';

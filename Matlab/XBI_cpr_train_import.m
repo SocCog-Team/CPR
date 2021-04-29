@@ -31,9 +31,9 @@ if nargin < 3                                                               % If
         else
             d           = MW_readFile(fname, 'include', var_import);       	% Import .mwk2 sesion file
           
-            disp('Save struct...')
-            save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
-            disp('Done!')
+%             disp('Save struct...')
+%             save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
+%             disp('Done!')
         end
     end
 end
@@ -467,10 +467,11 @@ for i = 1:size(rdp_dir_ts,1)
         rdp_corr(iSample+1) = rdp_dff(iSample) + rdp_corr(iSample);
     end
     
-    xc(i,:)               	= xcorr(double(abs(rdp_dff)),abs(js_dff),nLag);               	 % Crosscorrelation between stimulus and joystick direction
+    xc(i,:)               	= xcorr(double(abs(rdp_dff)),abs(js_dff),nLag);               	% Crosscorrelation between stimulus and joystick direction
     maxR(i)                 = max(xc(i,1:nLag+1));
     posPk(i,:)              = find(xc(i,1:nLag+1) == max(xc(i,1:nLag+1)));
-    
+    cc(i)                   = circ_corrcc(deg2rad(js_dir{i}),deg2rad(vec));                 % Circular correlation between stimulus and joystick direction
+
     try
         auPk(i,:)           = trapz(xc(i,posPk(i,:)-10:posPk(i,:)+10));
     catch
@@ -482,6 +483,7 @@ for i = 1:size(rdp_dir_ts,1)
 end
 
 out.xc                      = xc;
+out.cc                      = cc;
 out.maxR                    = maxR;
 out.posPk                   = posPk;
 out.auPk                    = auPk;
@@ -510,35 +512,42 @@ bby                         = [];
 snr                         = unique(coh);
 aucPeak                     = cell(1,length(snr));
 xcLag                       = cell(1,length(snr));
+ccorr                       = cell(1,length(snr));
 
 for iCoh = 1:size(snr,1)
     cIdx                 	= coh == snr(iCoh);
     aucPeak{iCoh}           = [aucPeak{iCoh} auPk(cIdx)'];
+    ccorr{iCoh}             = [ccorr{iCoh} cc(cIdx)'];
     xcLag{iCoh}             = [xcLag{iCoh} posPk(cIdx)'-nLag];
     
-    by                      = [by; aucPeak{iCoh}'];
-    bx                      = [bx; repmat(iCoh,length(aucPeak{iCoh}),1)];
+%     by                      = [by; aucPeak{iCoh}'];
+%     bx                      = [bx; repmat(iCoh,length(aucPeak{iCoh}),1)];
+    
+    by                      = [by; ccorr{iCoh}];
+    bx                      = [bx; repmat(iCoh,length(ccorr{iCoh}),1)];    
     
     bby                     = [bby; xcLag{iCoh}'];
     bbx                     = [bbx; repmat(iCoh,length(xcLag{iCoh}),1)];
 end
 
-ax                        	= subplot(3,3,8); hold on
+ax                        	= subplot(3,3,9); hold on
 vs                        	= violinplot(by,bx);
 cl                        	= linspace(0,1,size(vs,2));
 for iSub = 1:size(vs,2)
     vs(iSub).ViolinColor    = [cl(iSub) 0 0];
 end
-ax.YLabel.String            = 'Area under peak';
+% ax.YLabel.String            = 'Area under peak';
+ax.YLabel.String            = 'Corr Coeff';
 ax.XLabel.String            = 'Coherence level';
 ax.XTickLabel               = {rsnr};
-ax.Title.String             = 'Area under XCorr peak';
+% ax.Title.String             = 'Area under XCorr peak';
+ax.Title.String             = 'Circular correlation';
 ax.XColor                   = [0 0 0];
 ax.YColor                   = [0 0 0];
 ax.FontSize                 = 14;
 box off
 
-ax                        	= subplot(3,3,9); hold on
+ax                        	= subplot(3,3,8); hold on
 vs                        	= violinplot(bby,bbx);
 cl                        	= linspace(0,1,size(vs,2));
 for iSub = 1:size(vs,2)

@@ -1,6 +1,6 @@
 // TO-DO LIST
-// (1) IDENTICAL RDP STIMULUS: USE SAME SEED, IMPLEMENT LIFETIME SETTING
-// (2) IMPLEMENT SECOND mIO BOARD, NOTE NAMING CONVENTIONS
+// (1) IDENTICAL RDP STIMULUS: USE SAME SEED
+// (2) CORRECT MIO HANDLES FOR SECOND JOYSTICK
 // (3) IMPLEMENT EYE TRACKING: CONNECT TWO EYE TRACKERS; WARNING TONE + VISUAL CUE IF FIXATION BREAKS
 // (4) PLAY AUDITORY FEEDBACK ON RESPECTIVE SPEAKER
 // FELIX SCHNEIDER, CNL, 03/2021
@@ -18,21 +18,14 @@ iodevice/mio mIO (
     joystick_y_raw                          = IO_joystickY_raw_A
     joystick_x_calib                        = IO_joystickX_calib_A
     joystick_y_calib                        = IO_joystickY_calib_A
+
+    joystick_b_direction                    = IO_joystickDirection_B
+    joystick_b_strength                     = IO_joystickStrength_B
+    joystick_b_x_raw                        = IO_joystickX_raw_B
+    joystick_b_y_raw                        = IO_joystickY_raw_B
+    joystick_b_x_calib                      = IO_joystickX_calib_B
+    joystick_b_y_calib                      = IO_joystickY_calib_B
     )
-
-//
-// DIFFERENT mIO NAME DOESN'T WORK !!! HOW IMPLEMENT A SECOND BOARD?!
-//
-
-//iodevice/mio mIO (
-    //data_interval                           = 1ms
-    //joystick_direction                      = IO_joystickDirection_B
-    //joystick_strength                       = IO_joystickStrength_B
-    //joystick_x_raw                          = IO_joystickX_raw_B
-    //joystick_y_raw                          = IO_joystickY_raw_B
-    //joystick_x_calib                        = IO_joystickX_calib_B
-    //joystick_y_calib                        = IO_joystickY_calib_B
-    //)
 
 //
 // Variables
@@ -205,7 +198,6 @@ group IO {
 		// Fix color gradient
 		if (IO_joystickStrength_A > 1) {
             COL_arcA_r                  	= 1
-            COL_arcB_b                  	= 1
         }
         
         // Set arc width
@@ -238,6 +230,49 @@ group IO {
     }
     var IO_joystickY_calib_A                = 0  {
         IO_cursorA_y                       = (IO_joystickY_calib_A * CTRL_Ymax) + RDP_y
+    }
+
+    var IO_joystickX_raw_B                  = 0
+    var IO_joystickY_raw_B                  = 0
+    var IO_joystickStrength_B               = 0 {             
+        // Set arc color intensity
+        COL_arcB_b                          = IO_joystickStrength_B
+        
+        // Fix color gradient
+        if (IO_joystickStrength_B > 1) {
+            COL_arcB_b                      = 1
+        }
+        
+        // Set arc width
+        IO_arcB_width                       = 180 - (180 * IO_joystickStrength_B) 
+        
+        // Fix minimum arc size
+        if (IO_arcB_width < CTRL_target_deg) {
+            IO_arcB_width                   = CTRL_target_deg
+        } 
+    }
+    var IO_joystickDirection_B              = 0 {
+        // Calculate tracking accuracy and reward
+        TMP_normJoyDir_B                    = (int)(((int)IO_joystickDirection_B + (180-TMP_RDPdir) + 360) % 360) 
+        TMP_accuracy_B                      = abs(1 - abs(TMP_RDPdir - IO_joystickDirection_B) / 180)
+        TMP_Cash_B                          = round(( (IO_joystickStrength_B + TMP_accuracy_B) /2) *100) /1000
+        
+        // Fix reward
+        if (IO_joystickStrength_B > 1) {
+            TMP_Cash_B                      = round(( (1 + TMP_accuracy_B) /2) *100) /1000
+        }
+        TMP_Feedback_B                      = 360 * (TMP_Cash_B / .1)   
+        
+        // Compute trigger boundaries & flag
+        IO_arcB_trigger_min                 = (int)(((int)(TMP_RDPdir - (IO_arcB_width/2) + 360) % 360) + ((180-TMP_RDPdir) + 360)) % 360
+        IO_arcB_trigger_max                 = (int)(((int)(TMP_RDPdir + (IO_arcB_width/2) + 360) % 360) + ((180-TMP_RDPdir) + 360)) % 360
+        CTRL_arcB_flag                      = (TMP_normJoyDir_B >= IO_arcB_trigger_min) && (TMP_normJoyDir_B <= IO_arcB_trigger_max)     
+    }
+    var IO_joystickX_calib_B                = 0  {
+        IO_cursorB_x                       = (IO_joystickX_calib_B * CTRL_Xmax) + RDP_x
+    }
+    var IO_joystickY_calib_B                = 0  {
+        IO_cursorB_y                       = (IO_joystickY_calib_B * CTRL_Ymax) + RDP_y
     }
 }
 
@@ -363,14 +398,14 @@ stimulus/advstimulus arc_B (
     trigger_width               			= CTRL_arc_size
     trigger_watch_x             			= 0
     trigger_watch_y             			= 0
-    trigger_flag                			= CTRL_arcA_flag
+    trigger_flag                			= CTRL_arcB_flag
     x_size                      			= CTRL_arc_size
     y_size                      			= CTRL_arc_size
     x_position                  			= -RDP_x
     y_position                  			= RDP_y
-    shape                       			= format("circle %d", (integer)IO_arcA_width)    
+    shape                       			= format("circle %d", (integer)IO_arcB_width)    
     color                       			= COL_arcB_r,COL_arcB_g,COL_arcB_b
-    rotation                    			= -IO_joystickDirection_A + (IO_arcA_width/2) + 90
+    rotation                    			= -IO_joystickDirection_B + (IO_arcB_width/2) + 90
     alpha_multiplier            			= CTRL_arc_alpha
     version                     			= 1
     autoplay                    			= YES
@@ -380,14 +415,14 @@ stimulus/advstimulus arc_B2A (
     trigger_width               			= CTRL_arc_size
     trigger_watch_x             			= 0
     trigger_watch_y             			= 0
-    trigger_flag                			= CTRL_arcA_flag
+    trigger_flag                			= CTRL_arcB_flag
     x_size                      			= CTRL_arc_size
     y_size                      			= CTRL_arc_size
     x_position                  			= RDP_x
     y_position                  			= RDP_y
-    shape                       			= format("circle %d", (integer)IO_arcA_width)    
+    shape                       			= format("circle %d", (integer)IO_arcB_width)    
     color                       			= COL_arcB_r,COL_arcB_g,COL_arcB_b
-    rotation                    			= -IO_joystickDirection_A + (IO_arcA_width/2) + 90
+    rotation                    			= -IO_joystickDirection_B + (IO_arcB_width/2) + 90
     alpha_multiplier            			= CTRL_arc_alpha
     version                     			= 1
     autoplay                    			= YES
@@ -434,11 +469,11 @@ stimulus/advstimulus indicator_B (
     trigger_flag                			= 0
     x_size                      			= CTRL_target_size
     y_size                      			= CTRL_target_size
-    x_position                  			= (sin((IO_joystickDirection_A-90)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) - RDP_x
-    y_position                  			= (cos((IO_joystickDirection_A-90)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) + RDP_y
+    x_position                  			= (sin((IO_joystickDirection_B)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) - RDP_x
+    y_position                  			= (cos((IO_joystickDirection_B)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) + RDP_y
     shape                       			= format("symmetric 3")
     color                       			= COL_arcB_r,COL_arcB_g,COL_arcB_b
-    rotation                    			= -IO_joystickDirection_A+90
+    rotation                    			= -IO_joystickDirection_B
     alpha_multiplier            			= CTRL_arc_alpha
     version                     			= 1
     autoplay                    			= YES
@@ -451,11 +486,11 @@ stimulus/advstimulus indicator_B2A (
     trigger_flag                			= 0
     x_size                      			= CTRL_target_size
     y_size                      			= CTRL_target_size
-    x_position                  			= (sin((IO_joystickDirection_A-90)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) + RDP_x
-    y_position                  			= (cos((IO_joystickDirection_A-90)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) + RDP_y
+    x_position                  			= (sin((IO_joystickDirection_B)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) + RDP_x
+    y_position                  			= (cos((IO_joystickDirection_B)*(pi/180))* ((CTRL_start_area_size/2) + (CTRL_target_size/1.5))) + RDP_y
     shape                       			= format("symmetric 3")
     color                       			= COL_arcB_r,COL_arcB_g,COL_arcB_b
-    rotation                    			= -IO_joystickDirection_A+90
+    rotation                    			= -IO_joystickDirection_B
     alpha_multiplier            			= CTRL_arc_alpha
     version                     			= 1
     autoplay                    			= YES

@@ -5,12 +5,13 @@ addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 
-cd /Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/
-
 clear all 
 close all
 
-fnames = {
+pth     = '/Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_psychophysics/Pilot_free_viewing/';
+cd(pth)
+
+fnames  = {
     'fxs_cpr_20210204_mac.mwk2';
     'fxs_cpr_20210204_bew.mwk2';
     'fxs_cpr_20210204_kan.mwk2';
@@ -33,7 +34,7 @@ for iSubj = 1:size(fnames,1)
     tpop = [tpop; t];
     
     load([fnames{iSubj} '.mat'])
-    [~,~,out{iSubj}] = CPR_psych_import(fnames{iSubj}(end-7:end-5), fnames{iSubj},d);
+    [~,~,out{iSubj}] = CPR_psych_import(fnames{iSubj}(end-7:end-5),pth,fnames{iSubj},d);
     close all
 end
 

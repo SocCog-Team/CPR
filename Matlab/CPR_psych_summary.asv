@@ -319,28 +319,27 @@ for iCoh = 1:size(snr,1)
     bbx                     = [bbx; repmat(iCoh,length(xcLag{iCoh}),1)];
 end
 
-usub                        = unique(sub);
+usub = unique(sub);
 for iSub = 1:length(usub)
-    for iCoh = 1:length(snr)
-        sIdx                = strcmp(sbjct{iCoh},usub(iSub));
-        mcc(iSub,iCoh)      = nanmean(ccorr{iCoh}(sIdx));
-    end
+for iCoh = 1:length(snr)
+    
+end    
 end
 
 alph = .4;
-ax                       	= axes('Position',[clm(2) row(3) dim]); hold on
+ax                       	= axes('Position',[clm(2) row(2) dim]); hold on
 % im                          = imagesc(pk./mean(pk,2));
-im                          = imagesc(mcc./mean(mcc,2));
+im                          = imagesc(pk./mean(pk,2));
 ax.YLabel.String            = 'Subject';
 cb                          = colorbar;
 cb.Location                 = 'southoutside';
 cb.Position(3:4)            = [.1 .01];
 cb.Position(1)              = ax.Position(1) + ax.Position(3)/3;
 cb.Position(2)              = cb.Position(2) - yoff;
-cb.Title.String             = 'Corr coeff [norm]';
+cb.Title.String             = 'Avg area under peak [norm]';
 cb.FontSize                 = cfs;
-cb.Ticks                    = [-.5 3];
-caxis([-.5 3])
+cb.Ticks                    = [.8 1.5];
+caxis([0.8 1.5])
 colormap(gray)
 
 yyaxis right
@@ -369,7 +368,7 @@ ax.YAxis(2).Color           = [1 0 0];
 box off
 axis tight
 
-ax                       	= axes('Position',[clm(2) row(2) dim]); hold on
+ax                       	= axes('Position',[clm(2) row(3) dim]); hold on
 im                          = imagesc(slg./mean(slg,2));
 ax.YLabel.String            = 'Subject';
 cb                          = colorbar;

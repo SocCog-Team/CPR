@@ -46,7 +46,5 @@ for iSubj = 1:size(fname_cpr,1)
     ax.Title.String = fname_4afc{iSubj}(6:8);
 end
 
-lg = legend('CPR','', '4AFC','', 'Location', 'southeast');
-
-
-
+lg = legend('CPR bin','', '4AFC','','CPR acc','', 'Location', 'southeast');
+lg.FontSize = 12;

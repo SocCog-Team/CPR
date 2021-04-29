@@ -24,9 +24,9 @@ if nargin < 3                                                               % If
         else
             d           = MW_readFile(fname, 'include', var_import);       	% Import .mwk2 sesion file
             
-            disp('Save struct...')
-            save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
-            disp('Done!')
+%             disp('Save struct...')
+%             save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
+%             disp('Done!')
         end
     end
 end
@@ -43,11 +43,11 @@ f                       = figure('Units', 'normalized', 'Position', [0 0 1 1]);
 
 %%% RT distribution
 ax                      = subplot(2,8,1:4); hold on
-[RT, ~, ~, ~]        	= MW_getRT(d, [], [1 0], ax);                                  % Get reaction time distributions
+[RT, ~, ~, ~]        	= MW_getRT(d, [], [1 0], ax);                      	% Get reaction time distributions
 
 %%% Conditionwise RT
 ax                      = subplot(2,8,5:8); hold on
-[RT, ~, ~, ~]        	= MW_getRT(d, [], [0 1], ax);                                  % Get reaction time distributions
+[RT, ~, ~, ~]        	= MW_getRT(d, [], [0 1], ax);                     	% Get reaction time distributions
 ax.Position(2)          = 0.5838; 
 ax.Position(4)          = 0.3412; 
 
@@ -79,8 +79,8 @@ idx.outcome         = d.event == 'TRIAL_outcome';
 idx.trg             = d.event == 'TRIAL_reactionTrigger';
 
 if sum(idx.tOn) == 0
-    idx.tOn              	= d.event == 'ML_trialStart';
-    idx.tEnd             	= d.event == 'ML_trialEnd';
+    idx.tOn     	= d.event == 'ML_trialStart';
+    idx.tEnd        = d.event == 'ML_trialEnd';
 end
 
 % Trial timestamps

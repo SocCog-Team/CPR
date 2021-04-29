@@ -24,9 +24,9 @@ if nargin < 2                                                               % If
         else
             d           = MW_readFile(fname, 'include', var_import);       	% Import .mwk2 session file
             
-            disp('Save struct...')
-            save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
-            disp('Done!')
+%             disp('Save struct...')
+%             save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
+%             disp('Done!')
         end
     end
 end
