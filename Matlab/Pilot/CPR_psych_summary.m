@@ -217,10 +217,11 @@ lg.Location         = 'northwest';
 ax                  = axes('Position',[clm(2) row(1) dim]); hold on
 nLag                = 150;                                                      	% XCorr Lag
 yofs                = .015;
-tmp = cellfun(@size, t.trl_rdp_dir, 'UniformOutput', false);
+tmp                 = cellfun(@size, t.trl_rdp_dir, 'UniformOutput', false);
 for i = 1:size(tmp,1)
     indx(i,:) = tmp{i}(2) > 1;
 end
+
 rdp_dir             = t.trl_rdp_dir(indx);
 rdp_dir_ts          = t.trl_rdp_dir_ts(indx);
 js_dir              = t.trl_js_dir(indx);

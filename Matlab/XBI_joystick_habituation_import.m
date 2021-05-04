@@ -15,20 +15,7 @@ close all
 var_import            	= {'ML_', 'CTRL_', 'TRIAL_', 'RDP_'};
 
 if nargin < 2                                                               % If no data structure provided...
-    if iscell(fname)                                                        % If multiple files ...
-        d               = mergeFiles(fname, var_import);                    % ... merge to single structure
-    else
-        if isfile([fname '.mat'])                                           % If .mat file available...
-            tmp         = load([fname '.mat']);                            	% ...load .mat file
-            d           = tmp.d;
-        else
-            d           = MW_readFile(fname, 'include', var_import);       	% Import .mwk2 session file
-            
-%             disp('Save struct...')
-%             save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
-%             disp('Done!')
-        end
-    end
+    d                	= CPR_import_mwk2(fname, var_import, false);
 end
 
 if iscell(fname)                                                            % Get session ID

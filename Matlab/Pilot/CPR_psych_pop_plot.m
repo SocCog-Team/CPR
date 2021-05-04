@@ -11,37 +11,37 @@ close all
 pth     = '/Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_psychophysics/Pilot_free_viewing/';
 cd(pth)
 
-fnames  = {
-    'fxs_cpr_20210204_mac.mwk2';
-    'fxs_cpr_20210204_bew.mwk2';
-    'fxs_cpr_20210204_kan.mwk2';
-    'fxs_cpr_20210204_fxs.mwk2';
-    'fxs_cpr_20210205_pas.mwk2';
-    'fxs_cpr_20210205_sem.mwk2';
-    'fxs_cpr_20210205_stm.mwk2';
-    'fxs_cpr_20210205_lac.mwk2';
-    'fxs_cpr_20210210_ilv.mwk2';
-    'fxs_cpr_20210210_nes.mwk2';
-    'fxs_cpr_20210224_piy.mwk2';
-    'fxs_cpr_20210318_sut.mwk2';
-    };
-
-tpop = [];
-
-for iSubj = 1:size(fnames,1)
-    clear t
-    load([fnames{iSubj} '_tbl.mat'])    
-    tpop = [tpop; t];
-    
-    load([fnames{iSubj} '.mat'])
-    [~,~,out{iSubj}] = CPR_psych_import(fnames{iSubj}(end-7:end-5),pth,fnames{iSubj},d);
-    close all
-end
-
-clear t
-t = tpop;
-save('pop_tbl.mat', 't', '-v7.3')                              % Save as .mat file
-save('pop_summary.mat', 'out', '-v7.3')          
+% fnames  = {
+%     'fxs_cpr_20210204_mac.mwk2';
+%     'fxs_cpr_20210204_bew.mwk2';
+%     'fxs_cpr_20210204_kan.mwk2';
+%     'fxs_cpr_20210204_fxs.mwk2';
+%     'fxs_cpr_20210205_pas.mwk2';
+%     'fxs_cpr_20210205_sem.mwk2';
+%     'fxs_cpr_20210205_stm.mwk2';
+%     'fxs_cpr_20210205_lac.mwk2';
+%     'fxs_cpr_20210210_ilv.mwk2';
+%     'fxs_cpr_20210210_nes.mwk2';
+%     'fxs_cpr_20210224_piy.mwk2';
+%     'fxs_cpr_20210318_sut.mwk2';
+%     };
+% 
+% tpop = [];
+% 
+% for iSubj = 1:size(fnames,1)
+%     clear t
+%     load([fnames{iSubj} '_tbl.mat'])    
+%     tpop = [tpop; t];
+%     
+%     load([fnames{iSubj} '.mat'])
+%     [~,~,out{iSubj}] = CPR_psych_import(fnames{iSubj}(end-7:end-5),pth,fnames{iSubj},d);
+%     close all
+% end
+% 
+% clear t
+% t = tpop;
+% save('pop_tbl.mat', 't', '-v7.3')                              % Save as .mat file
+% save('pop_summary.mat', 'out', '-v7.3')          
 
 %% PERFORMANCE
 

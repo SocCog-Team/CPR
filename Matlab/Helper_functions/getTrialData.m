@@ -2,11 +2,11 @@ function out = getTrialData(dat,idx1,idx2)
 
 % Helper function to extract MWorks trial data.
 %
-% Input:        .dat: MWorks input
-%               .idx1: Trial index
-%               .idx2: Variable index
+% Input:        .dat    MWorks input
+%               .idx1   Trial index
+%               .idx2   Variable index
 %
-% Outout:       .out: Corresponding data values
+% Outout:       .out    Corresponding data values
 %
 % Example:      out = getTrialData(d.value, trlIdx, varIdx)
 %
