@@ -4,8 +4,7 @@ cd '/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/'
 
 % Load experimental data
 load('/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/pop_tbl.mat')
-
-subjID      = {'fxs_20210204';'kan_20210204';'cla_210409'};
+subjID      = {'fxs_20210204';'kan_20210204';'cla_210430'};
 titl        = {'Human: High confidence';'Human: Low confidence'; 'NHP_Claas'};
 cmap        = [0 0 0; gray(256)];
 steps       = .05;
@@ -22,7 +21,7 @@ for iSub = 1:3
     if iSub < 3
         stbl    = t(strcmp(t.ID,subjID{iSub}),:);
     else
-        tmp = load('/Users/fschneider/Documents/MWorks/XBI/claas_210409_tbl.mat');
+        tmp = load('/Users/fschneider/Documents/MWorks/XBI/cla_20210430_tbl.mat');
         stbl = tmp.t;
     end
     
@@ -124,13 +123,13 @@ for iSub = 1:3
     lg.Title.String  	= 'SNR';
     lg.Position(1:2)  	= [0 .05];
     
-    if iSub < 3
-        indx = 6:10;
-    else
-        indx = 5:8;
-    end
+%     if iSub < 3
+%         indx = 6:10;
+%     else
+%         indx = 5:8;
+%     end
     
-    for i = indx
+    for i = 6:10
         obj(i).Children.MarkerSize = 20;
     end
 
@@ -245,9 +244,6 @@ for iSub = 1:3
     
 end
 
-% dest_dir = '/Users/fschneider/ownCloud/Shared/SFB_1528_A1_Project - @SFB1528 [ownCloud, FS, ST]/Summary_plots/';
-% print(f, [dest_dir 'rewMatrix_subj'], '-r300', '-dpng');
-
 %% Helper function
 
 function [acc,conf,rew,trg_hit,trg_coh] = getTargetValue(t)
@@ -259,7 +255,11 @@ rdp_dir     = t.rdp_dir(indx);
 js_str_ts   = t.js_str_ts(indx);
 trg_ts      = t.trg_ts(indx);
 trg_hit     = t.trg_hit(indx);
-trg_coh     = t.trl_coh(indx);
+try
+    trg_coh = t.trl_coh(indx);
+catch
+    trg_coh = t.ss_coh(indx);
+end
 
 for i = 1:length(js_str)
     trg_pos     = find(js_str_ts{i} >= trg_ts(i), 1, 'first');

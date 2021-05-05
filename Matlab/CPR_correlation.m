@@ -100,18 +100,19 @@ for iTrl = 1:size(rdp_dir_ts,1)
         coh(count)              = rdp_coh{iTrl}(iCoh);                                          % Coherence ID
         cc(count)               = circ_corrcc(deg2rad(js_dir{iTrl}),deg2rad(dir_vec));          % Circular correlation between stimulus and joystick direction
         xc(count,:)             = xcorr(double(abs(rdp_dff(cIdx))),abs(js_dff(cIdx)),nLag);    	% Cross-correlation between stimulus and joystick direction
-        maxR(count)           	= max(xc(iTrl,1:nLag+1));                                      	% Max cross-correlation coefficient
-        posPk(count)        	= find(xc(count,1:nLag+1) == max(xc(count,1:nLag+1)));          % Peak position of cross-correlation
+        sxc(count,:)            = smoothdata(xc(count,:),'gaussian',20);                        % Smooth correlation output with gaussian kernel
+        maxR(count)           	= max(sxc(iTrl,1:nLag+1));                                     	% Max cross-correlation coefficient
+        posPk(count)        	= find(sxc(count,1:nLag+1) == max(sxc(count,1:nLag+1)));      	% Peak position of cross-correlation
 
         try
-            auPk(count,:)     	= trapz(xc(count,posPk(count)-10:posPk(count)+10));           	% Area under cross-correlation peak
+            auPk(count,:)     	= trapz(sxc(count,posPk(count)-10:posPk(count)+10));           	% Area under cross-correlation peak
         catch
             auPk(count,:)     	= nan;
         end
         
         if plotFlag
             % Plot trial-wise cross-correlation
-            ps              	= plot(xc(count,1:nLag),'Color',[.5 .5 .5 .1], 'Marker','none', 'LineWidth',2);
+            ps              	= plot(sxc(count,1:nLag),'Color',[.5 .5 .5 .1], 'Marker','none', 'LineWidth',2);
         else 
             ps                  = [];
         end
@@ -121,6 +122,7 @@ end
 out.coh                         = coh;
 out.cc                          = cc;
 out.xc                          = xc;
+out.sxc                         = sxc;
 out.maxR                        = maxR;
 out.posPk                       = posPk;
 out.auPk                        = auPk;

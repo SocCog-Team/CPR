@@ -63,7 +63,8 @@ for iTrl = 1:length(trl.tEnd)
     trlIdx                  = d.time >= trl.tOn(iTrl) & d.time <= trl.tEnd(iTrl);   	% Trial index
     trl.dir_ts{iTrl}        = getTrialData(d.time, trlIdx, idx.stateOn);             	% Timestamps of RDP direction changes [Steady state start, Ignore first value -> randomly drawn direction]
     trl.ssdur{iTrl}         = getTrialData(d.value, trlIdx, idx.steady_duration);       % Steady state duration for this trials
-    trl.coh{iTrl}           = getTrialData(d.value, trlIdx, idx.RDP_coh);               % Trial coherence level
+    trl.coh{iTrl}           = getTrialData(d.value, trlIdx, idx.RDP_coh);               % Trial RDP coherence level
+    trl.dir{iTrl}           = getTrialData(d.value, trlIdx, idx.RDP_dir);               % Trial RDP direction
     
     if length(trl.ssdur{iTrl}) < 2
         continue
@@ -74,7 +75,7 @@ for iTrl = 1:length(trl.tEnd)
         
         % Steady state index
         if iSS < length(trl.ssdur{iTrl})
-            ssIdx           = d.time >= trl.dir_ts{iTrl}(iSS+1) & d.time < trl.dir_ts{iTrl}(iSS+2);
+            ssIdx           = d.time >= trl.dir_ts{iTrl}(iSS+1) & d.time < trl.dir_ts{iTrl}(iSS+2); % 1st timestamp irrelevant
         else
             ssIdx           = d.time >= trl.dir_ts{iTrl}(iSS+1) & d.time <= trl.tEnd(iTrl);
         end
@@ -86,14 +87,15 @@ for iTrl = 1:length(trl.tEnd)
         t.trl_dur(cc)       = (trl.tEnd(iTrl) - trl.tOn(iTrl)) ./ 1e6;                  % Trial duration [s]
         t.ss_no(cc)         = cc;                                                       % Steady state counter
         
-        if strcmp(subj, 'cla') || strcmp(subj, 'nil')
+        if strcmp(subj, 'cla') || strcmp(subj, 'nil') || str2num(fid) < 20210401
             t.ss_coh(cc)  	= trl.coh{iTrl}(end);
+            t.rdp_dir(cc)  	= mod(trl.dir{iTrl}(iSS),360);
         else
             t.ss_coh(cc)   	= getTrialData(d.value, ssIdx, idx.RDP_coh);                % Steady state coherence
+            t.rdp_dir(cc)   = mod(getTrialData(d.value, ssIdx, idx.RDP_dir),360);       % Stimulus direction
         end
         
         t.ss_dur(cc)        = trl.ssdur{iTrl}(iSS);                                     % Steady state duration
-        t.rdp_dir(cc)       = mod(getTrialData(d.value, ssIdx, idx.RDP_dir),360);       % Stimulus direction
         t.trg_shown(cc)     = iscell(getTrialData(d.value, ssIdx, idx.outcome));        % Target shown?
         t.trg_hit(cc)       = strcmp(getTrialData(d.value, ssIdx, idx.outcome), 'hit'); % Target collected?
         trg_val             = getTrialData(d.value, ssIdx, idx.trg);                    % Target trigger
@@ -136,7 +138,7 @@ for iTrl = 1:length(trl.tEnd)
     end
     
     % Temporary fix: coherence per steady state
-    if strcmp(subj, 'cla') || strcmp(subj, 'nil')
+    if strcmp(subj, 'cla') || strcmp(subj, 'nil') || str2num(fid) < 20210401
     else
         b = repmat(trl.coh{iTrl},10,1);
         if iTrl == 1

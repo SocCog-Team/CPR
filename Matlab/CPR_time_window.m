@@ -57,13 +57,13 @@ for iCoh = 1:size(cohPool,1)                                                    
     trg_hit                	= t.trg_hit(cohIdx);
     trg_shown            	= t.trg_shown(cohIdx);
     
-    out.str_mean_dist{iCoh}	= mean(str_arr,2);
-    out.str_std_dist{iCoh} 	= std(str_arr,[],2);
-    out.acc_dist{iCoh}    	= mean(js_acc{iCoh},2);
+    out.str_mean_dist{iCoh}	= nanmedian(str_arr,2);
+    out.str_std_dist{iCoh} 	= nanstd(str_arr,[],2);
+    out.acc_dist{iCoh}    	= nanmedian(js_acc{iCoh},2);
     
-    out.str_mean(iCoh)      = mean(mean(str_arr,2));                              	% Average across steady states
-    out.str_std(iCoh)       = std(std(str_arr,[],2));                             	% Standard deviation across steady states
+    out.str_mean(iCoh)      = nanmedian(nanmedian(str_arr,2));                  	% Average across steady states
+    out.str_std(iCoh)       = nanstd(nanstd(str_arr,[],2));                       	% Standard deviation across steady states
     out.HIr(iCoh)           = sum(trg_hit) / sum(trg_shown);                     	% Hit rate
-    out.acc(iCoh)           = mean(mean(js_acc{iCoh},2));                       	% Response accuracy
+    out.acc(iCoh)           = nanmedian(nanmedian(js_acc{iCoh},2));               	% Response accuracy
 end
 end

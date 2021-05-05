@@ -53,8 +53,13 @@ if strcmp(subj, 'cla') || strcmp(subj, 'nil')
     idx.reward              = d.event == 'INFO_Juice_ml';
     rew_str                 = 'ml';
 else
-    idx.reward           	= d.event == 'INFO_Cash';
-    rew_str                 = 'EUR';
+    if str2num(fid) < 20210401
+        idx.reward      	= d.event == 'INFO_ExtraCash';
+        rew_str         	= 'EUR';
+    else
+        idx.reward      	= d.event == 'INFO_Cash';
+        rew_str          	= 'EUR';
+    end
 end
 
 if sum(idx.tOn) == 0
@@ -338,10 +343,15 @@ ax.Title.String                 = 'XCorr(RDP, JS)';
 ax.Title.Interpreter            = 'none';
 yyaxis right
 
-pm                              = plot(nanmedian(cr.xc),'Color',[1 0 0], 'Marker','none', 'LineWidth',4);
-ax.YAxis(2).Color               = [1 0 0];
-lg                              = legend([ps, pm], {'Trials','Median'});
-lg.Position(1)                  = .15;
+for iCoh = 1:length(snr)
+    vec                         = nanmean(cr.sxc(cr.coh == snr(iCoh),:));
+    svec                        = smoothdata(vec,'gaussian',30);                     
+    pm                         	= plot(svec,'Color',[cl(iCoh) 0 0 .8], 'Marker','none', 'LineStyle', '-', 'LineWidth',3);
+end
+
+ax.YAxis(2).Color               = [cl(iCoh) 0 0];
+lg                              = legend([ps, pm], {sprintf('All Trials\n[smoothed]'),sprintf('Mean\n[smoothed]')});
+lg.Position(1)                  = .13;
 
 %%% Coherence %%%
 bx                              = [];
@@ -370,23 +380,23 @@ for iCoh = 1:size(snr,2)
     bbx                         = [bbx; repmat(iCoh,length(xcLag{iCoh}),1)];
 end
 
-ax                              = subplot(3,3,8); hold on
+ax                              = subplot(3,3,9); hold on
 vs                              = violinplot(by,bx);
 cl                              = linspace(0,1,size(vs,2));
 for iSub = 1:size(vs,2)
     vs(iSub).ViolinColor        = [cl(iSub) 0 0];
 end
 ax.YLabel.String                = 'Area under peak';
-ax.YLabel.String                = 'Circular correlation';
+ax.YLabel.String                = 'Corr coeff';
 ax.XLabel.String                = 'Coherence level';
 ax.XTickLabel                   = {rsnr};
-ax.Title.String                 = 'Corr Coeff';
+ax.Title.String                 = 'Circular correlation';
 ax.XColor                       = [0 0 0];
 ax.YColor                       = [0 0 0];
 ax.FontSize                     = 14;
 box off
 
-ax                              = subplot(3,3,9); hold on
+ax                              = subplot(3,3,8); hold on
 vs                              = violinplot(bby,bbx);
 cl                              = linspace(0,1,size(vs,2));
 for iSub = 1:size(vs,2)
