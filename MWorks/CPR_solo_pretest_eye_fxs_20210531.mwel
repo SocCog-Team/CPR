@@ -133,10 +133,10 @@ group CTRL {
     var CTRL_scoreBar_size                  = 18.4
     var CTRL_scoreBar_alpha                 = .2
     var CTRL_scoreBarB_width                = 0
-    var CTRL_scoreBarB_size                 = 17.8
+    var CTRL_scoreBarB_size                 = 19
     var CTRL_scoreBarB_alpha                = .2
     var CTRL_targetBar_width                = 0
-    var CTRL_targetBar_size                 = 19
+    var CTRL_targetBar_size                 = 17.9
     var CTRL_targetBar_alpha                = .2
 
     var cnt                                 = 0
@@ -1673,12 +1673,12 @@ protocol 'CPR_solo' {
             }
 
             state 'Show Stimuli' {
-                live_queue_stimulus (targetBar)
-                live_queue_stimulus (targetBarMask)
-                live_queue_stimulus (scoreBar)
-                live_queue_stimulus (scoreBarMask)
                 //live_queue_stimulus (scoreBar_B)
                 //live_queue_stimulus (scoreBarMask_B)
+                live_queue_stimulus (scoreBar)
+                live_queue_stimulus (scoreBarMask)
+                live_queue_stimulus (targetBar)
+                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (arc)

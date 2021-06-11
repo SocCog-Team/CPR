@@ -2,6 +2,8 @@
 // 1) Individualised auditory feedback: Present respective sound to left and right speaker separately
 // 2) Debug eye fixation in CPR paradigms
 // 3) Decide on baseline angular arc diameter
+// 4) Dedicated local variables for each setup reg pre-tests
+
 // Hardware:
 // - Similar joysticks in both setups, ideally redesigned joystick plate; only new joystick design acceptable (circular space)
 // - Screen splitter to avoid dropped samples
@@ -252,13 +254,13 @@ group CTRL {
 
     var CTRL_scoreBar_width                 = 0
     var CTRL_scoreBar_size                  = 18.4
-    var CTRL_scoreBar_alpha                 = .2
+    var CTRL_scoreBar_alpha                 = .5
     var CTRL_scoreBarB_width                = 0
-    var CTRL_scoreBarB_size                 = 17.8
-    var CTRL_scoreBarB_alpha                = .2
+    var CTRL_scoreBarB_size                 = 19
+    var CTRL_scoreBarB_alpha                = .5
     var CTRL_targetBar_width                = 0
-    var CTRL_targetBar_size                 = 19
-    var CTRL_targetBar_alpha                = .2
+    var CTRL_targetBar_size                 = 17.9
+    var CTRL_targetBar_alpha                = .5
 }
 
 group TRIAL {
@@ -434,7 +436,7 @@ group IO {
 
             // Target
             if (TRIAL_reactionTrigger == 0) {
-            CTRL_target_idx                 = disc_rand(0,199) // Show target?
+            CTRL_target_idx                 = disc_rand(0,199) // Show target? --> Turn into macro...
             }
         }
     }
@@ -618,7 +620,7 @@ stimulus/r_d_p RDP (
     speed                       			= RDP_speed
     coherence                   			= RDP_coherence
     lifetime                    			= RDP_lifetime
-    announce_dots               			= NO // YES for dot position
+    announce_dots               			= YES // YES for dot position
     autoplay                    			= YES
     )
 
@@ -937,7 +939,7 @@ stimulus/advstimulus scoreBar_B (
     y_size                                  = CTRL_scoreBarB_size
     x_position                              = RDP_x
     y_position                              = RDP_y
-    shape                                   = format("circle %d", (integer)CTRL_scoreBar_width)    
+    shape                                   = format("circle %d", (integer)CTRL_scoreBarB_width)    
     color                                   = COL_scoreBarB_r,COL_scoreBarB_g,COL_scoreBarB_b
     rotation                                = 0
     alpha_multiplier                        = CTRL_scoreBarB_alpha
@@ -1679,13 +1681,15 @@ protocol 'CPR_solo' {
 	CTRL_target_alpha                   		= 1
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
     CTRL_ITI_ms                                 = 3000
-    TRIAL_start                                 = 0
-    TRIAL_end                                   = 0
+    CTRL_targetBar_width                        = 360
+    CTRL_scoreBar_width                         = 0
     COL_start_area_r 							= 1
 	COL_start_area_g 							= 1
 	COL_start_area_b 							= 1
 	
     // Reset counters
+    TRIAL_start                                 = 0
+    TRIAL_end                                   = 0
     INFO_SteadyStateCounter                     = 0
     INFO_CoherenceStateCounter                  = 0
     INFO_TargetCounter                          = 0
@@ -1741,10 +1745,10 @@ protocol 'CPR_solo' {
             }
 
             state 'Show Stimuli' {
-                live_queue_stimulus (targetBar)
-                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
+                live_queue_stimulus (targetBar)
+                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (arc)
@@ -1890,18 +1894,6 @@ protocol 'CPR_solo' {
                 goto ('Update Stimuli')
             }
 
-            state 'Fixation break detected' {
-                CTRL_fixation_break_flag      = 1
-
-                start_timer (
-                    timer                       = MinFixationBreakTimer
-                    duration                    = CTRL_minFixBreak_duration_ms
-                    duration_units              = ms
-                    )  
-
-                goto ('Update Stimuli')
-            }
-
             state 'Reset CTRL_fixation_break_flag' {
                     CTRL_fixation_break_flag        = 0
             }
@@ -1995,6 +1987,7 @@ protocol 'CPR_solo' {
 
                 INFO_HitCounter                 = INFO_HitCounter + 1
                 INFO_Cash                		= INFO_Cash + TMP_Cash
+                CTRL_scoreBar_width             = 360 * (INFO_Cash / (CTRL_NoTargets * CTRL_cash_per_target))
 
                 report ('--- OUTCOME: Hit ---')
                 report ('CASH: $TMP_Cash')
@@ -2103,6 +2096,11 @@ protocol 'CPR_dyatic' {
 	CTRL_target_alpha                   		= 1
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
     CTRL_ITI_ms                                 = 3000
+    CTRL_targetBar_width                        = 360
+    CTRL_scoreBar_width                         = 0
+    COL_start_area_r                            = 1
+    COL_start_area_g                            = 1
+    COL_start_area_b                            = 1
     
     // Reset counters
     TRIAL_start                                 = 0
@@ -2162,12 +2160,12 @@ protocol 'CPR_dyatic' {
             }
 
             state 'Show Stimuli' {
-                live_queue_stimulus (targetBar)
-                live_queue_stimulus (targetBarMask)
-                live_queue_stimulus (scoreBar)
-                live_queue_stimulus (scoreBarMask)
                 live_queue_stimulus (scoreBar_B)
                 live_queue_stimulus (scoreBarMask_B)
+                live_queue_stimulus (scoreBar)
+                live_queue_stimulus (scoreBarMask)
+                live_queue_stimulus (targetBar)
+                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (arc_B)
