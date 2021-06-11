@@ -12,13 +12,17 @@ cd(pth)
 
 % Define variables for import
 var_import = {
-    'ML_', ...
-    'CTRL_', ...
-    'RDP_', ...
-    'INFO_', ...
-    'TRIAL_', ...
-    'IO_joystickDirection', ...
-    'IO_joystickStrength' };
+        'ML_', ...
+        'CTRL_', ...
+        'RDP_', ...
+        'INFO_', ...
+        'TRIAL_', ...
+        'IO_joystickDirection', ...
+        'IO_joystickStrength',...
+        'IO_fixation_flag',...
+        'EYE_x_dva',... 
+        'EYE_y_dva',...
+        '#stimDis'};
 
 if nargin < 4                                                             
     d                	= CPR_import_mwk2(fname, var_import, false);
@@ -48,6 +52,9 @@ idx.JS_str                  = d.event == 'IO_joystickStrength';
 idx.outcome                 = d.event == 'TRIAL_outcome';
 idx.trg                     = d.event == 'TRIAL_reactionTrigger';
 idx.stateOn                 = d.event == 'INFO_SteadyStateCounter';
+idx.fixation              	= d.event == 'IO_fixation_flag';
+idx.eye_x_dva              	= d.event == 'EYE_x_dva';
+idx.eye_y_dva             	= d.event == 'EYE_y_dva';
 
 if strcmp(subj, 'cla') || strcmp(subj, 'nil')
     idx.reward              = d.event == 'INFO_Juice_ml';
@@ -159,10 +166,10 @@ fl.FaceColor                = col{3};
 fl.EdgeColor                = col{3};
 
 yyaxis right
-p2                          = plot(trg_ts,movmean(HIidx,5));
+p2                          = plot(trg_ts,movmean(HIidx,20));
 p2.LineWidth                = 2;
 p2.Color                    = col{1};
-p3                          = plot(trg_ts,movmean(~HIidx,5));
+p3                          = plot(trg_ts,movmean(~HIidx,20));
 p3.LineWidth                = 2;
 p3.LineStyle                = ':';
 p3.Color                    = col{2};
@@ -222,11 +229,11 @@ ax.YColor                   = [0 0 0];
 ax.FontSize                 = 14;
 box off
 
-[P,ANOVATAB,STATS]          = kruskalwallis(bby,bbx,'off');
-
-if P > .05
-    ax.Title.String     	= {'Avg motion tracking accuracy [states]','n.s.'};
-end
+% [P,ANOVATAB,STATS]          = kruskalwallis(bby,bbx,'off');
+% 
+% if P > .05
+%     ax.Title.String     	= {'Avg motion tracking accuracy [states]','n.s.'};
+% end
 
 ax                          = subplot(3,3,6); hold on
 vs                        	= violinplot(by,bx);
@@ -252,7 +259,7 @@ end
 
 % Get trial data
 trl_str                     = t.trl_js_str(indx);                           % Joystick strength
-trl_str_ts                  = t.trl_js_str_ts(indx);
+trl_str_ts                  = t.trl_js_ts(indx);
 tmp_coh                     = t.trl_rdp_coh(indx);                          % RDP coherence
 tmp_coh_ts                  = t.trl_rdp_coh_ts(indx);
 tmp_coh{1}(1)               = [];                                           % Remove first entry of first trial

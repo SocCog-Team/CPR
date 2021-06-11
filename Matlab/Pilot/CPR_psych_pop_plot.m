@@ -45,8 +45,8 @@ cd(pth)
 
 %% PERFORMANCE
 
-load('/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/pop_tbl.mat')
-load('/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/pop_summary.mat')
+load('/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/CPR_pop_tbl.mat')
+load('/Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing/CPR_pop_summary.mat')
 
 f                   = figure('Units', 'normalized', 'Position', [0 0 .65 1]); set(gcf,'color', [1 1 1]);
 
@@ -75,7 +75,7 @@ for i = 1:size(pText,1)
 end
 
 % Condition-wise performance
-tcoh                = t.trl_coh(logical(t.trg_shown));
+tcoh                = t.ss_coh(logical(t.trg_shown));
 clvl                = unique(tcoh);
 for iCoh = 1:length(clvl)
     cindx           = tcoh == clvl(iCoh);
@@ -103,7 +103,7 @@ axis tight
 %% ANALYSIS OF TIME WINDOW
 
 nSamples                = 29;                                                   	% Number of samples before direction changes
-cohPool                 = unique(t.trl_coh);                                        % Tested coherence levels
+cohPool                 = unique(t.ss_coh);                                        % Tested coherence levels
 cohPool(cohPool == 0)   = [];
 
 for iCoh = 1:size(cohPool,1)                                                        % For each coherence level
@@ -112,7 +112,7 @@ for iCoh = 1:size(cohPool,1)                                                    
     trg_shown           = [];
     trg_hit             = [];
     
-    cohIdx              = t.trl_coh == cohPool(iCoh);                               % Coherence index
+    cohIdx              = t.ss_coh == cohPool(iCoh);                               % Coherence index
     str_raw{iCoh}       = t.js_str(cohIdx);                                         % Joystick strength
     dir_raw{iCoh}       = t.js_dir(cohIdx);                                         % Joystick direction
     rdp_dir{iCoh}       = t.rdp_dir(cohIdx);                                        % Stimulus direction
@@ -211,7 +211,7 @@ tmp = cellfun(@size, t.trl_rdp_dir, 'UniformOutput', false);
 for i = 1:size(tmp,1)
     indx(i,:) = tmp{i}(2) > 1;
 end
-coh                         = t.trl_coh(indx);
+coh                         = t.ss_coh(indx);
 trl_str                     = t.trl_js_str(indx);
 
 for iTrl = 1:size(trl_str,1)

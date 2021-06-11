@@ -1,4 +1,5 @@
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Pilot
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 
 % Import 4AFC data
@@ -19,15 +20,15 @@ fname_4afc = {
     };
 
 fname_cpr = {
-    'fxs_cpr_20210204_fxs.mwk2_tbl.mat';
-    'fxs_cpr_20210318_sut.mwk2_tbl.mat';
-    'fxs_cpr_20210204_kan.mwk2_tbl.mat';
-    'fxs_cpr_20210204_mac.mwk2_tbl.mat';
-    'fxs_cpr_20210210_nes.mwk2_tbl.mat';
-    'fxs_cpr_20210205_pas.mwk2_tbl.mat';
-    'fxs_cpr_20210205_stm.mwk2_tbl.mat';
-    'fxs_cpr_20210205_sem.mwk2_tbl.mat';
-    'fxs_cpr_20210205_lac.mwk2_tbl.mat';
+    'fxs_20210204_tbl.mat';
+    'sut_20210318_tbl.mat';
+    'kan_20210204_tbl.mat';
+    'mac_20210204_tbl.mat';
+    'nes_20210210_tbl.mat';
+    'pas_20210205_tbl.mat';
+    'stm_20210205_tbl.mat';
+    'sem_20210205_tbl.mat';
+    'lac_20210205_tbl.mat';
     };
 
 for iSubj = 1:size(fname_cpr,1)  

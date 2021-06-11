@@ -8,7 +8,7 @@ addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes
 %% CONTINUOUS DATA: Binary
 
 sub                     = unique(t.ID);                                   	% Subject ID
-snr                     = unique(t.trl_coh);                                % Stimulus coherence level
+snr                     = unique(t.ss_coh);                                 % Stimulus coherence level
 snr(snr == 0)           = [];
 nSamples                = 9;                                               	% Integration period [1 sample == 10ms]
 tresh                   = 45;                                              	% +/-45deg --> 90 degree tolerance == 25% chance level
@@ -27,7 +27,7 @@ tdff                    = abs(dff) < tresh;
 
 for iCoh = 1:length(snr)
     clear cIdx
-    cIdx                = t.trl_coh == snr(iCoh);
+    cIdx                = t.ss_coh == snr(iCoh);
     HitNo(1,iCoh)       = sum(tdff(cIdx));
     OutOfNum(1,iCoh)    = length(tdff(cIdx));
     hir(1,iCoh)         = HitNo(1,iCoh) / OutOfNum(1,iCoh);
@@ -36,7 +36,7 @@ end
 %% CONTINUOUS DATA: Precision-based
 
 sub                     = unique(t.ID);                                   	% Subject ID
-snr                     = unique(t.trl_coh);                                % Stimulus coherence level
+snr                     = unique(t.ss_coh);                                 % Stimulus coherence level
 snr(snr == 0)           = [];
 nSamples                = 9;                                               	% Integration period [1 sample == 10ms]
 
@@ -53,7 +53,7 @@ dff                     = rad2deg(circ_dist(deg2rad(t.rdp_dir),deg2rad(js_dir)))
 
 for iCoh = 1:length(snr)
     clear cIdx
-    cIdx                = t.trl_coh == snr(iCoh);
+    cIdx                = t.ss_coh == snr(iCoh);
     mdiff(iCoh)         = mean(abs(dff(cIdx)));
 end
 

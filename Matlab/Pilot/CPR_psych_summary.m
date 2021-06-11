@@ -5,7 +5,7 @@ addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 
-cd /Users/fschneider/ownCloud/CPR_data/Pilot_free_viewing
+cd('/Users/fschneider/ownCloud/Shared/SFB_1528_A1_Project - @SFB1528 [ownCloud, FS, ST]/Summary_plots')
 load('pop_summary.mat')
 load('pop_tbl.mat')
 
@@ -167,7 +167,7 @@ for iSub = 1:size(vs,2)
     vs(iSub).WhiskerPlot.Marker   	= 'none';
     vs(iSub).ScatterPlot.MarkerFaceAlpha = alph;
 end
-ax.YLabel.String            = 'Joystick strength [norm]';
+ax.YLabel.String            = 'Joystick displacement [norm]';
 ax.XLabel.String            = 'Coherence level';
 ax.XTickLabel               = {rsnr(1),rsnr(2),rsnr(3),rsnr(4),rsnr(5)};
 ax.Title.String             = {'Radial joystick displacement'};

@@ -25,8 +25,6 @@ group TRIAL {
     var TRIAL_outcome                       = 0
     var TRIAL_reactionTrigger               = 0
     var TRIAL_reactionTrigger_ts            = 0
-    var TRIAL_reactionEvent                 = 0
-    var TRIAL_reactionEvent_ts              = 0
     var TRIAL_RT                            = 0
     var TRIAL_type                          = 0
 }
@@ -69,11 +67,7 @@ group CTRL {
     var CTRL_target_alpha                   = .75
 
     var CTRL_arc_size                       = 20
-    var CTRL_arc_flag                       = 0 {
-        if (CTRL_arc_flag == 0) {
-            TRIAL_reactionEvent             = 0
-        }
-    }
+    var CTRL_arc_flag                       = 0
     var CTRL_arc_alpha                      = 1
     var CTRL_arc_trigger_min                = .5
     var CTRL_arc_trigger_max                = .5
@@ -109,18 +103,18 @@ group ML {
 }
 
 group COL {
-    var COL_bg_r                            = .5
-    var COL_bg_g                            = .5
-    var COL_bg_b                            = .5
-    var COL_start_area_r                    = 0
-    var COL_start_area_g                    = 0
-    var COL_start_area_b                    = 0
+    var COL_bg_r                            = 0
+    var COL_bg_g                            = 0
+    var COL_bg_b                            = 0
+    var COL_start_area_r                    = 1
+    var COL_start_area_g                    = 1
+    var COL_start_area_b                    = 1
     var COL_arc_r                           = 0
     var COL_arc_g                           = 0
     var COL_arc_b                           = 0
-    var COL_target_r                        = 0
-    var COL_target_g                        = 0
-    var COL_target_b                        = 0
+    var COL_target_r                        = 1
+    var COL_target_g                        = 1
+    var COL_target_b                        = 1
     var COL_feedback_r                      = 0
     var COL_feedback_g                      = 1
     var COL_feedback_b                      = 0
@@ -139,7 +133,7 @@ group RDP {
     var RDP_x                               = 0
     var RDP_density                         = 5
     var RDP_dotsize                         = .2
-    var RDP_speed                           = 4
+    var RDP_speed                           = 8
     var RDP_coherence                       = 0
     var RDP_lifetime                        = 500
 }
@@ -665,7 +659,6 @@ protocol 'CPR_steady' {
                 dequeue_stimulus (arcMask)
                 dequeue_stimulus (feedback)
 
-                TRIAL_reactionEvent             = 0
                 TRIAL_reactionTrigger           = 0
                 TRIAL_RT                        = 0
                 TRIAL_end                       = TRIAL_start

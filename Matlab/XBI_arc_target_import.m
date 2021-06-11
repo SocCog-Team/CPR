@@ -30,26 +30,26 @@ f                       = figure('Units', 'normalized', 'Position', [0 0 1 1]);
 
 %%% RT distribution
 ax                      = subplot(2,8,1:4); hold on
-[RT, ~, ~, ~]        	= MW_getRT(d, [], [1 0], ax);                      	% Get reaction time distributions
+[RT, ~, ~, ~]        	= MW_getRT(d, [], 30, [], [1 0], ax);                      	% Get reaction time distributions
 
 %%% Conditionwise RT
 ax                      = subplot(2,8,5:8); hold on
-[RT, ~, ~, ~]        	= MW_getRT(d, [], [0 1], ax);                     	% Get reaction time distributions
+[RT, ~, ~, ~]        	= MW_getRT(d, [], 30, [], [0 1], ax);                     	% Get reaction time distributions
 ax.Position(2)          = 0.5838; 
 ax.Position(4)          = 0.3412; 
 
 %%% Performance pie chart
 ax                    	= subplot(2,8,9); hold on
-[perf, pIdx, ~]      	= MW_getPerformance(d,[1 0 0],ax);
+[perf, pIdx, ~]      	= MW_getPerformance(d,50,[1 0 0 0 0],ax);
 
 %%% Moving hit rate
 ax                   	= subplot(2,8,11:12); hold on
-[perf, pIdx, ~]        	= MW_getPerformance(d,[0 1 0],ax);
+[perf, pIdx, ~]        	= MW_getPerformance(d,50,[0 1 0 0 0],ax);
 ax.Position             = [0.285    0.1100    0.2    0.3412]; 
 
 %%% Condition-wise performance
 ax                     	= subplot(2,8,13:16); hold on
-[perf, pIdx, ~]         = MW_getPerformance(d,[0 0 1],ax);
+[perf, pIdx, ~]         = MW_getPerformance(d,50,[0 0 1 0 0],ax);
 
 dest_dir = '/Users/fschneider/Documents/MWorks/XBI/Plots/';
 print(f, [dest_dir 'summary_ ' monk '_' fid], '-r300', '-dpng');
