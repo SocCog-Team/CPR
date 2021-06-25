@@ -1,4 +1,4 @@
-function [tbl,d,summ] = CPR_psych_import(subj, pth, fname, d)
+function [t,d,out] = CPR_psych_import(subj, pth, fname, d)
 
 % This function imports, organises and visualises CPR data.
 %
@@ -8,14 +8,13 @@ function [tbl,d,summ] = CPR_psych_import(subj, pth, fname, d)
 %          	.d              Structure (optional), Contains trial
 %                           information. Skips data import if included.
 %
-% Output:   .tbl            Cell, Contains state-wise data table with 
+% Output:   .t              Table, State-wise data table containing 
 %                           stimulus parameters as well as behavioural 
 %                           responses 
-%          	.d              Structure, Contains (raw) MWorks data
-%          	.summ           Cell, Contains structure with summary
-%                           information
+%          	.d              Structure, Contains trial information
+%          	.out            Structure, Contains summary information
 %
-% Example:	[tbl,d,summ] = CPR_psych_import('fxs', '/Users/fschneider/Documents', 'test.mwk2')
+% Example:	[t,d,out] = CPR_psych_import('fxs', '/Users/fschneider/Documents', 'test.mwk2')
 %
 % Known bugs:
 %
@@ -23,8 +22,7 @@ function [tbl,d,summ] = CPR_psych_import(subj, pth, fname, d)
 %
 % Version history
 %   1.0     (fxs 2020-10-01) Initial version.
-%   1.1     (fxs 2020-05-25) Added compatibility for 2nd subject (dyadic setting)
-%   1.1     (fxs 2020-05-25) Analysis of multiple targets per state possible
+%   1.1     (fxs 2020-05-25) Added compatability for 2nd subject (dyadic setting)
 
 %% Add relevant directories
 
@@ -154,7 +152,7 @@ else
 end
 
 % Construct data table(s)
-tbl{1}                      = CPR_construct_table(sbj{1}, fid, d, trl, idx, true);
+t1                          = CPR_construct_table(sbj{1}, fid, d, trl, idx, true);
 
 if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
     % Define fields that index variables of subject 2
@@ -178,7 +176,7 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
     idx2.reward           	= idx.reward2;
     
     % Construct data table for subject2
-    tbl{2}               	= CPR_construct_table(sbj{2}, fid, d, trl, idx2, true);
+    t2                  	= CPR_construct_table(sbj{2}, fid, d, trl, idx2, true);
 end
 
 %% PLOT PERFORMANCE
@@ -189,9 +187,9 @@ for iSubj = 1:size(sbj,2)
     t                           = [];
     
     if iSubj == 1
-        t                       = tbl{1};
+        t                       = t1;
     elseif iSubj == 2
-        t                       = tbl{2};
+        t                       = t2;
     end
        
     thi                         = [t.trg_hit{:}];
@@ -299,7 +297,6 @@ for iSubj = 1:size(sbj,2)
     
     cohPool                     = unique(t.ss_coh);                           	% Tested coherence levels
     out                         = CPR_time_window(t,29);
-    summ{iSubj}                 = out;
     
     % if isfield(idx,'JS2_dir')
     %     out                  	= CPR_time_window(t,29);
@@ -450,7 +447,7 @@ for iSubj = 1:size(sbj,2)
     
     ax                              = subplot(3,3,7); hold on
     nLag                            = 150;
-    [cr,ps]                         = CPR_correlation(t, trl, indx, nLag, true);
+    [cr,ps]                         = CPR_correlation(t,indx, nLag, true);
     
     ax.XTick                        = [1 nLag/2 nLag];
     ax.XLim                         = [1 nLag];

@@ -8,7 +8,7 @@ function t = CPR_construct_table(subj, fid, d, trl, idx, write_file)
 %           .d              Structure, Contains raw data
 %          	.trl            Structure, Contains trial information
 %           .idx            Structure, Contains variable-wise indices
-%           .write_file     Boolean, Indicates if table is to be saved
+%           .write_file     Boolean, Indicates if table is saved
 %
 % Output:   .t              Table, State-wise data table containing 
 %                           stimulus parameters as well as behavioural 
@@ -22,7 +22,6 @@ function t = CPR_construct_table(subj, fid, d, trl, idx, write_file)
 %
 % Version history
 %   1.0     (fxs 2020-05-04) Initial version.
-%   1.1     (fxs 2020-05-25) Added compatibility for 2nd subject (dyadic setting)
 
 %% Initialise
 
@@ -116,8 +115,9 @@ for iTrl = 1:length(trl.tEnd)
         % Fill in table: Behavioural response
         % (1) For each steady state...
         t.js_dir{cc}        = getTrialData(d.value, ssIdx, idx.JS_dir);                 % Joystick direction
+        t.js_dir_ts{cc}     = getTrialData(d.time, ssIdx, idx.JS_dir);                  % Timestamps: Joystick direction
         t.js_str{cc}        = getTrialData(d.value, ssIdx, idx.JS_str);                 % Joystick strength
-        t.js_ts{cc}         = getTrialData(d.time, ssIdx, idx.JS_str);                  % Timestamps: Joystick strength
+        t.js_str_ts{cc}     = getTrialData(d.time, ssIdx, idx.JS_str);                  % Timestamps: Joystick strength
         
         % (2) For entire trial...
         if iSS == 1
@@ -166,7 +166,7 @@ end
 t(ismissing(t.ID),:)                = [];
 
 if write_file
-    disp(['Save table for subject ' subj '...'])
+    disp('Save table...')
     save([subj '_' fid '_tbl.mat'], 't', '-v7.3')                                                   % Save as .mat file
     disp('Done!')
 end
