@@ -21,8 +21,8 @@ function t = CPR_construct_table(subj, fid, d, trl, idx, write_file)
 % Feature wish list:
 %
 % Version history
-%   1.0     (fxs 2020-05-04) Initial version.
-%   1.1     (fxs 2020-05-25) Added compatibility for 2nd subject (dyadic setting)
+%   1.0     (fxs 2021-05-04) Initial version.
+%   1.1     (fxs 2021-05-25) Added compatibility with dyadic setting.
 
 %% Initialise
 

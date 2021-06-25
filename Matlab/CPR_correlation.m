@@ -17,8 +17,8 @@ function [out, ps] = CPR_correlation(t, trl, tindx, nLag, plotFlag)
 % Feature wish list:
 %
 % Version history
-%   1.0     (fxs 2020-05-04) Initial version.
-%   1.1     (fxs 2020-05-25) Improved vectorisation procedure of data
+%   1.0     (fxs 2021-05-04) Initial version.
+%   1.1     (fxs 2021-05-25) Improved vectorisation procedure of data
 
 %% Check input
 

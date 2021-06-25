@@ -17,8 +17,9 @@ function out = CPR_time_window(t,nSamples)
 % Feature wish list:
 %
 % Version history
-%   1.0     (fxs 2020-05-04) Initial version.
-%   1.0     (fxs 2020-05-25) Analysis of multiple targets per state possible
+%   1.0     (fxs 2021-05-04) Initial version.
+%   1.0     (fxs 2021-05-25) Analysis of multiple targets per state
+%                            possible.
 
 %% Check input
 

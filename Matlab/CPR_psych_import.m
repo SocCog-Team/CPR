@@ -2,15 +2,15 @@ function [tbl,d,summ] = CPR_psych_import(subj, pth, fname, d)
 
 % This function imports, organises and visualises CPR data.
 %
-% Input:  	.subj           String, Subject ID, 3 letter code 
+% Input:  	.subj           String, Subject ID, 3 letter code
 %           .pth            String, Data directory
 %           .fname        	String, File identifier
 %          	.d              Structure (optional), Contains trial
 %                           information. Skips data import if included.
 %
-% Output:   .tbl            Cell, Contains state-wise data table with 
-%                           stimulus parameters as well as behavioural 
-%                           responses 
+% Output:   .tbl            Cell, Contains state-wise data table with
+%                           stimulus parameters as well as behavioural
+%                           responses
 %          	.d              Structure, Contains (raw) MWorks data
 %          	.summ           Cell, Contains structure with summary
 %                           information
@@ -22,9 +22,10 @@ function [tbl,d,summ] = CPR_psych_import(subj, pth, fname, d)
 % Feature wish list:
 %
 % Version history
-%   1.0     (fxs 2020-10-01) Initial version.
-%   1.1     (fxs 2020-05-25) Added compatibility for 2nd subject (dyadic setting)
-%   1.1     (fxs 2020-05-25) Analysis of multiple targets per state possible
+%   1.0     (fxs 2020-09-01) Initial version.
+%   1.1     (fxs 2021-05-25) Added compatibility with dyadic setting.
+%   1.1     (fxs 2021-05-25) Analysis of multiple targets per state
+%                            possible.
 
 %% Add relevant directories
 
@@ -167,7 +168,7 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
         'reward2'};
     
     % Create new structure. Use subj1 fieldnames but fill with subj2
-    % variable index. Necessary to construct similar table for both subjects. 
+    % variable index. Necessary to construct similar table for both subjects.
     idx2                    = rmfield(idx,fields);
     idx2.JS_dir          	= idx.JS2_dir;
     idx2.JS_str         	= idx.JS2_str;
@@ -193,7 +194,7 @@ for iSubj = 1:size(sbj,2)
     elseif iSubj == 2
         t                       = tbl{2};
     end
-       
+    
     thi                         = [t.trg_hit{:}];
     tts                         = [t.trg_ts{:}];
     HIidx                       = thi(~isnan(tts));
