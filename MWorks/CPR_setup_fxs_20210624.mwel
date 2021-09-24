@@ -273,6 +273,7 @@ group TRIAL {
     var TRIAL_reactionTrigger               = 0
     var TRIAL_reactionTrigger_ts            = 0
     var TRIAL_RT                            = 0
+    var TRIAL_align                         = 0
     var TRIAL_type                          = 0
     var TRIAL_outcome                       = 0
     var TRIAL_outcome2                      = 0
@@ -490,7 +491,7 @@ group IO {
             TMP_normJoyDir2                 = (int)(((int)IO_joystickDirection2 + (180-TMP_RDPdir) + 360) % 360) 
             TMP_accuracy2                   = abs(1 - abs(TMP_RDPdir - IO_joystickDirection2) / 180)
             TMP_score2                      = IO_joystickStrength2 * TMP_accuracy2
-            TMP_Cash2                       = TMP_score * CTRL_cash_per_target 
+            TMP_Cash2                       = TMP_score2 * CTRL_cash_per_target 
 
             // Fix reward
             if (IO_joystickStrength2 > 1) {
@@ -1335,6 +1336,7 @@ protocol 'Pre-test SNR' {
             state 'New Trial' {        
                 ML_sync                 = 1
                 TRIAL_start             = TRIAL_start + 1
+                TRIAL_align             = 1
                 INFO_task               = "pre-test_SNR"
 
                 RDP_direction           = disc_rand(0,359)
@@ -1472,6 +1474,7 @@ protocol 'Pre-test SNR' {
                 TRIAL_reactionTrigger   = 0
                 TRIAL_reactionEvent     = 0
                 ML_sync                 = 0
+                TRIAL_align             = 0
                 TRIAL_end               = TRIAL_start
 
                 report ('==== END OF TRIAL $TRIAL_end ====')
@@ -1543,6 +1546,7 @@ protocol 'Pre-test RT' {
             state 'New Trial' {
                 ML_sync                 = 1
                 TRIAL_start             = TRIAL_start + 1
+                TRIAL_align             = 1
                 INFO_task               = "pre-test_RT"
 
                 start_timer (
@@ -1647,6 +1651,7 @@ protocol 'Pre-test RT' {
 
                 TRIAL_reactionTrigger   = 0
                 TRIAL_reactionEvent     = 0
+                TRIAL_align             = 0
                 TRIAL_end               = TRIAL_start
                 ML_sync                 = 0
                 
@@ -1746,6 +1751,7 @@ protocol 'CPR_solo' {
 				COL_start_area_g 				= 0
 				COL_start_area_b 				= 0
                 TRIAL_start                   	+= 1
+                TRIAL_align                     = 1
                 ML_sync                         = 1
                 INFO_SteadyStateCounter         = 0
                 INFO_CoherenceStateCounter      = 0
@@ -2059,6 +2065,7 @@ protocol 'CPR_solo' {
                 dequeue_stimulus (target)
 
                 ML_sync                         = 0
+                TRIAL_align                     = 0
                 TRIAL_end                     	= TRIAL_start
 
                 start_timer (
@@ -2171,6 +2178,7 @@ protocol 'CPR_dyatic' {
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
                 TRIAL_start                     += 1
+                TRIAL_align                     = 1
                 ML_sync                         = 1
                 INFO_SteadyStateCounter         = 0
                 INFO_CoherenceStateCounter      = 0
@@ -2623,6 +2631,7 @@ protocol 'CPR_dyatic' {
                 dequeue_stimulus (target)
 
                 ML_sync                         = 0
+                TRIAL_align                     = 0
                 TRIAL_end                       = TRIAL_start
 
                 start_timer (

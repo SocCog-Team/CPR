@@ -1,0 +1,60 @@
+//
+// Variables
+//
+
+var new_value                       = 0
+var count                           = 0
+var tmp                             = 0
+var n_iterations                    = 11
+var list_len                        = 10
+var list_idx                        = 0
+var list_sum                        = 0
+var list_bool                       = [0]
+var list                            = [0] {
+    tmp                             = 0
+    list_sum                        = 0
+            
+    while(tmp < size(list)-1) {
+        list_sum                    = list[tmp] + list_sum
+        list_bool[tmp]              = list[tmp] > (n_iterations/2)
+        tmp                         += 1
+    }
+
+    report ('SUM: $list_sum') 
+    report ('BOOL: $list_bool') 
+
+}
+
+//
+// Protocols
+//
+
+protocol 'Test' {
+        
+    report ('Hello, World!')
+
+    task 'Update list' {
+
+        state 'New Trial' {
+            new_value               += 1
+            list_idx                = count % list_len
+            list[list_idx]          = new_value
+            count                   += 1
+            report ('LIST: $list')
+
+            goto (
+            target                  = 'New Trial'
+            when                    =  count < n_iterations
+            )
+            goto (
+            target                  = 'Stop'
+            when                    =  count == n_iterations
+            )
+        }
+
+        state 'Stop' {
+            report ('STOP')
+            yield ()
+        }
+    }
+}

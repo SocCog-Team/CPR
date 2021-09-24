@@ -167,7 +167,7 @@ t(ismissing(t.ID),:)                = [];
 
 if write_file
     disp(['Save table for subject ' subj '...'])
-    save([subj '_' fid '_tbl.mat'], 't', '-v7.3')                                                   % Save as .mat file
+    save([fid '_' subj '_cpr_tbl.mat'], 't', '-v7.3')                                                   % Save as .mat file
     disp('Done!')
 end
 end

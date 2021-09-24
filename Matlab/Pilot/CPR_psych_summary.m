@@ -95,6 +95,7 @@ yoff                        = .12;
 cfs                         = 12;
 fs                          = 14;
 cl                        	= linspace(1,.4,size(arr_str,2));
+% cl                        	= ones(1,size(arr_str,2));
 yofs                        = .03;
 clm                         = [.1 .6];
 row                         = [.76 .47 .12];
@@ -416,5 +417,5 @@ text(.51,.98, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k', 'FontWeight', 'b
 text(.51,.7, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k', 'FontWeight', 'bold')
 text(.51,.35, 'F', 'Parent', ax0, 'FontSize', 30, 'Color', 'k', 'FontWeight', 'bold')
 
-dest_dir = '/Users/fschneider/ownCloud/Shared/SFB_1528_A1_Project - @SFB1528 [ownCloud, FS, ST]/Summary_plots/';
+dest_dir = '/Users/fschneider/Desktop/';
 print(f, [dest_dir 'summary_psych'], '-r300', '-dpng');

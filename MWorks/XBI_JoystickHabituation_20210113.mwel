@@ -147,7 +147,7 @@ protocol 'Joystick movement' {
     CTRL_rewardDelay = 100
     CTRL_IRI = 1000
     CTRL_cursor_flash_hz = 4
-    CTRL_cursor_flash_flag = 1
+    CTRL_cursor_flash_flag = 0
 
     task 'Trial Loop' {
 

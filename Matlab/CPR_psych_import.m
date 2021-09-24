@@ -1,4 +1,4 @@
-function [tbl,d,summ] = CPR_psych_import(subj, pth, fname, d)
+function [tbl,d,summ,crr] = CPR_psych_import(subj, pth, fname, d)
 
 % This function imports, organises and visualises CPR data.
 %
@@ -452,7 +452,8 @@ for iSubj = 1:size(sbj,2)
     ax                              = subplot(3,3,7); hold on
     nLag                            = 150;
     [cr,ps]                         = CPR_correlation(t, trl, indx, nLag, true);
-    
+    crr{iSubj}                      = cr;
+
     ax.XTick                        = [1 nLag/2 nLag];
     ax.XLim                         = [1 nLag];
     ax.XTickLabel                   = {['-' num2str(nLag)],['-' num2str(nLag/2)],'0'};
@@ -467,11 +468,17 @@ for iSubj = 1:size(sbj,2)
         vec                         = nanmean(cr.sxc(cr.coh == snr(iCoh),:));
         svec                        = smoothdata(vec,'gaussian',30);
         pm                         	= plot(svec,'Color',[cl(iCoh) 0 0 .8], 'Marker','none', 'LineStyle', '-', 'LineWidth',3);
+%         pm(iCoh)                 	= plot(svec,'Color',[cl(iCoh) 0 0 .8], 'Marker','none', 'LineStyle', '-', 'LineWidth',3);
     end
     
     ax.YAxis(2).Color               = [cl(iCoh) 0 0];
     lg                              = legend([ps, pm], {sprintf('All Trials\n[smoothed]'),sprintf('Mean\n[smoothed]')});
     lg.Position(1)                  = .13;
+
+%     lg                              = legend([ps, pm(1),pm(2),pm(3),pm(4),pm(5)], ...
+%         {'Trials',['Mean ' num2str(round(snr(1),2))],['Mean ' num2str(round(snr(2),2))],...
+%         ['Mean ' num2str(round(snr(3),2))],['Mean ' num2str(round(snr(4),2))],...
+%         ['Mean ' num2str(round(snr(5),2))]},'Location', 'northwest');
     
     %%% Coherence %%%
     bx                              = [];

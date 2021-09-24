@@ -60,18 +60,21 @@ for iTrl = 1:size(rdp_dir_ts,1)
     % Adjust vector length
     rdp_vec                     = []; 
     js_vec                      = []; 
+    ts                          = []; 
     
     for iDir = 1:size(rdp_dir{iTrl},2)-1
         % JS index
         jsIdx                   = [];
         jsIdx               	= js_ts{iTrl} >= rdp_dir_ts{iTrl}(iDir) & js_ts{iTrl} < rdp_dir_ts{iTrl}(iDir+1);
         js_vec               	= [js_vec js_dir{iTrl}(jsIdx)];
+        ts                      = [ts js_ts{iTrl}(jsIdx)];
         rdp_vec              	= [rdp_vec repmat(rdp_dir{iTrl}(iDir),1,sum(jsIdx))];
     end
     
     jsIdx                       = [];
     jsIdx                       = js_ts{iTrl} >= rdp_dir_ts{iTrl}(end) & js_ts{iTrl} <= trl.tEnd(iTrl);
     js_vec                      = [js_vec js_dir{iTrl}(jsIdx)];
+    ts                          = [ts js_ts{iTrl}(jsIdx)];
     rdp_vec                     = [rdp_vec repmat(rdp_dir{iTrl}(end),1,sum(jsIdx))];
     
     % Sample-by-sample difference
@@ -102,9 +105,9 @@ for iTrl = 1:size(rdp_dir_ts,1)
         
         % Build coherence index
         if iCoh < size(rdp_coh{iTrl},2)
-            cIdx                = js_ts{iTrl} >= rdp_coh_ts{iTrl}(iCoh) & js_ts{iTrl} < rdp_coh_ts{iTrl}(iCoh+1);
+            cIdx                = ts >= rdp_coh_ts{iTrl}(iCoh) & ts < rdp_coh_ts{iTrl}(iCoh+1);
         else
-            cIdx                = js_ts{iTrl} >= rdp_coh_ts{iTrl}(iCoh) & js_ts{iTrl} <= trl.tEnd(iTrl);
+            cIdx                = ts >= rdp_coh_ts{iTrl}(iCoh) & ts <= trl.tEnd(iTrl);
         end
         
         % Correlation analysis
