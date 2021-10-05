@@ -255,14 +255,18 @@ group CTRL {
     var CTRL_fixBreak_penalty_duration_ms   = 250
 
     var CTRL_scoreBar_width                 = 0
-    var CTRL_scoreBar_size                  = 18.4
+    var CTRL_scoreBar_size                  = 19.2
     var CTRL_scoreBar_alpha                 = .5
+    var CTRL_scoreBarBackground_alpha       = .05
     var CTRL_scoreBar2_width                = 0
-    var CTRL_scoreBar2_size                 = 19
+    var CTRL_scoreBar2_size                 = 20.4
     var CTRL_scoreBar2_alpha                = .5
+    var CTRL_scoreBarBackground2_alpha      = .05
     var CTRL_targetBar_width                = 0
-    var CTRL_targetBar_size                 = 17.9
+    var CTRL_targetBar_size                 = 18
     var CTRL_targetBar_alpha                = .5
+    var CTRL_targetBarBackground_alpha      = .05
+    var CTRL_barwidth                       = .9
 }
 
 group TRIAL {
@@ -902,13 +906,30 @@ stimulus/advstimulus targetBar (
     autoplay                                = YES
     )
 
+stimulus/advstimulus targetBarBackground (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_targetBar_size
+    y_size                                  = CTRL_targetBar_size
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)360)    
+    color                                   = COL_targetBar_r,COL_targetBar_g,COL_targetBar_b
+    rotation                                = 0
+    alpha_multiplier                        = CTRL_targetBarBackground_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
 stimulus/advstimulus targetBarMask (
     trigger_width                           = 0
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = CTRL_targetBar_size - .5
-    y_size                                  = CTRL_targetBar_size - .5
+    x_size                                  = CTRL_targetBar_size - CTRL_barwidth
+    y_size                                  = CTRL_targetBar_size - CTRL_barwidth
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)360)    
@@ -936,13 +957,30 @@ stimulus/advstimulus scoreBar (
     autoplay                                = YES
     )
 
+stimulus/advstimulus scoreBarBackground (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_scoreBar_size
+    y_size                                  = CTRL_scoreBar_size
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)360)    
+    color                                   = COL_scoreBar_r,COL_scoreBar_g,COL_scoreBar_b
+    rotation                                = 0
+    alpha_multiplier                        = CTRL_scoreBarBackground_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
 stimulus/advstimulus scoreBarMask (
     trigger_width                           = 0
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = CTRL_scoreBar_size - .5
-    y_size                                  = CTRL_scoreBar_size - .5
+    x_size                                  = CTRL_scoreBar_size - CTRL_barwidth
+    y_size                                  = CTRL_scoreBar_size - CTRL_barwidth
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)360)    
@@ -970,13 +1008,30 @@ stimulus/advstimulus scoreBar2 (
     autoplay                                = YES
     )
 
+stimulus/advstimulus scoreBarBackground2 (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_scoreBar2_size
+    y_size                                  = CTRL_scoreBar2_size
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)360)    
+    color                                   = COL_scoreBar2_r,COL_scoreBar2_g,COL_scoreBar2_b
+    rotation                                = 0
+    alpha_multiplier                        = CTRL_scoreBarBackground2_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
 stimulus/advstimulus scoreBarMask2 (
     trigger_width                           = 0
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = CTRL_scoreBar2_size - .5
-    y_size                                  = CTRL_scoreBar2_size - .5
+    x_size                                  = CTRL_scoreBar2_size - CTRL_barwidth
+    y_size                                  = CTRL_scoreBar2_size - CTRL_barwidth
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)360)    
@@ -1771,8 +1826,10 @@ protocol 'CPR_solo' {
             }
 
             state 'Show Stimuli' {
+                live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
+                live_queue_stimulus (targetBarBackground)
                 live_queue_stimulus (targetBar)
                 live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
@@ -2052,8 +2109,10 @@ protocol 'CPR_solo' {
             }  
 
             state 'End Trial' {
+                dequeue_stimulus (targetBarBackground)
                 dequeue_stimulus (targetBar)
                 dequeue_stimulus (targetBarMask)
+                dequeue_stimulus (scoreBarBackground)
                 dequeue_stimulus (scoreBar)
                 dequeue_stimulus (scoreBarMask)
                 dequeue_stimulus (RDP)
@@ -2198,10 +2257,13 @@ protocol 'CPR_dyatic' {
             }
 
             state 'Show Stimuli' {
+                live_queue_stimulus (scoreBarBackground2)
                 live_queue_stimulus (scoreBar2)
                 live_queue_stimulus (scoreBarMask2)
+                live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
+                live_queue_stimulus (targetBarBackground)
                 live_queue_stimulus (targetBar)
                 live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
@@ -2614,10 +2676,13 @@ protocol 'CPR_dyatic' {
             }  
 
             state 'End Trial' {
+                dequeue_stimulus (targetBarBackground)
                 dequeue_stimulus (targetBar)
                 dequeue_stimulus (targetBarMask)
+                dequeue_stimulus (scoreBarBackground)
                 dequeue_stimulus (scoreBar)
                 dequeue_stimulus (scoreBarMask)
+                dequeue_stimulus (scoreBarBackground2)
                 dequeue_stimulus (scoreBar2)
                 dequeue_stimulus (scoreBarMask2)
                 dequeue_stimulus (RDP)
