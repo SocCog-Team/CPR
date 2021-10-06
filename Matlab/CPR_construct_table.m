@@ -119,6 +119,19 @@ for iTrl = 1:length(trl.tEnd)
         t.js_str{cc}        = getTrialData(d.value, ssIdx, idx.JS_str);                 % Joystick strength
         t.js_ts{cc}         = getTrialData(d.time, ssIdx, idx.JS_str);                  % Timestamps: Joystick strength
         
+%         % Test & debug; delete if implemented in MWorks
+%         if size(t.js_dir{cc},2) ~= size(t.js_str{cc},2)
+%             dir_ts          = getTrialData(d.time, ssIdx, idx.JS_dir);
+%             str_ts          = getTrialData(d.time, ssIdx, idx.JS_str);
+%             
+%             vals = setdiff(dir_ts,str_ts);  % Set difference of two arrays
+%             pos = find(ismember(a,vals)); % Find positions
+%             
+%                 idx = i:pos(i)-1;
+%                 new = [new t.js_dir{cc}(idx) t.js_dir{cc}(i-1)]
+%             end
+%         end
+        
         % (2) For entire trial...
         if iSS == 1
             t.trl_rdp_dir{cc}       = mod(getTrialData(d.value, trlIdx, idx.RDP_dir),360);
