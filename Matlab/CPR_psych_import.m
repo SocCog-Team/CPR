@@ -539,7 +539,7 @@ for iSubj = 1:size(sbj,2)
     box off
     
     if strcmp(sbj{iSubj}, 'cla') || strcmp(sbj{iSubj}, 'nil')
-        dest_dir = '/Users/fschneider/Documents/MWorks/XBI/Plots/';
+        dest_dir = '/Users/fschneider/Documents/MWorks/Plots/';
         print(f, [dest_dir 'summary_' sbj{iSubj} '_' fid], '-r300', '-dpng');
     else
         print(f, [pth '/summary_' sbj{iSubj} '_' fid], '-r300', '-dpng');

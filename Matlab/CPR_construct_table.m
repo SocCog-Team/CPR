@@ -119,18 +119,13 @@ for iTrl = 1:length(trl.tEnd)
         t.js_str{cc}        = getTrialData(d.value, ssIdx, idx.JS_str);                 % Joystick strength
         t.js_ts{cc}         = getTrialData(d.time, ssIdx, idx.JS_str);                  % Timestamps: Joystick strength
         
-%         % Test & debug; delete if implemented in MWorks
-%         if size(t.js_dir{cc},2) ~= size(t.js_str{cc},2)
-%             dir_ts          = getTrialData(d.time, ssIdx, idx.JS_dir);
-%             str_ts          = getTrialData(d.time, ssIdx, idx.JS_str);
-%             
-%             vals = setdiff(dir_ts,str_ts);  % Set difference of two arrays
-%             pos = find(ismember(a,vals)); % Find positions
-%             
-%                 idx = i:pos(i)-1;
-%                 new = [new t.js_dir{cc}(idx) t.js_dir{cc}(i-1)]
-%             end
-%         end
+        % Test & debug; delete if implemented in MWorks
+        if size(t.js_dir{cc},2) ~= size(t.js_str{cc},2)
+            dir_ts        	= getTrialData(d.time, ssIdx, idx.JS_dir);                  % Get specific timestamps
+            str_ts        	= getTrialData(d.time, ssIdx, idx.JS_str);
+            [t.js_dir{cc},t.js_str{cc},t.js_ts{cc}] ...   
+                            = CPR_adjust_vector_length(t.js_dir{cc},dir_ts,t.js_str{cc},str_ts);
+        end
         
         % (2) For entire trial...
         if iSS == 1
