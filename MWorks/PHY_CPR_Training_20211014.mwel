@@ -67,6 +67,8 @@ group INFO {
 
 group CTRL {
 	var CTRL_reward_ml                      = 0
+    var CTRL_hit_bonus_ml                   = 0
+    var CTRL_reward_bonus                   = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
     var CTRL_NoTargets                      = 0
@@ -154,10 +156,10 @@ group TRIAL {
 
 group TMP {
     var pi                                  = 3.14159265359
+    var TMP_HitCounter_trial                = 0
     var TMP_dice 							= 0
 	var TMP_RDPdir 							= 0
 	var TMP_normJoyDir   					= 0
-    var TMP_juice_ml                        = 0
  	var TMP_Feedback						= 0
  	var TMP_accuracy 						= 0
     var TMP_feedback_size                   = 0
@@ -217,51 +219,6 @@ group COL {
     var COL_fix_b                           = 1
 }
 
-/*  group LIST_UPDATE {
-    var LIST_sample_count                   = 0 (logging = never)
-    var LIST_dir_loop_count                 = 0 (logging = never)
-    var LIST_dir_idx                        = 0 (logging = never)
-    var LIST_prev_dir_idx                   = 0 (logging = never)
-    var LIST_dir_samples                    = 100
-    var LIST_dir_criterion                  = 10 // deg
-    var LIST_dir_sum                        = 0 (logging = never) 
-    var LIST_abort_flag                     = 0
-    var LIST_step_size                      = 10 
-    var LIST_dir_diff                       = [0] (logging = never) 
-    var LIST_dir_bool                       = [0] (logging = never) 
-    var LIST_dir_change                     = [0] (logging = never) {
-        // Check every Nth sample to reduce processing
-        if ((LIST_sample_count % 10) == 0) {
-        // Basic change point detection 
-            // Reset flag
-            LIST_dir_loop_count                     = 0        
-
-            // Between-sample (angular) difference
-            while(LIST_dir_loop_count < size(LIST_dir_change)-2) {
-                LIST_dir_diff[LIST_dir_loop_count]  = abs(((LIST_dir_change[LIST_dir_loop_count] - LIST_dir_change[LIST_dir_loop_count+1] + 180) % 360) - 180) 
-                LIST_dir_loop_count                 += 1
-            }
-
-            // Reset variables
-            LIST_dir_loop_count                     = 0
-            LIST_dir_sum                            = 0
-
-            // Check difference values: IF larger than criterion -> true
-            while(LIST_dir_loop_count < size(LIST_dir_diff)-1) {
-                LIST_dir_bool[LIST_dir_loop_count]  = LIST_dir_diff[LIST_dir_loop_count] > LIST_dir_criterion
-                LIST_dir_sum                        = (LIST_dir_bool[LIST_dir_loop_count] == true) + LIST_dir_sum
-                LIST_dir_loop_count                 += 1
-
-            }
-
-            // Set flag to 1 to abort trial if no above-threshold change detected during time window
-            if (LIST_dir_sum == 0 && LIST_abort_flag == 0 && LIST_sample_count > LIST_dir_samples) {
-                LIST_abort_flag                     = 1
-            }
-        }
-    }
-}*/
-
 group EYE { // CHANGE VARIABLE NAMES
     var EYE_rightX_raw                      = (float)(0)(persistant = YES)
     var EYE_rightY_raw                      = (float)(0)(persistant = YES)
@@ -289,6 +246,7 @@ group EYE { // CHANGE VARIABLE NAMES
 }
 
 group IO {
+    var IO_rew_cum                          = 0
     var IO_fixation_flag                    = 0
     var IO_rewardA                          = 0
     var IO_arc_width                    	= 0
@@ -324,19 +282,17 @@ group IO {
             TMP_normJoyDir                  = (int)(((int)IO_joystickDirection + (180-TMP_RDPdir) + 360) % 360) 
             TMP_accuracy                    = abs(1 - abs(TMP_RDPdir - IO_joystickDirection) / 180)
             TMP_score                       = IO_joystickStrength * TMP_accuracy
-            TMP_juice_ml                    = TMP_score * CTRL_reward_ml
-              
+            TMP_Feedback                    = 360 * TMP_score
+
+            // Calculate cumulative reward
+            if (IO_joystickStrength <= 1) {
+                IO_rew_cum                  += (TMP_score * CTRL_reward_ml)
+            }
+
             // Cap reward at maximum
             if (IO_joystickStrength > 1) {
-                TMP_juice_ml                = (1 * TMP_accuracy) * CTRL_reward_ml
+                IO_rew_cum                  += ((1 * TMP_accuracy) * CTRL_reward_ml)
             }
-            TMP_Feedback                    = 360 * (TMP_juice_ml / CTRL_reward_ml) 
-
-            /*// Keep track of joystick direction in preceeding time window
-            LIST_prev_dir_idx               = LIST_dir_idx
-            LIST_dir_idx                    = LIST_sample_count % LIST_dir_samples
-            LIST_dir_change[LIST_dir_idx]   = TMP_normJoyDir 
-            LIST_sample_count               += 1*/
 
             // Compute trigger boundaries & flag
             IO_arc_trigger_min              = (int)(((int)(TMP_RDPdir - (IO_arc_width/2) + 360) % 360) + ((180-TMP_RDPdir) + 360)) % 360
@@ -773,7 +729,7 @@ protocol 'Calibration-9p' {
     update_stimulus_display ()
     stop_device_io (Eyelink)
 }
-*/
+
 protocol 'Pre-test SNR' {
     start_device_io (mIO)
     //start_device_io (Eyelink)
@@ -987,7 +943,7 @@ protocol 'Pre-test SNR' {
     }
     //stop_device_io (Eyelink)
 }
-/*
+
 protocol 'Pre-test RT' {
     start_device_io (mIO)
     live_queue_stimulus (Background)
@@ -1193,16 +1149,17 @@ protocol 'Pre-test RT' {
         }
     }
 }
-
+*/
 protocol 'CPR_solo' {
     report ('Hello! Starting Experiment...')
     start_device_io (mIO)
-    start_device_io (Eyelink)
+    //start_device_io (Eyelink)
     live_queue_stimulus (Background)
     update_stimulus_display ()
 
     // Set desired parameters
-    CTRL_reward_ml                              = .5
+    CTRL_reward_ml                              = .001
+    CTRL_hit_bonus_ml                           = 1
     CTRL_NoTargets                              = 100000
     CTRL_NoSteadyStates                         = 50
     CTRL_NoCoherenceStates                      = 10 
@@ -1261,15 +1218,17 @@ protocol 'CPR_solo' {
             }
 
             state 'New Trial' { 
-            	COL_start_area_r 				= 0
+            	COL_start_area_r 				= 0 // Reset start area colour
 				COL_start_area_g 				= 0
 				COL_start_area_b 				= 0
-                TRIAL_start                   	+= 1
-                TRIAL_align                     = 1
-                ML_sync                         = 1
-                INFO_SteadyStateCounter         = 0
+                TRIAL_start                   	+= 1 // Count trial number
+                TRIAL_align                     = 1 // Trial align event
+                IO_rew_cum                      = 0 // Reset cumulative reward
+                TMP_HitCounter_trial            = 0 // Reset counters
+                INFO_SteadyStateCounter         = 0 
                 INFO_CoherenceStateCounter      = 0
                 INFO_task                       = "CPR_solo_stepfunction_neutral"
+                ML_sync                         = 1 // Matlab sync event
 
                 // Initial trial specs
                 RDP_direction                   = disc_rand(0,359)
@@ -1504,19 +1463,19 @@ protocol 'CPR_solo' {
 
             state 'Hit' {
             	// Auditory feedback
-            	if (TMP_juice_ml > (CTRL_reward_ml*.95)) {
+            	if (TMP_score  > .95) {
             		play_sound (SuperReward_sound)
             	}
 
-                if (TMP_juice_ml > (CTRL_reward_ml*.75) && TMP_juice_ml <= (CTRL_reward_ml*.95)) {
+                if (TMP_score > .75 && TMP_score <= .95) {
                     play_sound (Reward_sound_3)
                 }
 
-                if (TMP_juice_ml > (CTRL_reward_ml*.5) && TMP_juice_ml <= (CTRL_reward_ml*.75)) {
+                if (TMP_score > .5 && TMP_score <= .75) {
                     play_sound (Reward_sound_2)
                 }
 
-            	if (TMP_juice_ml <= (CTRL_reward_ml*.5)) {
+            	if (TMP_score <= .5) {
             		play_sound (Reward_sound)
             	}
 
@@ -1529,6 +1488,7 @@ protocol 'CPR_solo' {
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
                 INFO_HitCounter                 = INFO_HitCounter + 1
+                TMP_HitCounter_trial            = TMP_HitCounter_trial + 1
 
                 report ('--- OUTCOME: Hit ---')
 
@@ -1538,17 +1498,9 @@ protocol 'CPR_solo' {
                     duration_units              = ms
                     )
 
-                goto ('Give reward')
-            }
-    
-            state 'Give reward' {
-                report ('REW: $TMP_juice_ml')
-                INFO_Juice_ml                   += TMP_juice_ml
-                IO_rewardA                      = TMP_juice_ml
-                
                 goto ('Update Stimuli')
             }
-
+    
             state 'Miss' {
                 //play_sound (Failure_sound)
 
@@ -1587,10 +1539,20 @@ protocol 'CPR_solo' {
 
                 update_stimulus_display ()
                 report ('===== TRIAL $TRIAL_end ENDS =====')
-                goto (ITI)
+                goto ('Give reward')
             }
 
-            state ITI {
+            state 'Give reward' {
+
+                CTRL_reward_bonus               = TMP_HitCounter_trial * CTRL_hit_bonus_ml
+                INFO_Juice_ml                   += IO_rew_cum + CTRL_reward_bonus
+                IO_rewardA                      = IO_rew_cum + CTRL_reward_bonus
+                                
+                report ('REW: $IO_rewardA')
+                goto ('ITI')
+            }
+
+            state 'ITI' {
                 goto (
                     target                      = 'End paradigm'
                     when                        = INFO_TargetCounter >= CTRL_NoTargets && timer_expired(ITI_Timer)
@@ -1610,5 +1572,5 @@ protocol 'CPR_solo' {
             }
         }
     }
-    stop_device_io (Eyelink)
-}*/
+    //stop_device_io (Eyelink)
+}
