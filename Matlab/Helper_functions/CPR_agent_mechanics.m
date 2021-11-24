@@ -86,3 +86,12 @@ for i = 2:length(dat_rdp)
     pause(0.0005)
 
 end
+
+%% Dyadic analysis
+
+% Signal lag (crosscorrelation, solo vs dyadic)
+% Angular difference
+% Granger causality
+% 1) Check if stationary
+% 2) Transform to avoid autocorrelation
+% Time-shifted, kalman-filtered version of joystick signal A and compare how well it matches joystick signal B

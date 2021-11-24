@@ -1,0 +1,102 @@
+//
+// Variables
+//
+
+var new_value                       = 0
+var bar_height                      = 0
+var n_iterations                    = 0
+var count                           = 0
+var bar_max                         = 0
+var y_position                      = 0
+
+stimulus/rectangle bar_frame (
+    x_size                                  = 5.2
+    y_size                                  = bar_max + .2
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = 0,1,0
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle bar_surface(
+    x_size                                  = 5
+    y_size                                  = bar_max
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = .5,.5,.5
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle bar (
+    x_size                                  = 5
+    y_size                                  = bar_height
+    x_position                              = 0
+    y_position                              = y_position
+    color                                   = 1,0,0
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+//
+// Protocols
+//
+
+protocol 'Test' {
+        
+    report ('Hello, World!')
+
+    new_value                       = 0
+    bar_height                      = 0
+    n_iterations                    = 10
+    count                           = 0
+    bar_max                         = 10
+    y_position                      = 0
+
+    live_queue_stimulus (bar_frame)
+    live_queue_stimulus (bar_surface)
+    live_queue_stimulus (bar)
+    update_stimulus_display ()
+
+    task 'Cumulative Bar' {
+
+        state 'Update Bar' {
+            count                   += 1
+            new_value               = disc_rand(1,5)/10
+            bar_height              += new_value
+            y_position              = (-bar_max/2) + (bar_height/2)
+            update_stimulus_display ()
+
+            report ('new_value: $new_value')
+            report ('bar_height: $bar_height')
+
+            goto ('Pause')
+        }
+
+        state 'Pause' {
+            wait (
+                duration            = 1000
+                duration_units      = ms
+                )
+
+            goto (
+            target                  = 'Update Bar'
+            when                    =  count < n_iterations
+            )
+            goto (
+            target                  = 'Stop'
+            when                    =  count == n_iterations
+            )
+        }
+
+        state 'Stop' {
+            dequeue_stimulus (bar_frame)
+            dequeue_stimulus (bar_surface)
+            dequeue_stimulus (bar)
+            update_stimulus_display ()
+            report ('STOP')
+            yield ()
+        }
+    }
+}

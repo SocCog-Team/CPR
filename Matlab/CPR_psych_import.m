@@ -82,6 +82,8 @@ end
 % Import .mwk2 data file
 if nargin < 4
     d                	= CPR_import_mwk2(fname, var_import, false);
+    d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');
+    d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');
 end
 
 %% Extract data and organise in table
@@ -91,8 +93,9 @@ idx                         = [];
 trl                         = [];
 
 % Create variable-specific indices
-idx.tOn                     = d.event == 'ML_trialStart';
-idx.tEnd                    = d.event == 'ML_trialEnd';
+idx.tOn                     = d.event == 'TRIAL_start';
+idx.tEnd                    = d.event == 'TRIAL_end';
+% idx.steady_duration         = d.event == 'CTRL_state_duration_ms';
 idx.steady_duration         = d.event == 'CTRL_SteadyStateDuration_ms';
 idx.RDP_dir                 = d.event == 'RDP_direction';
 idx.RDP_coh                 = d.event == 'RDP_coherence';
@@ -100,12 +103,13 @@ idx.JS_dir                  = d.event == 'IO_joystickDirection';
 idx.JS_str                  = d.event == 'IO_joystickStrength';
 idx.outcome                 = d.event == 'TRIAL_outcome';
 idx.trg                     = d.event == 'TRIAL_reactionTrigger';
+% idx.stateOn                 = d.event == 'INFO_StateCounter';
 idx.stateOn                 = d.event == 'INFO_SteadyStateCounter';
 idx.fixation              	= d.event == 'IO_fixation_flag';
 idx.eye_x_dva              	= d.event == 'EYE_x_dva';
 idx.eye_y_dva             	= d.event == 'EYE_y_dva';
 
-if strcmp(subj, 'cla') || strcmp(subj, 'nil')
+if strcmp(subj, 'cla') || strcmp(subj, 'nil') %|| strcmp(subj, 'xxx')
     idx.reward              = d.event == 'INFO_Juice_ml';
     rew_str                 = 'ml';
 else
@@ -116,11 +120,6 @@ else
         idx.reward      	= d.event == 'INFO_Cash';
         rew_str          	= 'EUR';
     end
-end
-
-if sum(idx.tOn) == 0
-    idx.tOn                 = d.event == 'TRIAL_start';
-    idx.tEnd                = d.event == 'TRIAL_end';
 end
 
 if contains(fname,'dyadic')
@@ -136,11 +135,6 @@ end
 % Get trial timestamps
 trl.tOn                     = d.time(idx.tOn);
 trl.tEnd                    = d.time(idx.tEnd);
-
-% % Remove trials with duration <30us
-% excl                        = trl.tEnd - trl.tOn < 30;
-% trl.tOn(excl)               = [];
-% trl.tEnd(excl)              = [];
 
 % Check if subject ID is dyad
 if contains(fname,'dyadic') && length(subj) < 3
@@ -294,6 +288,7 @@ for iSubj = 1:size(sbj,2)
     s.YAxis(1).Color            = col{3};
     s.YAxis(2).Color            = col{1};
     l                           = legend([p2,p3,fl],{'HIr', 'MIr', 'EUR'});
+%     l                           = legend([p2,p3],{'HIr', 'MIr'});
     l.Location                  = 'west';
     
     %% ANALYSIS OF TIME WINDOW

@@ -49,9 +49,13 @@ js_ts             	= t.trl_js_ts(tindx);
 % js_str              = t.trl_js_str(tindx);                                % Joystick strength
 rdp_coh            	= t.trl_rdp_coh(tindx);                               	% RDP coherence
 rdp_coh_ts        	= t.trl_rdp_coh_ts(tindx);
-rdp_coh{1}(1)   	= [];                                                   % Remove first entry of first trial
-rdp_coh_ts{1}(1)  	= [];
+% rdp_coh{1}(1)   	= [];                                                   % Remove first entry of first trial
+% rdp_coh_ts{1}(1)  = [];
 count               = 0;
+
+% excl                = cell2mat(cellfun(@(x) sum(x == 0),rdp_coh,'UniformOutput', false)) > 0;
+% rdp_coh(excl)       = [];
+% rdp_coh_ts(excl)    = [];
 
 %% Loop through blocks and correlate stimulus and behaviour
 
@@ -101,13 +105,20 @@ for iTrl = 1:size(rdp_dir_ts,1)
 %     end
      
     % Extract coherence chunks
-    for iCoh = 1:size(rdp_coh{iTrl},2)
+    cindx                       = [true diff(rdp_coh{iTrl}) ~=0];
+    cts                         = rdp_coh_ts{iTrl}(cindx);
+    
+    for iCoh = 1:size(cts,2)
         
         % Build coherence index
-        if iCoh < size(rdp_coh{iTrl},2)
-            cIdx                = ts >= rdp_coh_ts{iTrl}(iCoh) & ts < rdp_coh_ts{iTrl}(iCoh+1);
+        if iCoh < size(cts,2)
+            cIdx                = ts >= cts(iCoh) & ts < cts(iCoh+1);
         else
-            cIdx                = ts >= rdp_coh_ts{iTrl}(iCoh) & ts <= trl.tEnd(iTrl);
+            cIdx                = ts >= cts(iCoh) & ts <= trl.tEnd(iTrl);
+        end
+        
+        if sum(cIdx) == 0
+            continue
         end
         
         % Correlation analysis
@@ -116,8 +127,8 @@ for iTrl = 1:size(rdp_dir_ts,1)
         cc(count)               = circ_corrcc(deg2rad(js_vec(cIdx)),deg2rad(rdp_vec(cIdx)));  	% Circular correlation between stimulus and joystick direction
         xc(count,:)             = xcorr(double(abs(rdp_dff(cIdx))),abs(js_dff(cIdx)),nLag);    	% Cross-correlation between stimulus and joystick direction
         sxc(count,:)            = smoothdata(xc(count,:),'gaussian',20);                        % Smooth correlation output with gaussian kernel
-        maxR(count)           	= max(sxc(iTrl,1:nLag+1));                                     	% Max cross-correlation coefficient
-        posPk(count)        	= find(sxc(count,1:nLag+1) == max(sxc(count,1:nLag+1)));      	% Peak position of cross-correlation
+        maxR(count)           	= max(sxc(count,1:nLag+1));                                     % Max cross-correlation coefficient
+        posPk(count)        	= find(sxc(count,1:nLag+1) == maxR(count));                     % Peak position of cross-correlation
 
         try
             auPk(count,:)     	= trapz(sxc(count,posPk(count)-10:posPk(count)+10));           	% Area under cross-correlation peak

@@ -1,0 +1,100 @@
+//
+// Variables
+//
+
+// Corresponding MATLAB function: CPR_update_trl_params.m
+var ML_sync                 = 0
+var ML_timeout_ms           = 1000
+var fname_rdp_dir           = '/Users/fschneider/Desktop/RDP_direction.txt'
+var fname_rdp_coh           = '/Users/fschneider/Desktop/RDP_coherence.txt'
+var fname_ctrl_dur          = '/Users/fschneider/Desktop/CTRL_state_duration.txt'
+var fname_ctrl_trg          = '/Users/fschneider/Desktop/CTRL_target_ts.txt'
+var fname_counter           = '/Users/fschneider/Desktop/counter.txt'
+var RDP_direction           = []
+var RDP_coherence           = []
+var CTRL_state_duration     = []
+var CTRL_target_ts          = []
+var CTRL_counter            = []
+var TRIAL_start             = 0
+
+//
+// Optimizers
+//
+
+filter/file2array RDP_direction_txt (
+    output                  = RDP_direction
+    file_name               = fname_rdp_dir
+    version                 = 1
+    )
+
+filter/file2array RDP_coherence_txt (
+    output                  = RDP_coherence
+    file_name               = fname_rdp_coh
+    version                 = 1
+    )
+
+filter/file2array CTRL_state_duration_txt (
+    output                  = CTRL_state_duration
+    file_name               = fname_ctrl_dur
+    version                 = 1
+    )
+
+filter/file2array CTRL_target_ts_txt (
+    output                  = CTRL_target_ts
+    file_name               = fname_ctrl_trg
+    version                 = 1
+    )
+
+filter/file2array CTRL_counter_txt (
+    output                  = CTRL_counter
+    file_name               = fname_counter
+    version                 = 1
+    )
+//
+// Protocols
+//
+
+protocol 'TEST' {
+
+    fname_rdp_dir           = fname_rdp_dir
+    fname_rdp_coh           = fname_rdp_coh
+    fname_ctrl_dur          = fname_ctrl_dur
+    fname_ctrl_trg          = fname_ctrl_trg
+    fname_counter           = fname_counter
+                                           
+    block 'New Block' {
+        task 'THE_LOOP' {
+
+            state 'Start' {
+
+                wait (
+                    duration                = 500
+                    duration_units          = ms
+                    )
+            
+				ML_sync                     = 1
+				TRIAL_start                 += 1
+				goto('Sync File')
+            }
+
+            state 'Sync File' {
+                fname_rdp_dir               = fname_rdp_dir
+                fname_rdp_coh               = fname_rdp_coh
+                fname_ctrl_dur              = fname_ctrl_dur
+                fname_ctrl_trg              = fname_ctrl_trg
+
+                ML_sync                     = 0
+                                
+                while (CTRL_counter[0] != TRIAL_start) {
+                    wait (
+                        duration            = 50
+                        duration_units      = ms
+                        )
+                    fname_counter           = fname_counter
+                }
+
+                goto('Start')
+            }
+        }
+    }
+}
