@@ -2,9 +2,6 @@
 // 1) Individualised auditory feedback: Present respective sound to left and right speaker separately
 // 2) Dedicated local variables for each setup reg pre-tests
 
-// Hardware:
-// - Similar joysticks in both setups, ideally redesigned joystick plate; only new joystick design acceptable (circular space)
-
 //
 // I/O Devices
 //
@@ -50,7 +47,7 @@ eyelink Eyelink (
 // In dyadic setting, import data through network connection
 iodevice/getstream 'getStream' (
     data_interval                           = 1ms
-    ip                                      = (string)'172.17.10.40'
+    ip                                      = (string)'172.17.10.30'
     port                                    = 3490
     
     name_01                                 = (string)'IO_joystickDirection'
@@ -178,7 +175,7 @@ group CTRL {
     var CTRL_state_max_ms                   = 0
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
-    var CTRL_snr_list                       = [.5,.9]
+    var CTRL_snr_list                       = [.1,.5,.9]
     //var CTRL_snr_list                       = [0, .1,.1682, .2828, .4757, .8]
     var CTRL_directionChange_list           = [30,60,90]
     var CTRL_ITI_ms                         = 0
@@ -2398,9 +2395,7 @@ protocol 'CPR_dyatic' {
     CTRL_ITI_ms                                 = 1000
     CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
-    CTRL_show_agent                             = true
-    AGNT_arc_size                               = CTRL_arc_size + (CTRL_arc_size/10)
-    AGNT_indicator_offset                       = AGNT_arc_size/1.95
+    CTRL_show_agent                             = false
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2437,11 +2432,6 @@ protocol 'CPR_dyatic' {
     fname_ctrl_dur                              = fname_ctrl_dur
     fname_ctrl_trg                              = fname_ctrl_trg
     fname_counter                               = fname_counter
-
-    if (CTRL_show_agent == true) {
-        fname_agnt_direction                    = fname_agnt_direction
-        fname_agnt_strength                     = fname_agnt_strength
-        }
 
     // Initialise timer
     start_timer (
@@ -2526,19 +2516,9 @@ protocol 'CPR_dyatic' {
                 live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
-
-                if (CTRL_show_agent == true) {
-                    live_queue_stimulus (AGNT_arc)
-                    live_queue_stimulus (arcMask2)
-                    live_queue_stimulus (AGNT_indicator)
-                }
-
-                if (CTRL_show_agent == false) {
-                    live_queue_stimulus (arc2)
-                    live_queue_stimulus (arcMask2)
-                    live_queue_stimulus (indicator2)
-                }
-
+                live_queue_stimulus (arc2)
+                live_queue_stimulus (arcMask2)
+                live_queue_stimulus (indicator2)
                 live_queue_stimulus (arc)
                 live_queue_stimulus (arcMask)
                 live_queue_stimulus (indicator)
@@ -2623,107 +2603,54 @@ protocol 'CPR_dyatic' {
             }
 
             state 'Update Stimuli' {
-                if (CTRL_show_agent == false) {
-                    /*goto (                    
-                        target                      = 'Fixation break detected'
-                        when                        = (IO_fixation_flag == 0 && CTRL_fixation_break_flag == 0) || (IO_fixation2_flag == 0 && CTRL_fixation2_break_flag == 0)
-                        )
-                    goto (                    
-                        target                      = 'Reset CTRL_fixation_break_flag'
-                        when                        = (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer)==0) || (IO_fixation2_flag && CTRL_fixation2_break_flag && timer_expired(MinFixationBreakTimer2)==0)
-                        )                
-                    goto (                    
-                        target                      = 'Fixation break penalty'
-                        when                        = (IO_fixation_flag == 0 && timer_expired(MinFixationBreakTimer) && CTRL_fixation_break_flag && CTRL_fixation_penalty_flag==0) || (IO_fixation2_flag == 0 && timer_expired(MinFixationBreakTimer2) && CTRL_fixation2_break_flag && CTRL_fixation2_penalty_flag==0)
-                        )
-                    goto (                    
-                        target                      = 'Fixation restored'
-                        when                        = (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) || (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag)
-                        )*/
-                    goto (
-                        target                      = 'Dequeue Target'
-                        when                        = (CTRL_hit_flag + CTRL_hit_flag2) > 0 && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
-                        )
-                    goto (
-                        target                      = 'Dequeue Feedback'
-                        when                        = CTRL_feedback_flag && timer_expired(TargetDurationTimer) && timer_expired(FeedbackTimer) 
-                        )
-                    goto (
-                        target                      = 'Target presentation'
-                        when                        = CTRL_target_idx == 0 && TRIAL_reactionTrigger == 0 && timer_expired(Target_ITI_Timer) && timer_expired(TargetBanTimer)
-                        ) 
-                    goto (
-                        target                      = 'Single Hit A'
-                        when                        = CTRL_arc_flag && CTRL_arc2_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
-                        ) 
-                    goto (
-                        target                      = 'Single Hit B'
-                        when                        = CTRL_arc_flag == 0 && CTRL_arc2_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation2_penalty_flag == 0
-                        )
-                    goto (
-                        target                      = 'DoubleHit'
-                        when                        = CTRL_arc_flag && CTRL_arc2_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && (CTRL_fixation_penalty_flag == 0 && CTRL_fixation2_penalty_flag == 0)
-                        )  
-                    goto (
-                        target                      = 'DoubleMiss'
-                        when                        = timer_expired(TargetDurationTimer) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
-                        )              
-                    goto (
-                        target                      = 'Check Counters'
-                        when                        = timer_expired(StateDurationTimer) && TRIAL_reactionTrigger == 0
-                        )
-                }
-
-                if (CTRL_show_agent == true) {
-                    /*goto (                    
-                        target                      = 'Fixation break detected'
-                        when                        = (IO_fixation_flag == 0 && CTRL_fixation_break_flag == 0) 
-                        )
-                    goto (                    
-                        target                      = 'Reset CTRL_fixation_break_flag'
-                        when                        = (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer) == 0) 
-                        )                
-                    goto (                    
-                        target                      = 'Fixation break penalty'
-                        when                        = (IO_fixation_flag == 0 && timer_expired(MinFixationBreakTimer) && CTRL_fixation_break_flag && CTRL_fixation_penalty_flag == 0)
-                        )
-                    goto (                    
-                        target                      = 'Fixation restored'
-                        when                        = (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) 
-                        )*/
-                    goto (
-                        target                      = 'Dequeue Target'
-                        when                        = (CTRL_hit_flag + CTRL_hit_flag2) > 0 && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
-                        )
-                    goto (
-                        target                      = 'Dequeue Feedback'
-                        when                        = CTRL_feedback_flag && timer_expired(TargetDurationTimer) && timer_expired(FeedbackTimer) 
-                        )
-                    goto (
-                        target                      = 'Target presentation'
-                        when                        = CTRL_target_idx == 0 && TRIAL_reactionTrigger == 0 && timer_expired(Target_ITI_Timer) && timer_expired(TargetBanTimer)
-                        ) 
-                    goto (
-                        target                      = 'Single Hit A'
-                        when                        = CTRL_arc_flag && AGNT_arc_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 //&& CTRL_fixation_penalty_flag == 0
-                        ) 
-                    goto (
-                        target                      = 'Single Hit B'
-                        when                        = CTRL_arc_flag == 0 && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0
-                        )
-                    goto (
-                        target                      = 'DoubleHit'
-                        when                        = CTRL_arc_flag && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 // && CTRL_fixation_penalty_flag == 0
-                        )  
-                    goto (
-                        target                      = 'DoubleMiss'
-                        when                        = timer_expired(TargetDurationTimer) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
-                        )                     
-                    goto (
-                        target                      = 'Check Counters'
-                        when                        = timer_expired(StateDurationTimer) && TRIAL_reactionTrigger == 0
-                        )
-                }
+                /*goto (                    
+                    target                      = 'Fixation break detected'
+                    when                        = (IO_fixation_flag == 0 && CTRL_fixation_break_flag == 0) || (IO_fixation2_flag == 0 && CTRL_fixation2_break_flag == 0)
+                    )
+                goto (                    
+                    target                      = 'Reset CTRL_fixation_break_flag'
+                    when                        = (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer)==0) || (IO_fixation2_flag && CTRL_fixation2_break_flag && timer_expired(MinFixationBreakTimer2)==0)
+                    )                
+                goto (                    
+                    target                      = 'Fixation break penalty'
+                    when                        = (IO_fixation_flag == 0 && timer_expired(MinFixationBreakTimer) && CTRL_fixation_break_flag && CTRL_fixation_penalty_flag==0) || (IO_fixation2_flag == 0 && timer_expired(MinFixationBreakTimer2) && CTRL_fixation2_break_flag && CTRL_fixation2_penalty_flag==0)
+                    )
+                goto (                    
+                    target                      = 'Fixation restored'
+                    when                        = (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) || (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag)
+                    )*/
+                goto (
+                    target                      = 'Dequeue Target'
+                    when                        = (CTRL_hit_flag + CTRL_hit_flag2) > 0 && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    )
+                goto (
+                    target                      = 'Dequeue Feedback'
+                    when                        = CTRL_feedback_flag && timer_expired(TargetDurationTimer) && timer_expired(FeedbackTimer) 
+                    )
+                goto (
+                    target                      = 'Target presentation'
+                    when                        = CTRL_target_idx == 0 && TRIAL_reactionTrigger == 0 && timer_expired(Target_ITI_Timer) && timer_expired(TargetBanTimer)
+                    ) 
+                goto (
+                    target                      = 'Single Hit A'
+                    when                        = CTRL_arc_flag && CTRL_arc2_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
+                    ) 
+                goto (
+                    target                      = 'Single Hit B'
+                    when                        = CTRL_arc_flag == 0 && CTRL_arc2_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation2_penalty_flag == 0
+                    )
+                goto (
+                    target                      = 'DoubleHit'
+                    when                        = CTRL_arc_flag && CTRL_arc2_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && (CTRL_fixation_penalty_flag == 0 && CTRL_fixation2_penalty_flag == 0)
+                    )  
+                goto (
+                    target                      = 'DoubleMiss'
+                    when                        = timer_expired(TargetDurationTimer) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
+                    )              
+                goto (
+                    target                      = 'Check Counters'
+                    when                        = timer_expired(StateDurationTimer) && TRIAL_reactionTrigger == 0
+                    )
             }
 
             /*state 'Fixation break detected' {
@@ -3005,19 +2932,9 @@ protocol 'CPR_dyatic' {
                 dequeue_stimulus (targetBarMask)
                 dequeue_stimulus (RDP)
                 dequeue_stimulus (start_area)
-                
-                if (CTRL_show_agent == true) {
-                    dequeue_stimulus (AGNT_arc)
-                    dequeue_stimulus (arcMask2)
-                    dequeue_stimulus (AGNT_indicator)
-                }
-
-                if (CTRL_show_agent == false) {
-                    dequeue_stimulus (arc2)
-                    dequeue_stimulus (arcMask2)
-                    dequeue_stimulus (indicator2)
-                }
-
+                dequeue_stimulus (arc2)
+                dequeue_stimulus (arcMask2)
+                dequeue_stimulus (indicator2)   
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
 
@@ -3049,11 +2966,6 @@ protocol 'CPR_dyatic' {
                     fname_ctrl_dur              = fname_ctrl_dur
                     fname_ctrl_trg              = fname_ctrl_trg
                     fname_counter               = fname_counter
-
-                    if (CTRL_show_agent == true) {
-                        fname_agnt_direction    = fname_agnt_direction
-                        fname_agnt_strength     = fname_agnt_strength
-                        }
                     }
                 
                 goto (
