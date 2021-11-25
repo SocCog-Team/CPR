@@ -1,4 +1,4 @@
-function [out, ps] = CPR_correlation_analysis(t, trl, tindx, nLag, plotFlag)
+function [out, ps] = CPR_correlation(t, trl, tindx, nLag, plotFlag)
 
 % This function extracts stimulus and joystick data in a specified time
 % window at the end of a steady state

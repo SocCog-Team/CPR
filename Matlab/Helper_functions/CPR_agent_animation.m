@@ -16,8 +16,3 @@ for i = 1:length(AGNT.dir_clean)
     rlim([0 1])
     pause(0.0005)
 end
-
-
-
-% negative weights
-% monkey needs to fill bar to get reward

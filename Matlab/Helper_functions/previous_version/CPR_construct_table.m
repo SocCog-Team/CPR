@@ -23,8 +23,6 @@ function t = CPR_construct_table(subj, fid, d, trl, idx, write_file)
 % Version history
 %   1.0     (fxs 2021-05-04) Initial version.
 %   1.1     (fxs 2021-05-25) Added compatibility with dyadic setting.
-%   1.2     (fxs 2021-11-24) Compatibility with new MWEL paradigm.
-%   1.2     (fxs 2021-11-24) Frame-wise output.                            
 
 %% Initialise
 
@@ -40,14 +38,16 @@ var     = {'ID', 'string'; ...              % Subject identity
     'trg_shown', 'double'; ...              % Target shown?
     'trg_hit', 'cell'; ...                  % Target hit?
     'trg_ts', 'cell'; ...                   % Target timestamp
-    'frme_ts', 'cell'; ...                  % Frame timestamp
     'js_dir', 'cell'; ...                   % Joystick direction
     'js_str', 'cell'; ...                   % Joystick strength
-    'trl_frme_ts', 'cell';...               % Trial-wise frame timestamp
+    'js_ts', 'cell'; ...                    % Joystick timestamp
     'trl_rdp_dir', 'cell'; ...              % Trial-wise RDP direction
+    'trl_rdp_dir_ts', 'cell'; ...           % Trial-wise RDP direction timestamps
     'trl_rdp_coh', 'cell'; ...              % Trial-wise RDP coherence
+    'trl_rdp_coh_ts', 'cell'; ...           % Trial-wise RDP coherence timestamps
     'trl_js_dir', 'cell'; ...               % Trial-wise joystick direction
     'trl_js_str', 'cell'; ...               % Trial-wise joystick strength
+    'trl_js_ts', 'cell';...                 % Trial-wise joystick timestamp
     'trl_eye_x', 'cell'; ...                % Trial-wise eye data: x
     'trl_eye_y', 'cell'; ...                % Trial-wise eye data: y
     'trl_eye_ts', 'cell';...                % Trial-wise eye data: timestamps
@@ -60,8 +60,6 @@ t       = table('Size',[5000, size(var,1)],...
     'VariableNames',var(:,1));
 
 %% Build table
-
-fprintf('Building table...\n')
 
 % Trial loop
 for iTrl = 1:length(trl.tEnd)
@@ -92,17 +90,27 @@ for iTrl = 1:length(trl.tEnd)
         t.ID{cc}            = [subj '_' fid];                                           % Subject ID
         t.trl_no(cc)        = iTrl;                                                     % Trial number
         t.trl_dur(cc)       = (trl.tEnd(iTrl) - trl.tOn(iTrl)) ./ 1e3;                  % Trial duration [ms]
-        t.ss_no(cc)         = cc;                                                       % Steady state counter  
-        t.ss_coh(cc)        = trl.coh{iTrl}(iSS);                                       % Steady state coherence
-        t.rdp_dir(cc)       = mod(trl.dir{iTrl}(iSS),360);                              % Stimulus direction
+        t.ss_no(cc)         = cc;                                                       % Steady state counter
+        
+%         if strcmp(subj, 'cla') || strcmp(subj, 'nil') || str2num(fid) < 20210401
+%             t.ss_coh(cc)  	= trl.coh{iTrl}(end);
+%             t.rdp_dir(cc)  	= mod(trl.dir{iTrl}(iSS),360);
+%         else
+%             t.ss_coh(cc)   	= getTrialData(d.value, ssIdx, idx.RDP_coh);                % Steady state coherence
+%             t.rdp_dir(cc)   = mod(getTrialData(d.value, ssIdx, idx.RDP_dir),360);       % Stimulus direction
+%         end
+       
+        t.ss_coh(cc)        = getTrialData(d.value, ssIdx, idx.RDP_coh);               	% Steady state coherence
+        t.rdp_dir(cc)       = mod(getTrialData(d.value, ssIdx, idx.RDP_dir),360);    	% Stimulus direction
         t.ss_dur(cc)        = getTrialData(d.value, ssIdx, idx.steady_duration);      	% Steady state duration
+%         t.ss_dur(cc)        = trl.ssdur{iTrl}(iSS);                                	% Steady state duration
         t.trg_shown(cc)     = iscell(getTrialData(d.value, ssIdx, idx.outcome));        % Target shown?
         t.trg_hit{cc}       = strcmp(getTrialData(d.value, ssIdx, idx.outcome), 'hit'); % Target collected?
-        tmp_trg_val        	= getTrialData(d.value, ssIdx, idx.trg);                    % Target trigger
-        tmp_trg_ts        	= getTrialData(d.time, ssIdx, idx.trg);                     % Target timestamp
+        trg_val             = getTrialData(d.value, ssIdx, idx.trg);                    % Target trigger
+        trg_ts              = getTrialData(d.time, ssIdx, idx.trg);                     % Target timestamp
         
-        if sum(tmp_trg_val) > 0
-            t.trg_ts{cc}  	= tmp_trg_ts(logical(tmp_trg_val));
+        if sum(trg_val) > 0
+            t.trg_ts{cc}  	= trg_ts(logical(trg_val));
         else
             t.trg_ts{cc} 	= nan;
         end
@@ -110,76 +118,19 @@ for iTrl = 1:length(trl.tEnd)
         
         % Fill in table: Behavioural response
         % (1) For each steady state...
+        t.js_dir{cc}        = getTrialData(d.value, ssIdx, idx.JS_dir);                 % Joystick direction
+        t.js_str{cc}        = getTrialData(d.value, ssIdx, idx.JS_str);                 % Joystick strength
+        t.js_ts{cc}         = getTrialData(d.time, ssIdx, idx.JS_str);                  % Timestamps: Joystick strength
         
-        % Tmp variables based on joystick sampling rate
-        tmp_js_ts{cc}       = getTrialData(d.time, ssIdx, idx.JS_str);                  % Timestamps: Joystick strength
-        tmp_js_dir{cc}      = getTrialData(d.value, ssIdx, idx.JS_dir);                 % Joystick direction
-        tmp_js_str{cc}      = getTrialData(d.value, ssIdx, idx.JS_str);                 % Joystick strength
-        
-        t.frme_ts{cc}       = getTrialData(d.time, ssIdx, idx.frame);                   % Frame timestamps
-        
-        % Build frame-wise vector for joystick data
-        for iFrme = 1:length(t.frme_ts{cc})
-            fIdx                    = find(tmp_js_ts{cc} < t.frme_ts{cc}(iFrme),1,'last');  % Extract last entry before frame onset  
-            if sum(fIdx) == 0 || isempty(fIdx)        
-                t.js_dir{cc}(iFrme)     = nan;                                          % Write to vector
-                t.js_str{cc}(iFrme)     = nan;
-            else
-                t.js_dir{cc}(iFrme)     = tmp_js_dir{cc}(fIdx);                           
-                t.js_str{cc}(iFrme)     = tmp_js_str{cc}(fIdx);
-            end
-        end
-             
         % (2) For entire trial...
         if iSS == 1
-            
-            % TMP trial variables
-            tmp_trl_js_ts{cc}     	= getTrialData(d.time, trlIdx, idx.JS_str);
-            tmp_trl_js_dir{cc}   	= mod(getTrialData(d.value, trlIdx, idx.JS_dir),360);
-            tmp_trl_js_str{cc}    	= getTrialData(d.value, trlIdx, idx.JS_str);
-          	tmp_trl_rdp_dir_ts{cc}  = getTrialData(d.time, trlIdx, idx.RDP_dir);
-            tmp_trl_rdp_dir{cc}   	= mod(getTrialData(d.value, trlIdx, idx.RDP_dir),360);
-            tmp_trl_rdp_coh_ts{cc}	= getTrialData(d.time, trlIdx, idx.RDP_coh);
-            tmp_trl_rdp_coh{cc}    	= getTrialData(d.value, trlIdx, idx.RDP_coh);
-     
-            % Frame timestamps
-            t.trl_frme_ts{cc}       =  getTrialData(d.time, trlIdx, idx.frame);       	
-
-            % Frame-wise RDP direction
-            for iFrme = 1:length(t.trl_frme_ts{cc})
-                fdIdx                           = find(tmp_trl_rdp_dir_ts{cc} < t.trl_frme_ts{cc}(iFrme),1,'last'); 
-                
-                if sum(fdIdx) == 0 || isempty(fdIdx)
-                    t.trl_rdp_dir{cc}(iFrme) 	= nan;                           	
-                else
-                    t.trl_rdp_dir{cc}(iFrme)  	= tmp_trl_rdp_dir{cc}(fdIdx);                           
-                end
-            end
-            
-            % Frame-wise RDP coherence
-            for iFrme = 1:length(t.trl_frme_ts{cc})
-                fcIdx                           = find(tmp_trl_rdp_coh_ts{cc} < t.trl_frme_ts{cc}(iFrme),1,'last');
-                
-                if sum(fcIdx) == 0 || isempty(fcIdx)
-                    t.trl_rdp_coh{cc}(iFrme)	= nan;
-                else
-                    t.trl_rdp_coh{cc}(iFrme)	= tmp_trl_rdp_coh{cc}(fcIdx);
-                end
-            end
-            
-            % Frame-wise joystick data
-            for iFrme = 1:length(t.trl_frme_ts{cc})
-                fjIdx                       = find(tmp_trl_js_ts{cc} < t.trl_frme_ts{cc}(iFrme),1,'last');  
-                
-                if sum(fjIdx) == 0 || isempty(fjIdx)     
-                    t.trl_js_dir{cc}(iFrme)     = nan;                           	% Write to vector
-                    t.trl_js_str{cc}(iFrme)     = nan;
-                else
-                    t.trl_js_dir{cc}(iFrme)     = tmp_trl_js_dir{cc}(fjIdx);                           	% Write to vector
-                    t.trl_js_str{cc}(iFrme)     = tmp_trl_js_str{cc}(fjIdx);
-                end
-            end
-            
+            t.trl_rdp_dir{cc}       = mod(getTrialData(d.value, trlIdx, idx.RDP_dir),360);
+            t.trl_rdp_dir_ts{cc}    = getTrialData(d.time, trlIdx, idx.RDP_dir);
+            t.trl_rdp_coh{cc}       = getTrialData(d.value, trlIdx, idx.RDP_coh);
+            t.trl_rdp_coh_ts{cc}    = getTrialData(d.time, trlIdx, idx.RDP_coh);
+            t.trl_js_dir{cc}        = mod(getTrialData(d.value, trlIdx, idx.JS_dir),360);
+            t.trl_js_str{cc}        = getTrialData(d.value, trlIdx, idx.JS_str);
+            t.trl_js_ts{cc}         = getTrialData(d.time, trlIdx, idx.JS_str);
             t.trl_eye_x{cc}         = getTrialData(d.value, trlIdx, idx.eye_x_dva);
             t.trl_eye_y{cc}         = getTrialData(d.value, trlIdx, idx.eye_y_dva);
             t.trl_eye_ts{cc}        = getTrialData(d.time, trlIdx, idx.eye_y_dva);
@@ -187,7 +138,9 @@ for iTrl = 1:length(trl.tEnd)
             t.trl_fix_ts{cc}        = getTrialData(d.time, trlIdx, idx.fixation);
         else
             t.trl_rdp_dir{cc}       = nan;
+            t.trl_rdp_dir_ts{cc}    = nan;
             t.trl_rdp_coh{cc}       = nan;
+            t.trl_rdp_coh_ts{cc}    = nan;
             t.trl_js_dir{cc}        = nan;
             t.trl_js_str{cc}        = nan;
             t.trl_js_ts{cc}         = nan;
@@ -198,14 +151,26 @@ for iTrl = 1:length(trl.tEnd)
             t.trl_fix_ts{cc}        = nan;
         end
     end
+    
+%     % Temporary fix: coherence per steady state
+%     if strcmp(subj, 'cla') || strcmp(subj, 'nil') || str2num(fid) < 20210401
+%     else
+%         b = repmat(trl.coh{iTrl},10,1);
+%         if iTrl == 1
+%             c = reshape(b(:,2:end),size(b,1)*(size(b,2)-1),1);
+%         else
+%             c = reshape(b,size(b,1)*(size(b,2)),1);
+%         end
+%         strt = (iTrl*100)-99;
+%         t.ss_coh(strt:strt+length(c)-1) = c;
+%     end
 end
 
 t(ismissing(t.ID),:)                = [];
-fprintf('Done!\n')
 
 if write_file
-    fprintf(['Save table for subject ' subj '...\n'])
+    disp(['Save table for subject ' subj '...'])
     save([fid '_' subj '_cpr_tbl.mat'], 't', '-v7.3')                                                   % Save as .mat file
-    fprintf('Done!\n')
+    disp('Done!')
 end
 end

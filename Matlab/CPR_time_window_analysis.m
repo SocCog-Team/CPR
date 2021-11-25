@@ -1,4 +1,4 @@
-function out = CPR_time_window(t,nSamples)
+function out = CPR_time_window_analysis(t,nSamples)
 
 % This function extracts stimulus and joystick data in a specified time
 % window at the end of a steady state

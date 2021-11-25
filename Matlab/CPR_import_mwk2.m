@@ -22,6 +22,7 @@ function d = CPR_import_mwk2(fname, var_lst, write_file)
 %
 % Version history
 %   1.0     (fxs 2020-09-01) Initial version.
+%   1.1     (fxs 2021-11-24) HDF5 data writing.
 
 %% Check input
 
@@ -52,8 +53,9 @@ end
 %% Import data file
 if iscell(fname)                                                            % If multiple files ...
     if isfile([fname{1}(1:12) '_merged.mat'])
-        tmp         = load([fname{1}(1:34) '_merged.mat']);                 % Lod if merged file already exists
-        d           = tmp.d;
+%         tmp         = load([fname{1}(1:34) '_merged.mat']);             	% Load if merged file already exists
+%         d           = tmp.d;
+        d           = MW_readH5(d, [fname{1}(1:34) '_merged.h5']);
     else
         d.time      = [];                                                  	% Otherwise, import & merge...
         d.event     = [];
@@ -69,20 +71,24 @@ if iscell(fname)                                                            % If
         
         if write_file
             disp('Save struct...')
-            save([fname{1}(1:12) '_CPR_merged.mat'], 'd', '-v7.3')
+            MW_writeH5(d, [fname{1}(1:12) '_CPR_merged.h5'])                % Save as .h5 file
+%             save([fname{1}(1:12) '_CPR_merged.mat'], 'd', '-v7.3')       	% Save as .mat file
             disp('Done!')
         end
     end
 else
-    if isfile([fname '.mat'])                                               % If .mat file available...
-        tmp   	= load([fname '.mat']);                                  	% ...load .mat file
-        d   	= tmp.d;
+    if isfile([fname '.mat'])                                               % If file available...
+%         tmp   = load([fname '.mat']);                                  	% ...load .mat file
+%         d   	= tmp.d;
+        d       = MW_readH5([fname '.h5']);                                 % ...load .h5 file
+
     else
         d     	= MW_readFile(fname, 'include', var_lst);                   % Import .mwk2 sesion file
         
         if write_file
             disp('Save struct...')
-            save([fname '.mat'], 'd', '-v7.3')                              % Save as .mat file
+            MW_writeH5(d, [fname '.h5'])                                    % Save as .h5 file
+%             save([fname '.mat'], 'd', '-v7.3')                            % Save as .mat file
             disp('Done!')
         end
     end

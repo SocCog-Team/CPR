@@ -250,7 +250,7 @@ group RDP {
     var RDP_dotsize                         = .1
     var RDP_speed                           = 10
     var RDP_coherence                       = 0
-    var RDP_lifetime                        = 200
+    var RDP_lifetime                        = (1/120) * 25
     var RDP_alpha                        	= 1
 }
 
