@@ -1,5 +1,6 @@
 // TO DO
 // 1) Individualised auditory feedback: Present respective sound to left and right speaker separately
+// 2) Dedicated local variables for each setup reg pre-tests
 
 //
 // I/O Devices
@@ -162,15 +163,12 @@ group INFO {
     var INFO_StateCounter                   = 0
     var INFO_CoherenceStateCounter          = 0
     var INFO_TargetCounter                  = 0
-    var INFO_TrialTargetCounter             = 0
     var INFO_HitCounter                     = 0
     var INFO_HitCounter2                    = 0
     var INFO_ErrorCounter                   = 0
     var INFO_ErrorCounter2                  = 0
-    var INFO_Score                          = 0
-    var INFO_Score2                         = 0
-    var INFO_TrialScore                     = 0
-    var INFO_TrialScore2                    = 0
+    var INFO_Cash                           = 0
+    var INFO_Cash2                          = 0
 }
 
 group CTRL {
@@ -297,11 +295,13 @@ group TMP {
     var TMP_dice 							= 0
 	var TMP_RDPdir 							= 0
 	var TMP_normJoyDir   					= 0
+	var TMP_Cash							= 0
  	var TMP_accuracy 						= 0
     var TMP_score                           = 0 
     var TMP_agnt_dir                        = 0
 
     var TMP_normJoyDir2                     = 0
+    var TMP_Cash2                           = 0
     var TMP_accuracy2                       = 0
     var TMP_score2                          = 0
     
@@ -458,7 +458,7 @@ group AGNT {
     var AGNT_direction                      = 0 {
         if (TRIAL_start > TRIAL_end) {
             // Restrict to circular space [0:359]
-            TMP_agnt_dir                    = (int)(AGNT_direction + 360) % 360
+            TMP_agnt_dir                    = (AGNT_direction + 360) % 360
 
             // Calculate tracking accuracy and reward
             TMP_normJoyDir2                 = (int)(((int)AGNT_direction + (180-TMP_RDPdir) + 360) % 360) 
@@ -473,6 +473,8 @@ group AGNT {
             if (AGNT_strength > 1) {
                 TMP_score2                  = 1 * TMP_accuracy2
             }
+
+            TMP_Cash2                        = TMP_score2 * CTRL_reward_eur      
 
             // Compute trigger boundaries & flag
             AGNT_arc_trigger_min            = (int)(((int)(TMP_RDPdir - (AGNT_arc_width/2) + 360) % 360) + ((180-TMP_RDPdir) + 360)) % 360
@@ -545,6 +547,8 @@ group IO {
             if (IO_joystickStrength_norm > 1) {
                 TMP_score                   = 1 * TMP_accuracy
             }
+
+            TMP_Cash                        = TMP_score * CTRL_reward_eur      
             
             // Compute trigger boundaries & flag
             IO_arc_trigger_min              = (int)(((int)(TMP_RDPdir - (IO_arc_width/2) + 360) % 360) + ((180-TMP_RDPdir) + 360)) % 360
@@ -590,6 +594,8 @@ group IO {
             if (IO_joystickStrength2_norm > 1) {
                 TMP_score2                   = 1 * TMP_accuracy2
             }
+
+            TMP_Cash2                        = TMP_score2 * CTRL_reward_eur      
             
             // Compute trigger boundaries & flag
             IO_arc2_trigger_min             = (int)(((int)(TMP_RDPdir - (IO_arc2_width/2) + 360) % 360) + ((180-TMP_RDPdir) + 360)) % 360
@@ -1976,11 +1982,9 @@ protocol 'CPR_solo' {
     INFO_StateCounter                           = 0
     INFO_CoherenceStateCounter                  = 0
     INFO_TargetCounter                          = 0
-    INFO_TrialTargetCounter                     = 0
     INFO_HitCounter                             = 0
     INFO_ErrorCounter                           = 0
-    INFO_Score                                  = 0
-    INFO_TrialScore                             = 0
+    INFO_Cash                                   = 0
 
     // Set TMP variables for online processing
     TMP_NoStates                                = CTRL_NoStates
@@ -2056,10 +2060,7 @@ protocol 'CPR_solo' {
                 INFO_task                       = "CPR_solo_stepfunction_neutral"
                 TMP_sample_counter              = 0 // Reset variables
                 INFO_StateCounter               = 0 
-                INFO_CoherenceStateCounter      = 0  
-                INFO_TrialTargetCounter         = 0
-                INFO_TrialScore                 = 0
-                CTRL_scoreBar_width             = 0
+                INFO_CoherenceStateCounter      = 0                
                 COL_start_area_r                = 0 
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
@@ -2277,7 +2278,6 @@ protocol 'CPR_solo' {
 
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
-                INFO_TrialTargetCounter         += 1
                 CTRL_targetBar_width            = CTRL_targetBar_width - (360/CTRL_NoTargets) 
 
                 start_timer (
@@ -2303,26 +2303,25 @@ protocol 'CPR_solo' {
                 CTRL_hit_flag                   = 1
                 CTRL_feedback_flag              = 1
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Cash                       += TMP_Cash
+                CTRL_scoreBar_width             = 360 * (INFO_Cash / (CTRL_NoTargets * CTRL_reward_eur))
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
-                    play_sound (SuperReward_sound)
-                }
+                // Auditory feedback
+            	if (TMP_Cash > CTRL_reward_eur*.9) {
+            		play_sound (SuperReward_sound)
+            	}
 
-                if (TMP_score > .75 && TMP_score <= .95) {
+                if (TMP_Cash > CTRL_reward_eur*.75 && TMP_Cash <= CTRL_reward_eur*.9) {
                     play_sound (Reward_sound_3)
                 }
 
-                if (TMP_score > .5 && TMP_score <= .75) {
+                if (TMP_Cash > CTRL_reward_eur*.5 && TMP_Cash <= CTRL_reward_eur*.75) {
                     play_sound (Reward_sound_2)
                 }
 
-                if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
-                }
+            	if (TMP_Cash <= CTRL_reward_eur*.5) {
+            		play_sound (Reward_sound)
+            	}
 
 				// Visual feedback
 				live_queue_stimulus (feedback)
@@ -2330,7 +2329,7 @@ protocol 'CPR_solo' {
                 update_stimulus_display ()
 
                 report ('--- OUTCOME: Hit ---')
-                report ('Score: $TMP_score')
+                report ('CASH: $TMP_Cash')
 
                 start_timer (
                     timer                       = FeedbackTimer
@@ -2348,7 +2347,6 @@ protocol 'CPR_solo' {
                 TRIAL_outcome                   = "miss"
                 CTRL_miss_flag                  = 1
                 INFO_ErrorCounter               += 1
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Miss ---')
 
@@ -2444,7 +2442,7 @@ protocol 'CPR_dyadic_agent' {
     CTRL_state_max_ms                           = 2500
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
-    CTRL_arc2_alpha                             = 1
+    CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4
     CTRL_indicator_size                         = .3
     CTRL_indicator_offset                       = CTRL_arc_size/1.95
@@ -2474,13 +2472,8 @@ protocol 'CPR_dyadic_agent' {
     INFO_StateCounter                           = 0
     INFO_CoherenceStateCounter                  = 0
     INFO_TargetCounter                          = 0
-    INFO_TrialTargetCounter                     = 0
     INFO_HitCounter                             = 0
     INFO_ErrorCounter                           = 0
-    INFO_Score                                  = 0
-    INFO_Score2                                 = 0
-    INFO_TrialScore                             = 0
-    INFO_TrialScore2                            = 0
 
     // Set TMP variables for online processing
     TMP_NoStates                                = CTRL_NoStates
@@ -2558,12 +2551,7 @@ protocol 'CPR_dyadic_agent' {
                 INFO_task                       = "CPR_solo_stepfunction_neutral"
                 TMP_sample_counter              = 0 // Reset variables
                 INFO_StateCounter               = 0 
-                INFO_CoherenceStateCounter      = 0      
-                INFO_TrialTargetCounter         = 0  
-                INFO_TrialScore                 = 0
-                INFO_TrialScore2                = 0 
-                CTRL_scoreBar_width             = 0
-                CTRL_scoreBar2_width            = 0      
+                INFO_CoherenceStateCounter      = 0                
                 COL_start_area_r                = 0 
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
@@ -2716,7 +2704,7 @@ protocol 'CPR_dyadic_agent' {
                     ) 
                 goto (
                     target                      = 'Single Hit A'
-                    when                        = CTRL_arc_flag && AGNT_arc_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
+                    when                        = CTRL_arc_flag && AGNT_arc_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 //&& CTRL_fixation_penalty_flag == 0
                     ) 
                 goto (
                     target                      = 'Single Hit B'
@@ -2724,7 +2712,7 @@ protocol 'CPR_dyadic_agent' {
                     )
                 goto (
                     target                      = 'DoubleHit'
-                    when                        = CTRL_arc_flag && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
+                    when                        = CTRL_arc_flag && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 // && CTRL_fixation_penalty_flag == 0
                     )  
                 goto (
                     target                      = 'DoubleMiss'
@@ -2801,7 +2789,6 @@ protocol 'CPR_dyadic_agent' {
 
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
-                INFO_TrialTargetCounter         += 1
                 CTRL_targetBar_width            = CTRL_targetBar_width - (360/CTRL_NoTargets) 
 
                 start_timer (
@@ -2827,17 +2814,15 @@ protocol 'CPR_dyadic_agent' {
                 CTRL_hit_flag                   = 1
                 CTRL_feedback_flag              = 1
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Cash                       += TMP_Cash
+                CTRL_scoreBar_width             = 360 * (INFO_Cash / (CTRL_NoTargets * CTRL_reward_eur))
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
+                // Auditory feedback
                 if (TMP_score  > .95) {
                     play_sound (SuperReward_sound)
                 }
@@ -2868,33 +2853,16 @@ protocol 'CPR_dyadic_agent' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = 0
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
                 INFO_HitCounter2                += + 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                INFO_Cash2                      += TMP_Cash2
+                CTRL_scoreBar2_width            = 360 * (INFO_Cash2 / (CTRL_NoTargets * CTRL_reward_eur))
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
-                    play_sound (SuperReward_sound)
-                }
-
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
-                }
-
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
-                }
-
-                if (TMP_score2 <= .5) {
-                    play_sound (Reward_sound)
-                }
+                play_sound (Failure_sound)
 
                 //Visual feedback
                 live_queue_stimulus (feedback2)
@@ -2911,20 +2879,18 @@ protocol 'CPR_dyadic_agent' {
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score 
-                INFO_TrialScore                 += TMP_score 
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Cash                       += TMP_Cash 
+                CTRL_scoreBar_width             = 360 * (INFO_Cash / (CTRL_NoTargets * CTRL_reward_eur)) 
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                INFO_Cash2                      += TMP_Cash2
+                CTRL_scoreBar2_width            = 360 * (INFO_Cash2 / (CTRL_NoTargets * CTRL_reward_eur))
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
+                // Auditory feedback
                 if (TMP_score  > .95) {
                     play_sound (SuperReward_sound)
                 }
@@ -2938,23 +2904,6 @@ protocol 'CPR_dyadic_agent' {
                 }
 
                 if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
-                }
-
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
-                    play_sound (SuperReward_sound)
-                }
-
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
-                }
-
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
-                }
-
-                if (TMP_score2 <= .5) {
                     play_sound (Reward_sound)
                 }
 
@@ -2984,9 +2933,6 @@ protocol 'CPR_dyadic_agent' {
                 CTRL_hit_flag                   = 0
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 play_sound (Failure_sound)
 
@@ -3126,15 +3072,12 @@ protocol 'CPR_dyatic' {
     INFO_StateCounter                           = 0
     INFO_CoherenceStateCounter                  = 0
     INFO_TargetCounter                          = 0
-    INFO_TrialTargetCounter                     = 0
     INFO_HitCounter                             = 0
     INFO_ErrorCounter                           = 0
     INFO_HitCounter2                            = 0
     INFO_ErrorCounter2                          = 0
-    INFO_Score                                  = 0
-    INFO_Score2                                 = 0
-    INFO_TrialScore                             = 0
-    INFO_TrialScore2                            = 0
+    INFO_Cash                                   = 0
+    INFO_Cash2                                  = 0
 
     // Set TMP variables for online processing
     TMP_NoStates                                = CTRL_NoStates
@@ -3209,12 +3152,7 @@ protocol 'CPR_dyatic' {
                 INFO_task                       = "CPR_dyadic_stepfunction_neutral"
                 TMP_sample_counter              = 0 // Reset variables
                 INFO_StateCounter               = 0 
-                INFO_CoherenceStateCounter      = 0         
-                INFO_TrialTargetCounter         = 0
-                INFO_TrialScore                 = 0
-                INFO_TrialScore2                = 0  
-                CTRL_scoreBar_width             = 0
-                CTRL_scoreBar2_width            = 0      
+                INFO_CoherenceStateCounter      = 0                
                 COL_start_area_r                = 0 
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
@@ -3488,7 +3426,6 @@ protocol 'CPR_dyatic' {
 
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
-                INFO_TrialTargetCounter         += 1
                 CTRL_targetBar_width            = CTRL_targetBar_width - (360/CTRL_NoTargets) 
 
                 start_timer (
@@ -3513,30 +3450,21 @@ protocol 'CPR_dyatic' {
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Cash                       += TMP_Cash
+                CTRL_scoreBar_width             = 360 * (INFO_Cash / (CTRL_NoTargets * CTRL_reward_eur))
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = 1
 
                 // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
+                // Auditory feedback
+                if (TMP_Cash > .09) {
                     play_sound (SuperReward_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
-                }
-
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
-                }
-
-                if (TMP_score <= .5) {
+                if (TMP_Cash <= .09) {
                     play_sound (Reward_sound)
                 }
 
@@ -3547,7 +3475,7 @@ protocol 'CPR_dyatic' {
                 update_stimulus_display ()
 
                 report ('--- OUTCOME: Single Hit A ---')
-                report ('Score_A: $TMP_score')
+                report ('CASH_A: $TMP_Cash')
 
                 goto ('Start Feedback Timer')
             }
@@ -3556,33 +3484,25 @@ protocol 'CPR_dyatic' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = 0
-                CTRL_scoreBar_width            = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
                 INFO_HitCounter2                += + 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                INFO_Cash2                      += TMP_Cash2
+                CTRL_scoreBar2_width            = 360 * (INFO_Cash2 / (CTRL_NoTargets * CTRL_reward_eur))
 
                 CTRL_feedback_flag              = 1
 
                 // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
+                // Auditory feedback
+                if (TMP_Cash2 > .09) {
                     play_sound (SuperReward_sound)
                 }
 
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
-                }
-
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
-                }
-
-                if (TMP_score2 <= .5) {
+                if (TMP_Cash2 <= .09) {
                     play_sound (Reward_sound)
                 }
+
                 //Visual feedback
                 live_queue_stimulus (feedback2)
             	live_queue_stimulus (fixationCross)
@@ -3590,7 +3510,7 @@ protocol 'CPR_dyatic' {
                 update_stimulus_display ()
 
                 report ('--- OUTCOME: Single Hit B ---')
-                report ('Score_B: $TMP_score2')
+                report ('CASH_B: $TMP_Cash2')
 
                 goto ('Start Feedback Timer')
             }
@@ -3600,50 +3520,32 @@ protocol 'CPR_dyatic' {
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Cash                       += TMP_Cash 
+                CTRL_scoreBar_width             = 360 * (INFO_Cash / (CTRL_NoTargets * CTRL_reward_eur)) 
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                INFO_Cash2                      += TMP_Cash2
+                CTRL_scoreBar2_width            = 360 * (INFO_Cash2 / (CTRL_NoTargets * CTRL_reward_eur))
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
+                // PRESENT AT RESPECTIVE SPEAKER
+                // Auditory feedback
+                if (TMP_Cash > .09) {
                     play_sound (SuperReward_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
-                }
-
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
-                }
-
-                if (TMP_score <= .5) {
+                if (TMP_Cash <= .09) {
                     play_sound (Reward_sound)
                 }
 
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
+                if (TMP_Cash2 > .09) {
                     play_sound (SuperReward_sound)
                 }
 
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
-                }
-
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
-                }
-
-                if (TMP_score2 <= .5) {
+                if (TMP_Cash2 <= .09) {
                     play_sound (Reward_sound)
                 }
 
@@ -3655,7 +3557,7 @@ protocol 'CPR_dyatic' {
                 update_stimulus_display ()
                 
                 report ('--- OUTCOME: Double Hit ---')
-                report ('Scofre_A: $TMP_score || Score_B: $TMP_score2')
+                report ('CASH_A: $TMP_Cash || CASH_B: $TMP_Cash2')
 
                 goto ('Start Feedback Timer')
             }  
@@ -3677,9 +3579,6 @@ protocol 'CPR_dyatic' {
                 CTRL_hit_flag                   = 0
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
-
-                CTRL_scoreBar_width            = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Double Miss ---')
 

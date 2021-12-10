@@ -58,6 +58,21 @@ if contains(fname,'dyadic')
         'EYE_x2_dva',...
         'EYE_y2_dva',...
         '#stimDisplay'};
+elseif contains(fname,'agent')
+    var_import = {
+        'ML_', ...
+        'CTRL_', ...
+        'RDP_', ...
+        'INFO_', ...
+        'TRIAL_', ...
+        'IO_joystickDirection', ...
+        'IO_joystickStrength',...
+        'IO_fixation_flag',...
+        'EYE_x_dva',...
+        'EYE_y_dva',...
+        'AGNT_direction', ...
+        'AGNT_strength',...
+        '#stimDisplay'};
 else
     var_import = {
         'ML_', ...
@@ -75,18 +90,13 @@ end
 
 % Get file identifier/recording date
 dte                     = regexp(fname,'\d{8}');
-if strcmp(subj, 'cla') || strcmp(subj, 'nil')
-    fid              	= fname(dte(2):dte(2)+7);
-else
-    fid               	= fname(dte:dte+7);
-end
+fid                     = fname(dte:dte+7);
 
 % Import .mwk2 data file
 if nargin < 4
     d                	= CPR_import_mwk2(fname, var_import, false);
     d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
-    d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');
-    
+    d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
 end
 
 %% Extract data and organise in table
@@ -106,7 +116,7 @@ idx.RDP_dir                 = d.event == 'RDP_direction';
 idx.RDP_coh                 = d.event == 'RDP_coherence';
 idx.trg_on                  = d.event == 'STIM_target_onset';
 idx.JS_dir                  = d.event == 'IO_joystickDirection';
-idx.JS_str                  = d.event == 'IO_joystickStrength';
+idx.JS_str                  = d.event == 'IO_joystickStrength_norm';
 idx.fixation              	= d.event == 'IO_fixation_flag';
 idx.outcome                 = d.event == 'TRIAL_outcome';
 idx.trg                     = d.event == 'TRIAL_reactionTrigger';
@@ -138,6 +148,14 @@ if contains(fname,'dyadic')
     idx.eye_x2_dva       	= d.event == 'EYE_x2_dva';
     idx.eye_y2_dva       	= d.event == 'EYE_y2_dva';
     idx.reward2           	= d.event == 'INFO_Cash2';
+elseif contains(fname,'agent')
+    idx.JS2_dir          	= d.event == 'AGNT_direction';
+    idx.JS2_str         	= d.event == 'AGNT_strength';
+    idx.fixation2       	= zeros(1,length(d.event));
+    idx.outcome2          	= d.event == 'TRIAL_outcome2';
+    idx.eye_x2_dva       	= zeros(1,length(d.event));
+    idx.eye_y2_dva       	= zeros(1,length(d.event));
+    idx.reward2           	= d.event == 'INFO_Cash2';      
 end
 
 % Get trial timestamps
@@ -185,7 +203,7 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
 end
 
 % Plot performance summary
-[summ,crr]                  = CPR_plot_performance_summary(d,idx,trl,tbl,rew_str,sbj,fid);
+[summ,crr]                  = CPR_plot_performance_summary(d,idx,trl,tbl,rew_str,sbj,fid,pth);
 [~]                         = CPR_target_reward(tbl{1});
 
 end

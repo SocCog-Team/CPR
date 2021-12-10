@@ -29,8 +29,8 @@ param.state_min_ms              = cell2mat(d.value(d.event == 'TMP_state_min_ms'
 param.state_max_ms              = cell2mat(d.value(d.event == 'TMP_state_max_ms'));
 tmp_snr                         = d.value(d.event == 'TMP_snr_list');
 tmp_ddir                        = d.value(d.event == 'TMP_directionChange_list');
-param.snr_list                  = cell2mat(tmp_snr{1});
-param.directionChange_list      = cell2mat(tmp_ddir{1});
+param.snr_list                  = cellfun(@double, tmp_snr{1});
+param.directionChange_list      = cellfun(@double, tmp_ddir{1});
 param.target_ITI_ms             = cell2mat(d.value(d.event == 'TMP_target_ITI_ms'));
 param.target_blocked_ms         = cell2mat(d.value(d.event == 'TMP_target_ban_duration_ms'));
 param.target_prob               = .005;

@@ -13,8 +13,9 @@ end
 
 % Zero-pad, add noise, smooth
 pad_vec                 = zeros(1,AGNT.lag);
-AGNT.dir_clean          = tmp_rdp_dir;
-AGNT.str_clean          = tmp_rdp_str;
+buffer                  = 49; % to avoid lack of samples during task
+AGNT.dir_clean          = [tmp_rdp_dir tmp_rdp_dir(end-buffer:end)];
+AGNT.str_clean          = [tmp_rdp_str tmp_rdp_str(end-buffer:end)];
 AGNT.dir_nse            = [pad_vec AGNT.dir_clean + normrnd(0,AGNT.dir_sigma, [1,length(AGNT.dir_clean)])];
 AGNT.str_nse            = [pad_vec AGNT.str_clean + normrnd(0,AGNT.str_sigma, [1,length(AGNT.str_clean)])];
 AGNT.dir_smooth         = smoothdata(AGNT.dir_nse, AGNT.smooth_kernel, AGNT.win);
@@ -30,7 +31,7 @@ AGNT.str_smooth(AGNT.str_smooth < 0) = 0;
 % AGNT.dir_nse            = mod(AGNT.dir_nse(1:length(tmp_rdp_dir)),360);
 % AGNT.str_nse            = mod(AGNT.str_nse(1:length(tmp_rdp_str)),360);
 % AGNT.dir_smooth         = mod(AGNT.dir_smooth(1:length(tmp_rdp_dir)),360);
-% AGNT.str_smooth         = mod(AGNT.str_smooth(1:length(tmp_rdp_str)),360);
+% AGNT.str_smooth         = mod(AGNT.str_smooth(1:length(tmp_rdp_str)),360);dots_only
 
 end
 

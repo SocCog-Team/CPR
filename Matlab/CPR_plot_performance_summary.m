@@ -1,4 +1,4 @@
-function [summ,crr] = CPR_plot_performance_summary(d,idx,trl,tbl,rew_str,sbj,fid)
+function [summ,crr] = CPR_plot_performance_summary(d,idx,trl,tbl,rew_str,sbj,fid,pth)
 
 for iSubj = 1:size(tbl,2)
     
@@ -172,7 +172,7 @@ for iSubj = 1:size(tbl,2)
     ax.YLabel.String            = 'Joystick strength [norm]';
     ax.XLabel.String            = 'Coherence level';
     ax.XTickLabel               = {rsnr};
-    ax.Title.String             = 'Avg radial joystick displacement [states]';
+    ax.Title.String             = 'Avg joystick eccentricity [states]';
     ax.XColor                   = [0 0 0];
     ax.YColor                   = [0 0 0];
     ax.FontSize                 = 14;
@@ -186,29 +186,31 @@ for iSubj = 1:size(tbl,2)
     end
     
     % Get trial data
-    trl_frme_ts                 = t.trl_frme_ts(indx);
+    trl_frme_ts                 = t.trl_frme_ts(indx);                          % Frame timestamps
     trl_str                     = t.trl_js_str(indx);                           % Joystick strength
     tmp_coh                     = t.trl_rdp_coh(indx);                          % RDP coherence
     
+    % For each trial...
     for iTrl = 1:size(trl_str,1)
         clear trl_data trl_data_ts trl_coh trl_coh_ts
-        trl_data_ts           	= trl_frme_ts{iTrl};
         trl_data                = trl_str{iTrl};
-        trl_coh                 = unique(tmp_coh{iTrl});
-        trl_coh(isnan(trl_coh)) = [];
-        trl_coh_ts              = trl_frme_ts{iTrl}(find(tmp_coh{iTrl} == trl_coh,1,'first'));
+        trl_coh                 = tmp_coh{iTrl};
+        trl_data(isnan(trl_coh))= [];  
+        trl_coh(isnan(trl_coh)) = [];  
+        coh_df                  = [0 find(diff(trl_coh))];
         
-        for iCoh = 1:size(trl_coh,2)
-            % Coherence index
-            if iCoh < size(trl_coh,2)
-                cohIdx       	= trl_data_ts >= trl_coh_ts(iCoh) & trl_data_ts < trl_coh_ts(iCoh+1);
-            else
-                cohIdx          = trl_data_ts >= trl_coh_ts(iCoh) & trl_data_ts <= trl_frme_ts{iTrl}(end);
+        if isempty(find(diff(trl_coh)))
+            cohID(iTrl,1)       = unique(trl_coh);                 
+            mStr(iTrl,1)        = mean(trl_data);                  
+            sdStr(iTrl,1)       = std(trl_data);                   
+        else
+            % For each coherence block...
+            for iBlock = 1:size(coh_df,2)-1
+                cohIdx           	= coh_df(iBlock)+1:coh_df(iBlock+1);    	% Index of coherence block
+                cohID(iTrl,iBlock) 	= unique(trl_coh(cohIdx));                  % Coherence ID
+                mStr(iTrl,iBlock)	= mean(trl_data(cohIdx));                   % Average displacement for given stimulus condition
+                sdStr(iTrl,iBlock)	= std(trl_data(cohIdx));                    % Standard deviation
             end
-            
-            cohID(iTrl,iCoh)  	= trl_coh(iCoh);                                % Coherence ID
-            mStr(iTrl,iCoh) 	= mean(trl_data(cohIdx));                       % Average strength for given
-            sdStr(iTrl,iCoh)  	= std(trl_data(cohIdx));                        % Standard deviation
         end
     end
     
@@ -217,6 +219,7 @@ for iSubj = 1:size(tbl,2)
     bby                         = [];
     bbx                         = [];
     
+    % ADD IF STATEMENT: CHECK INPUT DIMENSIONS - IS VECTOR OR MATRIX?
     for iCoh = 1:length(clvl)
         cidx                    = [];
         cidx                    = cohID == clvl(iCoh);
@@ -252,7 +255,7 @@ for iSubj = 1:size(tbl,2)
     ax.YLabel.String            = 'Joystick strength [norm]';
     ax.XLabel.String            = 'Coherence level';
     ax.XTickLabel               = {rsnr};
-    ax.Title.String             = 'Avg radial joystick displacement [trial]';
+    ax.Title.String             = 'Avg joystick eccentricity [block]';
     ax.XColor                   = [0 0 0];
     ax.YColor                   = [0 0 0];
     ax.FontSize                 = 14;
@@ -264,7 +267,8 @@ for iSubj = 1:size(tbl,2)
     nLag                            = 150;
     [cr,ps]                         = CPR_correlation_analysis(t, trl, indx, nLag, true);
     crr{iSubj}                      = cr;
-    
+    cl                              = linspace(0,1,length(snr));
+
     ax.XTick                        = [1 nLag/2 nLag];
     ax.XLim                         = [1 nLag];
     ax.XTickLabel                   = {['-' num2str(nLag)],['-' num2str(nLag/2)],'0'};

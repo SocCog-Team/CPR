@@ -21,9 +21,15 @@ fprintf(['Correcting data entries for variables:\n' var1 '\n' var2 '\n'])
 
 % Append missing data to input structure
 for iPos = 1:length(pos)  
+    if pos(iPos) > length(d.var2_ts)
+        data.time	= [data.time d.var2_ts(end)];                    
+        data.value  = [data.value d.var2_val(end)];
+        data.event  = [data.event var2];
+    else
         data.time	= [data.time d.var2_ts(pos(iPos))];                    
         data.value  = [data.value d.var2_val(pos(iPos))];
         data.event  = [data.event var2];
+    end
 end
 
 % Check other way around
@@ -31,9 +37,15 @@ end
 
 % Append missing data to input structure
 for iPos = 1:length(pos)
+    if pos(iPos) > length(d.var1_ts)
+        data.time	= [data.time d.var1_ts(end)];
+        data.value  = [data.value d.var1_val(end)];
+        data.event  = [data.event var1];
+    else
         data.time   = [data.time d.var1_ts(pos(iPos))];
         data.value  = [data.value d.var1_val(pos(iPos))];
-        data.event  = [data.event var1];      
+        data.event  = [data.event var1];
+    end
 end
 
 % Sort data

@@ -79,7 +79,7 @@ group CTRL {
     var CTRL_state_max_ms                   = 0
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
-    var CTRL_snr_list                       = [.3,.6,.9]
+    var CTRL_snr_list                       = [.3,.6,.9,1]
     var CTRL_directionChange_list           = [30,60,90]
     var CTRL_ITI_ms                         = 0
     var CTRL_cpr_treshold                   = 0
@@ -98,6 +98,7 @@ group CTRL {
     var CTRL_target_reward_ml               = 0
     var CTRL_target_idx                     = 0
     var CTRL_target_size                    = 0
+    var CTRL_target_offset                  = 0
     var CTRL_target_deg                     = 0
     var CTRL_target_duration_ms             = 0
     var CTRL_target_direction               = 0
@@ -114,7 +115,6 @@ group CTRL {
     var CTRL_target3_y                      = 0    
     var CTRL_target4_y                      = 0    
     var CTRL_target_alpha                   = 0
-    var CTRL_target_offset                  = 0
     var CTRL_target_ITI_ms                  = 0
     var CTRL_target_ban_duration_ms         = 0
     var CTRL_target_delay_min_ms            = 0
@@ -164,6 +164,10 @@ group CTRL {
     var CTRL_PreSNR_StimDuration            = 0
 
     var CTRL_cursor_radius                  = .5
+
+    var CTRL_joystick_penalty_flag          = 0
+    var CTRL_joystick_strength_min          = .1
+    var CTRL_joystick_strength_max          = .99
 
     var CTRL_indicator_size                 = 0
     var CTRL_indicator_offset               = 0
@@ -230,6 +234,13 @@ group TMP {
     var lst_value                           = 0
     var fixationPoint_posY                  = 0
     var fixationPoint_posX                  = 0 
+    var js_norm                             = 0 (persistant = YES)
+    var js_X_min                            = 0 (persistant = YES)
+    var js_Y_min                            = 0 (persistant = YES)
+    var js_X_max                            = 0 (persistant = YES)
+    var js_Y_max                            = 0 (persistant = YES) {
+        js_norm                             = 1 / min(js_X_max, min(js_Y_max, min(-js_X_min, -js_Y_min)))
+    }
 }
 
 group ML {
@@ -250,7 +261,7 @@ group RDP {
     var RDP_dotsize                         = .1
     var RDP_speed                           = 10
     var RDP_coherence                       = 0
-    var RDP_lifetime                        = (1/120) * 25
+    var RDP_lifetime                        = (1/120) * 25 * 1000
     var RDP_alpha                        	= 1
 }
 
@@ -344,7 +355,7 @@ group AGNT {
 
             // Cap at maximum
             if (AGNT_strength > 1) {
-                TMP_score2                   = 1 * TMP_accuracy2
+                TMP_score2                  = 1 * TMP_accuracy2
             }
             
             // Compute trigger boundaries & flag
@@ -357,6 +368,7 @@ group AGNT {
 
 group IO {
     var IO_fixation_flag                    = 0
+    var IO_calib_fixation_flag              = 0
     var IO_rewardA                          = 0
     var IO_arc_width                        = 0
 	var IO_arc_trigger_min               	= 0
@@ -369,15 +381,31 @@ group IO {
     var IO_joystickY_raw                    = 0 {
             IO_cursor_y                     = (((IO_joystickY_raw/511.5)-1) * CTRL_Ymax) + RDP_y
     }
+    var IO_joystickStrength_norm            = 0                      
     var IO_joystickStrength                 = 0 {                     
+        IO_joystickStrength_norm            = min(1, (IO_joystickStrength * js_norm))
+                   
   		if (TRIAL_start > TRIAL_end) {
             // Set arc width
-            IO_arc_width                    = 180 - (180 * IO_joystickStrength) 
+            IO_arc_width                    = 180 - (180 * IO_joystickStrength_norm) 
 
       		// Fix minimum arc size
             if (IO_arc_width < CTRL_target_deg) {
              	IO_arc_width                = CTRL_target_deg
           	} 
+
+            // Penalise joystick extreme positions
+            if ((IO_joystickStrength_norm > CTRL_joystick_strength_max || IO_joystickStrength_norm < CTRL_joystick_strength_min) && CTRL_joystick_penalty_flag == 0) {
+                CTRL_joystick_penalty_flag  = 1
+                CTRL_arc_alpha              = 0
+                CTRL_indicator_alpha        = 0
+            }
+
+            if ((IO_joystickStrength_norm <= CTRL_joystick_strength_max && IO_joystickStrength_norm >= CTRL_joystick_strength_min) && CTRL_joystick_penalty_flag) {
+                CTRL_joystick_penalty_flag  = 0
+                CTRL_arc_alpha              = 1
+                CTRL_indicator_alpha        = 1
+            }
             
             if (CTRL_show_agent == true) {
                 // Set agent properties
@@ -405,12 +433,12 @@ group IO {
             TMP_accuracy                    = abs(1 - abs(TMP_RDPdir - IO_joystickDirection) / 180)
 
             // Calculate reward score
-            if (IO_joystickStrength <= 1) {
+            if (IO_joystickStrength_norm <= 1) {
                 TMP_score                   = IO_joystickStrength * TMP_accuracy
             }
 
             // Cap at maximum
-            if (IO_joystickStrength > 1) {
+            if (IO_joystickStrength_norm > 1) {
                 TMP_score                   = 1 * TMP_accuracy
             }
 
@@ -434,7 +462,8 @@ group Paths {
 
 group Selection {
     selection SEL_snr (
-        values                              = 0, .06, .08, .1067, .1423, .1897, .2530, .3374, .4499, .6
+        //values                              = 0, .06, .08, .1067, .1423, .1897, .2530, .3374, .4499, .6
+        values                              = .3, .4, .5, .6, .7, .8, .9
         selection                           = random_without_replacement
         nsamples                            = 1000
         sampling_method                     = cycles
@@ -534,7 +563,7 @@ stimulus/advstimulus fixationPoint (
     trigger_width                           = CTRL_fixationWidth_dva
     trigger_watch_x                         = EYE_x_dva
     trigger_watch_y                         = EYE_y_dva
-    trigger_flag                            = IO_fixation_flag
+    trigger_flag                            = IO_calib_fixation_flag
     x_size                                  = CTRL_fixationDotSize_dva
     y_size                                  = CTRL_fixationDotSize_dva
     x_position                              = fixationPoint_posX
@@ -593,7 +622,7 @@ stimulus/r_d_p RDP (
     speed                       			= RDP_speed
     coherence                   			= RDP_coherence
     lifetime                    			= RDP_lifetime
-    announce_dots               			= YES
+    announce_dots               			= NO
     autoplay                    			= YES
     )
 
@@ -910,7 +939,7 @@ stimulus/rectangle AGNT_cum_rew_bar (
 //
 // Protocols
 //
-/*
+
 protocol 'Calibration-9p' {
     report ('******** STARTING CALIBRATION ********')
     start_device_io (Eyelink)
@@ -936,19 +965,19 @@ protocol 'Calibration-9p' {
             
             state SHOW_CALIBRATION_POINT {
                 live_queue_stimulus (fixationPoint)
-                report ($IO_fixation_flag)
+                report ($IO_calib_fixation_flag)
                 report ('Calibration Trial; Fixation point at x= $fixationPoint_posX , y= $fixationPoint_posY , fixation width = $CTRL_fixationWidth_dva')
                 update_stimulus_display ()
 
                 goto (
                     target              = PRE_AQUIRE
-                    when                = IO_fixation_flag
+                    when                = IO_calib_fixation_flag
                     )
             }
             
             state PRE_AQUIRE {
                 report ('Pre Fixation Time ...')
-                report ($IO_fixation_flag)
+                report ($IO_calib_fixation_flag)
 
                 start_timer (
                     timer               = PreAquireTimer
@@ -958,7 +987,7 @@ protocol 'Calibration-9p' {
 
                 goto (
                     target              = SHOW_CALIBRATION_POINT
-                    when                = NOT( IO_fixation_flag )
+                    when                = NOT( IO_calib_fixation_flag )
                     )
                 timer_expired (
                     target              = CALIBRATION_AQUIRE
@@ -979,7 +1008,7 @@ protocol 'Calibration-9p' {
 
                 goto (
                     target              = FIXATION_BREAK
-                    when                = NOT( IO_fixation_flag )
+                    when                = NOT( IO_calib_fixation_flag )
                     )
                 timer_expired (
                     target              = ACCEPT_SAMPLES
@@ -1062,19 +1091,20 @@ protocol 'Calibration-9p' {
     stop_device_io (Eyelink)
 }
 
+
 protocol 'SNR Sensitivity' {
     start_device_io (mIO)
-    start_device_io (Eyelink)
+    //start_device_io (Eyelink)
     live_queue_stimulus (Background)
     live_queue_stimulus (cursor)
     update_stimulus_display ()
         
-    CTRL_reward_ml                      = .2
+    CTRL_reward_ml                      = .5
     CTRL_NoTargets                  	= 400
     CTRL_PreSNR_StimDuration            = 1000
     CTRL_start_area_size                = 4 
     CTRL_start_area_alpha               = 1
-    CTRL_target_size                    = 3
+    CTRL_target_size                    = 5
     CTRL_target_alpha                   = .5
     CTRL_target_offset                  = 8
     CTRL_ITI_ms                         = 1000
@@ -1089,11 +1119,12 @@ protocol 'SNR Sensitivity' {
             state 'Wait [Joystick Reset]' {
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (fixationCross)
+            	live_queue_stimulus (cursor)
                 update_stimulus_display ()
 
                 goto (
                     target              = 'New Trial'
-                    when                = CTRL_start_area_flag && IO_fixation_flag
+                    when                = CTRL_start_area_flag //&& IO_fixation_flag
                     )
                 goto (
                     target              = 'Wait [Joystick Reset]'
@@ -1115,6 +1146,7 @@ protocol 'SNR Sensitivity' {
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (fixationCross)
+                live_queue_stimulus (cursor)
                 update_stimulus_display ()
 
                 start_timer (
@@ -1134,10 +1166,10 @@ protocol 'SNR Sensitivity' {
                     target              = 'False Alarm'
                     when                = CTRL_start_area_flag == 0
                     )
-                goto (
-                    target              = 'Fixation Break'
-                    when                = IO_fixation_flag == 0
-                    )
+                //goto (
+                    //target              = 'Fixation Break'
+                    //when                = IO_fixation_flag == 0
+                    //)
                 goto (
                     target              = 'Show Target'
                     when                = timer_expired(RDP_Timer)
@@ -1274,9 +1306,9 @@ protocol 'SNR Sensitivity' {
             }
         }
     }
-    stop_device_io (Eyelink)
+    //stop_device_io (Eyelink)
 }
-*/
+
 
 protocol 'RT_measurement' {
     start_device_io (mIO)
@@ -1526,14 +1558,15 @@ protocol 'CPR_solo' {
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4.75
-    CTRL_indicator_size                         = .3
-    CTRL_indicator_offset                       = CTRL_arc_size/1.95
+    CTRL_indicator_size                         = .5
+    CTRL_indicator_offset                       = CTRL_arc_size/1.9
     CTRL_indicator_alpha                        = 1
     CTRL_start_area_size                        = 5 
     CTRL_start_area_alpha                       = 1
     CTRL_target_size                            = .8
     CTRL_target_alpha                           = 1
     CTRL_target_deg                             = 2 * (asin( (CTRL_target_size/2) / ((CTRL_start_area_size/2) + (CTRL_target_size/2)) ) * (180/pi))
+    CTRL_target_offset                          = 2.1
     CTRL_target_duration_ms                     = 50
     CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 300
@@ -1603,7 +1636,7 @@ protocol 'CPR_solo' {
             state 'Wait for Joystick Reset' {
                 goto (
                     target                      = 'Wait for Joystick Movement'
-                    when                        = (IO_joystickStrength <= CTRL_cpr_treshold) 
+                    when                        = (IO_joystickStrength_norm <= CTRL_cpr_treshold) 
                     )
             }
             
@@ -1617,7 +1650,7 @@ protocol 'CPR_solo' {
                 
                 goto (
                     target                      = 'New Trial'
-                    when                        = (IO_joystickStrength > CTRL_cpr_treshold) 
+                    when                        = (IO_joystickStrength_norm > CTRL_cpr_treshold) 
                     )
             }
 
@@ -1771,7 +1804,7 @@ protocol 'CPR_solo' {
                     ) 
                 goto (
                     target                      = 'Hit'
-                    when                        = CTRL_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_miss_flag) == 0 && timer_expired(TargetDurationTimer) == 0
+                    when                        = CTRL_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_miss_flag) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_joystick_penalty_flag == 0
                     )  
                 goto (
                     target                      = 'Miss'
@@ -1840,8 +1873,8 @@ protocol 'CPR_solo' {
 
             state 'Target presentation' {
                 // Target coordinates according to RDP direction
-                CTRL_target_x                   = (sin((RDP_direction)*(pi/180)) * ((CTRL_start_area_size/2.4))) + RDP_x
-                CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * ((CTRL_start_area_size/2.4))) + RDP_y
+                CTRL_target_x                   = (sin((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_x
+                CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_y
 
                 live_queue_stimulus (target)
                 update_stimulus_display ()
@@ -2066,14 +2099,15 @@ protocol 'CPR_dyadic_agent' {
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4.75
-    CTRL_indicator_size                         = .3
-    CTRL_indicator_offset                       = CTRL_arc_size/1.95
+    CTRL_indicator_size                         = .5
+    CTRL_indicator_offset                       = CTRL_arc_size/1.9
     CTRL_indicator_alpha                        = 1
     CTRL_start_area_size                        = 5 
     CTRL_start_area_alpha                       = 1
     CTRL_target_size                            = .8
     CTRL_target_alpha                           = 1
     CTRL_target_deg                             = 2 * (asin( (CTRL_target_size/2) / ((CTRL_start_area_size/2) + (CTRL_target_size/2)) ) * (180/pi))
+    CTRL_target_offset                          = 2.1
     CTRL_target_duration_ms                     = 50
     CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 300
@@ -2148,7 +2182,7 @@ protocol 'CPR_dyadic_agent' {
             state 'Wait for Joystick Reset' {
                 goto (
                     target                      = 'Wait for Joystick Movement'
-                    when                        = (IO_joystickStrength <= CTRL_cpr_treshold) 
+                    when                        = (IO_joystickStrength_norm <= CTRL_cpr_treshold) 
                     )
             }
             
@@ -2162,7 +2196,7 @@ protocol 'CPR_dyadic_agent' {
                 
                 goto (
                     target                      = 'New Trial'
-                    when                        = (IO_joystickStrength > CTRL_cpr_treshold) 
+                    when                        = (IO_joystickStrength_norm > CTRL_cpr_treshold) 
                     )
             }
 
@@ -2403,8 +2437,8 @@ protocol 'CPR_dyadic_agent' {
 
             state 'Target presentation' {
                 // Target coordinates according to RDP direction
-                CTRL_target_x                   = (sin((RDP_direction)*(pi/180)) * ((CTRL_start_area_size/2.4))) + RDP_x
-                CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * ((CTRL_start_area_size/2.4))) + RDP_y
+                CTRL_target_x                   = (sin((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_x
+                CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_y
 
                 live_queue_stimulus (target)
                 update_stimulus_display ()

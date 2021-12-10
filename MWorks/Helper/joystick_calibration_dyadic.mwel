@@ -1,0 +1,100 @@
+
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0, 0, 0)
+iodevice/mio mIO (
+    data_interval           = 1ms
+    joystick_x_raw          = IO_joystickX_raw
+    joystick_y_raw          = IO_joystickY_raw
+    joystick_x_calib        = IO_joystickX_norm
+    joystick_y_calib        = IO_joystickY_norm
+    joystick_direction      = IO_joystickDirection
+    joystick_strength       = IO_joystickStrength
+    looptime                = IO_looptime
+    )
+
+iodevice/getstream 'getStream' (
+    data_interval                           = 1ms
+    ip                                      = (string)'172.17.10.30'
+    port                                    = 3490
+    
+    name_01                                 = (string)'IO_joystickDirection'
+    stream_01                               = IO_joystickDirection2
+
+    name_02                                 = (string)'IO_joystickStrength'
+    stream_02                               = IO_joystickStrength2
+
+    name_03                                 = (string)'IO_joystickX_raw'
+    stream_03                               = IO_joystickX2_raw
+
+    name_04                                 = (string)'IO_joystickY_raw'
+    stream_04                               = IO_joystickY2_raw
+    
+    name_05                                 = (string)'IO_joystickX_norm'
+    stream_05                               = IO_joystickX2_norm
+
+    name_06                                 = (string)'IO_joystickY_norm'
+    stream_06                               = IO_joystickY2_norm
+
+//
+// Variables
+//
+
+var IO_looptime             = 0
+var js_X_max                = 0 (persistant = YES)
+var js_Y_max                = 0 (persistant = YES)
+var js_X_min                = 0 (persistant = YES)
+var js_Y_min                = 0 (persistant = YES)
+var js_norm                 = 0 (persistant = YES)
+var IO_joystickX_raw        = 0 
+var IO_joystickY_raw        = 0
+var IO_joystickX_norm       = 0 {
+    js_X_max                = max(js_X_max, IO_joystickX_norm)
+    js_X_min                = min(js_X_min, IO_joystickX_norm)
+}
+var IO_joystickY_norm       = 0 {
+    js_Y_max                = max(js_Y_max, IO_joystickY_norm)
+    js_Y_min                = min(js_Y_min, IO_joystickY_norm)
+}
+var IO_joystickDirection    = 0
+var IO_joystickStrength     = 0 {
+    js_norm                 = 1 / min(js_X_max, min(js_Y_max, min(-js_X_min, -js_Y_min)))
+}
+
+var js_X2_max               = 0 (persistant = YES)
+var js_Y2_max               = 0 (persistant = YES)
+var js_X2_min               = 0 (persistant = YES)
+var js_Y2_min               = 0 (persistant = YES)
+var js_norm2                = 0 (persistant = YES)
+var IO_joystickX2_raw       = 0 
+var IO_joystickY2_raw       = 0
+var IO_joystickX2_norm      = 0 {
+    js_X2_max               = max(js_X_max, IO_joystickX_norm)
+    js_X2_min               = min(js_X_min, IO_joystickX_norm)
+}
+var IO_joystickY2_norm      = 0 {
+    js_Y2_max               = max(js_Y_max, IO_joystickY_norm)
+    js_Y2_min               = min(js_Y_min, IO_joystickY_norm)
+}
+var IO_joystickDirection2   = 0
+var IO_joystickStrength2    = 0 {
+    js_norm2                = 1 / min(js_X2_max, min(js_Y2_max, min(-js_X2_min, -js_Y2_min)))
+}
+
+//
+// Protocols
+//
+
+protocol 'New Protocol' {
+    start_device_io (mIO)
+    start_device_io (getStream)
+    wait (
+        duration = 360
+        duration_units = s
+        )
+    stop_device_io (mIO)
+    stop_device_io (getStream)
+
+}

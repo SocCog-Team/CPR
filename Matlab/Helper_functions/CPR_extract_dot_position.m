@@ -6,7 +6,6 @@
 % addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 % cd /Users/fschneider/Desktop
 % fname = 'fschneider-CPR_dyatic_fxs_20210901-20210901-092758.mwk2';
-% fname = 'CPR_nessut_20210624_dyadic.mwk2';
 % d = MW_readFile(fname, 'include', {'IO_joystickDirection','IO_joystickStrength','#stimDisplay'}, 'dotPositions');
 
 idx             = [];

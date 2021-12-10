@@ -120,8 +120,9 @@ for iTrl = 1:length(trl.tEnd)
         
         % Build frame-wise vector for joystick data
         for iFrme = 1:length(t.frme_ts{cc})
-            fIdx                    = find(tmp_js_ts{cc} < t.frme_ts{cc}(iFrme),1,'last');  % Extract last entry before frame onset  
-            if sum(fIdx) == 0 || isempty(fIdx)        
+            fIdx                        = [];
+            fIdx                        = find(tmp_js_ts{cc} < t.frme_ts{cc}(iFrme),1,'last');  % Extract last entry before frame onset  
+            if sum(fIdx) == 0 || isempty(fIdx) || fIdx > length(tmp_js_dir{cc}) || fIdx > length(tmp_js_str{cc})        
                 t.js_dir{cc}(iFrme)     = nan;                                          % Write to vector
                 t.js_str{cc}(iFrme)     = nan;
             else
@@ -147,9 +148,10 @@ for iTrl = 1:length(trl.tEnd)
 
             % Frame-wise RDP direction
             for iFrme = 1:length(t.trl_frme_ts{cc})
+                fdIdx                           = [];
                 fdIdx                           = find(tmp_trl_rdp_dir_ts{cc} < t.trl_frme_ts{cc}(iFrme),1,'last'); 
                 
-                if sum(fdIdx) == 0 || isempty(fdIdx)
+                if sum(fdIdx) == 0 || isempty(fdIdx) || fdIdx > length(tmp_trl_rdp_dir{cc})
                     t.trl_rdp_dir{cc}(iFrme) 	= nan;                           	
                 else
                     t.trl_rdp_dir{cc}(iFrme)  	= tmp_trl_rdp_dir{cc}(fdIdx);                           
@@ -158,9 +160,10 @@ for iTrl = 1:length(trl.tEnd)
             
             % Frame-wise RDP coherence
             for iFrme = 1:length(t.trl_frme_ts{cc})
+                fcIdx                           = [];
                 fcIdx                           = find(tmp_trl_rdp_coh_ts{cc} < t.trl_frme_ts{cc}(iFrme),1,'last');
                 
-                if sum(fcIdx) == 0 || isempty(fcIdx)
+                if sum(fcIdx) == 0 || isempty(fcIdx) || fcIdx > length(tmp_trl_rdp_coh{cc})
                     t.trl_rdp_coh{cc}(iFrme)	= nan;
                 else
                     t.trl_rdp_coh{cc}(iFrme)	= tmp_trl_rdp_coh{cc}(fcIdx);
@@ -169,9 +172,10 @@ for iTrl = 1:length(trl.tEnd)
             
             % Frame-wise joystick data
             for iFrme = 1:length(t.trl_frme_ts{cc})
+                fjIdx                       = [];
                 fjIdx                       = find(tmp_trl_js_ts{cc} < t.trl_frme_ts{cc}(iFrme),1,'last');  
                 
-                if sum(fjIdx) == 0 || isempty(fjIdx)     
+                if sum(fjIdx) == 0 || isempty(fjIdx) || fjIdx > length(tmp_trl_js_dir{cc}) || fjIdx > length(tmp_trl_js_str{cc})  
                     t.trl_js_dir{cc}(iFrme)     = nan;                           	% Write to vector
                     t.trl_js_str{cc}(iFrme)     = nan;
                 else
@@ -186,11 +190,11 @@ for iTrl = 1:length(trl.tEnd)
             t.trl_fix{cc}           = getTrialData(d.value, trlIdx, idx.fixation);
             t.trl_fix_ts{cc}        = getTrialData(d.time, trlIdx, idx.fixation);
         else
+            t.trl_frme_ts{cc}       = nan;
             t.trl_rdp_dir{cc}       = nan;
             t.trl_rdp_coh{cc}       = nan;
             t.trl_js_dir{cc}        = nan;
             t.trl_js_str{cc}        = nan;
-            t.trl_js_ts{cc}         = nan;
             t.trl_eye_x{cc}         = nan;
             t.trl_eye_y{cc}         = nan;
             t.trl_eye_ts{cc}        = nan;

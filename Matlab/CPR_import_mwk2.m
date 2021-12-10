@@ -84,6 +84,7 @@ else
 
     else
         d     	= MW_readFile(fname, 'include', var_lst);                   % Import .mwk2 sesion file
+        %d     	= MW_readFile(fname, 'include', var_lst, 'dotPositions');   % Import .mwk2 sesion file
         
         if write_file
             disp('Save struct...')

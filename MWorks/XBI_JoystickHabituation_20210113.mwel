@@ -5,15 +5,15 @@
 
 stimulus_display 'Stimulus Display' (0, 0, 0)
 iodevice/mio mIO (
-    data_interval = 1ms
-    joystick_direction = IO_joystickDirection
-    joystick_strength = IO_joystickStrength
-    joystick_x_raw = IO_joystickX_raw
-    joystick_y_raw = IO_joystickY_raw
-    joystick_x_calib = IO_joystickX_calib
-    joystick_y_calib = IO_joystickY_calib
-    reward_a = IO_rewardA
-    joystick_color = 1,0,0
+    data_interval               = 1ms
+    joystick_direction          = IO_joystickDirection
+    joystick_strength           = IO_joystickStrength
+    joystick_x_raw              = IO_joystickX_raw
+    joystick_y_raw              = IO_joystickY_raw
+    joystick_x_calib            = IO_joystickX_calib
+    joystick_y_calib            = IO_joystickY_calib
+    reward_a                    = IO_rewardA
+    joystick_color              = 1,0,0
     )
 
 //
@@ -21,55 +21,55 @@ iodevice/mio mIO (
 //
 
 group ML {
-    var ML_trialStart = 0
-    var ML_trialEnd = 0
-    var ML_sync = 0
+    var ML_trialStart           = 0
+    var ML_trialEnd             = 0
+    var ML_sync                 = 0
 }
 
 group CTRL {
-    var CTRL_rewardVol_ml = 0
-    var CTRL_delayDuration = 0
-    var CTRL_IRI = 1000
-    var CTRL_joystickThreshold = .15
-    var CTRL_HitCounter = 0
-    var CTRL_Xmax = 11.4018
-    var CTRL_Ymax = 15.2024
-    var CTRL_time_response = 0
+    var CTRL_rewardVol_ml       = 0
+    var CTRL_delayDuration      = 0
+    var CTRL_IRI                = 0
+    var CTRL_joystickThreshold  = 0
+    var CTRL_HitCounter         = 0
+    var CTRL_Xmax               = 11.4018
+    var CTRL_Ymax               = 15.2024
+    var CTRL_time_response      = 0
     var CTRL_time_previous_response = 0
-    var CTRL_rewardDelay = 0
-    var CTRL_cursor_flash_flag = 0
-    var CTRL_cursor_radius = 1
-    var CTRL_cursor_flash_hz = 0
-    var CTRL_cursor_alpha = 1
-    var CTRL_start_area_alpha = 1
-    var CTRL_start_area_flag = 0
-    var CTRL_SuccessCounter = 0
-    var CTRL_ErrorCounter = 0
+    var CTRL_rewardDelay        = 0
+    var CTRL_cursor_flash_flag  = 0
+    var CTRL_cursor_radius      = 1
+    var CTRL_cursor_flash_hz    = 0
+    var CTRL_cursor_alpha       = 1
+    var CTRL_start_area_alpha   = 1
+    var CTRL_start_area_flag    = 0
+    var CTRL_SuccessCounter     = 0
+    var CTRL_ErrorCounter       = 0
 }
 
 group IO {
-    var IO_joystickX_raw = 0
-    var IO_joystickY_raw = 0
-    var IO_joystickX_calib = (float)(0)
-    var IO_joystickY_calib = (float)(0)
-    var IO_joystickDirection = (float)(0)
-    var IO_joystickStrength = (float)(0)
-    var IO_convX = 0
-    var IO_convY = 0
-    var IO_rewardA = 0
+    var IO_joystickX_raw        = 0
+    var IO_joystickY_raw        = 0
+    var IO_joystickX_calib      = (float)(0)
+    var IO_joystickY_calib      = (float)(0)
+    var IO_joystickDirection    = (float)(0)
+    var IO_joystickStrength     = (float)(0)
+    var IO_convX                = 0
+    var IO_convY                = 0
+    var IO_rewardA              = 0
 }
 
 group TRIAL {
-    var TRIAL_outcome = 0
-    var TRIAL_RT = 0
-    var TRIAL_RespDir = 0
-    var TRIAL_flash_flag = 0
+    var TRIAL_outcome           = 0
+    var TRIAL_RT                = 0
+    var TRIAL_RespDir           = 0
+    var TRIAL_flash_flag        = 0
 }
 
 group COL {
-    var col_r = 1
-    var col_g = 1
-    var col_b = 1
+    var col_r                   = 1
+    var col_g                   = 1
+    var col_b                   = 1
 }
 
 //
@@ -83,54 +83,39 @@ wav_file Success ('./sounds/reward.wav')
 //
 
 blank_screen Background (
-    color = .5,.5,.5
+    color                       = 0,0,0
     )
 
 circular_fixation_point start_area (
-    color = 0,0,0
-    trigger_width = CTRL_joystickThreshold * 20
-    trigger_watch_x = 0
-    trigger_watch_y = 0
-    trigger_flag = CTRL_start_area_flag
-    x_size = CTRL_joystickThreshold * 20
-    y_size = CTRL_joystickThreshold * 20
-    x_position = 0
-    y_position = 0
-    rotation = 0
-    alpha_multiplier = CTRL_start_area_alpha
+    color                       = .2,.2,.2
+    trigger_width               = CTRL_joystickThreshold * 20
+    trigger_watch_x             = 0
+    trigger_watch_y             = 0
+    trigger_flag                = CTRL_start_area_flag
+    x_size                      = CTRL_joystickThreshold * 20
+    y_size                      = CTRL_joystickThreshold * 20
+    x_position                  = 0
+    y_position                  = 0
+    rotation                    = 0
+    alpha_multiplier            = CTRL_start_area_alpha
     )
 
 stimulus/advstimulus cursor (
-    trigger_width = 0
-    trigger_watch_x = 0
-    trigger_watch_y = 0
-    trigger_flag = 0
-    x_size = CTRL_cursor_radius * 2
-    y_size = CTRL_cursor_radius * 2
-    x_position = CTRL_Xmax * IO_joystickX_calib
-    y_position = CTRL_Ymax * IO_joystickY_calib
-    shape = format("circle")
-    color = col_r,col_g,col_b
-    rotation = 0
-    alpha_multiplier = CTRL_cursor_alpha
-    version = 1
-    autoplay = YES
+    trigger_width               = 0
+    trigger_watch_x             = 0
+    trigger_watch_y             = 0
+    trigger_flag                = 0
+    x_size                      = CTRL_cursor_radius * 2
+    y_size                      = CTRL_cursor_radius * 2
+    x_position                  = CTRL_Xmax * IO_joystickX_calib
+    y_position                  = CTRL_Ymax * IO_joystickY_calib
+    shape                       = format("circle")
+    color                       = col_r,col_g,col_b
+    rotation                    = 0
+    alpha_multiplier            = CTRL_cursor_alpha
+    version                     = 1
+    autoplay                    = YES
     )
-
-//
-// Filters
-//
-
-
-//
-// Optimizers
-//
-
-
-//
-// Resources
-//
-
 
 //
 // Protocols
@@ -143,80 +128,89 @@ protocol 'Joystick movement' {
     live_queue_stimulus (cursor)
     update_stimulus_display ()
 
-    CTRL_rewardVol_ml = 0.25
-    CTRL_rewardDelay = 100
-    CTRL_IRI = 1000
-    CTRL_cursor_flash_hz = 4
-    CTRL_cursor_flash_flag = 0
+    CTRL_rewardVol_ml                   = 0.25
+    CTRL_joystickThreshold              = .2
+    CTRL_rewardDelay                    = 100
+    CTRL_IRI                            = 1000
+    CTRL_cursor_flash_hz                = 4
+    CTRL_cursor_flash_flag              = 0
 
     task 'Trial Loop' {
 
         state 'Wait for joystick reset' {
             goto (
-                target = 'Wait for response'
-                when = abs(IO_joystickStrength) < CTRL_joystickThreshold
+                target                  = 'Wait for response'
+                when                    = abs(IO_joystickStrength) < CTRL_joystickThreshold
                 )
         }
 
         state 'Wait for response' { 
             if (CTRL_cursor_flash_flag) {
                 start_timer (
-                    timer = FlashTimer
-                    duration = 1000/CTRL_cursor_flash_hz
-                    duration_units = ms
+                    timer               = FlashTimer
+                    duration            = 1000/CTRL_cursor_flash_hz
+                    duration_units      = ms
                     )
-                TRIAL_flash_flag = 0
+
+                TRIAL_flash_flag        = 0
+
                 if (CTRL_cursor_alpha == 0 && TRIAL_flash_flag == 0) {
-                    CTRL_cursor_alpha = 1
-                    TRIAL_flash_flag = 1
+                    CTRL_cursor_alpha   = 1
+                    TRIAL_flash_flag    = 1
                 }
+
                 if (CTRL_cursor_alpha == 1 && TRIAL_flash_flag == 0) {
-                    CTRL_cursor_alpha = 0
-                    TRIAL_flash_flag = 1
+                    CTRL_cursor_alpha   = 0
+                    TRIAL_flash_flag    = 1
                 }
             }
 
             if (CTRL_cursor_flash_flag == 0) {
                 start_timer (
-                    timer = FlashTimer
-                    duration = 10
-                    duration_units = s
+                    timer               = FlashTimer
+                    duration            = 10
+                    duration_units      = s
                     )
             }
 
             goto (
-                target = 'Response detected'
-                when = abs(IO_joystickStrength) > CTRL_joystickThreshold
+                target                  = 'Response detected'
+                when                    = abs(IO_joystickStrength) > CTRL_joystickThreshold
                 )
+
             timer_expired (
-                target = 'Wait for response'
-                timer = FlashTimer
+                target                  = 'Wait for response'
+                timer                   = FlashTimer
                 )
         }
 
         state 'Response detected' {
-            CTRL_cursor_alpha = 1
-            ML_sync = 1
-            ML_trialStart = ML_trialStart + 1
-            CTRL_time_response = now()
-            TRIAL_RT = round((CTRL_time_response - CTRL_time_previous_response)/1000)
-            TRIAL_RespDir = IO_joystickDirection
+            ML_sync                     = 1
+            CTRL_cursor_alpha           = 1
+            ML_trialStart               = ML_trialStart + 1
+            CTRL_time_response          = now()
+            TRIAL_RT                    = round((CTRL_time_response - CTRL_time_previous_response)/1000)
+            TRIAL_RespDir               = IO_joystickDirection
+
             report ('=> Joystick Response! Dir: $TRIAL_RespDir')
             
             if (TRIAL_RT > CTRL_IRI) {
-                col_r = 0
-                col_b = 0
-                CTRL_HitCounter = CTRL_HitCounter +1
+                col_r                   = 0
+                col_b                   = 0
+                CTRL_HitCounter         = CTRL_HitCounter +1
+
                 play_sound (Success)
             }
+
             if (TRIAL_RT < CTRL_IRI) {
-                col_g = 0
-                col_b = 0
+                col_g                   = 0
+                col_b                   = 0
             }
+
             start_timer (
-                timer = RewardDelayTimer
-                duration = CTRL_rewardDelay
-                duration_units = ms
+                timer                   = RewardDelayTimer
+                duration                = CTRL_rewardDelay
+                duration_units          = ms
                 )
             
             goto ('Delay reward')
@@ -224,21 +218,21 @@ protocol 'Joystick movement' {
 
         state 'Delay reward' {
             timer_expired (
-                target = 'Give reward'
-                timer = RewardDelayTimer
+                target                  = 'Give reward'
+                timer                   = RewardDelayTimer
                 )
         }
 
         state 'Give reward' {
             if (TRIAL_RT < CTRL_IRI) {
                 report ('=> No Reward!')
-                TRIAL_outcome = 'error'
-                CTRL_ErrorCounter = CTRL_ErrorCounter +1
+                TRIAL_outcome           = 'error'
+                CTRL_ErrorCounter       = CTRL_ErrorCounter +1
             }
             if (TRIAL_RT > CTRL_IRI) {
-                IO_rewardA = CTRL_rewardVol_ml
-                TRIAL_outcome = 'success'
-                CTRL_SuccessCounter = CTRL_SuccessCounter + 1
+                IO_rewardA              = CTRL_rewardVol_ml
+                TRIAL_outcome           = 'success'
+                CTRL_SuccessCounter     = CTRL_SuccessCounter + 1
                 report ('=> Reward!')
             }
             
@@ -247,11 +241,11 @@ protocol 'Joystick movement' {
 
         state 'End trial' {
             CTRL_time_previous_response = CTRL_time_response
-            col_r = 1
-            col_g = 1
-            col_b = 1
-            ML_sync = 1
-            ML_trialEnd = ML_trialStart
+            col_r                       = 1
+            col_g                       = 1
+            col_b                       = 1
+            ML_sync                     = 1
+            ML_trialEnd                 = ML_trialStart
             
             goto ('Wait for joystick reset')
         }
