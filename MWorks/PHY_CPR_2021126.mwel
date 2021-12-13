@@ -85,6 +85,7 @@ group CTRL {
     var CTRL_cpr_treshold                   = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
+    var CTRL_js_norm                        = 0 // SETUP CALIBRATION
     var CTRL_show_agent                     = 0
 
     var CTRL_arc_alpha                      = 0
@@ -160,8 +161,8 @@ group CTRL {
     var CTRL_hit_flag2                      = 0
     var CTRL_miss_flag2                     = 0
 
-    var CTRL_PreRT_ResponseWindow           = 0
-    var CTRL_PreSNR_StimDuration            = 0
+    var CTRL_response_window_ms             = 0
+    var CTRL_rdp_duration_ms                = 0
 
     var CTRL_cursor_radius                  = .5
 
@@ -234,13 +235,6 @@ group TMP {
     var lst_value                           = 0
     var fixationPoint_posY                  = 0
     var fixationPoint_posX                  = 0 
-    var js_norm                             = 0 (persistant = YES)
-    var js_X_min                            = 0 (persistant = YES)
-    var js_Y_min                            = 0 (persistant = YES)
-    var js_X_max                            = 0 (persistant = YES)
-    var js_Y_max                            = 0 (persistant = YES) {
-        js_norm                             = 1 / min(js_X_max, min(js_Y_max, min(-js_X_min, -js_Y_min)))
-    }
 }
 
 group ML {
@@ -383,7 +377,7 @@ group IO {
     }
     var IO_joystickStrength_norm            = 0                      
     var IO_joystickStrength                 = 0 {                     
-        IO_joystickStrength_norm            = min(1, (IO_joystickStrength * js_norm))
+        IO_joystickStrength_norm            = min(1, (IO_joystickStrength * CTRL_js_norm))
                    
   		if (TRIAL_start > TRIAL_end) {
             // Set arc width
@@ -1101,7 +1095,7 @@ protocol 'SNR Sensitivity' {
         
     CTRL_reward_ml                      = .5
     CTRL_NoTargets                  	= 400
-    CTRL_PreSNR_StimDuration            = 1000
+    CTRL_rdp_duration_ms                = 1000
     CTRL_start_area_size                = 4 
     CTRL_start_area_alpha               = 1
     CTRL_target_size                    = 5
@@ -1151,7 +1145,7 @@ protocol 'SNR Sensitivity' {
 
                 start_timer (
                     timer               = RDP_Timer
-                    duration            = CTRL_PreSNR_StimDuration
+                    duration            = CTRL_rdp_duration_ms
                     duration_units      = ms
                     )
 
@@ -1319,12 +1313,12 @@ protocol 'RT_measurement' {
     CTRL_reward_ml                      = .1
     CTRL_js_reward_ml                   = 0
     CTRL_NoTargets                  	= 300
-    CTRL_PreRT_ResponseWindow           = 3000
+    CTRL_response_window_ms             = 10000
     CTRL_target_delay_min_ms            = 500
     CTRL_target_delay_max_ms            = 1000
     CTRL_target_size                    = 6
     CTRL_target_alpha                   = .5
-    CTRL_target_offset                  = 8
+    CTRL_target_offset                  = 5
     CTRL_start_area_size                = 3 
     CTRL_start_area_alpha               = .3
     CTRL_ITI_ms                         = 1000
@@ -1409,8 +1403,8 @@ protocol 'RT_measurement' {
             state 'Show Target' {
                 report ('-- Show Target --')
                 CTRL_target_direction   = disc_rand(0,359)
-                CTRL_target_x           = sin((CTRL_target_direction)*(pi/180)) * (3 + (CTRL_target_size/2))
-                CTRL_target_y           = cos((CTRL_target_direction)*(pi/180)) * (3 + (CTRL_target_size/2))
+                CTRL_target_x           = sin((CTRL_target_direction)*(pi/180)) * CTRL_target_offset
+                CTRL_target_y           = cos((CTRL_target_direction)*(pi/180)) * CTRL_target_offset
                 TRIAL_type              = format("Dir%d", (integer)CTRL_target_direction)
 
                 dequeue_stimulus (start_area)
@@ -1422,7 +1416,7 @@ protocol 'RT_measurement' {
 
                 start_timer (
                     timer               = ResponseTimer
-                    duration            = CTRL_PreRT_ResponseWindow
+                    duration            = CTRL_response_window_ms
                     duration_units      = ms
                     )
 
@@ -1461,7 +1455,7 @@ protocol 'RT_measurement' {
                     IO_rewardA          = CTRL_reward_ml
                 }
                 
-                if (TRIAL_RT >= 1500 && TRIAL_RT < CTRL_PreRT_ResponseWindow) {
+                if (TRIAL_RT >= 1500 && TRIAL_RT < CTRL_response_window_ms) {
                     IO_rewardA          = CTRL_reward_ml / 2
                 }
 

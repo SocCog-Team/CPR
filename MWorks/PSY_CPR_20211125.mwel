@@ -184,7 +184,7 @@ group CTRL {
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
     //var CTRL_snr_list                       = [0.001, .1,.1682, .2828, .4757, .8]
-    var CTRL_snr_list                       = [0, .05, .1,.15, .20, .25, .30, .35, .4, .45, .5, .55, .6, .65, .7, .75, .8]
+    var CTRL_snr_list                       = [0, .05, .1,.15, .20, .25, .30, .35, .4, .45, .5, .6, .7, .8]
     var CTRL_directionChange_list           = [30,60,90]
     var CTRL_ITI_ms                         = 0
     var CTRL_change_mangitude               = 0
@@ -1760,7 +1760,7 @@ protocol 'RT measurement' {
     live_queue_stimulus (cursor)
         
     CTRL_RequiredHitNo                  = 200
-    CTRL_response_window_ms             = 5000
+    CTRL_response_window_ms             = 10000
     CTRL_target_delay_min_ms            = 500
     CTRL_target_delay_max_ms            = 1000
     CTRL_target_size                    = 4
@@ -1825,8 +1825,8 @@ protocol 'RT measurement' {
             state 'Show Target' {
                 report ('-- Show Target --')
                 CTRL_target_direction   = disc_rand(0,359)
-                CTRL_target_x           = sin((CTRL_target_direction)*(pi/180)) * (3 + (CTRL_target_size/2))
-                CTRL_target_y           = cos((CTRL_target_direction)*(pi/180)) * (3 + (CTRL_target_size/2))
+                CTRL_target_x           = sin((CTRL_target_direction)*(pi/180)) * CTRL_target_offset
+                CTRL_target_y           = cos((CTRL_target_direction)*(pi/180)) * CTRL_target_offset
 
                 dequeue_stimulus (start_area)
                 live_queue_stimulus (target)

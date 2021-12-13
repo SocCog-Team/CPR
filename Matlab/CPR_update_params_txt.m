@@ -12,6 +12,7 @@ end
 % Update stimulus
 var_names           = {'RDP_direction',...
                         'RDP_coherence',...
+                        'RDP_coherence_cnt',...
                         'CTRL_state_duration',...
                         'CTRL_target_ts'};
 
@@ -26,9 +27,12 @@ for iVar = 1:size(var_names,2)
         vec         = sprintf('%f\n', STATES.RDP_coherence);
         vec         = vec(1:end-1); 
     elseif iVar == 3
+        vec         = sprintf('%d\n', STATES.RDP_coherence_cnt);
+        vec         = vec(1:end-1);
+    elseif iVar == 4
         vec         = sprintf('%d\n', STATES.state_duration_ms);
         vec         = vec(1:end-1); 
-    elseif iVar == 4
+    elseif iVar == 5
         vec         = sprintf('%d\n', STATES.target_ts);
         vec         = vec(1:end-1); 
     end

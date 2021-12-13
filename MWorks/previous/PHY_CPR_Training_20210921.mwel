@@ -773,7 +773,7 @@ protocol 'Calibration-9p' {
     update_stimulus_display ()
     stop_device_io (Eyelink)
 }
-*/
+
 protocol 'Pre-test SNR' {
     start_device_io (mIO)
     //start_device_io (Eyelink)
@@ -987,7 +987,7 @@ protocol 'Pre-test SNR' {
     }
     //stop_device_io (Eyelink)
 }
-/*
+
 protocol 'Pre-test RT' {
     start_device_io (mIO)
     live_queue_stimulus (Background)
@@ -1193,7 +1193,7 @@ protocol 'Pre-test RT' {
         }
     }
 }
-
+*/
 protocol 'CPR_solo' {
     report ('Hello! Starting Experiment...')
     start_device_io (mIO)
@@ -1611,4 +1611,4 @@ protocol 'CPR_solo' {
         }
     }
     stop_device_io (Eyelink)
-}*/
+}
