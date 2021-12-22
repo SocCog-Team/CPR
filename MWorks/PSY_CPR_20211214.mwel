@@ -119,7 +119,7 @@ iodevice/getstream 'getStream' (
     stream_23                               = EYE_sampleTime2
     )
 
-// psycho4
+// primary
 standard_eye_calibrator EyeCalibrator (
     eyeh_raw                                = EYE_x_raw
     eyev_raw                                = EYE_y_raw
@@ -136,7 +136,7 @@ basic_eye_monitor EyeMonitor (
     saccade_exit_speed                      = 20
     )
 
-// psycho3
+// secondary - streamed variables
 standard_eye_calibrator EyeCalibrator2 (
     eyeh_raw                                = EYE_x2_raw
     eyev_raw                                = EYE_x2_raw
@@ -184,7 +184,7 @@ group CTRL {
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
     //var CTRL_snr_list                       = [0.001, .1,.1682, .2828, .4757, .8]
-    var CTRL_snr_list                       = [0, .05, .1,.15, .20, .25, .30, .35, .4, .45, .5, .6, .7, .8]
+    var CTRL_snr_list                       = [0, .05, .1,.15, .20, .25, .30, .35, .4, .45, .5, .55, .6, .65, .7, .75, .8]
     var CTRL_directionChange_list           = [30,60,90]
     var CTRL_ITI_ms                         = 0
     var CTRL_change_mangitude               = 0
@@ -233,6 +233,13 @@ group CTRL {
     var CTRL_feedback_alpha 				= 0
     var CTRL_feedback_ms                    = 0
     var CTRL_feedback_flag                  = 0
+    var CTRL_feedback_bar_height            = 0
+    var CTRL_feedback2_bar_height           = 0
+    var CTRL_feedback_bar_width             = 0
+    var CTRL_feedback_offset_x              = 0
+    var CTRL_feedback_frame_width           = 0
+    var CTRL_feedback_frame_height          = 0
+    var CTRL_feedback_rotation              = 0
 
     var CTRL_hit_flag 					    = 0
     var CTRL_miss_flag                      = 0
@@ -260,8 +267,8 @@ group CTRL {
     var CTRL_fixation_penalty_flag          = 0
     var CTRL_fixation2_break_flag           = 0
     var CTRL_fixation2_penalty_flag         = 0
-    var CTRL_minFixBreak_duration_ms        = 250
-    var CTRL_fixBreak_penalty_duration_ms   = 250
+    var CTRL_minFixBreak_duration_ms        = 300
+    var CTRL_fixBreak_penalty_duration_ms   = 0
 
     var CTRL_scoreBar_width                 = 0
     var CTRL_scoreBar_size                  = 19.2
@@ -387,7 +394,7 @@ group RDP {
     var RDP_dotsize                         = .1
     var RDP_speed                           = 10
     var RDP_coherence                       = 0
-    var RDP_lifetime                        = (1/120) * 25 * 1000
+    var RDP_lifetime                        = (1/120) * 25 * 1000 // 25 frames
     var RDP_alpha                        	= 1
     var RDP_seed                            = 1
 }
@@ -432,9 +439,9 @@ group COL {
     var COL_scoreBar2_r                     = 0
     var COL_scoreBar2_g                     = 1
     var COL_scoreBar2_b                     = 0
-    var COL_targetBar_r                     = .1
-    var COL_targetBar_g                     = .1
-    var COL_targetBar_b                     = .1
+    var COL_targetBar_r                     = .3
+    var COL_targetBar_g                     = .3
+    var COL_targetBar_b                     = .3
 }
 
 group AGNT {
@@ -599,6 +606,7 @@ group IO {
     }
 }
 
+
 group Paths {
     var fname_rdp_dir                       = '/Users/cnl/Desktop/Felix/CPR/RDP_direction.txt'
     var fname_rdp_coh                       = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence.txt'
@@ -706,7 +714,7 @@ blank_screen Background (
     color                       			= COL_bg_r,COL_bg_g,COL_bg_b
     )
 
-stimulus/advstimulus fixationPoint_psycho3 (
+stimulus/advstimulus fixationPoint_primarySetup (
     trigger_width                           = CTRL_fixationWidth_dva
     trigger_watch_x                         = EYE_x_dva
     trigger_watch_y                         = EYE_y_dva
@@ -723,7 +731,7 @@ stimulus/advstimulus fixationPoint_psycho3 (
     autoplay                                = YES
     )
 
-stimulus/advstimulus fixationPoint_psycho4 (
+stimulus/advstimulus fixationPoint_secondarySetup (
     trigger_width                           = CTRL_fixationWidth_dva
     trigger_watch_x                         = EYE_x2_dva
     trigger_watch_y                         = EYE_y2_dva
@@ -1090,7 +1098,7 @@ stimulus/advstimulus targetBar (
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)CTRL_targetBar_width)    
     color                                   = COL_targetBar_r,COL_targetBar_g,COL_targetBar_b
-    rotation                                = 0
+    rotation                                = CTRL_feedback_rotation
     alpha_multiplier                        = CTRL_targetBar_alpha
     version                                 = 1
     autoplay                                = YES
@@ -1141,7 +1149,7 @@ stimulus/advstimulus scoreBar (
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)CTRL_scoreBar_width)    
     color                                   = COL_scoreBar_r,COL_scoreBar_g,COL_scoreBar_b
-    rotation                                = 0
+    rotation                                = CTRL_feedback_rotation
     alpha_multiplier                        = CTRL_scoreBar_alpha
     version                                 = 1
     autoplay                                = YES
@@ -1192,7 +1200,7 @@ stimulus/advstimulus scoreBar2 (
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)CTRL_scoreBar2_width)    
     color                                   = COL_scoreBar2_r,COL_scoreBar2_g,COL_scoreBar2_b
-    rotation                                = 0
+    rotation                                = CTRL_feedback_rotation
     alpha_multiplier                        = CTRL_scoreBar2_alpha
     version                                 = 1
     autoplay                                = YES
@@ -1232,6 +1240,67 @@ stimulus/advstimulus scoreBarMask2 (
     autoplay                                = YES
     )
 
+stimulus/rectangle cum_rew_bar_frame_solo (
+    x_size                                  = CTRL_feedback_bar_width + CTRL_feedback_frame_width
+    y_size                                  = CTRL_feedback_frame_height + CTRL_feedback_frame_width
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = 1,1,1
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_rew_bar_surface_solo (
+    x_size                                  = CTRL_feedback_bar_width
+    y_size                                  = CTRL_feedback_frame_height
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = 0,0,0
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_rew_bar_frame (
+    x_size                                  = (CTRL_feedback_bar_width*2) + (CTRL_feedback_frame_width*2)
+    y_size                                  = CTRL_feedback_frame_height + CTRL_feedback_frame_width
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = 1,1,1
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_rew_bar_surface(
+    x_size                                  = CTRL_feedback_bar_width*2
+    y_size                                  = CTRL_feedback_frame_height
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = 0,0,0
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_rew_bar (
+    x_size                                  = CTRL_feedback_bar_width
+    y_size                                  = CTRL_feedback_bar_height
+    x_position                              = -CTRL_feedback_offset_x
+    y_position                              = (CTRL_feedback_bar_height/2) - (CTRL_feedback_frame_height/2)
+    color                                   = COL_feedback_r,COL_feedback_g,COL_feedback_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_rew_bar2 (
+    x_size                                  = CTRL_feedback_bar_width
+    y_size                                  = CTRL_feedback2_bar_height
+    x_position                              = CTRL_feedback_offset_x
+    y_position                              = (CTRL_feedback2_bar_height/2) - (CTRL_feedback_frame_height/2)
+    color                                   = COL_feedback2_r,COL_feedback2_g,COL_feedback2_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+
 //
 // Filters
 //
@@ -1249,7 +1318,7 @@ stimulus/advstimulus scoreBarMask2 (
 //
 
 
-protocol 'Calibration-9p_psycho4' {
+protocol 'Calibration-9p_primarySetup' {
     report ('******** STARTING CALIBRATION ********')
     start_device_io (Eyelink)
     clear_calibration (EyeCalibrator)
@@ -1271,7 +1340,7 @@ protocol 'Calibration-9p_psycho4' {
             }
             
             state SHOW_CALIBRATION_POINT {
-                live_queue_stimulus (fixationPoint_psycho3)
+                live_queue_stimulus (fixationPoint_primarySetup)
                 report ($IO_calib_fixation_flag)
                 report ('Calibration Trial; Fixation point at x= $fixationPoint_posX , y= $fixationPoint_posY , fixation width = $CTRL_fixationWidth_dva')
                 update_stimulus_display ()
@@ -1326,12 +1395,12 @@ protocol 'Calibration-9p_psycho4' {
             state ACCEPT_SAMPLES {
                 end_calibration_average_and_take_sample (
                     calibrator          = EyeCalibrator
-                    calibratable_object = fixationPoint_psycho3
+                    calibratable_object = fixationPoint_primarySetup
                     )
                 
                 cnt                     += 1
                 play_sound (Reward_sound)
-                dequeue_stimulus (fixationPoint_psycho3)
+                dequeue_stimulus (fixationPoint_primarySetup)
                 update_stimulus_display ()
                 accept_selections (EYE_pos)
                 report ('Fixation Maintained -- Trial Accepted !!!')
@@ -1353,7 +1422,7 @@ protocol 'Calibration-9p_psycho4' {
             state FIXATION_BREAK {
                 play_sound (Failure_sound)
                 end_calibration_average_and_ignore (EyeCalibrator)
-                dequeue_stimulus (fixationPoint_psycho3)
+                dequeue_stimulus (fixationPoint_primarySetup)
                 update_stimulus_display ()
                 reject_selections (EYE_pos)
                 report ('Fixation Lost -- Trial Rejected.')
@@ -1395,7 +1464,7 @@ protocol 'Calibration-9p_psycho4' {
     stop_device_io (Eyelink)
 }
 
-protocol 'Calibration-9p_psycho3' {
+protocol 'Calibration-9p_secondarySetup' {
     report ('******** STARTING CALIBRATION ********')
     start_device_io (getStream)
     clear_calibration (EyeCalibrator2)
@@ -1417,7 +1486,7 @@ protocol 'Calibration-9p_psycho3' {
             }
             
             state SHOW_CALIBRATION_POINT {
-                live_queue_stimulus (fixationPoint_psycho4)
+                live_queue_stimulus (fixationPoint_secondarySetup)
                 report ($IO_calib_fixation2_flag)
                 report ('Calibration Trial; Fixation point at x= $fixationPoint_posX , y= $fixationPoint_posY , fixation width = $CTRL_fixationWidth_dva')
                 update_stimulus_display ()
@@ -1472,12 +1541,12 @@ protocol 'Calibration-9p_psycho3' {
             state ACCEPT_SAMPLES {
                 end_calibration_average_and_take_sample (
                     calibrator          = EyeCalibrator2
-                    calibratable_object = fixationPoint_psycho4
+                    calibratable_object = fixationPoint_secondarySetup
                     )
                 
                 cnt                     += 1
                 play_sound (Reward_sound)
-                dequeue_stimulus (fixationPoint_psycho4)
+                dequeue_stimulus (fixationPoint_secondarySetup)
                 update_stimulus_display ()
                 accept_selections (EYE_pos)
                 report ('Fixation Maintained -- Trial Accepted !!!')
@@ -1499,7 +1568,7 @@ protocol 'Calibration-9p_psycho3' {
             state FIXATION_BREAK {
                 play_sound (Failure_sound)
                 end_calibration_average_and_ignore (EyeCalibrator2)
-                dequeue_stimulus (fixationPoint_psycho4)
+                dequeue_stimulus (fixationPoint_secondarySetup)
                 update_stimulus_display ()
                 reject_selections (EYE_pos)
                 report ('Fixation Lost -- Trial Rejected.')
@@ -1561,7 +1630,10 @@ protocol 'SNR sensitivity' {
     TRIAL_start                         = 0
     TRIAL_end                           = 0
     CTRL_fixationWidth_dva              = CTRL_start_area_size+1
-
+    COL_start_area_r 					= 0
+	COL_start_area_g 					= 0
+	COL_start_area_b 					= 0
+	
     trial 'Main Task System' {
         task LOOP {
             state 'Wait [Joystick Reset]' {
@@ -1759,16 +1831,16 @@ protocol 'RT measurement' {
     live_queue_stimulus (Background)
     live_queue_stimulus (cursor)
         
-    CTRL_RequiredHitNo                  = 200
+    CTRL_RequiredHitNo                  = 300
     CTRL_response_window_ms             = 10000
     CTRL_target_delay_min_ms            = 500
     CTRL_target_delay_max_ms            = 1000
-    CTRL_target_size                    = 4
+    CTRL_target_size                    = 5
     CTRL_target_alpha                   = .5
     CTRL_target_offset                  = 8
     CTRL_start_area_size                = 3 
     CTRL_start_area_alpha               = .3
-    CTRL_ITI_ms                         = 1000
+    CTRL_ITI_ms                         = 500
     INFO_HitCounter                     = 0
     INFO_ErrorCounter                   = 0
     TRIAL_start                         = 0
@@ -1950,7 +2022,7 @@ protocol 'CPR_solo' {
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4
-    CTRL_indicator_size                         = .3
+    CTRL_indicator_size                         = .4
     CTRL_indicator_offset                       = CTRL_arc_size/1.95
     CTRL_indicator_alpha                        = 1
     CTRL_start_area_size                        = 4 
@@ -1962,14 +2034,19 @@ protocol 'CPR_solo' {
     CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 300
 	CTRL_target_alpha                   		= 1
-    CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
-    CTRL_ITI_ms                                 = 1000
+    CTRL_ITI_ms                                 = 2000
     CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
     CTRL_show_agent                             = false
-	
+    CTRL_feedback_bar_width                     = 4
+    CTRL_feedback_offset_x                      = 0
+    CTRL_feedback_frame_width                   = .2
+    CTRL_feedback_frame_height                  = 10
+    CTRL_feedback_bar_height                    = 0
+
     // Reset counters
     TRIAL_start                                 = 0
     TRIAL_end                                   = 0
@@ -2037,6 +2114,9 @@ protocol 'CPR_solo' {
             
             state 'Wait for Joystick Movement' {
                 live_queue_stimulus (start_area)
+                dequeue_stimulus (cum_rew_bar_frame_solo)
+                dequeue_stimulus (cum_rew_bar_surface_solo)
+                dequeue_stimulus (cum_rew_bar)
                 update_stimulus_display ()
 
             	COL_start_area_r 				= 1
@@ -2063,6 +2143,7 @@ protocol 'CPR_solo' {
                 COL_start_area_r                = 0 
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
+                CTRL_feedback_rotation          = disc_rand(0,359)
 
                 // Set TMP variables for online processing
                 TMP_NoStates                    = CTRL_NoStates
@@ -2391,6 +2472,13 @@ protocol 'CPR_solo' {
             }
 
             state ITI {
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                
+                live_queue_stimulus (cum_rew_bar_frame_solo)
+                live_queue_stimulus (cum_rew_bar_surface_solo)
+                live_queue_stimulus (cum_rew_bar)
+                update_stimulus_display ()   
+
                 // Wait for update to be finished                
                 while (CTRL_counter[0] != TRIAL_start) {
                     wait (
@@ -2446,7 +2534,7 @@ protocol 'CPR_dyadic_agent' {
     CTRL_arc_alpha                              = 1
     CTRL_arc2_alpha                             = 1
     CTRL_arc_size                               = 4
-    CTRL_indicator_size                         = .3
+    CTRL_indicator_size                         = .4
     CTRL_indicator_offset                       = CTRL_arc_size/1.95
     CTRL_indicator_alpha                        = 1
     CTRL_indicator2_alpha                       = 1
@@ -2461,12 +2549,19 @@ protocol 'CPR_dyadic_agent' {
     CTRL_target_ban_duration_ms                 = 300
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
-    CTRL_ITI_ms                                 = 1000
+    CTRL_ITI_ms                                 = 2000
     CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
     CTRL_show_agent                             = true
     AGNT_arc_size                               = CTRL_arc_size + (CTRL_arc_size/10)
     AGNT_indicator_offset                       = AGNT_arc_size/1.95
+    CTRL_feedback_bar_width                     = 2
+    CTRL_feedback_offset_x                      = 1
+    CTRL_feedback_frame_width                   = .2
+    CTRL_feedback_frame_height                  = 10
+    CTRL_feedback_bar_height                    = 0
+    CTRL_feedback2_bar_height                   = 0
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2539,6 +2634,10 @@ protocol 'CPR_dyadic_agent' {
             
             state 'Wait for Joystick Movement' {
                 live_queue_stimulus (start_area)
+                dequeue_stimulus (cum_rew_bar_frame)
+                dequeue_stimulus (cum_rew_bar_surface)
+                dequeue_stimulus (cum_rew_bar)
+                dequeue_stimulus (cum_rew_bar2)
                 update_stimulus_display ()
 
                 COL_start_area_r                = 1
@@ -2570,6 +2669,7 @@ protocol 'CPR_dyadic_agent' {
                 COL_feedback_r                  = 1
                 COL_feedback_g                  = 0
                 COL_feedback_b                  = 0
+                CTRL_feedback_rotation          = disc_rand(0,359)
 
                 // Set TMP variables for online processing
                 TMP_NoStates                    = CTRL_NoStates
@@ -3039,6 +3139,15 @@ protocol 'CPR_dyadic_agent' {
             }
 
             state 'ITI' {
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                
+                live_queue_stimulus (cum_rew_bar_frame)
+                live_queue_stimulus (cum_rew_bar_surface)
+                live_queue_stimulus (cum_rew_bar)
+                live_queue_stimulus (cum_rew_bar2)
+                update_stimulus_display ()   
+
                 // Wait for update to be finished                
                 while (CTRL_counter[0] != TRIAL_start) {
                     wait (
@@ -3098,11 +3207,11 @@ protocol 'CPR_dyatic' {
     CTRL_arc_alpha                              = 1
     CTRL_arc2_alpha                             = 1
     CTRL_arc_size                               = 4
-    CTRL_indicator_size                         = .3
+    CTRL_indicator_size                         = .4
     CTRL_indicator_offset                       = CTRL_arc_size/1.95
-    CTRL_indicator2_offset                      = 3.3/1.95
     CTRL_indicator_alpha                        = 1
     CTRL_indicator2_alpha                       = 1
+    CTRL_indicator2_offset                    	= 4.4 / 1.95
     CTRL_start_area_size                        = 4 
     CTRL_start_area_alpha                       = 1
     CTRL_target_size                            = .5
@@ -3112,13 +3221,19 @@ protocol 'CPR_dyatic' {
     CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 300
     CTRL_target_alpha                           = 1
-    CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
-    CTRL_ITI_ms                                 = 1000
+    CTRL_ITI_ms                                 = 2000
     CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
     CTRL_show_agent                             = false
+    CTRL_feedback_bar_width                     = 2
+    CTRL_feedback_offset_x                      = 1
+    CTRL_feedback_frame_width                   = .2
+    CTRL_feedback_frame_height                  = 10
+    CTRL_feedback_bar_height                    = 0
+    CTRL_feedback2_bar_height                   = 0
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -3190,6 +3305,10 @@ protocol 'CPR_dyatic' {
             
             state 'Wait for Joystick Movement' {
                 live_queue_stimulus (start_area)
+                dequeue_stimulus (cum_rew_bar_frame)
+                dequeue_stimulus (cum_rew_bar_surface)
+                dequeue_stimulus (cum_rew_bar)
+                dequeue_stimulus (cum_rew_bar2)
                 update_stimulus_display ()
 
                 COL_start_area_r                = 1
@@ -3218,6 +3337,7 @@ protocol 'CPR_dyatic' {
                 COL_start_area_r                = 0 
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
+                CTRL_feedback_rotation          = disc_rand(0,359)
 
                 // Set TMP variables for online processing
                 TMP_NoStates                    = CTRL_NoStates
@@ -3705,6 +3825,9 @@ protocol 'CPR_dyatic' {
                 dequeue_stimulus (arc2)
                 dequeue_stimulus (arcMask2)
                 dequeue_stimulus (indicator2)   
+                dequeue_stimulus (arc)
+                dequeue_stimulus (arcMask)
+                dequeue_stimulus (indicator)   
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
                 dequeue_stimulus (feedback1)
@@ -3725,7 +3848,16 @@ protocol 'CPR_dyatic' {
             }
 
             state ITI {
-                                // Wait for update to be finished                
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                
+                live_queue_stimulus (cum_rew_bar_frame)
+                live_queue_stimulus (cum_rew_bar_surface)
+                live_queue_stimulus (cum_rew_bar)
+                live_queue_stimulus (cum_rew_bar2)
+                update_stimulus_display ()   
+
+                // Wait for update to be finished                
                 while (CTRL_counter[0] != TRIAL_start) {
                     wait (
                         duration                = 100

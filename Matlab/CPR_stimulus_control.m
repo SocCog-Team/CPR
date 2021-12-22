@@ -33,7 +33,7 @@ if param.trial == 0
     out.RDP_coherence_cnt(2,:)      = out.RDP_coherence_cnt(1,:) == out.RDP_coherence(1);
 else
     tmp                             = load([param.pth 'RDP_coherence_cnt.txt']);                                            % Import .txt file
-    out.RDP_coherence_cnt           = reshape(tmp, [2 length(tmp)/2]);                                        % Reshape to matrix  
+    out.RDP_coherence_cnt           = reshape(tmp, [2 length(tmp)/2]);                                                      % Reshape to matrix  
     [val,ind]                       = sort(out.RDP_coherence_cnt(2,:));                                                     % Sort according to count
     coh_pool                       	= ind(val == min(val));                                                                 % Extract indizes with minimum value
     out.RDP_coherence(1)        	= param.snr_list(coh_pool(randi([1 length(coh_pool)])));                                % Draw from this coherence pool

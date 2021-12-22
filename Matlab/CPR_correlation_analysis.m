@@ -71,6 +71,10 @@ for iTrl = 1:size(ts,1)
     js_dff                      = [0 js_dff];
     rdp_dff                     = [0 rdp_dff];
     
+    % NANs coming from table-building or MWorks?!
+    js_dff(isnan(js_dff))       = [];
+    rdp_dff(isnan(js_dff))      = [];
+    
     % Extract coherence chunks
     cindx                       = diff(rdp_coh{iTrl}) ~=0;
     cid                         = rdp_coh{iTrl}([true cindx]);

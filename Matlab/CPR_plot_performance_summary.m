@@ -82,7 +82,7 @@ for iSubj = 1:size(tbl,2)
     p.LineStyle                 = '-';
     p.Color                     = [1 1 1];
     s.YLim                      = [0 rew(end)];
-    s.YLabel.String             = ['Cumulative reward' rew_str];
+    s.YLabel.String             = ['Cumulative reward ' rew_str];
     
     x                           = [p.XData(1),repelem(p.XData(2:end),2)];       % Fill area
     y                           = [repelem(p.YData(1:end-1),2),p.YData(end)];

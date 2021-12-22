@@ -1553,7 +1553,7 @@ protocol 'CPR_solo' {
     CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4.75
     CTRL_indicator_size                         = .5
-    CTRL_indicator_offset                       = CTRL_arc_size/1.9
+    CTRL_indicator_offset                       = CTRL_arc_size/1.91
     CTRL_indicator_alpha                        = 1
     CTRL_start_area_size                        = 5 
     CTRL_start_area_alpha                       = 1
@@ -2094,7 +2094,7 @@ protocol 'CPR_dyadic_agent' {
     CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4.75
     CTRL_indicator_size                         = .5
-    CTRL_indicator_offset                       = CTRL_arc_size/1.9
+    CTRL_indicator_offset                       = CTRL_arc_size/1.91
     CTRL_indicator_alpha                        = 1
     CTRL_start_area_size                        = 5 
     CTRL_start_area_alpha                       = 1

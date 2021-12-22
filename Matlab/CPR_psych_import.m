@@ -131,13 +131,8 @@ if strcmp(subj, 'cla') || strcmp(subj, 'nil')
     idx.reward              = d.event == 'INFO_Juice_ml';
     rew_str                 = 'ml';
 else
-    if str2num(fid) < 20210401
-        idx.reward      	= d.event == 'INFO_ExtraCash';
-        rew_str         	= 'EUR';
-    else
-        idx.reward      	= d.event == 'INFO_Cash';
-        rew_str          	= 'EUR';
-    end
+    idx.reward              = d.event == 'INFO_Score';
+    rew_str                 = 'EUR';
 end
 
 if contains(fname,'dyadic')
@@ -147,7 +142,7 @@ if contains(fname,'dyadic')
     idx.outcome2          	= d.event == 'TRIAL_outcome2';
     idx.eye_x2_dva       	= d.event == 'EYE_x2_dva';
     idx.eye_y2_dva       	= d.event == 'EYE_y2_dva';
-    idx.reward2           	= d.event == 'INFO_Cash2';
+    idx.reward2           	= d.event == 'INFO_Score2';
 elseif contains(fname,'agent')
     idx.JS2_dir          	= d.event == 'AGNT_direction';
     idx.JS2_str         	= d.event == 'AGNT_strength';
@@ -155,7 +150,7 @@ elseif contains(fname,'agent')
     idx.outcome2          	= d.event == 'TRIAL_outcome2';
     idx.eye_x2_dva       	= zeros(1,length(d.event));
     idx.eye_y2_dva       	= zeros(1,length(d.event));
-    idx.reward2           	= d.event == 'INFO_Cash2';      
+    idx.reward2           	= d.event == 'INFO_Score2';      
 end
 
 % Get trial timestamps
