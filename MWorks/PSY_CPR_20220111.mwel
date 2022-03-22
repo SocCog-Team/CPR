@@ -17,6 +17,7 @@ iodevice/mio mIO (
     //joystick_b_y_raw                        = IO_joystickY_raw2
     )
 
+
 eyelink Eyelink (
     data_interval                           = 1ms
     eye_rx                                  = EYE_rightX_raw
@@ -136,7 +137,7 @@ basic_eye_monitor EyeMonitor (
 // secondary - streamed variables
 standard_eye_calibrator EyeCalibrator2 (
     eyeh_raw                                = EYE_x2_raw
-    eyev_raw                                = EYE_x2_raw
+    eyev_raw                                = EYE_y2_raw
     eyeh_calibrated                         = EYE_x2_dva
     eyev_calibrated                         = EYE_y2_dva
     )
@@ -187,14 +188,16 @@ group CTRL {
     var CTRL_cpr_treshold                   = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
-    var CTRL_js_norm                        = 1.11559 // physio4: joystick calibration 
-    var CTRL_js_norm2                       = 1.07798 // physio3: joystick calibration
+    var CTRL_js_norm                        = 1.12048 // physio4: joystick calibration 
+    var CTRL_js_norm2                       = 1.09882 // physio3: joystick calibration
     var CTRL_show_agent                     = 0
 
     var CTRL_arc_alpha                      = 0
     var CTRL_arc_flag                       = 0
     var CTRL_arc2_flag                      = 0
-    var CTRL_arc2_alpha                     = 0
+    var CTRL_arc2_alpha                     = 0 {
+    	CTRL_indicator2_alpha               = CTRL_arc2_alpha
+    }
     var CTRL_arc_size                       = 0
     var CTRL_arc2_size                      = 0
 
@@ -236,6 +239,8 @@ group CTRL {
     var CTRL_feedback_frame_width           = 0
     var CTRL_feedback_frame_height          = 0
     var CTRL_feedback_rotation              = 0
+    var CTRL_feedback_target_bar_height     = 0
+    var CTRL_feedback_nBar                  = 0
 
     var CTRL_hit_flag 					    = 0
     var CTRL_miss_flag                      = 0
@@ -267,17 +272,13 @@ group CTRL {
     var CTRL_fixBreak_penalty_duration_ms   = 0
 
     var CTRL_scoreBar_width                 = 0
-    var CTRL_scoreBar_size                  = 19.2
+    var CTRL_scoreBar_size                  = 18.2
     var CTRL_scoreBar_alpha                 = .5
-    var CTRL_scoreBarBackground_alpha       = .05
+    var CTRL_scoreBarBackground_alpha       = .15
     var CTRL_scoreBar2_width                = 0
-    var CTRL_scoreBar2_size                 = 20.4
+    var CTRL_scoreBar2_size                 = 19.4
     var CTRL_scoreBar2_alpha                = .5
-    var CTRL_scoreBarBackground2_alpha      = .05
-    var CTRL_targetBar_width                = 0
-    var CTRL_targetBar_size                 = 18
-    var CTRL_targetBar_alpha                = .5
-    var CTRL_targetBarBackground_alpha      = .05
+    var CTRL_scoreBarBackground2_alpha      = .15
     var CTRL_barwidth                       = .9
 }
 
@@ -388,7 +389,7 @@ group RDP {
     var RDP_x                               = 0
     var RDP_density                         = 2.5
     var RDP_dotsize                         = .1
-    var RDP_speed                           = 10
+    var RDP_speed                           = 8
     var RDP_coherence                       = 0
     var RDP_lifetime                        = (1/120) * 25 * 1000 // 25 frames
     var RDP_alpha                        	= 1
@@ -695,12 +696,25 @@ filter/file2array AGENT_strength_txt (
 //
 
 wav_file Acquire_sound ('./sounds/acquire.wav')
-wav_file Failure_sound ('./sounds/failure2.wav')
 wav_file Reward_sound ('./sounds/reward.wav')
-wav_file Reward_sound_2 ('./sounds/reward_2.wav')
-wav_file Reward_sound_3 ('./sounds/reward_3.wav')
-wav_file SuperReward_sound ('./sounds/Power Up.wav')
+wav_file Failure_sound ('./sounds/failure2.wav')
 wav_file End_sound ('./sounds/Defeat Bowser.wav')
+wav_file Reward1R_sound ('./sounds/1R.wav')
+wav_file Reward1L_sound ('./sounds/1L.wav')
+wav_file Reward2R_sound ('./sounds/2R.wav')
+wav_file Reward2L_sound ('./sounds/2L.wav')
+wav_file Reward3R_sound ('./sounds/3R.wav')
+wav_file Reward3L_sound ('./sounds/3L.wav')
+wav_file Reward4R_sound ('./sounds/4R.wav')
+wav_file Reward4L_sound ('./sounds/4L.wav')
+wav_file Reward5R_sound ('./sounds/5R.wav')
+wav_file Reward5L_sound ('./sounds/5L.wav')
+wav_file Reward6R_sound ('./sounds/6R.wav')
+wav_file Reward6L_sound ('./sounds/6L.wav')
+wav_file Reward7R_sound ('./sounds/7R.wav')
+wav_file Reward7L_sound ('./sounds/7L.wav')
+wav_file Reward8R_sound ('./sounds/8R.wav')
+wav_file Reward8L_sound ('./sounds/8L.wav')
 
 //
 // Stimuli
@@ -1083,57 +1097,6 @@ stimulus/advstimulus feedback2 (
     autoplay                                = YES
     )
 
-stimulus/advstimulus targetBar (
-    trigger_width                           = 0
-    trigger_watch_x                         = 0
-    trigger_watch_y                         = 0
-    trigger_flag                            = 0
-    x_size                                  = CTRL_targetBar_size
-    y_size                                  = CTRL_targetBar_size
-    x_position                              = RDP_x
-    y_position                              = RDP_y
-    shape                                   = format("circle %d", (integer)CTRL_targetBar_width)    
-    color                                   = COL_targetBar_r,COL_targetBar_g,COL_targetBar_b
-    rotation                                = CTRL_feedback_rotation
-    alpha_multiplier                        = CTRL_targetBar_alpha
-    version                                 = 1
-    autoplay                                = YES
-    )
-
-stimulus/advstimulus targetBarBackground (
-    trigger_width                           = 0
-    trigger_watch_x                         = 0
-    trigger_watch_y                         = 0
-    trigger_flag                            = 0
-    x_size                                  = CTRL_targetBar_size
-    y_size                                  = CTRL_targetBar_size
-    x_position                              = RDP_x
-    y_position                              = RDP_y
-    shape                                   = format("circle %d", (integer)360)    
-    color                                   = COL_targetBar_r,COL_targetBar_g,COL_targetBar_b
-    rotation                                = 0
-    alpha_multiplier                        = CTRL_targetBarBackground_alpha
-    version                                 = 1
-    autoplay                                = YES
-    )
-
-stimulus/advstimulus targetBarMask (
-    trigger_width                           = 0
-    trigger_watch_x                         = 0
-    trigger_watch_y                         = 0
-    trigger_flag                            = 0
-    x_size                                  = CTRL_targetBar_size - CTRL_barwidth
-    y_size                                  = CTRL_targetBar_size - CTRL_barwidth
-    x_position                              = RDP_x
-    y_position                              = RDP_y
-    shape                                   = format("circle %d", (integer)360)    
-    color                                   = 0,0,0
-    rotation                                = 0
-    alpha_multiplier                        = 1
-    version                                 = 1
-    autoplay                                = YES
-    )
-
 stimulus/advstimulus scoreBar (
     trigger_width                           = 0
     trigger_watch_x                         = 0
@@ -1236,28 +1199,8 @@ stimulus/advstimulus scoreBarMask2 (
     autoplay                                = YES
     )
 
-stimulus/rectangle cum_rew_bar_frame_solo (
-    x_size                                  = CTRL_feedback_bar_width + CTRL_feedback_frame_width
-    y_size                                  = CTRL_feedback_frame_height + CTRL_feedback_frame_width
-    x_position                              = 0
-    y_position                              = 0
-    color                                   = 1,1,1
-    rotation                                = 0
-    alpha_multiplier                        = 1
-    )
-
-stimulus/rectangle cum_rew_bar_surface_solo (
-    x_size                                  = CTRL_feedback_bar_width
-    y_size                                  = CTRL_feedback_frame_height
-    x_position                              = 0
-    y_position                              = 0
-    color                                   = 0,0,0
-    rotation                                = 0
-    alpha_multiplier                        = 1
-    )
-
 stimulus/rectangle cum_rew_bar_frame (
-    x_size                                  = (CTRL_feedback_bar_width*2) + (CTRL_feedback_frame_width*2)
+    x_size                                  = (CTRL_feedback_bar_width*CTRL_feedback_nBar) + (CTRL_feedback_frame_width*CTRL_feedback_nBar)
     y_size                                  = CTRL_feedback_frame_height + CTRL_feedback_frame_width
     x_position                              = 0
     y_position                              = 0
@@ -1267,11 +1210,41 @@ stimulus/rectangle cum_rew_bar_frame (
     )
 
 stimulus/rectangle cum_rew_bar_surface(
-    x_size                                  = CTRL_feedback_bar_width*2
+    x_size                                  = CTRL_feedback_bar_width*CTRL_feedback_nBar
     y_size                                  = CTRL_feedback_frame_height
     x_position                              = 0
     y_position                              = 0
     color                                   = 0,0,0
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_target_counter_solo(
+    x_size                                  = CTRL_feedback_bar_width
+    y_size                                  = CTRL_feedback_target_bar_height
+    x_position                              = CTRL_feedback_offset_x
+    y_position                              = (CTRL_feedback_target_bar_height/2) - (CTRL_feedback_frame_height/2)
+    color                                   = COL_targetBar_r,COL_targetBar_g,COL_targetBar_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_rew_bar_solo (
+    x_size                                  = CTRL_feedback_bar_width
+    y_size                                  = CTRL_feedback_bar_height
+    x_position                              = -CTRL_feedback_offset_x
+    y_position                              = (CTRL_feedback_bar_height/2) - (CTRL_feedback_frame_height/2)
+    color                                   = COL_feedback_r,COL_feedback_g,COL_feedback_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle cum_target_counter(
+    x_size                                  = CTRL_feedback_bar_width
+    y_size                                  = CTRL_feedback_target_bar_height
+    x_position                              = 0
+    y_position                              = (CTRL_feedback_target_bar_height/2) - (CTRL_feedback_frame_height/2)
+    color                                   = COL_targetBar_r,COL_targetBar_g,COL_targetBar_b
     rotation                                = 0
     alpha_multiplier                        = 1
     )
@@ -1613,7 +1586,7 @@ protocol 'SNR sensitivity' {
     live_queue_stimulus (cursor)
     update_stimulus_display ()
     
-    CTRL_RequiredHitNo                  = 400
+    CTRL_RequiredHitNo                  = 500
     CTRL_rdp_duration_ms                = 1000
     CTRL_start_area_size                = 4 
     CTRL_start_area_alpha               = 1
@@ -1656,6 +1629,7 @@ protocol 'SNR sensitivity' {
 
                 RDP_direction           = disc_rand(0,359)
                 RDP_coherence           = SEL_snr
+                TRIAL_type              = format("Coh%d Dir%d", (float)RDP_coherence, (float)RDP_direction)
 
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
@@ -1820,6 +1794,7 @@ protocol 'SNR sensitivity' {
         }
     }
     stop_device_io (Eyelink)
+    play_sound (End_sound)
 }
 
 protocol 'RT measurement' {
@@ -1827,7 +1802,7 @@ protocol 'RT measurement' {
     live_queue_stimulus (Background)
     live_queue_stimulus (cursor)
         
-    CTRL_RequiredHitNo                  = 300
+    CTRL_RequiredHitNo                  = 400
     CTRL_response_window_ms             = 10000
     CTRL_target_delay_min_ms            = 500
     CTRL_target_delay_max_ms            = 1000
@@ -1895,6 +1870,7 @@ protocol 'RT measurement' {
                 CTRL_target_direction   = disc_rand(0,359)
                 CTRL_target_x           = sin((CTRL_target_direction)*(pi/180)) * CTRL_target_offset
                 CTRL_target_y           = cos((CTRL_target_direction)*(pi/180)) * CTRL_target_offset
+                TRIAL_type              = format("Dir%d", (float)CTRL_target_direction)
 
                 dequeue_stimulus (start_area)
                 live_queue_stimulus (target)
@@ -1991,9 +1967,9 @@ protocol 'RT measurement' {
             }
 
             state 'End paradigm' {
+                play_sound (End_sound)
                 report ('==== $INFO_HitCounter COINS COLLECTED ====')
                 report ('==== ENDING PARADIGM ====')
-                play_sound (End_sound)
                 yield ()
             }
         }
@@ -2009,9 +1985,9 @@ protocol 'CPR_solo' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NoTargets                              = 500
-    CTRL_NoStates                               = 20
-    CTRL_NoCoherenceStates                      = 5 
+    CTRL_NoTargets                              = 600
+    CTRL_NoStates                               = 30
+    CTRL_NoCoherenceStates                      = 10
     CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
     CTRL_cpr_treshold                           = .2
@@ -2027,20 +2003,20 @@ protocol 'CPR_solo' {
     CTRL_target_deg                             = 2 * (asin( (CTRL_target_size/2) / ((CTRL_start_area_size/2) + (CTRL_target_size/2)) ) * (180/pi))
     CTRL_target_duration_ms                 	= 50
     CTRL_target_ITI_ms                          = 500
-    CTRL_target_ban_duration_ms                 = 300
+    CTRL_target_ban_duration_ms                 = 1
 	CTRL_target_alpha                   		= 1
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
-    CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
     CTRL_show_agent                             = false
-    CTRL_feedback_bar_width                     = 4
-    CTRL_feedback_offset_x                      = 0
+    CTRL_feedback_bar_width                     = 2
+    CTRL_feedback_offset_x                      = 1
     CTRL_feedback_frame_width                   = .2
     CTRL_feedback_frame_height                  = 10
     CTRL_feedback_bar_height                    = 0
+    CTRL_feedback_nBar                          = 2
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2109,9 +2085,10 @@ protocol 'CPR_solo' {
             
             state 'Wait for Joystick Movement' {
                 live_queue_stimulus (start_area)
-                dequeue_stimulus (cum_rew_bar_frame_solo)
-                dequeue_stimulus (cum_rew_bar_surface_solo)
-                dequeue_stimulus (cum_rew_bar)
+                dequeue_stimulus (cum_rew_bar_frame)
+                dequeue_stimulus (cum_rew_bar_surface)
+                dequeue_stimulus (cum_rew_bar_solo)
+                dequeue_stimulus (cum_target_counter_solo)
                 update_stimulus_display ()
 
             	COL_start_area_r 				= 1
@@ -2160,9 +2137,6 @@ protocol 'CPR_solo' {
                 live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
-                live_queue_stimulus (targetBarBackground)
-                live_queue_stimulus (targetBar)
-                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (arc)
@@ -2354,7 +2328,6 @@ protocol 'CPR_solo' {
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
                 INFO_TrialTargetCounter         += 1
-                CTRL_targetBar_width            = CTRL_targetBar_width - (360/CTRL_NoTargets) 
 
                 start_timer (
                     timer                       = TargetDurationTimer
@@ -2383,21 +2356,45 @@ protocol 'CPR_solo' {
                 INFO_TrialScore                 += TMP_score
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT BOTH SPEAKERS - SETUP INDEPENDENT
+                if (TMP_score > .875) {
+                    play_sound (Reward8R_sound)
+                    play_sound (Reward8L_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .75 && TMP_score <= .875) {
+                    play_sound (Reward7R_sound)
+                    play_sound (Reward7L_sound)
                 }
 
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .625 && TMP_score <= .75) {
+                    play_sound (Reward6R_sound)
+                    play_sound (Reward6L_sound)
                 }
 
-                if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score > .5 && TMP_score <= .625) {
+                    play_sound (Reward5R_sound)
+                    play_sound (Reward5L_sound)
+                }
+
+                if (TMP_score > .375 && TMP_score <= .5) {
+                    play_sound (Reward4R_sound)
+                    play_sound (Reward4L_sound)
+                }
+
+                if (TMP_score > .25 && TMP_score <= .375) {
+                    play_sound (Reward3R_sound)
+                    play_sound (Reward3L_sound)
+                }
+
+                if (TMP_score > .125 && TMP_score <= .25) {
+                    play_sound (Reward2R_sound)
+                    play_sound (Reward2L_sound)
+                }
+
+                if (TMP_score <= .125) {
+                    play_sound (Reward1R_sound)
+                    play_sound (Reward1L_sound)
                 }
 
 				// Visual feedback
@@ -2436,9 +2433,6 @@ protocol 'CPR_solo' {
             }  
 
             state 'End Trial' {
-                dequeue_stimulus (targetBarBackground)
-                dequeue_stimulus (targetBar)
-                dequeue_stimulus (targetBarMask)
                 dequeue_stimulus (scoreBarBackground)
                 dequeue_stimulus (scoreBar)
                 dequeue_stimulus (scoreBarMask)
@@ -2467,11 +2461,13 @@ protocol 'CPR_solo' {
             }
 
             state ITI {
-                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                CTRL_feedback_bar_height                = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                CTRL_feedback_target_bar_height         = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NoTargets)
                 
-                live_queue_stimulus (cum_rew_bar_frame_solo)
-                live_queue_stimulus (cum_rew_bar_surface_solo)
-                live_queue_stimulus (cum_rew_bar)
+                live_queue_stimulus (cum_rew_bar_frame)
+                live_queue_stimulus (cum_rew_bar_surface)
+                live_queue_stimulus (cum_rew_bar_solo)
+                live_queue_stimulus (cum_target_counter_solo)
                 update_stimulus_display ()   
 
                 // Wait for update to be finished                
@@ -2510,6 +2506,7 @@ protocol 'CPR_solo' {
     stop_device_io (Eyelink)
 }
 
+
 protocol 'CPR_dyadic_agent' {
     report ('Hello! Starting Experiment...')
     start_device_io (mIO)
@@ -2519,9 +2516,9 @@ protocol 'CPR_dyadic_agent' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NoTargets                              = 500
-    CTRL_NoStates                               = 20
-    CTRL_NoCoherenceStates                      = 5 
+    CTRL_NoTargets                              = 600
+    CTRL_NoStates                               = 30
+    CTRL_NoCoherenceStates                      = 10 
     CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
     CTRL_cpr_treshold                           = .2
@@ -2540,21 +2537,21 @@ protocol 'CPR_dyadic_agent' {
     CTRL_target_deg                             = 2 * (asin( (CTRL_target_size/2) / ((CTRL_start_area_size/2) + (CTRL_target_size/2)) ) * (180/pi))
     CTRL_target_duration_ms                     = 50
     CTRL_target_ITI_ms                          = 500
-    CTRL_target_ban_duration_ms                 = 300
+    CTRL_target_ban_duration_ms                 = 1
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
-    CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
     CTRL_show_agent                             = true
     AGNT_arc_size                               = CTRL_arc_size + (CTRL_arc_size/10)
     AGNT_indicator_offset                       = AGNT_arc_size/1.95
     CTRL_feedback_bar_width                     = 2
-    CTRL_feedback_offset_x                      = 1
+    CTRL_feedback_offset_x                      = 2
     CTRL_feedback_frame_width                   = .2
     CTRL_feedback_frame_height                  = 10
     CTRL_feedback_bar_height                    = 0
     CTRL_feedback2_bar_height                   = 0
+    CTRL_feedback_nBar                          = 3
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
 
     // Reset counters
@@ -2632,6 +2629,7 @@ protocol 'CPR_dyadic_agent' {
                 dequeue_stimulus (cum_rew_bar_surface)
                 dequeue_stimulus (cum_rew_bar)
                 dequeue_stimulus (cum_rew_bar2)
+                dequeue_stimulus (cum_target_counter)
                 update_stimulus_display ()
 
                 COL_start_area_r                = 1
@@ -2688,9 +2686,6 @@ protocol 'CPR_dyadic_agent' {
                 live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
-                live_queue_stimulus (targetBarBackground)
-                live_queue_stimulus (targetBar)
-                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (AGNT_arc)
@@ -2810,15 +2805,15 @@ protocol 'CPR_dyadic_agent' {
                     ) 
                 goto (
                     target                      = 'Single Hit A'
-                    when                        = CTRL_arc_flag && AGNT_arc_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
+                    when                        = CTRL_arc_flag && (AGNT_arc_flag == 0 || CTRL_arc2_alpha == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
                     ) 
                 goto (
                     target                      = 'Single Hit B'
-                    when                        = CTRL_arc_flag == 0 && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0
+                    when                        = (CTRL_arc_flag == 0 || CTRL_fixation_penalty_flag == 1) && (AGNT_arc_flag && CTRL_arc2_alpha == 1) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0
                     )
                 goto (
                     target                      = 'DoubleHit'
-                    when                        = CTRL_arc_flag && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
+                    when                        = CTRL_arc_flag && (AGNT_arc_flag && CTRL_arc2_alpha == 1)  && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
                     )  
                 goto (
                     target                      = 'DoubleMiss'
@@ -2896,7 +2891,6 @@ protocol 'CPR_dyadic_agent' {
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
                 INFO_TrialTargetCounter         += 1
-                CTRL_targetBar_width            = CTRL_targetBar_width - (360/CTRL_NoTargets) 
 
                 start_timer (
                     timer                       = TargetDurationTimer
@@ -2931,21 +2925,37 @@ protocol 'CPR_dyadic_agent' {
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT AT SPEAKER R ONLY
+                if (TMP_score > .875) {
+                    play_sound (Reward8R_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .75 && TMP_score <= .875) {
+                    play_sound (Reward7R_sound)
                 }
 
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .625 && TMP_score <= .75) {
+                    play_sound (Reward6R_sound)
                 }
 
-                if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score > .5 && TMP_score <= .625) {
+                    play_sound (Reward5R_sound)
+                }
+
+                if (TMP_score > .375 && TMP_score <= .5) {
+                    play_sound (Reward4R_sound)
+                }
+
+                if (TMP_score > .25 && TMP_score <= .375) {
+                    play_sound (Reward3R_sound)
+                }
+
+                if (TMP_score > .125 && TMP_score <= .25) {
+                    play_sound (Reward2R_sound)
+                }
+
+                if (TMP_score <= .125) {
+                    play_sound (Reward1R_sound)
                 }
 
                 //Visual feedback
@@ -2973,21 +2983,37 @@ protocol 'CPR_dyadic_agent' {
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT AT SPEAKER L ONLY
+                if (TMP_score2 > .875) {
+                    play_sound (Reward8L_sound)
                 }
 
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score2 > .75 && TMP_score2 <= .875) {
+                    play_sound (Reward7L_sound)
                 }
 
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score2 > .625 && TMP_score2 <= .75) {
+                    play_sound (Reward6L_sound)
                 }
 
-                if (TMP_score2 <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score2 > .5 && TMP_score2 <= .625) {
+                    play_sound (Reward5L_sound)
+                }
+
+                if (TMP_score2 > .375 && TMP_score2 <= .5) {
+                    play_sound (Reward4L_sound)
+                }
+
+                if (TMP_score2 > .25 && TMP_score2 <= .375) {
+                    play_sound (Reward3L_sound)
+                }
+
+                if (TMP_score2 > .125 && TMP_score2 <= .25) {
+                    play_sound (Reward2L_sound)
+                }
+
+                if (TMP_score2 <= .125) {
+                    play_sound (Reward1L_sound)
                 }
 
                 //Visual feedback
@@ -3018,38 +3044,70 @@ protocol 'CPR_dyadic_agent' {
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT AT SPEAKER R ONLY
+                if (TMP_score > .875) {
+                    play_sound (Reward8R_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .75 && TMP_score <= .875) {
+                    play_sound (Reward7R_sound)
                 }
 
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .625 && TMP_score <= .75) {
+                    play_sound (Reward6R_sound)
                 }
 
-                if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score > .5 && TMP_score <= .625) {
+                    play_sound (Reward5R_sound)
                 }
 
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
-                    play_sound (SuperReward_sound)
+                if (TMP_score > .375 && TMP_score <= .5) {
+                    play_sound (Reward4R_sound)
                 }
 
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .25 && TMP_score <= .375) {
+                    play_sound (Reward3R_sound)
                 }
 
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .125 && TMP_score <= .25) {
+                    play_sound (Reward2R_sound)
                 }
 
-                if (TMP_score2 <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score <= .125) {
+                    play_sound (Reward1R_sound)
+                }
+
+                // PRESENT AT SPEAKER L ONLY
+                if (TMP_score2 > .875) {
+                    play_sound (Reward8L_sound)
+                }
+
+                if (TMP_score2 > .75 && TMP_score2 <= .875) {
+                    play_sound (Reward7L_sound)
+                }
+
+                if (TMP_score2 > .625 && TMP_score2 <= .75) {
+                    play_sound (Reward6L_sound)
+                }
+
+                if (TMP_score2 > .5 && TMP_score2 <= .625) {
+                    play_sound (Reward5L_sound)
+                }
+
+                if (TMP_score2 > .375 && TMP_score2 <= .5) {
+                    play_sound (Reward4L_sound)
+                }
+
+                if (TMP_score2 > .25 && TMP_score2 <= .375) {
+                    play_sound (Reward3L_sound)
+                }
+
+                if (TMP_score2 > .125 && TMP_score2 <= .25) {
+                    play_sound (Reward2L_sound)
+                }
+
+                if (TMP_score2 <= .125) {
+                    play_sound (Reward1L_sound)
                 }
 
                 //Visual feedback
@@ -3082,7 +3140,7 @@ protocol 'CPR_dyadic_agent' {
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
-                play_sound (Failure_sound)
+                //play_sound (Failure_sound)
 
                 report ('--- OUTCOME: Double Miss ---')
 
@@ -3101,9 +3159,6 @@ protocol 'CPR_dyadic_agent' {
                 dequeue_stimulus (scoreBarBackground)
                 dequeue_stimulus (scoreBar)
                 dequeue_stimulus (scoreBarMask)
-                dequeue_stimulus (targetBarBackground)
-                dequeue_stimulus (targetBar)
-                dequeue_stimulus (targetBarMask)
                 dequeue_stimulus (RDP)
                 dequeue_stimulus (start_area)
                 dequeue_stimulus (arc)
@@ -3135,11 +3190,13 @@ protocol 'CPR_dyadic_agent' {
             state 'ITI' {
                 CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
                 CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NoTargets)
-                
+                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NoTargets)
+           
                 live_queue_stimulus (cum_rew_bar_frame)
                 live_queue_stimulus (cum_rew_bar_surface)
                 live_queue_stimulus (cum_rew_bar)
                 live_queue_stimulus (cum_rew_bar2)
+                live_queue_stimulus (cum_target_counter)
                 update_stimulus_display ()   
 
                 // Wait for update to be finished                
@@ -3191,9 +3248,9 @@ protocol 'CPR_dyatic' {
 
    // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NoTargets                              = 500
-    CTRL_NoStates                               = 20
-    CTRL_NoCoherenceStates                      = 5 
+    CTRL_NoTargets                              = 600
+    CTRL_NoStates                               = 30
+    CTRL_NoCoherenceStates                      = 10 
     CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
     CTRL_cpr_treshold                           = .2
@@ -3205,28 +3262,28 @@ protocol 'CPR_dyatic' {
     CTRL_indicator_alpha                        = 1
     CTRL_indicator2_alpha                       = 1
     CTRL_indicator2_offset                    	= 4.4 / 1.95
-    CTRL_start_area_size                        = 4 
+    CTRL_start_area_size                        = 5 
     CTRL_start_area_alpha                       = 1
     CTRL_target_size                            = .5
     CTRL_target_offset                          = 2.5 
     CTRL_target_deg                             = 2 * (asin( (CTRL_target_size/2) / ((CTRL_start_area_size/2) + (CTRL_target_size/2)) ) * (180/pi))
     CTRL_target_duration_ms                     = 50
     CTRL_target_ITI_ms                          = 500
-    CTRL_target_ban_duration_ms                 = 300
+    CTRL_target_ban_duration_ms                 = 1
     CTRL_target_alpha                           = 1
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
-    CTRL_targetBar_width                        = 360
     CTRL_scoreBar_width                         = 0
     CTRL_show_agent                             = false
     CTRL_feedback_bar_width                     = 2
-    CTRL_feedback_offset_x                      = 1
+    CTRL_feedback_offset_x                      = 2
     CTRL_feedback_frame_width                   = .2
     CTRL_feedback_frame_height                  = 10
     CTRL_feedback_bar_height                    = 0
     CTRL_feedback2_bar_height                   = 0
+    CTRL_feedback_nBar                          = 3
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -3302,6 +3359,7 @@ protocol 'CPR_dyatic' {
                 dequeue_stimulus (cum_rew_bar_surface)
                 dequeue_stimulus (cum_rew_bar)
                 dequeue_stimulus (cum_rew_bar2)
+                dequeue_stimulus (cum_target_counter)
                 update_stimulus_display ()
 
                 COL_start_area_r                = 1
@@ -3355,9 +3413,6 @@ protocol 'CPR_dyatic' {
                 live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
-                live_queue_stimulus (targetBarBackground)
-                live_queue_stimulus (targetBar)
-                live_queue_stimulus (targetBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (arc2)
@@ -3438,7 +3493,7 @@ protocol 'CPR_dyatic' {
                 // Block target appearance in time window after state onset
                 start_timer (
                     timer                       = TargetBanTimer
-                    duration                    = 500
+                    duration                    = CTRL_target_ban_duration_ms
                     duration_units              = ms
                     )
 
@@ -3477,15 +3532,15 @@ protocol 'CPR_dyatic' {
                     ) 
                 goto (
                     target                      = 'Single Hit A'
-                    when                        = CTRL_arc_flag && CTRL_arc2_flag == 0 && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation_penalty_flag == 0
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag == 0 || CTRL_fixation2_penalty_flag == 1) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
                     ) 
                 goto (
                     target                      = 'Single Hit B'
-                    when                        = CTRL_arc_flag == 0 && CTRL_arc2_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && CTRL_fixation2_penalty_flag == 0
+                    when                        = (CTRL_arc_flag == 0 || CTRL_fixation_penalty_flag == 1) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
                     )
                 goto (
                     target                      = 'DoubleHit'
-                    when                        = CTRL_arc_flag && CTRL_arc2_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 && (CTRL_fixation_penalty_flag == 0 && CTRL_fixation2_penalty_flag == 0)
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0
                     )  
                 goto (
                     target                      = 'DoubleMiss'
@@ -3602,7 +3657,6 @@ protocol 'CPR_dyatic' {
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
                 INFO_TrialTargetCounter         += 1
-                CTRL_targetBar_width            = CTRL_targetBar_width - (360/CTRL_NoTargets) 
 
                 start_timer (
                     timer                       = TargetDurationTimer
@@ -3636,21 +3690,37 @@ protocol 'CPR_dyatic' {
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT AT SPEAKER R ONLY
+                if (TMP_score > .875) {
+                    play_sound (Reward8R_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .75 && TMP_score <= .875) {
+                    play_sound (Reward7R_sound)
                 }
 
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .625 && TMP_score <= .75) {
+                    play_sound (Reward6R_sound)
                 }
 
-                if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score > .5 && TMP_score <= .625) {
+                    play_sound (Reward5R_sound)
+                }
+
+                if (TMP_score > .375 && TMP_score <= .5) {
+                    play_sound (Reward4R_sound)
+                }
+
+                if (TMP_score > .25 && TMP_score <= .375) {
+                    play_sound (Reward3R_sound)
+                }
+
+                if (TMP_score > .125 && TMP_score <= .25) {
+                    play_sound (Reward2R_sound)
+                }
+
+                if (TMP_score <= .125) {
+                    play_sound (Reward1R_sound)
                 }
 
                 //Visual feedback
@@ -3680,22 +3750,39 @@ protocol 'CPR_dyatic' {
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT AT SPEAKER L ONLY
+                if (TMP_score2 > .875) {
+                    play_sound (Reward8L_sound)
                 }
 
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score2 > .75 && TMP_score2 <= .875) {
+                    play_sound (Reward7L_sound)
                 }
 
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score2 > .625 && TMP_score2 <= .75) {
+                    play_sound (Reward6L_sound)
                 }
 
-                if (TMP_score2 <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score2 > .5 && TMP_score2 <= .625) {
+                    play_sound (Reward5L_sound)
                 }
+
+                if (TMP_score2 > .375 && TMP_score2 <= .5) {
+                    play_sound (Reward4L_sound)
+                }
+
+                if (TMP_score2 > .25 && TMP_score2 <= .375) {
+                    play_sound (Reward3L_sound)
+                }
+
+                if (TMP_score2 > .125 && TMP_score2 <= .25) {
+                    play_sound (Reward2L_sound)
+                }
+
+                if (TMP_score2 <= .125) {
+                    play_sound (Reward1L_sound)
+                }
+
                 //Visual feedback
                 live_queue_stimulus (feedback2)
             	live_queue_stimulus (fixationCross)
@@ -3726,38 +3813,70 @@ protocol 'CPR_dyatic' {
 
                 CTRL_feedback_flag              = 1
 
-                // PRESENT AT SPEAKER A ONLY
-                if (TMP_score  > .95) {
-                    play_sound (SuperReward_sound)
+                // PRESENT AT SPEAKER R ONLY
+                if (TMP_score > .875) {
+                    play_sound (Reward8R_sound)
                 }
 
-                if (TMP_score > .75 && TMP_score <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .75 && TMP_score <= .875) {
+                    play_sound (Reward7R_sound)
                 }
 
-                if (TMP_score > .5 && TMP_score <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .625 && TMP_score <= .75) {
+                    play_sound (Reward6R_sound)
                 }
 
-                if (TMP_score <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score > .5 && TMP_score <= .625) {
+                    play_sound (Reward5R_sound)
                 }
 
-                // PRESENT AT SPEAKER B ONLY
-                if (TMP_score2  > .95) {
-                    play_sound (SuperReward_sound)
+                if (TMP_score > .375 && TMP_score <= .5) {
+                    play_sound (Reward4R_sound)
                 }
 
-                if (TMP_score2 > .75 && TMP_score2 <= .95) {
-                    play_sound (Reward_sound_3)
+                if (TMP_score > .25 && TMP_score <= .375) {
+                    play_sound (Reward3R_sound)
                 }
 
-                if (TMP_score2 > .5 && TMP_score2 <= .75) {
-                    play_sound (Reward_sound_2)
+                if (TMP_score > .125 && TMP_score <= .25) {
+                    play_sound (Reward2R_sound)
                 }
 
-                if (TMP_score2 <= .5) {
-                    play_sound (Reward_sound)
+                if (TMP_score <= .125) {
+                    play_sound (Reward1R_sound)
+                }
+
+                // PRESENT AT SPEAKER L ONLY
+                if (TMP_score2 > .875) {
+                    play_sound (Reward8L_sound)
+                }
+
+                if (TMP_score2 > .75 && TMP_score2 <= .875) {
+                    play_sound (Reward7L_sound)
+                }
+
+                if (TMP_score2 > .625 && TMP_score2 <= .75) {
+                    play_sound (Reward6L_sound)
+                }
+
+                if (TMP_score2 > .5 && TMP_score2 <= .625) {
+                    play_sound (Reward5L_sound)
+                }
+
+                if (TMP_score2 > .375 && TMP_score2 <= .5) {
+                    play_sound (Reward4L_sound)
+                }
+
+                if (TMP_score2 > .25 && TMP_score2 <= .375) {
+                    play_sound (Reward3L_sound)
+                }
+
+                if (TMP_score2 > .125 && TMP_score2 <= .25) {
+                    play_sound (Reward2L_sound)
+                }
+
+                if (TMP_score2 <= .125) {
+                    play_sound (Reward1L_sound)
                 }
 
                 //Visual feedback
@@ -3791,7 +3910,7 @@ protocol 'CPR_dyatic' {
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
 
-                CTRL_scoreBar_width            = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Double Miss ---')
@@ -3810,9 +3929,6 @@ protocol 'CPR_dyatic' {
                 dequeue_stimulus (scoreBarBackground)
                 dequeue_stimulus (scoreBar)
                 dequeue_stimulus (scoreBarMask)
-                dequeue_stimulus (targetBarBackground)
-                dequeue_stimulus (targetBar)
-                dequeue_stimulus (targetBarMask)
                 dequeue_stimulus (RDP)
                 dequeue_stimulus (start_area)
                 dequeue_stimulus (arc2)
@@ -3843,11 +3959,13 @@ protocol 'CPR_dyatic' {
             state ITI {
                 CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
                 CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NoTargets)
-                
+                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NoTargets)
+
                 live_queue_stimulus (cum_rew_bar_frame)
                 live_queue_stimulus (cum_rew_bar_surface)
                 live_queue_stimulus (cum_rew_bar)
                 live_queue_stimulus (cum_rew_bar2)
+                live_queue_stimulus (cum_target_counter)
                 update_stimulus_display ()   
 
                 // Wait for update to be finished                
@@ -3887,3 +4005,4 @@ protocol 'CPR_dyatic' {
 	stop_device_io (getStream)
     stop_device_io (Eyelink)
 }
+

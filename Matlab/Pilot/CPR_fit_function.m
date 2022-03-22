@@ -95,7 +95,8 @@ end
 
 %% FIT & PLOT
 
-for iExp = 1:2
+% for iExp = 1:2
+for iExp = 2
     
     clear vec
     if iExp == 1

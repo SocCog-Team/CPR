@@ -89,8 +89,13 @@ else
 end
 
 % Get file identifier/recording date
-dte                     = regexp(fname,'\d{8}');
-fid                     = fname(dte:dte+7);
+if iscell(fname)
+    dte                 = regexp(fname{1},'\d{8}');
+    fid                 = fname{1}(dte:dte+7);
+else
+    dte               	= regexp(fname,'\d{8}');
+    fid             	= fname(dte:dte+7);
+end
 
 % Import .mwk2 data file
 if nargin < 4
@@ -158,7 +163,7 @@ trl.tOn                     = d.time(idx.tOn);
 trl.tEnd                    = d.time(idx.tEnd);
 
 % Check if subject ID is dyad
-if contains(fname,'dyadic') && length(subj) < 6
+if contains(fname,'dyadic') & length(subj) < 6
     error('Dyatic experiment. Use concatenated 3-letter subject code: ''xxxyyy''')
 end
 
@@ -170,8 +175,8 @@ else
 end
 
 % Construct data table(s)
-tbl{1}                      = CPR_construct_table(sbj{1}, fid, d, trl, idx, true);
-
+tbl{1}                      = CPR_construct_table(sbj{1}, fname, d, trl, idx, true);
+    
 if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
     % Define fields that index variables of subject 2
     fields = {'JS2_dir',...
@@ -198,7 +203,7 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
 end
 
 % Plot performance summary
-[summ,crr]                  = CPR_plot_performance_summary(d,idx,trl,tbl,rew_str,sbj,fid,pth);
+[summ,crr]                  = CPR_plot_performance_summary(d,idx,tbl,rew_str,sbj,fname);
 [~]                         = CPR_target_reward(tbl{1});
 
 end

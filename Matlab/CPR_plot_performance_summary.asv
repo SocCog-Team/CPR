@@ -363,7 +363,7 @@ for iSubj = 1:size(tbl,2)
         else
             fid = strsplit(fname,'_');
         end
-        print(f, [dest_dir fid{1}  '_' sbj{iSubj} '_' fid{3}], '-r300', '-dpng');
+        print(f, [dest_dir strjoin(fid(1:3),'_')], '-r300', '-dpng');
     end
 end
 end

@@ -8,7 +8,11 @@ tmp_rdp_str             = [];
 for iState = 1:length(STATE.RDP_direction)
     nSamples            = ceil(STATE.state_duration_ms(iState)/10);
     tmp_rdp_dir         = [tmp_rdp_dir repmat(STATE.RDP_direction_raw(iState),1,nSamples)];
-    tmp_rdp_str         = [tmp_rdp_str repmat(STATE.RDP_coherence(iState),1,nSamples)];
+    if isempty(AGNT.str)
+        tmp_rdp_str         = [tmp_rdp_str repmat(STATE.RDP_coherence(iState),1,nSamples)];
+    else
+        tmp_rdp_str         = [tmp_rdp_str repmat(AGNT.str,1,nSamples)];
+    end
 end
 
 % Zero-pad, add noise, smooth
@@ -16,8 +20,8 @@ pad_vec                 = zeros(1,AGNT.lag);
 buffer                  = 49; % to avoid lack of samples during task
 AGNT.dir_clean          = [tmp_rdp_dir tmp_rdp_dir(end-buffer:end)];
 AGNT.str_clean          = [tmp_rdp_str tmp_rdp_str(end-buffer:end)];
-AGNT.dir_nse            = [pad_vec AGNT.dir_clean + normrnd(0,AGNT.dir_sigma, [1,length(AGNT.dir_clean)])];
-AGNT.str_nse            = [pad_vec AGNT.str_clean + normrnd(0,AGNT.str_sigma, [1,length(AGNT.str_clean)])];
+AGNT.dir_nse            = [pad_vec+randi(359) normrnd(AGNT.dir_clean,AGNT.dir_sigma, [1,length(AGNT.dir_clean)])];
+AGNT.str_nse            = [pad_vec+rand(1) normrnd(AGNT.str_clean,AGNT.str_sigma, [1,length(AGNT.str_clean)])];
 AGNT.dir_smooth         = smoothdata(AGNT.dir_nse, AGNT.smooth_kernel, AGNT.win);
 AGNT.str_smooth         = smoothdata(AGNT.str_nse, AGNT.smooth_kernel, AGNT.win);
 

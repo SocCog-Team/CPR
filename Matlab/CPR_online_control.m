@@ -34,8 +34,11 @@ else
 end
 
 % Import data
-
-d                               = MW_readOnline(data,'~checkTrialBorder','debugLevel',0);
+if isfield(data, 'time') && isfield(data, 'value') && isfield(data, 'event')
+    d                           = data;
+else
+    d                           = MW_readOnline(data,'~checkTrialBorder','debugLevel',0);
+end
 
 % Extract parameter
 param.trial                     = cell2mat(d.value(d.event == 'TRIAL_start'));
@@ -56,11 +59,11 @@ param.pth                       = pth;
 
 % Draw RDP stimulus parameters
 STATES                          = CPR_stimulus_control(param);
-
 % Prepare agent response
 if param.agent_flag == true
-    AGNT.dir_sigma          	= 30;                                       % Direction sigma [deg]
-    AGNT.str_sigma            	= .1;                                       % Strength sigma [%]
+    AGNT.dir_sigma          	= 45;                                       % Direction sigma [deg]
+    AGNT.str_sigma            	= .2;                                       % Eccentricity sigma [%]
+    AGNT.str                    = .5;                                       % Eccentricity [norm]
     AGNT.lag                  	= 50;                                       % Delay to reference point [samples]
     AGNT.win                 	= 50;                                       % Smoothing window size [samples]
     AGNT.smooth_kernel        	= 'gaussian';                               % Smoothing kernel [samples]

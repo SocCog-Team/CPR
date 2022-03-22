@@ -7,7 +7,6 @@ ramp_dur        = .05; % [s]
 t               = 0:1/fs:snd_dur-1/fs;
 frq             = [261.63 293.66 329.63 349.23 392.00 440.00 493.88 523.25]*2;
 wav_name        = {'1','2','3','4','5','6','7','8',};
-% wav_name        = {'500_Hz_200ms','1k_Hz_200ms','2k_Hz_200ms','4k_Hz_200ms'};
 dest_dir        = '/Users/fschneider/Desktop/sound/';
 
 % Reward sounds: pure tones
@@ -49,20 +48,20 @@ audiowrite([dest_dir 'noise_R.wav'],[zeros(nsamples,1) nse_r'],fs)
 audiowrite([dest_dir 'noise_L.wav'],[nse_r' zeros(nsamples,1)],fs)
 
 %% Change duration and pitch of complex sounds
-
-[y, fs]         = audioread('/Users/fschneider/Desktop/sound/reward8.wav');
-nSamp           = length(y);
-ramp_dur2       = .15;
-window          = hanning(2*floor(fs*ramp_dur2))';
-w2              = window(ceil((length(window))/2)+1:end);
-w_off           = [ones(1,nSamp-length(w2)) w2];
-
-for iFile = 1:8
-    fname               = [dest_dir 'reward' num2str(iFile)];
-    [y, fs]             = audioread([fname '.wav']);
-    yr                  = (y' .* w_off) * 1.5;
-    yr(yr>1 | yr<-1)    = 1;
-    figure; plot(yr)
-    audiowrite([fname '_right.wav'],[yr' zeros(nSamp,1)],fs)
-    audiowrite([fname '_left.wav'],[zeros(nSamp,1) yr'],fs)
-end
+% 
+% [y, fs]         = audioread('/Users/fschneider/Desktop/sound/reward8.wav');
+% nSamp           = length(y);
+% ramp_dur2       = .15;
+% window          = hanning(2*floor(fs*ramp_dur2))';
+% w2              = window(ceil((length(window))/2)+1:end);
+% w_off           = [ones(1,nSamp-length(w2)) w2];
+% 
+% for iFile = 1:8
+%     fname               = [dest_dir 'reward' num2str(iFile)];
+%     [y, fs]             = audioread([fname '.wav']);
+%     yr                  = (y' .* w_off) * 1.5;
+%     yr(yr>1 | yr<-1)    = 1;
+%     figure; plot(yr)
+%     audiowrite([fname '_right.wav'],[yr' zeros(nSamp,1)],fs)
+%     audiowrite([fname '_left.wav'],[zeros(nSamp,1) yr'],fs)
+% end

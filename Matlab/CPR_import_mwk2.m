@@ -27,6 +27,7 @@ function d = CPR_import_mwk2(fname, var_lst, write_file)
 %% Check input
 
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 
 if nargin < 3 || isempty(write_file)
     write_file  = false;
@@ -62,7 +63,8 @@ if iscell(fname)                                                            % If
         d.value     = [];
         
         for i = 1:size(fname,2)
-            tmp    	= MW_readFile(fname{i}, 'include', var_import);
+            tmp    	= MW_readFile(fname{i}, 'include', var_lst, ...
+                '~typeOutcomeCheck');
             
             d.time  = [d.time tmp.time];
             d.event = [d.event tmp.event];
@@ -83,7 +85,8 @@ else
         d       = MW_readH5([fname '.h5']);                                 % ...load .h5 file
 
     else
-        d     	= MW_readFile(fname, 'include', var_lst);                   % Import .mwk2 sesion file
+        d     	= MW_readFile(fname, 'include', var_lst, ...
+                '~typeOutcomeCheck');                                      % Import .mwk2 sesion file
         %d     	= MW_readFile(fname, 'include', var_lst, 'dotPositions');   % Import .mwk2 sesion file
         
         if write_file

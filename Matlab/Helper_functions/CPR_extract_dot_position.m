@@ -1,19 +1,14 @@
-% addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
-% cd /Users/fschneider/Documents/MWorks/Data
-% fname = 'fschneider-PHY_CPR_Training_20210820-20210825-185052.mwk2';
-% d = MW_readFile(fname, 'include', {'IO_joystickDirection','IO_joystickStrength','#stimDisplay'}, 'dotPositions');
-
-% addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
-% cd /Users/fschneider/Desktop
-% fname = 'fschneider-CPR_dyatic_fxs_20210901-20210901-092758.mwk2';
-% d = MW_readFile(fname, 'include', {'IO_joystickDirection','IO_joystickStrength','#stimDisplay'}, 'dotPositions');
+addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
+cd /Users/fschneider/Documents/MWorks/Data
+fname = '20220222_anm_CPRsolo_block2_fxs.mwk2';
+d = MW_readFile(fname, 'include', {'IO_joystickDirection','IO_joystickStrength','#stimDisplay'}, 'dotPositions');
 
 idx             = [];
 idx.dot         = d.event == 'STIM_RDP_dot_positions';
 idx.rdp_dir     = d.event == 'STIM_RDP_direction';
 idx.rdp_coh     = d.event == 'STIM_RDP_coherence';
-idx.js_dirA     = d.event == 'IO_joystickDirection_A';
-idx.js_strA     = d.event == 'IO_joystickStrength_A';
+idx.js_dirA     = d.event == 'IO_joystickDirection';
+idx.js_strA     = d.event == 'IO_joystickStrength';
 idx.js_dirB     = d.event == 'IO_joystickDirection_B';
 idx.js_strB     = d.event == 'IO_joystickStrength_B';
 idx.tx          = d.event == 'STIM_target_x_position';

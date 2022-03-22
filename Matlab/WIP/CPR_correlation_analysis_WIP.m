@@ -1,4 +1,4 @@
-function [out, ps] = CPR_correlation_analysis(t, trl, tindx, nLag, plotFlag)
+function [out, ps] = CPR_correlation_analysis(t, nLag, plotFlag)
 
 % This function extracts stimulus and joystick data in a specified time
 % window at the end of a steady state
@@ -25,16 +25,12 @@ function [out, ps] = CPR_correlation_analysis(t, trl, tindx, nLag, plotFlag)
 
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 
-if nargin < 4 || isempty(plotFlag)
+if nargin < 3 || isempty(plotFlag)
     plotFlag     	= true;
 end
 
-if nargin < 3 || isempty(nLag)
+if nargin < 2 || isempty(nLag)
     nLag            = 150;
-end
-
-if nargin < 2 || isempty(tindx)
-    error('Index pointing to trial/block data is missing')
 end
 
 if nargin < 1 || ~istable(t)
@@ -43,29 +39,29 @@ end
 
 %% Assign data from table
 
-rdp_dir             = t.trl_rdp_dir(tindx);                              	% RDP direction
-js_dir              = t.trl_js_dir(tindx);                               	% Joystick direction
-% js_str              = t.trl_js_str(tindx);                                % Joystick strength
-rdp_coh            	= t.trl_rdp_coh(tindx);                               	% RDP coherence
-ts                  = t.trl_frme_ts(tindx);
+rdp_dir             = t.trl_rdp_dir;                              	% RDP direction
+js_dir              = t.trl_js_dir;                               	% Joystick direction
+% js_str              = t.trl_js_str;                                % Joystick strength
+rdp_coh            	= t.trl_rdp_coh;                               	% RDP coherence
+ts                  = t.trl_frme_ts;
 count               = 0;
 
 %% Loop through blocks and correlate stimulus and behaviour
 
 for iTrl = 1:size(ts,1)
     
-    if length(unique(rdp_coh{iTrl})) > 3
-        continue
-    end
-    
     % Sample-by-sample difference
     clear js_dff rdp_dff
     
-    excl                        = isnan(rdp_coh{iTrl}) | isnan(rdp_dir{iTrl})| isnan(js_dir{iTrl})| isnan(ts{iTrl});
+    excl                        = isnan(rdp_coh{iTrl}) | isnan(rdp_dir{iTrl}) | isnan(js_dir{iTrl}) | isnan(ts{iTrl});
     rdp_coh{iTrl}(excl)         = [];
     rdp_dir{iTrl}(excl)        	= [];
     js_dir{iTrl}(excl)         	= [];
     ts{iTrl}(excl)              = [];
+    
+    if isempty(ts{iTrl})
+        continue
+    end
     
     for iSample = 1:size(ts{iTrl},2)-1
         js_dff(iSample)     	= rad2deg(circ_dist(deg2rad(js_dir{iTrl}(iSample)),deg2rad(js_dir{iTrl}(iSample+1))));
@@ -84,17 +80,21 @@ for iTrl = 1:size(ts,1)
     cindx                       = diff(rdp_coh{iTrl}) ~=0;
     cid                         = rdp_coh{iTrl}([true cindx]);
     cts                         = ts{iTrl}([true cindx]);
-    
+            
+    if sum(cid) > 3 
+        continue
+    end
+        
     for iCoh = 1:size(cts,2)
                 
         % Build coherence index
         if iCoh < size(cts,2)
             cIdx                = ts{iTrl} >= cts(iCoh) & ts{iTrl} < cts(iCoh+1);
         else
-            cIdx                = ts{iTrl} >= cts(iCoh) & ts{iTrl} <= trl.tEnd(iTrl);
+            cIdx                = ts{iTrl} >= cts(iCoh) & ts{iTrl} <= ts{iTrl}(end);
         end
         
-        if sum(cIdx) == 0
+        if sum(cIdx) < 10 %|| isempty(find(diff(rdp_dir{iTrl}(cIdx))))
             continue
         end
         

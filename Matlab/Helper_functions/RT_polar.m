@@ -1,4 +1,4 @@
-function RT_polar(fname, pth, ID)
+function RT_polar(fname, pth, dest_dir)
 
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 cd(pth)
@@ -12,7 +12,7 @@ var_import = {
     'INFO_', ...
     'TRIAL_'};
 
-d = MW_readFile(fname, 'include',var_import);
+d = MW_readFile(fname, 'include',var_import,'~typeOutcomeCheck','~cleanTrialBorders');
 
 %% Extract data & calculate RT
 
@@ -23,6 +23,7 @@ idx.trg                     = d.event == 'TRIAL_reactionTrigger';
 idx.outcome                 = d.event == 'TRIAL_outcome';
 idx.ttype                   = d.event == 'TRIAL_type';
 idx.res                     = d.event == 'CTRL_start_area_flag';
+idx.tdir                    = d.event == 'CTRL_target_direction';
 
 % Extract timestamps
 trl.tOn                     = d.time(idx.tOn);                               	% Trial onset
@@ -39,7 +40,8 @@ for iTrl = 1:length(trl.tEnd)                                                   
     
     if strcmp(outcome, 'hit')
         c = c+1;
-        trg_dir(c)          = str2num(ttype{:}(4:end));
+%         trg_dir(c)          = str2num(ttype{:}(4:end));
+        trg_dir(c)      	= getTrialData(d.value, trlIdx, idx.tdir);          % Target direction
         trg_value{c}      	= getTrialData(d.time, trlIdx, idx.trg);          	% Reaction trigger [stimulus] values
         res_value{c}       	= getTrialData(d.time, trlIdx, idx.res);          	% Reaction trigger [stimulus] values
         rt(c)             	= (res_value{c}(end) - trg_value{c}(1))/1e3;
@@ -89,7 +91,6 @@ lg                  = legend('Trial RT','Binned Median','Binned Std');
 lg.Position         = [0.03    0.07    0.2473    0.0940];
 lg.Box              = 'off';
 
-dest_dir = '/Users/fschneider/Documents/MWorks/Plots';
-print(f, [dest_dir '/RT_' ID], '-r300', '-dpng');
+print(f, [dest_dir fname(1:15)], '-r300', '-dpng');
 
 end
