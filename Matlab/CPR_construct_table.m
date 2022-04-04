@@ -28,13 +28,12 @@ function t = CPR_construct_table(subj, fname, d, trl, idx, write_file)
 
 %% Initialise
 
-fid = strsplit(fname,'_');
-        
 % Table specs
 cc    	= 0;
 var     = {'ID', 'string'; ...              % Subject identity
-    'date', 'double'; ...                   % Experiment date
+    'date', 'string'; ...                   % Experiment date
     'exp', 'string'; ...                    % Trial/Block number
+    'setup', 'string'; ...                  % Setup
     'block', 'double'; ...                  % Experimental block
     'trl_no', 'double'; ...                 % Trial/Block number
     'trl_dur', 'double'; ...                % Trial/Block duration
@@ -69,6 +68,16 @@ t       = table('Size',[5000, size(var,1)],...
 
 fprintf('Building table...\n')
 
+% Extract title information
+fid = strsplit(fname,'_');
+psy4 = strcmp(fid{2}(1:3),subj);    
+
+if psy4 == 1
+    setup = 'psycho4';
+else
+    setup = 'psycho3';
+end
+
 % Trial loop
 for iTrl = 1:length(trl.tEnd)
     
@@ -96,9 +105,10 @@ for iTrl = 1:length(trl.tEnd)
         % Fill in table: Trial/State/Stimulus parameter
         cc                  = cc+1;                                                     % Steady state counter
         t.ID{cc}            = subj;                                                     % Subject ID
-        t.date(cc)          = ;                                                         % Experimental date
-        t.exp{cc}           = ;                                                         % Experimental condition
-        t.block(cc)         = ;                                                         % Experimental block
+        t.date(cc)          = fid{1};                                                   % Experimental date
+        t.exp{cc}           = fid{3};                                                   % Experimental condition
+        t.setup{cc}         = setup;                                                    % Setup
+        t.block(cc)         = str2double(fid{4}(end));                                  % Experimental block
         t.trl_no(cc)        = iTrl;                                                     % Trial number
         t.trl_dur(cc)       = (trl.tEnd(iTrl) - trl.tOn(iTrl)) ./ 1e3;                  % Trial duration [ms]
         t.ss_no(cc)         = cc;                                                       % Steady state counter  
@@ -107,18 +117,19 @@ for iTrl = 1:length(trl.tEnd)
         t.ss_dur(cc)        = getTrialData(d.value, ssIdx, idx.steady_duration);      	% Steady state duration
         t.trg_shown(cc)     = iscell(getTrialData(d.value, ssIdx, idx.outcome));        % Target shown?
         t.trg_hit{cc}       = strcmp(getTrialData(d.value, ssIdx, idx.outcome), 'hit'); % Target collected?
+        t.trg_score{cc}     = nan(1,length(t.trg_hit{cc}));                             % Target score vector
         tmp_trg_val        	= getTrialData(d.value, ssIdx, idx.trg);                    % Target trigger
         tmp_trg_ts        	= getTrialData(d.time, ssIdx, idx.trg);                     % Target timestamp
-        tmp_trg_score       = getTrialData(d.time, ssIdx, idx.reward);                  % Target reward score
         
         if sum(tmp_trg_val) > 0
-            t.trg_ts{cc}  	= tmp_trg_ts(logical(tmp_trg_val));
-            t.trg_score{cc} = tmp_trg_score(logical(tmp_trg_val));
+            t.trg_ts{cc}                        = tmp_trg_ts(logical(tmp_trg_val));
+            if sum(t.trg_hit{cc}) > 0
+                tmp_trg_score                   = getTrialData(d.value, ssIdx, idx.reward);           % Target score
+                t.trg_score{cc}(t.trg_hit{cc})  = tmp_trg_score;
+            end
         else
-            t.trg_ts{cc} 	= nan;
-            t.trg_score{cc} = nan;
+            t.trg_ts{cc}                        = nan;
         end
-        clear trg_val trg_ts
         
         % Fill in table: Behavioural response
         % (1) For each steady state...
@@ -223,8 +234,10 @@ if write_file
     fprintf(['Save table for subject ' subj '...\n'])
     pth_raw = pwd;
     cd ../summary
-    save([dest_dir fid{1} '_' subj '_' fid{3} '_tbl.mat'], 't', '-v7.3')                                                   % Save as .mat file
-    %save([fid '_' subj '_cpr_tbl.mat'], 't', '-v7.3')                                                   % Save as .mat file
+    
+    % Save as .mat file
+    save([fid{1} '_' subj '_' fid{3} '_' fid{4} '_tbl.mat'], 't', '-v7.3')
+    
     cd(pth_raw)
     fprintf('Done!\n')
 end

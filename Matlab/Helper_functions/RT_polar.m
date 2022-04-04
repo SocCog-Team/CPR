@@ -1,4 +1,4 @@
-function RT_polar(fname, pth, dest_dir)
+function [rt, trg_dir] = RT_polar(fname, pth, dest_dir)
 
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 cd(pth)

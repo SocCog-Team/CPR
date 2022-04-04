@@ -38,7 +38,7 @@ end
 
 nse_r           = nse.*w_on.*w_off;
 
-% Write files: right speaker
+% Write files
 for iFrq = 1:length(frq)
     audiowrite([dest_dir wav_name{iFrq} 'R.wav'],[zeros(nsamples,1) pt_r(iFrq,:)'],fs)
     audiowrite([dest_dir wav_name{iFrq} 'L.wav'],[pt_r(iFrq,:)' zeros(nsamples,1)],fs)
@@ -46,22 +46,3 @@ end
 
 audiowrite([dest_dir 'noise_R.wav'],[zeros(nsamples,1) nse_r'],fs)
 audiowrite([dest_dir 'noise_L.wav'],[nse_r' zeros(nsamples,1)],fs)
-
-%% Change duration and pitch of complex sounds
-% 
-% [y, fs]         = audioread('/Users/fschneider/Desktop/sound/reward8.wav');
-% nSamp           = length(y);
-% ramp_dur2       = .15;
-% window          = hanning(2*floor(fs*ramp_dur2))';
-% w2              = window(ceil((length(window))/2)+1:end);
-% w_off           = [ones(1,nSamp-length(w2)) w2];
-% 
-% for iFile = 1:8
-%     fname               = [dest_dir 'reward' num2str(iFile)];
-%     [y, fs]             = audioread([fname '.wav']);
-%     yr                  = (y' .* w_off) * 1.5;
-%     yr(yr>1 | yr<-1)    = 1;
-%     figure; plot(yr)
-%     audiowrite([fname '_right.wav'],[yr' zeros(nSamp,1)],fs)
-%     audiowrite([fname '_left.wav'],[zeros(nSamp,1) yr'],fs)
-% end

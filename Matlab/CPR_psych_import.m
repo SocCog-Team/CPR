@@ -99,10 +99,11 @@ end
 
 % Import .mwk2 data file
 if nargin < 4
-    d                	= CPR_import_mwk2(fname, var_import, false);
+    d                	= CPR_import_mwk2(fname, var_import, true);
     d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
     d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
 end
+
 
 %% Extract data and organise in table
 
@@ -121,6 +122,7 @@ idx.RDP_dir                 = d.event == 'RDP_direction';
 idx.RDP_coh                 = d.event == 'RDP_coherence';
 idx.trg_on                  = d.event == 'STIM_target_onset';
 idx.JS_dir                  = d.event == 'IO_joystickDirection';
+% idx.JS_str                  = d.event == 'IO_joystickStrength_norm';
 idx.JS_str                  = d.event == 'IO_joystickStrength_norm';
 idx.fixation              	= d.event == 'IO_fixation_flag';
 idx.outcome                 = d.event == 'TRIAL_outcome';
@@ -199,7 +201,7 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
     idx2.reward           	= idx.reward2;
     
     % Construct data table for subject2
-    tbl{2}               	= CPR_construct_table(sbj{2}, fid, d, trl, idx2, true);
+    tbl{2}               	= CPR_construct_table(sbj{2}, fname, d, trl, idx2, true);
 end
 
 % Plot performance summary
