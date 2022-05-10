@@ -4,26 +4,34 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer
 close all
 clear all
 
-fname_solo = {'20220215_ana',...
-    '20220214_sol',...
-    '20220126_dih',...
-    '20220201_mam',...
-    '20220128_nak',...
-    '20220216_tos',...
-    '20220223_cah',...
-    '20220222_anm'}; % SOLO DATA         
+fname_solo = {'20220120_ana_CPRsolo_block1_tbl.mat',...
+    '20220214_sol_CPRsolo_block1_tbl.mat',...
+    '20220126_dih_CPRsolo_block1_tbl.mat',...
+    '20220201_mam_CPRsolo_block1_tbl.mat',...
+    '20220128_nak_CPRsolo_block1_tbl.mat',...
+    '20220223_cah_CPRsolo_block1_tbl.mat',...
+    '20220315_syn_CPRsolo_block1_tbl.mat',...
+    '20220225_anb_CPRsolo_block1_tbl.mat',...
+    '20220325_ant_CPRsolo_block1_tbl.mat',...
+    '20220216_tos_CPRsolo_block1_tbl.mat',...
+    '20220312_seo_CPRsolo_block1_tbl.mat',...
+    '20220222_anm_CPRsolo_block1_tbl.mat'}; % SOLO DATA
 
-fname_agent = {'20220127_ana',...
-    '20220204_sol',...  
-    '20220131_dih',...
-    '20220228_mam',...
-    '20220224_nak',...
-    '20220201_tos',...
-    '20220301_cah',...
-    '20220301_anm'}; % AGNT DATA       
+fname_agent = {'20220127_ana_CPRagent_block1_tbl.mat',...
+    '20220204_sol_CPRagent_block1_tbl.mat',...
+    '20220131_dih_CPRagent_block1_tbl.mat',...
+    '20220228_mam_CPRagent_block1_tbl.mat',...
+    '20220224_nak_CPRagent_block1_tbl.mat',...
+    '20220301_cah_CPRagent_block1_tbl.mat',...
+    '20220310_syn_CPRagent_block1_tbl.mat',...
+    '20220324_anb_CPRagent_block1_tbl.mat',...
+    '20220324_ant_CPRagent_block1_tbl.mat',...
+    '20220201_tos_CPRagent_block1_tbl.mat',...
+    '20220311_seo_CPRagent_block1_tbl.mat',...
+    '20220301_anm_CPRagent_block1_tbl.mat'}; % AGNT DATA
 
 
-pth                 = '/Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_psychophysics/';
+pth                 = '/Users/fschneider/Documents/CPR_psychophysics/';
 nSample             = 30;
 
 for iCond = 1:2
@@ -37,9 +45,12 @@ for iCond = 1:2
     for iSub = 1:size(fname,2)
         disp(['Condition_' num2str(iCond) '_Subject_' num2str(iSub)])
         clear t
-        load([pth fname{iSub}(end-2:end) '/summary/' fname{iSub} '_cpr_tbl.mat'])
+        tmp1                    = load([pth fname{iSub}(10:12) '/summary/' fname{iSub}]);
+        fname{iSub}(end-8)      = '2';
+        tmp2                    = load([pth fname{iSub}(10:12) '/summary/' fname{iSub}]);
+        t                       = [tmp1.t; tmp2.t];
         snr                     = unique(t.ss_coh);
-        id{iSub}                = fname{iSub}(end-2:end);
+        id{iSub}                = fname{iSub}(end-2:end); 
         
         % Correlation analysis - for coherence blocks
         clear tmp tIdx tbl_trl cr ps
@@ -49,7 +60,7 @@ for iCond = 1:2
         tIdx                  	= cell2mat(tIdx);
         tbl_trl                	= t(tIdx,:);
         nLag                 	= 150;
-        [cr,ps]               	= CPR_correlation_analysis_WIP(tbl_trl, nLag, true);
+        [cr,ps]               	= CPR_correlation_analysis_WIP(tbl_trl, nLag, false);
         
         % Target score
         clear score score_hi score_coh
@@ -68,7 +79,8 @@ for iCond = 1:2
             end
         end
         
-        for iCoh = 1:length(snr)
+        for iCoh = 1:17%length(snr)
+            
             clear cIdx rdp_dir t.js_dir
             
             cIdx = t.ss_coh == snr(iCoh);
@@ -146,7 +158,7 @@ for iDat = 1:8
     ax.Title.Interpreter    = 'none';
     ax.FontSize             = 16;
     ax.YTick                = 1:size(fname,2);
-    ax.YTickLabel           = cellfun(@(x) x(end-2:end),fname,'UniformOutput',false);
+    ax.YTickLabel           = cellfun(@(x) x(10:12),fname,'UniformOutput',false);
     ax.XTick                = xtick;
     ax.XTickLabel           = snr(xtick);
     ax.XLabel.String        = 'Coherence';
@@ -159,7 +171,7 @@ for iDat = 1:8
     elseif iDat == 3
         caxis([-.35 .35])
     elseif iDat == 4
-        caxis([-.2 .2])
+        caxis([-.1 .1])
     elseif iDat == 5
         caxis([-.5 .5])
     elseif iDat == 6
@@ -170,9 +182,9 @@ for iDat = 1:8
         caxis([-1000 1000])
     end
     
-    colormap(cbrewer('div', 'RdGy', 256, 'PCHIP'))  
+    colormap(cbrewer('div', 'RdGy', 256, 'PCHIP'))
     axis square;
-
+    
 end
 
 
@@ -185,10 +197,16 @@ for j = 1:size(fname,2)
     agnt                = [];
     
     for i = 1:length(snr)
-        solo            = [solo; mean(sxc{j,i,1})];
+        if size(sxc{j,i,1},1) == 1
+            solo        = [solo; sxc{j,i,1}];
+        else
+            solo       	= [solo; mean(sxc{j,i,1})];
+        end
+        
         agnt            = [agnt; mean(sxc{j,i,2})];
     end
     
+    all{j}              = solo;
     ms(j,:)             = mean(solo);
     ma(j,:)             = mean(agnt);
     
@@ -208,7 +226,7 @@ ax.YLabel.String        = 'Coherence';
 ax.XTick                = [1 151 301];
 ax.XTickLabel           = round([-150 0 150] * 8.333);
 ax.XLabel.String        = 'Lag [ms]';
-ax.Title.String         = ['Exmpl Subj: ' fname_solo{j}(end-2:end) '_solo'];
+ax.Title.String         = ['Exmpl Subj: ' fname_solo{j}(10:12) '_solo'];
 ax.FontSize             = 20;
 ax.Title.Interpreter    = 'none';
 cb                      = colorbar;
@@ -220,7 +238,7 @@ colormap(gray)
 ax                      = subplot(2,3,2);
 hold on
 for i = 1:size(ms,1)
-pl                      = plot(ms(i,:),'LineWidth',2,'Color',[c(i,:) alph]);
+    pl                  = plot(ms(i,:),'LineWidth',2,'Color',[c(i,:) alph]);
 end
 ax.XTick                = [1 151 301];
 ax.XTickLabel           = round([-150 0 150] * 8.333);
@@ -238,7 +256,7 @@ ax.YLabel.String        = 'Coherence';
 ax.XTick                = [1 151 301];
 ax.XTickLabel           = round([-150 0 150] * 8.333);
 ax.XLabel.String        = 'Lag [ms]';
-ax.Title.String         = ['Exmpl Subj: ' fname_agent{j}(end-2:end) '_computer'];
+ax.Title.String         = ['Exmpl Subj: ' fname_agent{j}(10:12) '_computer'];
 ax.Title.Interpreter    = 'none';
 ax.FontSize             = 20;
 cb                      = colorbar;
@@ -250,7 +268,7 @@ colormap(gray)
 ax                      = subplot(2,3,5);
 hold on
 for i = 1:size(ma,1)
-pl                      = plot(ma(i,:),'LineWidth',2,'Color',[c(i,:) alph]);
+    pl                  = plot(ma(i,:),'LineWidth',2,'Color',[c(i,:) alph]);
 end
 ax.XTick                = [1 151 301];
 ax.XTickLabel           = round([-150 0 150] * 8.333);
@@ -281,8 +299,80 @@ ax.XTick                = [];
 ax.Box                  = 'off';
 ax.FontSize             = 20;
 
-lg                      = legend(cellfun(@(x) x(end-2:end),fname,'UniformOutput',false));
+lg                      = legend(cellfun(@(x) x(10:12),fname,'UniformOutput',false));
 lg.Location             = 'east';
 lg.Box                  = 'off';
 
 print(f, ['/Users/fschneider/Desktop/Pk_diff'], '-r300', '-dpng');
+
+%% Solo plot
+
+f = figure('units','normalized','outerposition',[0 0 1 1]);
+for s = 1:length(all)
+    ax                      = subplot(2,6,s);
+    im                      = imagesc(all{s}./max(max(all{s})));
+    cm                      = colormap(gray(256));
+    ax.XTick                = [1 151 301];
+    ax.XTickLabel           = round([-150 0 150] * 8.333);
+    ax.XLabel.String        = 'Lag [ms]';
+    ax.YTick                = 1:length(snr);
+    ax.YTickLabel           = snr;
+    ax.YLabel.String        = 'Coherence';
+    ax.Title.String         = [fname_solo{s}(10:12)];
+    ax.Title.Interpreter    = 'none';
+    ax.FontSize             = 16;
+end
+print(f, ['/Users/fschneider/Desktop/xCorr_coh_subj'], '-r300', '-dpng');
+
+%%
+
+f                       = figure;
+dat                     = (p(:,1)*8.3333);
+bx                      = boxplot(dat, 'Colors', 'k');
+
+set(bx(end,:),'Visible','off')
+set(bx, {'linew'},{3})
+hold on
+
+for i = 1:length(dat)
+    sc               	= scatter(1+randi([-3 3])/100,(p(i,1)*8.3333));
+    sc.SizeData         = 100;
+    sc.MarkerFaceColor  = c(i,:);
+    sc.MarkerFaceAlpha  = 1;
+    sc.MarkerEdgeColor  = 'none';
+end
+
+ax                      = gca;
+ax.YLabel.String        = 'Response delay [ms]';
+ax.XTick                = [];
+ax.Box                  = 'off';
+ax.FontSize             = 20;
+
+lg                      = legend(cellfun(@(x) x(10:12),fname,'UniformOutput',false));
+lg.Location             = 'east';
+lg.Box                  = 'off';
+print(f, ['/Users/fschneider/Desktop/Resp_delay'], '-r300', '-dpng');
+
+%%
+
+pool = [];
+for ii = 1:length(all)
+    pool = [pool all{ii}];
+    df(:,ii) = max(all{ii},[],2) ./ mean(all{ii},2);
+end
+
+f                       = figure;
+ax                      = gca;
+im                      = imagesc(df);
+cm                      = colormap(gray(256));
+ax.XLabel.String        = 'Subject';
+ax.YTick                = 1:length(snr);
+ax.YTickLabel           = snr;
+ax.YLabel.String        = 'Coherence';
+ax.XTick                = 1:length(fname);
+ax.XTickLabel           = cellfun(@(x) x(10:12),fname,'UniformOutput',false);
+ax.Title.String         = 'XCorr coeff: Max / Mean';
+ax.Title.Interpreter    = 'none';
+ax.FontSize             = 16;
+cb                      = colorbar;
+cb.Label.String         = 'Max/Mean ratio';

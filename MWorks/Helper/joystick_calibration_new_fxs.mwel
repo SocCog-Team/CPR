@@ -1,0 +1,97 @@
+
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0, 0, 0)
+iodevice/mio mIO (
+    data_interval           = 1ms
+    joystick_x_raw          = IO_joystickX_raw
+    joystick_y_raw          = IO_joystickY_raw
+    joystick_x_calib        = IO_joystickX_norm
+    joystick_y_calib        = IO_joystickY_norm
+    joystick_direction      = IO_joystickDirection
+    joystick_strength       = IO_joystickStrength
+    looptime                = IO_looptime
+    )
+
+//
+// Variables
+//
+
+var IO_looptime             = 0
+var cntX                    = 0
+var cntY                    = 0
+var listX_sum               = 0
+var listY_sum               = 0
+
+// JOYSTICK CENTER VALUES - SAMPLED AS LIST WHEN FLAG IS SET TO 1 - AUTOMATICALLY AVERAGED
+var js_X_center             = [0,0] (persistant = YES)
+var js_Y_center             = [0,0] (persistant = YES)
+var js_X_center_avg         = 0 (persistant = YES)
+var js_Y_center_avg         = 0 (persistant = YES)
+
+// JOYSTICK EXTREME VALUES
+var js_Y_max                = 0 (persistant = YES)
+var js_X_max                = 0 (persistant = YES)
+var js_X_min                = 0 (persistant = YES)
+var js_Y_min                = 0 (persistant = YES)
+
+// DISTANCE TO CENTER - USE THESE TO NORMALISE
+var js_Y_max_dist           = 0 (persistant = YES)
+var js_X_max_dist           = 0 (persistant = YES)
+var js_X_min_dist           = 0 (persistant = YES)
+var js_Y_min_dist           = 0 (persistant = YES)
+
+// NORMALISED VALUES
+var js_Y_max_norm           = 0 (persistant = YES)
+var js_X_max_norm           = 0 (persistant = YES) 
+var js_X_min_norm           = 0 (persistant = YES)
+var js_Y_min_norm           = 0 (persistant = YES)
+
+// INCOMING JOYSTICK SIGNAL - USED FOR CALCULATION
+var IO_joystickX_raw        = 0 {
+    js_X_max                = max(js_X_max, IO_joystickX_raw)
+    js_X_min                = min(js_X_min, IO_joystickX_raw)
+
+    // SAMPLE AND AVERAGE CENTER VALUES
+    if (center_flag == 1) {
+        js_X_center[cntX]    = IO_joystickX_raw
+        listX_sum            += IO_joystickX_raw
+        cntX                 += 1
+        js_X_center_avg      = listX_sum / cntX
+    }
+}
+var IO_joystickY_raw        = 0 {
+    js_Y_max                = max(js_Y_max, IO_joystickY_raw)
+    js_Y_min                = min(js_Y_min, IO_joystickY_raw)
+
+        // SAMPLE AND AVERAGE CENTER VALUES
+        if (center_flag == 1) {
+        js_Y_center[cntY]   = IO_joystickY_raw
+        listY_sum           += IO_joystickY_raw
+        cntY                += 1
+        js_Y_center_avg     = listY_sum / cntY
+    }
+}
+var IO_joystickX_norm       = 0
+var IO_joystickY_norm       = 0
+var IO_joystickDirection    = 0
+var IO_joystickStrength     = 0
+}
+
+// CHANGE THIS MANUALLY ONCE JOYSTICK IS IN CENTRAL POSITION
+var center_flag             = 0 
+
+//
+// Protocols
+//
+
+protocol 'New Protocol' {
+    start_device_io (mIO)
+    wait (
+        duration = 360
+        duration_units = s
+        )
+    stop_device_io (mIO)
+}

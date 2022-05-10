@@ -1,6 +1,10 @@
-function f = CPR_fit_sigmoid(snr, HitNo, OutOfNum)
+function[fhandle, ProportionCorrectObserved, ProportionCorrectModel] = CPR_fit_sigmoid(snr, HitNo, OutOfNum, fhandle)
 
 addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes
+
+if nargin < 4
+    fhandle = [];
+end
 
 %% FIT & PLOT
 
@@ -70,7 +74,10 @@ ProportionCorrectModel = PF(paramsValues,StimLevelsFineGrain);
 
 %% PLOT
 
-f                   = figure; hold on
+if isempty(fhandle)
+    fhandle       	= figure; hold on
+end
+
 lw                  = 4;
 alph                = 1;
 

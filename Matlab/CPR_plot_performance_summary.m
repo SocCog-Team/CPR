@@ -357,7 +357,12 @@ for iSubj = 1:size(tbl,2)
         dest_dir = '/Users/fschneider/Documents/MWorks/Plots/';
         print(f, [dest_dir 'summary_' sbj{iSubj} '_' fname], '-r300', '-dpng');
     else
-        dest_dir = ['/Users/fschneider/Documents/CPR_psychophysics/' sbj{iSubj} '/summary/'];
+        if strcmp(sbj{iSubj}, 'Agnt')
+            dest_dir = ['/Users/fschneider/Documents/CPR_psychophysics/' sbj{1} '/summary/'];
+        else
+            dest_dir = ['/Users/fschneider/Documents/CPR_psychophysics/' sbj{iSubj} '/summary/'];
+        end
+        
         if iscell(fname)
             fid = strsplit(fname{iSubj},'_');
         else

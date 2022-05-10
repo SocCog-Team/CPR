@@ -202,6 +202,7 @@ group CTRL {
     var CTRL_arcMask_size                   = 0
     var CTRL_arc2_size                      = 0
     var CTRL_arcMask2_size                  = 0
+    var CTRL_arc_position                   = 0
 
 	var CTRL_start_area_size                = 0 
     var CTRL_start_area_alpha               = 0
@@ -271,7 +272,7 @@ group CTRL {
     var CTRL_fixation2_break_flag           = 0
     var CTRL_fixation2_penalty_flag         = 0
     var CTRL_minFixBreak_duration_ms        = 300
-    var CTRL_fixBreak_penalty_duration_ms   = 10
+    var CTRL_fixBreak_penalty_duration_ms   = 0
 
     var CTRL_scoreBar_width                 = 0
     var CTRL_scoreBar_size                  = 18.2
@@ -399,6 +400,12 @@ group RDP {
 }
 
 group COL {
+    var COL_player1_r                       = 0
+    var COL_player1_g                       = 0
+    var COL_player1_b                       = 0
+    var COL_player2_r                       = 0
+    var COL_player2_g                       = 0
+    var COL_player2_b                       = 0
     var COL_bg_r                            = 0
     var COL_bg_g                            = 0
     var COL_bg_b                            = 0
@@ -411,20 +418,20 @@ group COL {
     var COL_cursor_r 						= 1
     var COL_cursor_g 						= 1
     var COL_cursor_b 						= 1
-    var COL_arc_r                           = 1
+    var COL_arc_r                           = 0
     var COL_arc_g                           = 0
     var COL_arc_b                           = 0
     var COL_arc2_r                          = 0
-    var COL_arc2_g                          = 1
+    var COL_arc2_g                          = 0
     var COL_arc2_b                          = 0    
     var COL_target_r                        = 1
     var COL_target_g                        = 1
     var COL_target_b                        = 1
-    var COL_feedback_r                      = 1
+    var COL_feedback_r                      = 0
     var COL_feedback_g                      = 0
     var COL_feedback_b                      = 0
     var COL_feedback2_r                     = 0
-    var COL_feedback2_g                     = 1
+    var COL_feedback2_g                     = 0
     var COL_feedback2_b                     = 0
     var COL_fix_r                           = 1
     var COL_fix_g                           = 1
@@ -432,11 +439,11 @@ group COL {
     var COL_fix2_r                          = 1
     var COL_fix2_g                          = 1
     var COL_fix2_b                          = 1
-    var COL_scoreBar_r                      = 1
+    var COL_scoreBar_r                      = 0
     var COL_scoreBar_g                      = 0
     var COL_scoreBar_b                      = 0
     var COL_scoreBar2_r                     = 0
-    var COL_scoreBar2_g                     = 1
+    var COL_scoreBar2_g                     = 0
     var COL_scoreBar2_b                     = 0
     var COL_targetBar_r                     = .3
     var COL_targetBar_g                     = .3
@@ -1995,8 +2002,9 @@ protocol 'CPR_solo' {
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
     CTRL_arc_size                               = 4
+    CTRL_arcMask_size                           = CTRL_arc_size - (CTRL_arc_size/10)
+    CTRL_indicator_offset                       = CTRL_arc_size/1.95    
     CTRL_indicator_size                         = .4
-    CTRL_indicator_offset                       = CTRL_arc_size/1.95
     CTRL_indicator_alpha                        = 1
     CTRL_start_area_size                        = 4 
     CTRL_start_area_alpha                       = 1
@@ -2008,8 +2016,6 @@ protocol 'CPR_solo' {
     CTRL_target_ban_duration_ms                 = 1
 	CTRL_target_alpha                   		= 1
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
-    CTRL_minFixBreak_duration_ms                = 300
-    CTRL_fixBreak_penalty_duration_ms           = 10
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
@@ -2021,6 +2027,19 @@ protocol 'CPR_solo' {
     CTRL_feedback_frame_height                  = 10
     CTRL_feedback_bar_height                    = 0
     CTRL_feedback_nBar                          = 2
+    
+    COL_player1_r                               = 1
+    COL_player1_g                               = 0
+    COL_player1_b                               = 0
+    COL_arc_r                                   = COL_player1_r
+    COL_arc_g                                   = COL_player1_g
+    COL_arc_b                                   = COL_player1_b
+    COL_feedback_r                              = COL_player1_r
+    COL_feedback_g                              = COL_player1_g
+    COL_feedback_b                              = COL_player1_b
+    COL_scoreBar_r                              = COL_player1_r
+    COL_scoreBar_g                              = COL_player1_g
+    COL_scoreBar_b                              = COL_player1_b
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2275,14 +2294,14 @@ protocol 'CPR_solo' {
                     duration_units              = ms
                     )
                     
-                report ('FIX BREAK')
+                //report ('FIX BREAK')
                 
                 goto ('Update Stimuli')
             }
 
             state 'Reset CTRL_fixation_break_flag' {
                     CTRL_fixation_break_flag        = 0
-                    report ('FIX RESET')
+                    //report ('FIX RESET')
                     goto ('Update Stimuli')
             }
 
@@ -2557,8 +2576,6 @@ protocol 'CPR_dyadic_agent' {
     CTRL_feedback2_bar_height                   = 0
     CTRL_feedback_nBar                          = 3
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
-    CTRL_minFixBreak_duration_ms                = 300
-    CTRL_fixBreak_penalty_duration_ms           = 10
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2573,6 +2590,32 @@ protocol 'CPR_dyadic_agent' {
     INFO_Score2                                 = 0
     INFO_TrialScore                             = 0
     INFO_TrialScore2                            = 0
+
+    COL_player1_r                               = 1
+    COL_player1_g                               = 0
+    COL_player1_b                               = 0
+    COL_player2_r                               = 0
+    COL_player2_g                               = .55
+    COL_player2_b                               = 0
+    COL_arc_r                                   = COL_player1_r
+    COL_arc_g                                   = COL_player1_g
+    COL_arc_b                                   = COL_player1_b
+    COL_feedback_r                              = COL_player1_r
+    COL_feedback_g                              = COL_player1_g
+    COL_feedback_b                              = COL_player1_b
+    COL_scoreBar_r                              = COL_player1_r
+    COL_scoreBar_g                              = COL_player1_g
+    COL_scoreBar_b                              = COL_player1_b
+    COL_arc2_r                                  = COL_player2_r
+    COL_arc2_g                                  = COL_player2_g
+    COL_arc2_b                                  = COL_player2_b
+    COL_feedback2_r                             = COL_player2_r
+    COL_feedback2_g                             = COL_player2_g
+    COL_feedback2_b                             = COL_player2_b
+    COL_scoreBar2_r                             = COL_player2_r
+    COL_scoreBar2_g                             = COL_player2_g
+    COL_scoreBar2_b                             = COL_player2_b
+
 
     // Set TMP variables for online processing
     TMP_NoStates                                = CTRL_NoStates
@@ -2664,11 +2707,8 @@ protocol 'CPR_dyadic_agent' {
                 COL_start_area_r                = 0 
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
-                COL_feedback_r                  = 1
-                COL_feedback_g                  = 0
-                COL_feedback_b                  = 0
                 CTRL_feedback_rotation          = disc_rand(0,359)
-                CTRL_arc_position               = disc_rand(0,1)
+                CTRL_arc_position               = TRIAL_start % 2
 
                 if (CTRL_arc_position == 0) {
                     CTRL_arc_size               = 4
@@ -2715,12 +2755,25 @@ protocol 'CPR_dyadic_agent' {
                 live_queue_stimulus (scoreBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
-                live_queue_stimulus (AGNT_arc)
-                live_queue_stimulus (arcMask2)
-                live_queue_stimulus (AGNT_indicator)
-                live_queue_stimulus (arc)
-                live_queue_stimulus (arcMask)
-                live_queue_stimulus (indicator)
+
+                if (CTRL_arc_position == 0) {
+                    live_queue_stimulus (AGNT_arc)
+                    live_queue_stimulus (arcMask2)
+                    live_queue_stimulus (AGNT_indicator)
+                    live_queue_stimulus (arc)
+                    live_queue_stimulus (arcMask)
+                    live_queue_stimulus (indicator)
+                }
+
+                if (CTRL_arc_position == 1) {
+                    live_queue_stimulus (arc)
+                    live_queue_stimulus (arcMask)
+                    live_queue_stimulus (indicator)
+                    live_queue_stimulus (AGNT_arc)
+                    live_queue_stimulus (arcMask2)
+                    live_queue_stimulus (AGNT_indicator)
+                }
+
                 live_queue_stimulus (fixationCross)
                 update_stimulus_display () 
                 goto ('Dequeue Target')
@@ -2861,14 +2914,14 @@ protocol 'CPR_dyadic_agent' {
                     duration_units              = ms
                     )
                     
-                report ('FIX BREAK')
+                //report ('FIX BREAK')
                 
                 goto ('Update Stimuli')
             }
 
             state 'Reset CTRL_fixation_break_flag' {
                     CTRL_fixation_break_flag        = 0
-                    report ('FIX RESET')
+                    //report ('FIX RESET')
                     goto ('Update Stimuli')
             }
 
@@ -3300,8 +3353,6 @@ protocol 'CPR_dyatic' {
     CTRL_target_ban_duration_ms                 = 1
     CTRL_target_alpha                           = 1
     CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
-    CTRL_minFixBreak_duration_ms                = 300
-    CTRL_fixBreak_penalty_duration_ms           = 10
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
@@ -3314,6 +3365,31 @@ protocol 'CPR_dyatic' {
     CTRL_feedback_bar_height                    = 0
     CTRL_feedback2_bar_height                   = 0
     CTRL_feedback_nBar                          = 3
+
+    COL_player1_r                               = 1
+    COL_player1_g                               = 0
+    COL_player1_b                               = 0
+    COL_player2_r                               = 0
+    COL_player2_g                               = .55
+    COL_player2_b                               = 0
+    COL_arc_r                                   = COL_player1_r
+    COL_arc_g                                   = COL_player1_g
+    COL_arc_b                                   = COL_player1_b
+    COL_feedback_r                              = COL_player1_r
+    COL_feedback_g                              = COL_player1_g
+    COL_feedback_b                              = COL_player1_b
+    COL_scoreBar_r                              = COL_player1_r
+    COL_scoreBar_g                              = COL_player1_g
+    COL_scoreBar_b                              = COL_player1_b
+    COL_arc2_r                                  = COL_player2_r
+    COL_arc2_g                                  = COL_player2_g
+    COL_arc2_b                                  = COL_player2_b
+    COL_feedback2_r                             = COL_player2_r
+    COL_feedback2_g                             = COL_player2_g
+    COL_feedback2_b                             = COL_player2_b
+    COL_scoreBar2_r                             = COL_player2_r
+    COL_scoreBar2_g                             = COL_player2_g
+    COL_scoreBar2_b                             = COL_player2_b
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -3419,7 +3495,7 @@ protocol 'CPR_dyatic' {
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
                 CTRL_feedback_rotation          = disc_rand(0,359)
-                CTRL_arc_position               = disc_rand(0,1)
+                CTRL_arc_position               = TRIAL_start % 2
 
                 if (CTRL_arc_position == 0) {
                     CTRL_arc_size               = 4
@@ -3466,12 +3542,25 @@ protocol 'CPR_dyatic' {
                 live_queue_stimulus (scoreBarMask)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
-                live_queue_stimulus (arc2)
-                live_queue_stimulus (arcMask2)
-                live_queue_stimulus (indicator2)
-                live_queue_stimulus (arc)
-                live_queue_stimulus (arcMask)
-                live_queue_stimulus (indicator)
+
+                if (CTRL_arc_position == 0) {
+                    live_queue_stimulus (arc2)
+                    live_queue_stimulus (arcMask2)
+                    live_queue_stimulus (indicator2)
+                    live_queue_stimulus (arc)
+                    live_queue_stimulus (arcMask)
+                    live_queue_stimulus (indicator)
+                }
+
+                if (CTRL_arc_position == 1) {
+                    live_queue_stimulus (arc)
+                    live_queue_stimulus (arcMask)
+                    live_queue_stimulus (indicator)
+                    live_queue_stimulus (arc2)
+                    live_queue_stimulus (arcMask2)
+                    live_queue_stimulus (indicator2)
+                }
+
                 live_queue_stimulus (fixationCross)
                 live_queue_stimulus (fixationCross2)
                 update_stimulus_display () 
@@ -3606,7 +3695,7 @@ protocol 'CPR_dyatic' {
             state 'Fixation break detected' {
 
                 if (IO_fixation_flag == 0 && CTRL_fixation_break_flag == 0) {
-                    report ('FIX BREAK A')
+                    //report ('FIX BREAK A')
                     CTRL_fixation_break_flag      = 1
 
                     start_timer (
@@ -3617,7 +3706,7 @@ protocol 'CPR_dyatic' {
                 }
 
                 if (IO_fixation2_flag == 0 && CTRL_fixation2_break_flag == 0) {
-                    report ('FIX BREAK B')
+                    //report ('FIX BREAK B')
                     CTRL_fixation2_break_flag       = 1
 
                     start_timer (
@@ -3632,12 +3721,12 @@ protocol 'CPR_dyatic' {
 
             state 'Reset CTRL_fixation_break_flag' {
                 if (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer)) {
-                    report ('FIX BREAK RESET A')
+                    //report ('FIX BREAK RESET A')
                     CTRL_fixation_break_flag        = 0
                 }
 
                 if (IO_fixation2_flag && CTRL_fixation2_break_flag && timer_expired(MinFixationBreakTimer2)) {
-                    report ('FIX BREAK RESET B')
+                    //report ('FIX BREAK RESET B')
                     CTRL_fixation2_break_flag       = 0
                 }
             

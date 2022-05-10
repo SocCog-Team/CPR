@@ -1,4 +1,4 @@
-function CPR_psychometric_function(pth, fname, dest_dir)
+function [snr, dat, model] = CPR_psychometric_function(pth, fname, dest_dir)
 
 % Import 4AFC data
 var_import = {
@@ -44,7 +44,7 @@ end
 
 %% Fit and plot psychometric function
 
-f                       = CPR_fit_sigmoid(snr, HitNo, OutOfNum);
+[f, dat, model]         = CPR_fit_sigmoid(snr, HitNo, OutOfNum);
 
 print(f, [dest_dir fname(1:16)], '-r300', '-dpng');
 

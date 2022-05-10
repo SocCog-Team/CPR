@@ -1,7 +1,11 @@
-function [rt, trg_dir] = RT_polar(fname, pth, dest_dir)
+function [rt, trg_dir] = RT_polar(fname, pth, dest_dir, plotFlag)
 
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 cd(pth)
+
+if nargin < 4
+    plotFlag = true;
+end
 
 %% Import file
 
@@ -40,7 +44,7 @@ for iTrl = 1:length(trl.tEnd)                                                   
     
     if strcmp(outcome, 'hit')
         c = c+1;
-%         trg_dir(c)          = str2num(ttype{:}(4:end));
+        %         trg_dir(c)          = str2num(ttype{:}(4:end));
         trg_dir(c)      	= getTrialData(d.value, trlIdx, idx.tdir);          % Target direction
         trg_value{c}      	= getTrialData(d.time, trlIdx, idx.trg);          	% Reaction trigger [stimulus] values
         res_value{c}       	= getTrialData(d.time, trlIdx, idx.res);          	% Reaction trigger [stimulus] values
@@ -67,30 +71,31 @@ end
 
 %% PLOT
 
-f                   = figure;
-pp                  = polarscatter(deg2rad(trg_dir), rt);
-pp.Marker           = 'o';
-pp.SizeData         = 15;
-pp.MarkerFaceColor  = [0 0 0];
-pp.MarkerEdgeColor  = 'none';
-pp.MarkerFaceAlpha  = .5;
-ax                  = gca;
-ax.RLim             = [0 1000];
-ax.FontSize         = 16;
-hold on
-
-pl                  = polarplot(deg2rad([tdir tdir(1)]), [dat dat(1)]);
-pl.LineWidth        = 3;
-pl.Color            = [1 0 0 .75];
-
-pv                  = polarplot(deg2rad([tdir tdir(1)]), [stddat stddat(1)]);
-pv.LineWidth        = 3;
-pv.Color            = [.5 .5 1 .75];
-
-lg                  = legend('Trial RT','Binned Median','Binned Std');
-lg.Position         = [0.03    0.07    0.2473    0.0940];
-lg.Box              = 'off';
-
-print(f, [dest_dir fname(1:15)], '-r300', '-dpng');
-
+if plotFlag
+    f                   = figure;
+    pp                  = polarscatter(deg2rad(trg_dir), rt);
+    pp.Marker           = 'o';
+    pp.SizeData         = 15;
+    pp.MarkerFaceColor  = [0 0 0];
+    pp.MarkerEdgeColor  = 'none';
+    pp.MarkerFaceAlpha  = .5;
+    ax                  = gca;
+    ax.RLim             = [0 1000];
+    ax.FontSize         = 16;
+    hold on
+    
+    pl                  = polarplot(deg2rad([tdir tdir(1)]), [dat dat(1)]);
+    pl.LineWidth        = 3;
+    pl.Color            = [1 0 0 .75];
+    
+    pv                  = polarplot(deg2rad([tdir tdir(1)]), [stddat stddat(1)]);
+    pv.LineWidth        = 3;
+    pv.Color            = [.5 .5 1 .75];
+    
+    lg                  = legend('Trial RT','Binned Median','Binned Std');
+    lg.Position         = [0.03    0.07    0.2473    0.0940];
+    lg.Box              = 'off';
+    
+    print(f, [dest_dir fname(1:15)], '-r300', '-dpng');
+end
 end

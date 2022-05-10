@@ -31,7 +31,7 @@ if clear_dir_flag == true
 end
 
 % Preprocess data
-for iSubj = 17:length(sbj_lst)
+for iSubj = 11 %1:length(sbj_lst)
         
     clear fname_RT fname_SNR fname_SOLO1 fname_SOLO2 fname_AGNT1 fname_AGNT2 fname_SOLO1r fname_SOLO2r
     disp(['Processing subject: ' sbj_lst{iSubj}])

@@ -100,10 +100,9 @@ end
 % Import .mwk2 data file
 if nargin < 4
     d                	= CPR_import_mwk2(fname, var_import, true);
-    d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
-    d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
+%     d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
+%     d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
 end
-
 
 %% Extract data and organise in table
 
@@ -122,8 +121,7 @@ idx.RDP_dir                 = d.event == 'RDP_direction';
 idx.RDP_coh                 = d.event == 'RDP_coherence';
 idx.trg_on                  = d.event == 'STIM_target_onset';
 idx.JS_dir                  = d.event == 'IO_joystickDirection';
-% idx.JS_str                  = d.event == 'IO_joystickStrength_norm';
-idx.JS_str                  = d.event == 'IO_joystickStrength_norm';
+idx.JS_str                  = d.event == 'IO_joystickStrength';
 idx.fixation              	= d.event == 'IO_fixation_flag';
 idx.outcome                 = d.event == 'TRIAL_outcome';
 idx.trg                     = d.event == 'TRIAL_reactionTrigger';
