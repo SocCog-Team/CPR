@@ -205,7 +205,7 @@ group CTRL {
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
     //var CTRL_snr_list                       = [0, .0500, .0900, .1620, .2916, .5249, .9448] // factor 1.8
-    var CTRL_snr_list                       = [0, .08, .132, .2178, .3594, .593, .9784] // factor 1.65
+    var CTRL_snr_list                       = [0, .08, .132, .2178, .3594, .593, .9784] // factor 1.65    
     var CTRL_directionChange_list           = [15, 45, 90, 135]
     var CTRL_ITI_ms                         = 0
     var CTRL_change_mangitude               = 0
@@ -521,21 +521,20 @@ group AGNT {
 }
 
 group IO {
-    // Measure manually [psycho4]
-    var IO_joystickX_raw_max                = 1015
-    var IO_joystickX_raw_min                = 18
-    var IO_joystickY_raw_max                = 1023
-    var IO_joystickY_raw_min                = 57
+    // Measure manually [server]
+    var IO_joystickX_raw_max                = 511
+    var IO_joystickX_raw_min                = 511
+    var IO_joystickY_raw_max                = 511
+    var IO_joystickY_raw_min                = 511
+
+    // Measure manually [stream]
+    var IO_joystickX2_raw_max               = 511
+    var IO_joystickX2_raw_min               = 511
+    var IO_joystickY2_raw_max               = 511
+    var IO_joystickY2_raw_min               = 511
+
     var IO_joystickTrigger                  = false
     var cancelTrigger                       = false
-
-    // Measure manually [psycho3]
-    var IO_joystickX2_raw_max               = 998
-    var IO_joystickX2_raw_min               = 12
-    var IO_joystickY2_raw_max               = 1014
-    var IO_joystickY2_raw_min               = 44
-    var IO_joystickTrigger2                 = false
-
     var IO_fixation_flag                    = 0
     var IO_fixation2_flag                   = 0
     var IO_calib_fixation_flag              = 0
@@ -1338,19 +1337,18 @@ stimulus/rectangle cum_rew_bar2 (
     )
 
 stimulus/text calib_instruction (
-    text                                    = Pls rotate the joystick at maximum displacement
+    text                                    = "Pls rotate the joystick at maximum displacement"
     font_name                               = Helvetica
-    font_size                               = 24
+    font_size                               = 62
     text_alignment                          = center
-    //x_size                                  = 5  
-    //y_size                                  = 5
-    //x_position                              = 0  
-    //y_position                              = 0  
+    x_size                                  = 10  
+    y_size                                  = 10
+    x_position                              = 0  
+    y_position                              = 0  
     color                                   = 1,1,1
     //rotation                                = 0
     //alpha_multiplier                        = 1
     )
-
 
 
 //
@@ -1389,6 +1387,29 @@ protocol 'Joystick_calibration_ServerSetup' {
     dequeue_stimulus (calib_instruction)
     update_stimulus_display ()
     stop_device_io (mIO)
+}
+
+protocol 'Joystick_calibration_StreamSetup' {
+    start_device_io (mIO)
+    start_device_io (getStream)
+    live_queue_stimulus (Background)
+    live_queue_stimulus (calib_instruction)
+    update_stimulus_display ()
+
+    CTRL_js2_calibration_flag            = true
+    
+    wait (
+        duration                        = 10
+        duration_units                  = s
+        )
+
+    CTRL_js2_calibration_flag            = false
+
+    dequeue_stimulus (Background)
+    dequeue_stimulus (calib_instruction)
+    update_stimulus_display ()
+    stop_device_io (mIO)
+    stop_device_io (getStream)
 }
 
 protocol 'Calibration-9p_ServerSetup' {
@@ -2110,7 +2131,7 @@ protocol 'CPR_solo' {
     CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 1
 	CTRL_target_alpha                   		= 1
-    CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
@@ -2203,7 +2224,6 @@ protocol 'CPR_solo' {
         cancel                                  = cancelTrigger
         ) {
             IO_joystickTrigger                  = true
-            IO_joystickTrigger2                 = true
     }
 
     trial 'Trial Structure' {
@@ -2685,7 +2705,7 @@ protocol 'CPR_dyadic_agent' {
     CTRL_feedback_bar_height                    = 0
     CTRL_feedback2_bar_height                   = 0
     CTRL_feedback_nBar                          = 3
-    CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2783,7 +2803,6 @@ protocol 'CPR_dyadic_agent' {
         cancel                                  = cancelTrigger
         ) {
             IO_joystickTrigger                  = true
-            IO_joystickTrigger2                 = true
     }
 
     trial 'Trial Structure' {
@@ -3470,7 +3489,7 @@ protocol 'CPR_dyatic' {
     CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 1
     CTRL_target_alpha                           = 1
-    CTRL_fixationWidth_dva                      = CTRL_start_area_size+2
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+1
     CTRL_feedback_alpha                         = 1 
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
@@ -3578,7 +3597,6 @@ protocol 'CPR_dyatic' {
         cancel                                  = cancelTrigger
         ) {
             IO_joystickTrigger                  = true
-            IO_joystickTrigger2                 = true
     }
 
     trial 'Trial Structure' {

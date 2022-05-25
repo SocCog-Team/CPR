@@ -58,33 +58,29 @@ for iSubj = 1:length(sbj_lst)
     if ~isnat(x.DateSolo1(iSubj))
         try
             [t1,d1,s1]   	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho4_fxs.mwk2']);
-            [t2,d2,s2]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho3_fxs.mwk2']);
+            [t2,d2,s2]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho3fxs.mwk2']);
         catch
             [t1,d1,s1]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho3_fxs.mwk2']);
-            [t2,d2,s2]     	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho4_fxs.mwk2']);
+            [t2,d2,s2]     	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho4fxs.mwk2']);
         end
     end
     
-%     % Import CPRagent data
-%     if ~isnat(x.DateAgent(iSubj))
-%         try
-%             [t1,d1,s1]   	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block1_psycho4_fxs.mwk2']);
-%             [t2,d2,s2]   	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block2_psycho3_fxs.mwk2']);
-%         catch
-%             [t1,d1,s1]    	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block1_psycho3_fxs.mwk2']);
-%             [t2,d2,s2]     	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block2_psycho4_fxs.mwk2']);
-%         end
-%     end
+    % Import CPRagent data
+    if ~isnat(x.DateAgent(iSubj))
+        fname_AGNT1         = [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block1_fxs.mwk2'];
+        fname_AGNT2       	= [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block2_fxs.mwk2'];
+   
+        [t1,d1,s1]          = CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, fname_AGNT1);
+        [t2,d2,s2]          = CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, fname_AGNT2);
+    end
     
     % Import CPRsolo_repeated data
     if ~isnat(x.DateSolo2(iSubj))
-        try
-            [t1,d1,s1]      = CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho4_fxs.mwk2']);
-            [t2,d2,s2]   	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho3_fxs.mwk2']);
-        catch
-            [t1,d1,s1]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho3_fxs.mwk2']);
-            [t2,d2,s2]   	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho4_fxs.mwk2']);
-        end
+        fname_SOLO1r        = [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_fxs.mwk2'];
+        fname_SOLO2r        = [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_fxs.mwk2'];
+    
+        [t1,d1,s1]          = CPR_psych_import(sbj_lst{iSubj}, data_pth, fname_SOLO1r);
+        [t2,d2,s2]          = CPR_psych_import(sbj_lst{iSubj}, data_pth, fname_SOLO2r);
     end
  
 %     % CPR-4AFC psychometric curve comparison

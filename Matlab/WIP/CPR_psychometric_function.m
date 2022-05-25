@@ -1,4 +1,4 @@
-function [snr, dat, model] = CPR_psychometric_function(pth, fname, dest_dir)
+function [out] = CPR_psychometric_function(pth, fname, dest_dir)
 
 % Import 4AFC data
 var_import = {
@@ -48,4 +48,8 @@ end
 
 print(f, [dest_dir fname(1:16)], '-r300', '-dpng');
 
+% figure
+% [estimated_params,stat]=sigm_fit(snr,hir,[0.25 1 NaN NaN],[],1);
+% 
+out = hir;
 end

@@ -69,7 +69,7 @@ disp(message);
 snr = round(snr,2);
 ProportionCorrectObserved=HitNo./OutOfNum;
 %     StimLevelsFineGrain=[min(vec):max(vec)./1000:max(vec)];
-StimLevelsFineGrain=[0:.01:1];
+StimLevelsFineGrain=[0:.001:1];
 ProportionCorrectModel = PF(paramsValues,StimLevelsFineGrain);
 
 %% PLOT

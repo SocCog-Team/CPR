@@ -97,7 +97,7 @@ for iTrl = 1:length(trl.tEnd)
         
         % Steady state index
         if iSS < length(trl.ssdur{iTrl})
-            ssIdx           = d.time >= trl.state_ts{iTrl}(iSS) & d.time < trl.state_ts{iTrl}(iSS+1); % 1st timestamp irrelevant
+            ssIdx           = d.time >= trl.state_ts{iTrl}(iSS) & d.time < trl.state_ts{iTrl}(iSS+1); 
         else
             ssIdx           = d.time >= trl.state_ts{iTrl}(iSS) & d.time <= trl.tEnd(iTrl);
         end

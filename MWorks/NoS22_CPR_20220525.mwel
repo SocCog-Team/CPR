@@ -1,0 +1,133 @@
+//
+// I/O Devices
+//
+
+iodevice/usbhid_generic joystick (
+       usage_page                           = 1
+       usage                                = 4
+       log_all_input_values                 = NO
+       autostart                            = YES
+   ){
+   iochannel/usbhid_generic_input_channel (
+       usage_page                           = 1
+       usage                                = 49
+       value                                = IO_joystickY_raw
+   )
+   iochannel/usbhid_generic_input_channel (
+       usage_page                           = 1
+       usage                                = 48
+       value                                = IO_joystickX_raw
+   )
+}
+
+
+filter/joystick_calibrator joystick_norm (
+    maxX                                    = IO_joystickX_raw_max
+    minX                                    = IO_joystickX_raw_min
+    maxY                                    = IO_joystickY_raw_max
+    minY                                    = IO_joystickY_raw_min
+    rawX                                    = IO_joystickX_raw
+    rawY                                    = IO_joystickY_raw
+    strength                                = IO_joystickStrength
+    direction                               = IO_joystickDirection
+    normX                                   = IO_joystickX_norm
+    normY                                   = IO_joystickY_norm
+    trigger                                 = IO_joystickTrigger
+    capStrength                             = YES
+    )
+
+//
+// Variables
+//
+
+group IO {
+    // Measure manually [server]
+    var IO_joystickX_raw_max                = 511
+    var IO_joystickX_raw_min                = 511
+    var IO_joystickY_raw_max                = 511
+    var IO_joystickY_raw_min                = 511
+
+    var IO_joystickX_norm                   = 0
+    var IO_joystickY_norm                   = 0
+    var IO_joystickX_raw                    = 0 {
+        if (CTRL_js_calibration_flag == true) {
+            IO_joystickX_raw_max            = max(IO_joystickX_raw_max, IO_joystickX_raw)
+            IO_joystickX_raw_min            = min(IO_joystickX_raw_min, IO_joystickX_raw)
+        }
+    }
+    var IO_joystickY_raw                    = 0 {
+        if (CTRL_js_calibration_flag == true) {
+            IO_joystickY_raw_max            = max(IO_joystickY_raw_max, IO_joystickY_raw)
+            IO_joystickY_raw_min            = min(IO_joystickY_raw_min, IO_joystickY_raw)
+        }
+    }
+    var IO_joystickStrength                 = 0 
+    var IO_joystickDirection                = 0 
+    var IO_joystickTrigger                  = false
+    var cancelTrigger                       = false
+}
+
+group COL {
+    var COL_bg_r                            = 0
+    var COL_bg_g                            = 0
+    var COL_bg_b                            = 0
+}
+
+
+//
+// Stimuli
+//
+
+
+blank_screen Background (
+    color                                   = COL_bg_r,COL_bg_g,COL_bg_b
+    )
+
+stimulus/text calib_instruction (
+    text                                    = "Pls rotate the joystick at maximum displacement"
+    font_name                               = Helvetica
+    font_size                               = 62
+    text_alignment                          = center
+    x_size                                  = 10  
+    y_size                                  = 10
+    x_position                              = 0  
+    y_position                              = 0  
+    color                                   = 1,1,1
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+
+//
+// Protocols
+//
+
+
+protocol 'Joystick_calibration' {
+    start_device_io (joystick)
+    live_queue_stimulus (Background)
+    live_queue_stimulus (calib_instruction)
+    update_stimulus_display ()
+
+    CTRL_js_calibration_flag            = true
+    
+    wait (
+        duration                        = 10
+        duration_units                  = s
+        )
+
+    CTRL_js_calibration_flag            = false
+
+    dequeue_stimulus (Background)
+    dequeue_stimulus (calib_instruction)
+    update_stimulus_display ()
+    stop_device_io (mIO)
+}
+
+
+protocol 'Test' {
+        wait (
+        duration                        = 100
+        duration_units                  = s
+        )
+}

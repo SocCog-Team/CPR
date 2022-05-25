@@ -99,7 +99,7 @@ end
 
 % Import .mwk2 data file
 if nargin < 4
-    d                	= CPR_import_mwk2(fname, var_import, true);
+    d                	= CPR_import_mwk2(fname, var_import, false);
 %     d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
 %     d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
 end
