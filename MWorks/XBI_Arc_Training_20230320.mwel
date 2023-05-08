@@ -23,7 +23,7 @@ iodevice/mio mIO (
 group CTRL {
     var CTRL_js_reward                  = true
     var CTRL_reward_ml                  = 0
-    var CTRL_reward_divisor             = 0
+    var CTRL_reward_js_ml               = 0
     var CTRL_TimeOut_ms                 = 0
     var CTRL_joystickThreshold          = 0
     var CTRL_ITI_ms                     = 0
@@ -31,9 +31,6 @@ group CTRL {
     var CTRL_Xmax                       = 11.4018
     var CTRL_HitCounter                 = 0
     var CTRL_MissCounter                = 0
-    var CTRL_FalseAlarmCounter          = 0
-    var CTRL_FailureCounter             = 0
-    var CTRL_IgnoreCounter              = 0
 }
 
 group Arc {
@@ -62,6 +59,8 @@ group Target {
 }
 
 group TRIAL {
+    var TRIAL_start                     = 0
+    var TRIAL_end                       = 0  
     var TRIAL_reactionTrigger           = 0
     var TRIAL_reactionTrigger_ts        = 0
     var TRIAL_reactionEvent             = 0
@@ -73,16 +72,10 @@ group TRIAL {
     var TRIAL_type                      = 0
 }
 
-group ML {
-    var ML_trialStart                   = 0
-    var ML_trialEnd                     = 0
-    var ML_sync                         = 0
-}
-
 group COL {
-    var CTRL_bg_col_r                   = 0
-    var CTRL_bg_col_g                   = 0
-    var CTRL_bg_col_b                   = 0
+    var CTRL_bg_col_r                   = 0.5
+    var CTRL_bg_col_g                   = 0.5
+    var CTRL_bg_col_b                   = 0.5
     var CTRL_target_col_r               = 0
     var CTRL_target_col_g               = 1
     var CTRL_target_col_b               = 1
@@ -91,11 +84,12 @@ group COL {
     var CTRL_arc_col_b                  = 0
 }
 
-group Stuff {
+group TMP {
     var pi                              = 3.14159265359
     var TMP_target_dir                  = 0
     var TMP_RDPdir                      = 0
     var TMP_normJoyDir                  = 0
+    var ML_sync                         = 0
 }
 
 group RDP {
@@ -269,16 +263,16 @@ protocol 'Hit target' {
     CTRL_js_reward                      = true
     CTRL_joystickThreshold              = .15
     CTRL_reward_ml                      = 0.2
-    CTRL_reward_divisor                 = 6
+    CTRL_reward_js_ml                   = 0.1
     CTRL_TimeOut_ms                     = 500
-    CTRL_target_delay_ms                = 1000
-    CTRL_target_duration_ms             = 1000
-    CTRL_target_hold_duration_ms        = 300
+    CTRL_target_delay_ms                = 500
+    CTRL_target_duration_ms             = 5000
+    CTRL_target_hold_duration_ms        = 50
     CTRL_target_size                    = 1.5
     CTRL_target_distance                = 8
-    CTRL_arc_width                      = 30
+    CTRL_arc_width                      = 75
     CTRL_ITI_ms                         = 500
-    RDP_on                              = true
+    RDP_on                              = false
 
     task 'Trial Loop' {
         state 'Wait [Joystick Reset]' {
@@ -293,6 +287,8 @@ protocol 'Hit target' {
         state 'Wait [Joystick Movement]' {
 			CTRL_start_area_alpha        = .3
 
+            report ('Wait for joystick movement')
+
             queue_stimulus (start_area)
             update_stimulus_display ()
 
@@ -305,10 +301,12 @@ protocol 'Hit target' {
         state 'Feedback for 1st movement' {
             dequeue_stimulus (start_area)
             update_stimulus_display ()
+            report ('Movement detected!')
 
             if (CTRL_js_reward) {
                 play_sound (Success2)
-                IO_rewardA              = CTRL_reward_ml/CTRL_reward_divisor
+                IO_rewardA              = CTRL_reward_js_ml
+                report('Joystick reward: $CTRL_reward_js_ml')
                 update_stimulus_display ()
             }
 
@@ -324,8 +322,11 @@ protocol 'Hit target' {
 
         state 'Start Trial' {
             ML_sync                     = 1
-            ML_trialStart               += 1
-            
+            TRIAL_start                 += 1
+                        
+            report('----- TRIAL $TRIAL_start START ------')
+
+
             TRIAL_dir_idx               = disc_rand(0,size(CTRL_target_DirectionList)-1)
             TRIAL_target_direction      = CTRL_target_DirectionList[TRIAL_dir_idx]
             TRIAL_type                  = format("dir %d", (integer)TRIAL_target_direction)
@@ -350,7 +351,7 @@ protocol 'Hit target' {
             if (RDP_on) {
                 live_queue_stimulus (RDP)	
             }
-            queue_stimulus (start_area)
+            live_queue_stimulus (start_area)
             update_stimulus_display ()
 
             timer_expired (
@@ -435,14 +436,14 @@ protocol 'Hit target' {
                 when                    = CTRL_arc_flag && (abs(IO_joystickStrength) > CTRL_joystickThreshold)
                 )
             goto (
-                target                  = 'Error'
-                when                    = timer_expired(TargetDurationTimer) || TRIAL_reactionTrigger == 0
+                target                  = 'Miss'
+                when                    = timer_expired(TargetDurationTimer) && CTRL_arc_flag == 0
                 )
         }
 
         state 'Hit' {
             play_sound (Success)
-            report ('=> Hit!')
+            report ('Outcome => Hit!')
 
             TRIAL_reactionTrigger       = 0
             TRIAL_outcome               = "hit"
@@ -451,46 +452,20 @@ protocol 'Hit target' {
             goto ('Give reward')
         }
 
-        state 'Error' {
+        state 'Miss' {
             play_sound (Failure)
-            report ('=> Error!')
+            report ('Outcome => Miss!')
 
             TRIAL_RT                    = 0
+            TRIAL_reactionTrigger       = 0
+            TRIAL_outcome               = "miss"
+            CTRL_MissCounter            += 1
 
             start_timer (
                 timer                   = TimeOutTimer
                 duration                = CTRL_TimeOut_ms
                 duration_units          = ms
                 )
-
-            goto (
-                target                  = 'Miss'
-                when                    = TRIAL_reactionTrigger == 1 && timer_expired(TargetDurationTimer)
-                )
-
-            goto (
-                target                  = 'False Alarm'
-                when                    = TRIAL_reactionTrigger == 0
-                )
-        }
-
-        state 'Miss' {
-            report ('=> Miss!')
-
-            TRIAL_reactionTrigger       = 0
-            TRIAL_outcome               = "miss"
-            CTRL_MissCounter            += 1
-            CTRL_FailureCounter         += 1
-
-            goto ('TimeOut')
-        }
-
-        state 'False Alarm' {
-            report ('=> False Alarm!')
-            TRIAL_reactionTrigger       = 0
-            TRIAL_outcome               = "false alarm"
-            CTRL_FalseAlarmCounter      += 1
-            CTRL_FailureCounter         += 1
 
             goto ('TimeOut')
         }
@@ -505,6 +480,7 @@ protocol 'Hit target' {
         state 'Give reward' {
             IO_rewardA                  = CTRL_reward_ml
 
+            report('Reward: $CTRL_reward_ml')
             goto ('End trial')
         }
 
@@ -513,7 +489,9 @@ protocol 'Hit target' {
             TRIAL_reactionEvent         = 0
             TRIAL_RT                    = 0
             ML_sync                     = 1
-            ML_trialEnd                 = ML_trialStart
+            TRIAL_end                   = TRIAL_start
+
+            report('----- TRIAL $TRIAL_start END ------')
 
             start_timer (
                 timer                   = ITI_timer

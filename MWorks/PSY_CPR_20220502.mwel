@@ -41,7 +41,7 @@ filter/joystick_calibrator joystick_stream (
     direction                               = IO_joystickDirection2
     normX                                   = IO_joystickX2_norm
     normY                                   = IO_joystickY2_norm
-    trigger                                 = IO_joystickTrigger
+    trigger                                 = IO_joystickTrigger2
     capStrength                             = YES
     )
 
@@ -496,11 +496,11 @@ group AGNT {
     var AGNT_direction                      = 0 {
         if (TRIAL_start > TRIAL_end) {
             // Restrict to circular space [0:359]
-            TMP_agnt_dir                    = (int)(AGNT_direction + 360) % 360
+            //TMP_agnt_dir                    = (int)(AGNT_direction + 360) % 360
 
             // Calculate tracking accuracy and reward
             TMP_normJoyDir2                 = (int)(((int)AGNT_direction + (180-TMP_RDPdir) + 360) % 360) 
-            TMP_accuracy2                   = abs(1 - abs(TMP_RDPdir - TMP_agnt_dir) / 180)
+            TMP_accuracy2                   = abs(1 - abs(TMP_RDPdir - AGNT_direction) / 180)
             
             // Calculate reward score
             if (AGNT_strength <= 1) {
@@ -534,6 +534,7 @@ group IO {
     var IO_joystickY2_raw_min               = 511
 
     var IO_joystickTrigger                  = false
+    var IO_joystickTrigger2                 = false
     var cancelTrigger                       = false
     var IO_fixation_flag                    = 0
     var IO_fixation2_flag                   = 0
@@ -3129,6 +3130,7 @@ protocol 'CPR_dyadic_agent' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
+                CTRL_miss_flag                  = 0
                 CTRL_feedback_flag              = 1
                 INFO_HitCounter                 += 1
                 INFO_Score                      += TMP_score
@@ -3137,6 +3139,7 @@ protocol 'CPR_dyadic_agent' {
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
+                CTRL_miss_flag2                 = 1
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = 1
@@ -3188,10 +3191,12 @@ protocol 'CPR_dyadic_agent' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = 0
+                CTRL_miss_flag                  = 1
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
+                CTRL_miss_flag2                 = 0
                 INFO_HitCounter2                += + 1
                 INFO_Score2                     += TMP_score2
                 INFO_TrialScore2                += TMP_score2
@@ -3246,6 +3251,7 @@ protocol 'CPR_dyadic_agent' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
+                CTRL_miss_flag                  = 0
                 INFO_HitCounter                 += 1
                 INFO_Score                      += TMP_score 
                 INFO_TrialScore                 += TMP_score 
@@ -3253,6 +3259,7 @@ protocol 'CPR_dyadic_agent' {
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
+                CTRL_miss_flag2                 = 0
                 INFO_HitCounter2                += 1
                 INFO_Score2                     += TMP_score2
                 INFO_TrialScore2                += TMP_score2
@@ -3350,8 +3357,10 @@ protocol 'CPR_dyadic_agent' {
                 // Set flags
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = 0
+                CTRL_miss_flag                  = 1
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
+                CTRL_miss_flag2                 = 1
 
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
@@ -3597,6 +3606,7 @@ protocol 'CPR_dyatic' {
         cancel                                  = cancelTrigger
         ) {
             IO_joystickTrigger                  = true
+            IO_joystickTrigger2                 = true
     }
 
     trial 'Trial Structure' {
@@ -3970,6 +3980,7 @@ protocol 'CPR_dyatic' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
+                CTRL_miss_flag                  = 0
                 INFO_HitCounter                 += 1
                 INFO_Score                      += TMP_score
                 INFO_TrialScore                 += TMP_score
@@ -3977,6 +3988,7 @@ protocol 'CPR_dyatic' {
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
+                CTRL_miss_flag2                 = 1
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = 1
@@ -4030,10 +4042,12 @@ protocol 'CPR_dyatic' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = 0
-                CTRL_scoreBar_width            = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                CTRL_miss_flag                  = 1
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
+                CTRL_miss_flag2                 = 0
                 INFO_HitCounter2                += + 1
                 INFO_Score2                     += TMP_score2
                 INFO_TrialScore2                += TMP_score2
@@ -4090,6 +4104,7 @@ protocol 'CPR_dyatic' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "hit"
                 CTRL_hit_flag                   = 1
+                CTRL_miss_flag                  = 0
                 INFO_HitCounter                 += 1
                 INFO_Score                      += TMP_score
                 INFO_TrialScore                 += TMP_score
@@ -4097,6 +4112,7 @@ protocol 'CPR_dyatic' {
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
+                CTRL_miss_flag2                 = 0
                 INFO_HitCounter2                += 1
                 INFO_Score2                     += TMP_score2
                 INFO_TrialScore2                += TMP_score2
@@ -4198,8 +4214,10 @@ protocol 'CPR_dyatic' {
                 // Set flags
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = 0
+                CTRL_miss_flag                  = 1
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = 0
+                CTRL_miss_flag2                 = 1
 
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)

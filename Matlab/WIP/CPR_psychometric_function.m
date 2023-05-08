@@ -50,6 +50,10 @@ print(f, [dest_dir fname(1:16)], '-r300', '-dpng');
 
 % figure
 % [estimated_params,stat]=sigm_fit(snr,hir,[0.25 1 NaN NaN],[],1);
-% 
-out = hir;
+
+out.snr                 = snr;
+out.hir                 = dat;
+out.model               = model;
+out.model_snr           = 0:.001:1;
+
 end

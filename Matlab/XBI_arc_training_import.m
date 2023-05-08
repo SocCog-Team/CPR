@@ -1,4 +1,4 @@
-function d = XBI_arc_training_import(monk, fname, d)
+RTRTfunction d = XBI_arc_training_import(monk, fname, d)
 
 % Add relevant directories
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab

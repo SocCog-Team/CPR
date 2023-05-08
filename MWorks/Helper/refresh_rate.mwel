@@ -1,0 +1,62 @@
+
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0, 0, 0)
+
+//
+// Variables
+//
+
+group CTRL_refreshRateCheck {
+    var CTRL_refreshRate_ideal = 120
+    var CTRL_refreshRate_tolerance = 2
+}
+
+//
+// Sounds
+//
+
+
+//
+// Stimuli
+//
+
+
+//
+// Filters
+//
+
+
+//
+// Optimizers
+//
+
+
+//
+// Resources
+//
+
+
+//
+// Protocols
+//
+
+protocol example_refresh_rate_check {
+    block 'New Block' {
+        task THE_LOOP {
+            state REFRESH_RATE_CHECK {
+                report ('The current refresh rate is $(refresh_rate()) Hz and the ideal refresh rate is ${CTRL_refreshRate_ideal} Hz. If the two values differ by more than ${CTRL_refreshRate_tolerance} Hz, the experiment will not be started.')
+                goto (
+                    target = START_EXPERIMENT
+                    when = CTRL_refreshRate_ideal == 0 || (CTRL_refreshRate_ideal != 0 && (CTRL_refreshRate_ideal+CTRL_refreshRate_tolerance >= refresh_rate() && CTRL_refreshRate_ideal-CTRL_refreshRate_tolerance <= refresh_rate()))
+                    )
+                yield ()
+            }
+            state START_EXPERIMENT {
+                report ('State system beginning')
+            }
+        }
+    }
+}

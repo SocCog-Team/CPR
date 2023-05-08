@@ -1,4 +1,8 @@
-clear all 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% CPR DATA PREPROCESSING %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+clear all
 close all
 
 % Add relevant directories
@@ -10,116 +14,115 @@ addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 
-% Import subject summary table
-pth                     = '/Users/fschneider/Documents/CPR_psychophysics/';
+% Copy subject summary from server
+source_pth              = '/Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_psychophysics/';
+local_pth               = '/Volumes/T7_Shield/CPR_psychophysics/';
 fname                   = 'Subjects_summary.xlsx';
-x                       = readtable([pth fname]);
+[status,msg,msgID]      = copyfile([source_pth fname], local_pth);
+
+% Import subject summary table
+x                       = readtable([local_pth fname]);
 sbj_lst                 = x.Abbreviation;
 sbj_lst(cellfun(@isempty,sbj_lst)) = [];
-dte_format              = 'yyyymmdd';
-clear_dir_flag          = false;
 
-% Clear all summary directories
-if clear_dir_flag == true
-    for iSubj = 1:length(sbj_lst)
-        summ_pth            = [pth sbj_lst{iSubj} '/summary/'];
-        
-        if isfolder(summ_pth)
-            rmdir([pth sbj_lst{iSubj} '/summary/'],'s')
-            mkdir([pth sbj_lst{iSubj} '/summary/'])
-        end
-    end
-end
+% Set params
+skip_processed_files    = false;
+copy_if_present         = false;
 
 % Preprocess data
-for iSubj = 1:length(sbj_lst)
-        
-    clear fname_RT fname_SNR fname_SOLO1 fname_SOLO2 fname_AGNT1 fname_AGNT2 fname_SOLO1r fname_SOLO2r
-    disp(['Processing subject: ' sbj_lst{iSubj}])
-    
-    % Specify directories
-    data_pth                = [pth sbj_lst{iSubj} '/raw/'];
-    summ_pth                = [pth sbj_lst{iSubj} '/summary/'];
-    cd(data_pth)
-    
-    % Pre-tests
-    if ~isnat(x.DateTraining(iSubj))
-        fname_RT            = [datestr(x.DateTraining(iSubj),dte_format) '_' sbj_lst{iSubj} '_RT_fxs.mwk2'];
-        fname_SNR           = [datestr(x.DateTraining(iSubj),dte_format) '_' sbj_lst{iSubj} '_SNR_fxs.mwk2'];
-            
-        % Extract reaction time profile
-        [rt, trg_dir]       = RT_polar(fname_RT, data_pth, summ_pth);
-            
-        % Fit psychometric curves
-        CPR_psychometric_function(data_pth, fname_SNR, summ_pth)
-    end
-    
-    % Import CPRsolo data
-    if ~isnat(x.DateSolo1(iSubj))
-        try
-            [t1,d1,s1]   	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho4_fxs.mwk2']);
-            [t2,d2,s2]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho3_fxs.mwk2']);
-        catch
-            [t1,d1,s1]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho3_fxs.mwk2']);
-            [t2,d2,s2]     	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo1(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho4_fxs.mwk2']);
-        end
-    end
-    
-%     % Import CPRagent data
-%     if ~isnat(x.DateAgent(iSubj))
-%         try
-%             [t1,d1,s1]   	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block1_psycho4_fxs.mwk2']);
-%             [t2,d2,s2]   	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block2_psycho3_fxs.mwk2']);
-%         catch
-%             [t1,d1,s1]    	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block1_psycho3_fxs.mwk2']);
-%             [t2,d2,s2]     	= CPR_psych_import([sbj_lst{iSubj} 'Agnt'], data_pth, [datestr(x.DateAgent(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRagent_block2_psycho4_fxs.mwk2']);
+% for iSubj = 32:length(sbj_lst)
+%     
+%     disp(['Processing subject: ' sbj_lst{iSubj}])
+%     
+%     % Create local directories
+%     data_pth                = [local_pth sbj_lst{iSubj} '/raw/'];
+%     summ_pth                = [local_pth sbj_lst{iSubj} '/summary/'];
+%     [status,msg,msgID]      = mkdir(data_pth);
+%     [status,msg,msgID]      = mkdir(summ_pth);
+%             
+%     % Change into data source directory
+%     cd([source_pth sbj_lst{iSubj} '/raw/'])
+% 
+%     % Extract .mwk2 file names from source directory
+%     mwk2_files              = dir('*.mwk2');
+%     
+%     for iFile = 1:length(mwk2_files)
+%         
+%         % Skip irrelevant files
+%         if contains(mwk2_files(iFile).name, 'CPRtrain') || ...
+%                 (contains(mwk2_files(iFile).name, 'RT') && length(mwk2_files(iFile).name) > 24)
+%             continue
+%         end
+%         
+%         % Copy file to local directory
+%         if copy_if_present || ~isfile([data_pth mwk2_files(iFile).name])
+%             [status,msg,msgID]	= copyfile([source_pth sbj_lst{iSubj} '/raw/' mwk2_files(iFile).name], data_pth);
+%         end
+%         
+%         % Skip files if already processed
+%         if skip_processed_files
+%             fid = strsplit(mwk2_files(iFile).name,'_');
+%             
+%             if isfile([summ_pth strjoin(fid(2:3),'_') '.mat'])
+%                 continue
+%             elseif isfile([summ_pth strjoin(fid(2:3),'_') 'fit.mat'])
+%                 continue
+%             elseif isfile([summ_pth strjoin(fid(1:4),'_') '_tbl.mat'])
+%                 continue
+%             end
+%         end
+%         
+% %         if contains(mwk2_files(iFile).name,'RT')
+% %             % Extract reaction time profile
+% %             [rt.dat,rt.trg_dir] = RT_polar(mwk2_files(iFile).name, data_pth, summ_pth);
+% %             % Save variables
+% %             save([summ_pth sbj_lst{iSubj} '_RT.mat'], 'rt', '-v7.3')
+% %         end
+% %         
+% %         if contains(mwk2_files(iFile).name,'SNR')
+% %             % Fit psychometric curves
+% %             [psy_func]   	= CPR_psychometric_function(data_pth, mwk2_files(iFile).name, summ_pth);
+% %             % Save variables
+% %             save([summ_pth sbj_lst{iSubj} '_SNRfit.mat'], 'psy_func', '-v7.3')
+% %         end
+%         
+%         if contains(mwk2_files(iFile).name,'CPRsolo') && length(mwk2_files(iFile).name) >= 44
+%             % Import CPRsolo data
+%             [t,d,s]         = CPR_psych_import(data_pth, mwk2_files(iFile).name);
+%         end
+%         
+%         if contains(mwk2_files(iFile).name,'CPRagent') && length(mwk2_files(iFile).name) >= 44
+%             % Import CPRagent data
+%             [t,d,s]         = CPR_psych_import(data_pth, mwk2_files(iFile).name);
 %         end
 %     end
-    
-    % Import CPRsolo_repeated data
-    if ~isnat(x.DateSolo2(iSubj))
-        try
-            [t1,d1,s1]      = CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho4_fxs.mwk2']);
-            [t2,d2,s2]   	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho3_fxs.mwk2']);
-        catch
-            [t1,d1,s1]    	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block1_psycho3_fxs.mwk2']);
-            [t2,d2,s2]   	= CPR_psych_import(sbj_lst{iSubj}, data_pth, [datestr(x.DateSolo2(iSubj),dte_format) '_' sbj_lst{iSubj} '_CPRsolo_block2_psycho4_fxs.mwk2']);
-        end
-    end
- 
-%     % CPR-4AFC psychometric curve comparison
-%     if exist(fname_SNR,'file') == 2 && exist([summ_pth DATA_TABLE])
-%     end
-end
+%     close all
+% end
 
 %% Import dyadic data
 
-% xd                      = readtable([pth fname],'Sheet','Dyads');
-%     
-% for iDyad = 14:17%xd.Dyad'
-%     % Specify directories
-%     data_pth            = [pth 'Dyad' num2str(iDyad) '/raw/'];
-%     summ_pth            = [pth 'Dyad' num2str(iDyad) '/summary/'];
-%     cd(data_pth)
-%     
-%     % Wipe directory
-%     if isfolder(summ_pth)
-%         rmdir(summ_pth,'s')
-%         mkdir(summ_pth)
-%     else
-%         mkdir(summ_pth)
-%     end
-%     
-%     % Specify file names
-%     fname_block1        = [datestr(xd.Date(iDyad),dte_format) '_' xd.Block1_PSY4{iDyad} xd.Block1_PSY3{iDyad} '_CPRdyadic_block1_fxs.mwk2'];
-%     fname_block2        = [datestr(xd.Date(iDyad),dte_format) '_' xd.Block2_PSY4{iDyad} xd.Block2_PSY3{iDyad} '_CPRdyadic_block2_fxs.mwk2'];
-%     
-%     % Import data: Subject naming convention: Primary (PSY4) - Secondary (PSY3)
-%     [t_b1,d_b1,s_b1]    = CPR_psych_import([xd.Block1_PSY4{iDyad} xd.Block1_PSY3{iDyad}], data_pth, fname_block1);
-%     [t_b2,d_b2,s_b2]   	= CPR_psych_import([xd.Block2_PSY4{iDyad} xd.Block2_PSY3{iDyad}], data_pth, fname_block2);
-% 
-% %     % Merge data table for each subject
-% %     subj1_merged        = [t_b1{1}; t_b2{1}];
-% %     subj2_merged        = [t_b1{2}; t_b2{1}];
-%     
-% end
+xd                      = readtable([local_pth fname],'Sheet','Dyads');
+
+for iDyad = 46:61%xd.Dyad'
+    % Specify directories
+    data_pth            = [local_pth 'Dyad' num2str(iDyad) '/raw/'];
+    summ_pth            = [local_pth 'Dyad' num2str(iDyad) '/summary/'];
+    [status,msg,msgID] 	= mkdir(data_pth);
+    [status,msg,msgID] 	= mkdir(summ_pth);
+    
+    % Extract .mwk2 file names from source directory
+    cd([source_pth 'Dyad' num2str(iDyad) '/raw/'])
+    mwk2_files              = dir('*.mwk2');
+    
+    for iFile = 1:length(mwk2_files)
+        % Copy file to local directory
+        if copy_if_present || ~isfile([data_pth mwk2_files(iFile).name])
+            [status,msg,msgID]	= copyfile([source_pth 'Dyad' num2str(iDyad) '/raw/' mwk2_files(iFile).name], data_pth);
+        end
+        
+        if contains(mwk2_files(iFile).name,'CPRdyadic')
+            % Import CPRdyadic data
+            [t,d,s]         = CPR_psych_import(data_pth, mwk2_files(iFile).name);
+        end
+    end
+end

@@ -1,0 +1,486 @@
+// ADD FEEDBACK FOR AGENT
+// ADD VISUAL FEEDBACK FOR MISS CONDITION
+
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0, 0, 0)
+mouse_input Mouse (
+    mouse_position_x                        = IO_mouse_x
+    mouse_position_y                        = IO_mouse_y
+    mouse_down                              = IO_mouse_down
+    hide_cursor                             = YES
+    use_mirror_window                       = YES
+    )
+
+/*
+eyelink Eyelink (
+    data_interval                           = 1ms
+    eye_rx                                  = EYE_rightX_raw
+    eye_ry                                  = EYE_rightY_raw
+    eye_lx                                  = EYE_leftX_raw
+    eye_ly                                  = EYE_leftY_raw
+    eye_x                                   = EYE_x_raw
+    eye_y                                   = EYE_y_raw
+    href_rx                                 = EYE_hrefRightX
+    href_ry                                 = EYE_hrefRightY
+    href_lx                                 = EYE_hrefLeftX
+    href_ly                                 = EYE_hrefLeftY
+    pupil_rx                                = EYE_pupilRightX
+    pupil_ry                                = EYE_pupilRightY
+    pupil_lx                                = EYE_pupilLeftX
+    pupil_ly                                = EYE_pupilLeftY
+    pupil_size_r                            = EYE_pupilRightSize
+    pupil_size_l                            = EYE_pupilLeftSize
+    eye_time                                = EYE_sampleTime
+    tracking_dist                           = 1024
+    tracker_ip                              = '100.1.1.1'
+    )
+
+standard_eye_calibrator EyeCalibrator (
+    eyeh_raw                                = EYE_x_raw
+    eyev_raw                                = EYE_y_raw
+    eyeh_calibrated                         = EYE_x_dva
+    eyev_calibrated                         = EYE_y_dva
+    )
+
+basic_eye_monitor EyeMonitor (
+    eyeh_calibrated                         = EYE_x_dva
+    eyev_calibrated                         = EYE_y_dva
+    eye_state                               = EYE_saccade
+    width_samples                           = 5
+    saccade_entry_speed                     = 50
+    saccade_exit_speed                      = 20
+    )
+*/
+
+//
+// Variables
+//
+
+
+group CTRL {
+    var CTRL_reward_ml                      = 0
+    var CTRL_ITI_ms                         = 0
+    var CTRL_count                          = 0
+
+    var CTRL_dir_lst                        = [0,30,60,90,120,150,180,210,240,270,300,330]
+    var CTRL_dir_step_deg                   = 0
+    var CTRL_dir_step_clockwise             = 0
+
+    var CTRL_mouse_flag                     = 0
+    var CTRL_RDP_flag                       = 0
+
+    var CTRL_fixationWidth_dva              = 0
+    var CTRL_fixation_size                  = 0
+    var CTRL_fixation_hold_ms               = 0
+    var CTRL_fixation_x                     = 0
+    var CTRL_fixation_y                     = 0
+
+    var CTRL_rectangle_size_x               = 0
+    var CTRL_rectangle_size_y               = 0
+}
+
+group RDP {
+    var RDP_x                               = 0
+    var RDP_y                               = 0
+    var RDP_direction                       = 0 
+    var RDP_radius                          = 2
+    var RDP_density                         = 5
+    var RDP_dotsize                         = .1
+    var RDP_speed                           = 10
+    var RDP_coherence                       = 1
+    var RDP_lifetime                        = (1/120) * 25 * 1000
+    var RDP_alpha                        	= 1
+}
+
+group TRIAL {
+    var TRIAL_start                         = 0
+    var TRIAL_end                           = 0
+}
+
+group IO {
+    var IO_mouse_x                          = 0
+    var IO_mouse_y                          = 0
+    var IO_mouse_down                       = 0 
+    var IO_fixation_flag                    = 0
+    var IO_rewardA                          = 0
+    }
+
+group EYE {
+    var EYE_rightX_raw                      = (float)(0)(persistant = YES)
+    var EYE_rightY_raw                      = (float)(0)(persistant = YES)
+    var EYE_leftX_raw                       = (float)(0)(persistant = YES)
+    var EYE_leftY_raw                       = (float)(0)(persistant = YES)
+    var EYE_x_raw                           = (float)(0)(persistant = YES)
+    var EYE_y_raw                           = (float)(0)(persistant = YES)
+    var EYE_hrefRightX                      = (integer)(0)(persistant = YES)
+    var EYE_hrefRightY                      = (integer)(0)(persistant = YES)
+    var EYE_hrefLeftX                       = (integer)(0)(persistant = YES)
+    var EYE_hrefLeftY                       = (integer)(0)(persistant = YES)
+    var EYE_pupilRightX                     = (integer)(0)(persistant = YES)
+    var EYE_pupilRightY                     = (integer)(0)(persistant = YES)
+    var EYE_pupilLeftX                      = (integer)(0)(persistant = YES)
+    var EYE_pupilLeftY                      = (integer)(0)(persistant = YES)
+    var EYE_pupilRightSize                  = (integer)(0)(persistant = YES)
+    var EYE_pupilLeftSize                   = (integer)(0)(persistant = YES)
+    var EYE_sampleTime                      = (integer)0 (persistant = YES)
+    var EYE_x_dva                           = (integer)0 (persistant = YES)
+    var EYE_y_dva                           = (integer)0 (persistant = YES)
+    var EYE_saccade                         = (integer)0 (persistant = YES)
+
+    var local_posX                          = 0 (scope = local)
+    var local_posY                          = 0 (scope = local)
+}
+
+group COL {
+    var COL_rdp_r                           = 1
+    var COL_rdp_g                           = 1
+    var COL_rdp_b                           = 1
+    var COL_fix_r                           = 1
+    var COL_fix_g                           = 1
+    var COL_fix_b                           = 1
+}
+
+group Selection {
+    selection SEL_dir (
+        values                              = 0,30,60,90,120,150,180,210,240,270,300,330 //cannot use variables here
+        selection                           = random_without_replacement
+        nsamples                            = 2 //cannot use variables here
+        sampling_method                     = cycles
+        advance_on_accept                   = YES
+        autoreset                           = YES
+        )
+}
+
+//
+// Sounds
+//
+
+wav_file Failure_sound ('./sounds/failure2.wav')
+wav_file Reward_sound ('./sounds/reward.wav')
+
+
+//
+// Stimuli
+//
+
+stimulus/advstimulus fixationCross (
+    trigger_width                           = CTRL_fixationWidth_dva
+    trigger_watch_x                         = EYE_x_dva
+    trigger_watch_y                         = EYE_y_dva
+    trigger_flag                            = IO_fixation_flag
+    x_size                                  = CTRL_fixation_size
+    y_size                                  = CTRL_fixation_size
+    x_position                              = CTRL_fixation_x
+    y_position                              = CTRL_fixation_y
+    shape                                   = format("cross")
+    color                                   = COL_fix_r,COL_fix_g,COL_fix_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/r_d_p RDP_explore (
+    radius                                  = RDP_radius
+    x_position                              = IO_mouse_x
+    y_position                              = IO_mouse_y
+    dot_density                             = RDP_density
+    dot_size                                = RDP_dotsize
+    color                                   = COL_rdp_r,COL_rdp_g,COL_rdp_b
+    alpha_multiplier                        = RDP_alpha
+    direction                               = RDP_direction
+    speed                                   = RDP_speed
+    coherence                               = RDP_coherence
+    lifetime                                = RDP_lifetime
+    announce_dots                           = NO
+    autoplay                                = YES
+    )
+
+stimulus/r_d_p RDP_mapping (
+    radius                                  = RDP_radius
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    dot_density                             = RDP_density
+    dot_size                                = RDP_dotsize
+    color                                   = COL_rdp_r,COL_rdp_g,COL_rdp_b
+    alpha_multiplier                        = RDP_alpha
+    direction                               = RDP_direction
+    speed                                   = RDP_speed
+    coherence                               = RDP_coherence
+    lifetime                                = RDP_lifetime
+    announce_dots                           = NO
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus rectangle (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_rectangle_size_x
+    y_size                                  = CTRL_rectangle_size_y
+    x_position                              = IO_mouse_x
+    y_position                              = IO_mouse_y
+    shape                                   = format("rectangle")
+    color                                   = COL_rdp_r,COL_rdp_g,COL_rdp_b
+    rotation                                = RDP_direction
+    alpha_multiplier                        = 1
+    version                                 = 1
+    autoplay                                = YES
+    )
+//
+// Protocols
+//
+
+protocol 'RF_exploration' {
+    start_device_io (Mouse)
+       
+    CTRL_reward_ml                          = .2
+    CTRL_fixationWidth_dva                  = 3
+    CTRL_fixation_size                      = .5
+    CTRL_fixation_hold_ms                   = 2000
+    CTRL_rectangle_size_x                   = 7
+    CTRL_rectangle_size_y                   = .5
+    CTRL_dir_step_deg                       = 30
+    CTRL_dir_step_clockwise                 = true
+    CTRL_ITI_ms                             = 1000
+    IO_fixation_flag                        = true
+    TRIAL_start                             = 0
+    TRIAL_end                               = 0
+
+    trial 'Main Task System' {
+        task LOOP {
+
+            state 'Wait for Fixation' {
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()
+
+                goto (
+                    target              = 'New trial'
+                    when                = IO_fixation_flag
+                    ) 
+            }
+
+            state 'New trial' {
+                // Show RDP
+                if (CTRL_RDP_flag == true)  {
+                    live_queue_stimulus (RDP_explore)
+                }    
+
+                // Show bar
+                if (CTRL_RDP_flag == false)  {
+                    live_queue_stimulus (rectangle)
+                }    
+
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()
+                
+                TRIAL_start             += 1
+
+                start_timer (
+                    timer               = FixTimer
+                    duration            = CTRL_fixation_hold_ms
+                    duration_units      = ms
+                    )
+
+                goto ('Hold') 
+            }
+
+            state 'Hold' {
+                goto (
+                    target              = 'Reset flag'
+                    when                = IO_mouse_down == false && CTRL_mouse_flag == true
+                    ) 
+                goto (
+                    target              = 'Change RDP direction'
+                    when                = IO_mouse_down && CTRL_mouse_flag == false
+                    ) 
+                goto (
+                    target              = 'Give reward'
+                    when                = timer_expired(FixTimer)
+                    ) 
+                goto (
+                    target              = 'Abort'
+                    when                = IO_fixation_flag == false
+                    ) 
+            }
+
+            state 'Change RDP direction' {
+                CTRL_mouse_flag         = true
+
+                if (CTRL_dir_step_clockwise == true) {
+                    RDP_direction       = (360 + RDP_direction + CTRL_dir_step_deg) % 360
+                }
+
+                if (CTRL_dir_step_clockwise == false) {
+                    RDP_direction       = (360 + RDP_direction - CTRL_dir_step_deg) % 360
+           
+                }
+
+                goto ('Hold') 
+            }
+
+            state 'Reset flag' {
+                CTRL_mouse_flag         = false
+
+                goto ('Hold')
+            }
+
+
+            state 'Abort' {
+                play_sound (Failure_sound)
+
+                goto ('End trial')
+            }
+
+            state 'Give reward' {
+                play_sound (Reward_sound)
+
+                IO_rewardA              = CTRL_reward_ml
+
+                goto ('End trial')
+            }
+
+            state 'End trial' {
+                dequeue_stimulus (fixationCross)
+                dequeue_stimulus (rectangle)
+                dequeue_stimulus (RDP_explore)
+                update_stimulus_display ()
+
+                start_timer (
+                    timer               = ITI_Timer
+                    duration            = CTRL_ITI_ms
+                    duration_units      = ms
+                    )
+
+                TRIAL_end               = TRIAL_start
+
+                report ('==== END OF TRIAL $TRIAL_end ====')
+                goto ('ITI')
+            }
+
+            state 'ITI' {
+                goto (
+                    target              = 'Wait for Fixation'
+                    when                = timer_expired(ITI_Timer)
+                    ) 
+            }
+        }
+    }
+}
+
+protocol 'RF_mapping' {   
+    CTRL_reward_ml                          = .2
+    CTRL_fixationWidth_dva                  = 3
+    CTRL_fixation_size                      = .5
+    CTRL_fixation_hold_ms                   = 500
+    CTRL_ITI_ms                             = 1000
+    CTRL_count                              = 0
+
+    RDP_x                                   = 7
+    RDP_y                                   = 3
+    RDP_radius                              = 4
+    
+    TRIAL_start                             = 0
+    TRIAL_end                               = 0
+
+    IO_fixation_flag                        = true
+
+    trial 'Main Task System' {
+        task LOOP {
+
+            state 'Wait for Fixation' {
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()
+
+                goto (
+                    target              = 'New trial'
+                    when                = IO_fixation_flag
+                    ) 
+            }
+
+            state 'New trial' {
+                live_queue_stimulus (RDP_mapping)
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()
+                
+                TRIAL_start             += 1
+                RDP_direction           = SEL_dir
+
+                start_timer (
+                    timer               = FixTimer
+                    duration            = CTRL_fixation_hold_ms
+                    duration_units      = ms
+                    )
+
+                goto ('Hold') 
+            }
+
+            state 'Hold' {
+                goto (
+                    target              = 'Give reward'
+                    when                = timer_expired(FixTimer)
+                    ) 
+                goto (
+                    target              = 'Abort'
+                    when                = IO_fixation_flag == false
+                    ) 
+            }
+
+            state 'Abort' {
+                play_sound (Failure_sound)
+                reject_selections (SEL_dir)
+
+                goto ('End trial')
+            }
+
+            state 'Give reward' {
+                play_sound (Reward_sound)
+                accept_selections (SEL_dir)
+
+                CTRL_count              += 1
+                IO_rewardA              = CTRL_reward_ml
+
+                goto ('End trial')
+            }
+
+            state 'End trial' {
+                dequeue_stimulus (fixationCross)
+                dequeue_stimulus (RDP_mapping)
+                update_stimulus_display ()
+
+                start_timer (
+                    timer               = ITI_Timer
+                    duration            = CTRL_ITI_ms
+                    duration_units      = ms
+                    )
+
+                TRIAL_end               = TRIAL_start
+
+                report ('==== END OF TRIAL $TRIAL_end ====')
+                goto (
+                    target              = 'End paradigm'
+                    when                = CTRL_count == (12 * 15)
+                    ) 
+                goto ('ITI') 
+
+            }
+
+            state 'ITI' {
+                goto (
+                    target              = 'Wait for Fixation'
+                    when                = timer_expired(ITI_Timer)
+                    ) 
+            }
+
+            state 'End paradigm' {
+                update_stimulus_display ()
+                report ('==== ENDING PARADIGM ====')
+                yield ()
+            }
+        }
+    }
+}

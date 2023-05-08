@@ -35,7 +35,7 @@ end
 
 %% Time window analysis
 
-cohPool                 = unique(t.ss_coh);                                         % Tested coherence levels
+cohPool                 = unique(t.rdp_coh);                                         % Tested coherence levels
 
 for iCoh = 1:size(cohPool,1)                                                        % For each coherence level
     str_arr           	= [];                                                       % Reset temporary variables
@@ -43,7 +43,7 @@ for iCoh = 1:size(cohPool,1)                                                    
     trg_shown           = [];
     trg_hit             = [];
     
-    cohIdx              = t.ss_coh == cohPool(iCoh);                                % Coherence index
+    cohIdx              = t.rdp_coh == cohPool(iCoh);                                % Coherence index
     str_raw{iCoh}       = t.js_str(cohIdx);                                         % Joystick strength
     dir_raw{iCoh}       = t.js_dir(cohIdx);                                         % Joystick direction
     rdp_dir{iCoh}       = t.rdp_dir(cohIdx);                                        % Stimulus direction

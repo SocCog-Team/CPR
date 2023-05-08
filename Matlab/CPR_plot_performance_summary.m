@@ -10,9 +10,10 @@ for iSubj = 1:size(tbl,2)
     elseif iSubj == 2
         t                       = tbl{2};
     end
-    
-    thi                         = [t.trg_hit{:}];
-    tts                         = [t.trg_ts{:}];
+        
+    trg_tbl                   	= t(logical(t.trg_shown),:);
+    thi                         = [trg_tbl.trg_hit{:}];
+    tts                         = [trg_tbl.trg_ts{:}];
     HIidx                       = thi(~isnan(tts));
     HIr                         = sum(HIidx) / length(HIidx);
     MIr                         = sum(~HIidx) / length(HIidx);
@@ -46,11 +47,11 @@ for iSubj = 1:size(tbl,2)
     end
     
     % Condition-wise performance
-    trg_shown                   = cellfun(@(x) (~isnan(x)),t.trg_ts,'uni',false);
-    tcoh_tmp                    = cellfun(@times,trg_shown,num2cell(t.ss_coh),'uni',false);
+    trg_shown                   = cellfun(@(x) (~isnan(x)),trg_tbl.trg_ts,'uni',false);
+    tcoh_tmp                    = cellfun(@times,trg_shown,num2cell(trg_tbl.rdp_coh),'uni',false);
     tcoh                        = [tcoh_tmp{:}];
     tcoh(isnan(tts))            = [];
-    clvl                        = unique(t.ss_coh);
+    clvl                        = unique(trg_tbl.rdp_coh);
     for iCoh = 1:length(clvl)
         cindx               	= tcoh == clvl(iCoh);
         hir(iCoh)               = sum(HIidx(cindx)) / length(HIidx(cindx));
@@ -115,7 +116,7 @@ for iSubj = 1:size(tbl,2)
     
     %% ANALYSIS OF TIME WINDOW
     
-    cohPool                     = unique(t.ss_coh);                           	% Tested coherence levels
+    cohPool                     = unique(t.rdp_coh);                           	% Tested coherence levels
     out                         = CPR_time_window_analysis(t,29);
     summ{iSubj}                 = out;
     
@@ -180,37 +181,34 @@ for iSubj = 1:size(tbl,2)
     
     
     %%% PLOT TRIAL DATA %%%
-    tmp                         = cellfun(@size, t.trl_rdp_dir, 'UniformOutput', false);
-    for i = 1:size(tmp,1)
-        indx(i,:)               = tmp{i}(2) > 1;
-    end
-    
-    % Get trial data
-    trl_frme_ts                 = t.trl_frme_ts(indx);                          % Frame timestamps
-    trl_str                     = t.trl_js_str(indx);                           % Joystick strength
-    tmp_coh                     = t.trl_rdp_coh(indx);                          % RDP coherence
-    
-    % For each trial...
-    for iTrl = 1:size(trl_str,1)
-        clear trl_data trl_data_ts trl_coh trl_coh_ts
-        trl_data                = trl_str{iTrl};
-        trl_coh                 = tmp_coh{iTrl};
-        trl_data(isnan(trl_coh))= [];  
-        trl_coh(isnan(trl_coh)) = [];  
-        coh_df                  = [0 find(diff(trl_coh))];
+    for iTrl = 1:t.trl_no(end)
+        tidx = t.trl_no == iTrl;
+        tt = t(tidx,:);
         
-        if isempty(find(diff(trl_coh)))
-            cohID(iTrl,1)       = unique(trl_coh);                 
-            mStr(iTrl,1)        = mean(trl_data);                  
-            sdStr(iTrl,1)       = std(trl_data);                   
-        else
-            % For each coherence block...
-            for iBlock = 1:size(coh_df,2)-1
-                cohIdx           	= coh_df(iBlock)+1:coh_df(iBlock+1);    	% Index of coherence block
-                cohID(iTrl,iBlock) 	= unique(trl_coh(cohIdx));                  % Coherence ID
-                mStr(iTrl,iBlock)	= mean(trl_data(cohIdx));                   % Average displacement for given stimulus condition
-                sdStr(iTrl,iBlock)	= std(trl_data(cohIdx));                    % Standard deviation
-            end
+        tmp.frme_ts{iTrl}    	= [];
+        tmp.rdp_dir{iTrl}    	= [];
+        tmp.rdp_coh{iTrl}     	= [];
+        tmp.js_dir{iTrl}      	= [];
+        tmp.js_str{iTrl}      	= [];
+        tmp.refresh{iTrl}      	= [];
+        
+        for iState = 1:size(tt,1)
+            tmp.frme_ts{iTrl}  	= [tmp.frme_ts{iTrl} tt.frme_ts{iState}];
+            tmp.rdp_dir{iTrl}  	= [tmp.rdp_dir{iTrl} repmat(tt.rdp_dir(iState),1,length(tt.frme_ts{iState}))];
+            tmp.rdp_coh{iTrl}  	= [tmp.rdp_coh{iTrl} repmat(tt.rdp_coh(iState),1,length(tt.frme_ts{iState}))];
+            tmp.js_dir{iTrl}  	= [tmp.js_dir{iTrl} tt.js_dir{iState}];
+            tmp.js_str{iTrl}  	= [tmp.js_str{iTrl} tt.js_str{iState}];  
+            tmp.refresh{iTrl} 	= [tmp.refresh{iTrl} median(diff(tmp.frme_ts{iTrl}))];
+        end
+        
+        coh_block = unique(tmp.rdp_coh{iTrl});
+        
+      % For each coherence block...
+        for iBlock = 1:size(coh_block,2)
+            cohIdx           	= tmp.rdp_coh{iTrl} == coh_block(iBlock);         % Index of coherence block
+            cohID(iTrl,iBlock) 	= coh_block(iBlock);                        % Coherence ID
+            mStr(iTrl,iBlock)	= nanmean(tmp.js_str{iTrl}(cohIdx));                   % Average displacement for given stimulus condition
+            sdStr(iTrl,iBlock)	= nanstd(tmp.js_str{iTrl}(cohIdx));                    % Standard deviation
         end
     end
     
@@ -265,7 +263,7 @@ for iSubj = 1:size(tbl,2)
     
     ax                              = subplot(3,3,7); hold on
     nLag                            = 150;
-    [cr,ps]                         = CPR_correlation_analysis_WIP(t, nLag, true);
+    [cr,ps]                         = CPR_correlation_analysis_WIP(tmp, nLag, true);
     crr{iSubj}                      = cr;
     cl                              = linspace(0,1,length(snr));
 
@@ -354,13 +352,15 @@ for iSubj = 1:size(tbl,2)
     box off
     
     if strcmp(sbj{iSubj}, 'cla') || strcmp(sbj{iSubj}, 'nil')
-        dest_dir = '/Users/fschneider/Documents/MWorks/Plots/';
+        %         dest_dir = '/Users/fschneider/Documents/MWorks/Plots/';
+        %         print(f, [dest_dir 'summary_' sbj{iSubj} '_' fname], '-r300', '-dpng');
+        dest_dir = '/Users/fschneider/Desktop/';
         print(f, [dest_dir 'summary_' sbj{iSubj} '_' fname], '-r300', '-dpng');
     else
-        if strcmp(sbj{iSubj}, 'Agnt')
-            dest_dir = ['/Users/fschneider/Documents/CPR_psychophysics/' sbj{1} '/summary/'];
+        if strcmp(sbj{iSubj}, 'agnt')
+            dest_dir = ['/Volumes/T7_Shield/CPR_psychophysics/' sbj{1} '/summary/'];
         else
-            dest_dir = ['/Users/fschneider/Documents/CPR_psychophysics/' sbj{iSubj} '/summary/'];
+            dest_dir = ['/Volumes/T7_Shield/CPR_psychophysics/' sbj{iSubj} '/summary/'];
         end
         
         if iscell(fname)

@@ -28,7 +28,7 @@ paramsFree = [0 1 0 0];  %1: free parameter, 0: fixed parameter
 %parameter search.
 searchGrid.alpha = snr(1):.001:snr(end); % threshold
 searchGrid.beta = logspace(0,2,101); % slope
-searchGrid.gamma = 0.25;  % guess-rate
+searchGrid.gamma = 0;  % guess-rate
 searchGrid.lambda = 0.02;  % lapse-rate
 
 %Perform fit

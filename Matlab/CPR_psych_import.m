@@ -1,4 +1,4 @@
-function [tbl,d,summ,crr] = CPR_psych_import(subj, pth, fname, d)
+function [tbl,d,summ,crr] = CPR_psych_import(pth, fname, d)
 
 % This function imports, organises and visualises CPR data.
 %
@@ -42,9 +42,6 @@ cd(pth)
 % Define variables for import
 if contains(fname,'dyadic')
     var_import = {
-        'ML_', ...
-        'CTRL_', ...
-        'RDP_', ...
         'INFO_', ...
         'TRIAL_', ...
         'IO_joystickDirection', ...
@@ -60,9 +57,6 @@ if contains(fname,'dyadic')
         '#stimDisplay'};
 elseif contains(fname,'agent')
     var_import = {
-        'ML_', ...
-        'CTRL_', ...
-        'RDP_', ...
         'INFO_', ...
         'TRIAL_', ...
         'IO_joystickDirection', ...
@@ -75,9 +69,6 @@ elseif contains(fname,'agent')
         '#stimDisplay'};
 else
     var_import = {
-        'ML_', ...
-        'CTRL_', ...
-        'RDP_', ...
         'INFO_', ...
         'TRIAL_', ...
         'IO_joystickDirection', ...
@@ -88,18 +79,39 @@ else
         '#stimDisplay'};
 end
 
+% var_import = {
+%     'INFO_', ...
+%     'TRIAL_', ...
+%     'IO_', ...
+%     'EYE_',...
+%     'AGNT_',...
+%     '#stimDisplay'};
+
+% 'STIM_AGNTindicator_rotation'
+% 'STIM_AGNTarc_shape'
+% 'STIM_AGNTarc_rotation'
+
 % Get file identifier/recording date
 if iscell(fname)
-    dte                 = regexp(fname{1},'\d{8}');
-    fid                 = fname{1}(dte:dte+7);
+    % Do something here
 else
-    dte               	= regexp(fname,'\d{8}');
-    fid             	= fname(dte:dte+7);
+    fid = strsplit(fname,'_');
+    
+    if length(fid{2}) > 3
+        sbj{1}                 	= fid{2}(1:3);
+        sbj{2}                 	= fid{2}(4:end);
+    else
+        sbj{1}                 	= fid{2};
+    end
+    
+    if contains(fname,'agent')
+        sbj{2} = 'agnt';
+    end
 end
 
 % Import .mwk2 data file
-if nargin < 4
-    d                	= CPR_import_mwk2(fname, var_import, false);
+if nargin < 3
+    d                	= CPR_import_mwk2(fname, var_import, true);
 %     d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
 %     d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
 end
@@ -113,12 +125,11 @@ trl                         = [];
 % Create variable-specific indices
 idx.tOn                     = d.event == 'TRIAL_start';
 idx.tEnd                    = d.event == 'TRIAL_end';
-idx.steady_duration         = d.event == 'CTRL_state_duration_ms';
 idx.frame                   = d.event == 'STIM_displayUpdate';
-idx.RDP_dir_frme            = d.event == 'STIM_RDP_direction';
-idx.RDP_coh_frme            = d.event == 'STIM_RDP_coherence';
-idx.RDP_dir                 = d.event == 'RDP_direction';
-idx.RDP_coh                 = d.event == 'RDP_coherence';
+idx.RDP_onset               = d.event == 'STIM_RDP_onset';
+idx.RDP_dir                 = d.event == 'STIM_RDP_direction';
+idx.RDP_coh                 = d.event == 'STIM_RDP_coherence';
+idx.RDP_dot                	= d.event == 'STIM_RDP_dot_positions';
 idx.trg_on                  = d.event == 'STIM_target_onset';
 idx.JS_dir                  = d.event == 'IO_joystickDirection';
 idx.JS_str                  = d.event == 'IO_joystickStrength';
@@ -127,17 +138,13 @@ idx.outcome                 = d.event == 'TRIAL_outcome';
 idx.trg                     = d.event == 'TRIAL_reactionTrigger';
 idx.eye_x_dva              	= d.event == 'EYE_x_dva';
 idx.eye_y_dva             	= d.event == 'EYE_y_dva';
-idx.stateOn                 = d.event == 'INFO_StateCounter';
 
-% idx.steady_duration         = d.event == 'CTRL_SteadyStateDuration_ms';
-% idx.stateOn                 = d.event == 'INFO_SteadyStateCounter';
-
-if strcmp(subj, 'cla') || strcmp(subj, 'nil')
+if strcmp(sbj{1}, 'cla') || strcmp(sbj{1}, 'nil')
     idx.reward              = d.event == 'INFO_Juice_ml';
     rew_str                 = 'ml';
 else
     idx.reward              = d.event == 'INFO_Score';
-    rew_str                 = 'EUR';
+    rew_str                 = '[a.u.]';
 end
 
 if contains(fname,'dyadic')
@@ -163,15 +170,8 @@ trl.tOn                     = d.time(idx.tOn);
 trl.tEnd                    = d.time(idx.tEnd);
 
 % Check if subject ID is dyad
-if contains(fname,'dyadic') & length(subj) < 6
+if contains(fname,'dyadic') && length(fid{2}) < 6
     error('Dyatic experiment. Use concatenated 3-letter subject code: ''xxxyyy''')
-end
-
-if length(subj) > 3
-    sbj{1}                 	= subj(1:3);
-    sbj{2}                 	= subj(4:end);
-else
-    sbj{1}                 	= subj;
 end
 
 % Construct data table(s)
@@ -203,7 +203,8 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
 end
 
 % Plot performance summary
-[summ,crr]                  = CPR_plot_performance_summary(d,idx,tbl,rew_str,sbj,fname);
-[~]                         = CPR_target_reward(tbl{1});
-
+% [summ,crr]                  = CPR_plot_performance_summary(d,idx,tbl,rew_str,sbj,fname); % buggy
+% [~]                         = CPR_target_reward(tbl{1});
+summ = [];
+crr = [];
 end
