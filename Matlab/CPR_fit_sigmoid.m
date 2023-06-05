@@ -89,7 +89,7 @@ ax.XTick            = [0:.2:.8];
 ax.XLabel.String    = 'Coherence';
 ax.YLabel.String    = '% correct';
 ax.YLim             = [0 1];
-ax.XLim             = [0 1];
+ax.XLim             = [0 .8];
 ax.Title.String     = '4AFC psychometric curve';
 ln                  = line(ax.XLim,[.25 .25],'Color', 'k', 'LineStyle', '--');
 

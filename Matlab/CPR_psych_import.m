@@ -79,14 +79,6 @@ else
         '#stimDisplay'};
 end
 
-% var_import = {
-%     'INFO_', ...
-%     'TRIAL_', ...
-%     'IO_', ...
-%     'EYE_',...
-%     'AGNT_',...
-%     '#stimDisplay'};
-
 % 'STIM_AGNTindicator_rotation'
 % 'STIM_AGNTarc_shape'
 % 'STIM_AGNTarc_rotation'
@@ -120,11 +112,11 @@ end
 
 % Initialise variables
 idx                         = [];
-trl                         = [];
+cyc                         = [];
 
 % Create variable-specific indices
-idx.tOn                     = d.event == 'TRIAL_start';
-idx.tEnd                    = d.event == 'TRIAL_end';
+idx.cOn                     = d.event == 'TRIAL_start';
+idx.cEnd                    = d.event == 'TRIAL_end';
 idx.frame                   = d.event == 'STIM_displayUpdate';
 idx.RDP_onset               = d.event == 'STIM_RDP_onset';
 idx.RDP_dir                 = d.event == 'STIM_RDP_direction';
@@ -166,8 +158,8 @@ elseif contains(fname,'agent')
 end
 
 % Get trial timestamps
-trl.tOn                     = d.time(idx.tOn);
-trl.tEnd                    = d.time(idx.tEnd);
+cyc.cOn                     = d.time(idx.cOn);
+cyc.cEnd                    = d.time(idx.cEnd);
 
 % Check if subject ID is dyad
 if contains(fname,'dyadic') && length(fid{2}) < 6
@@ -175,7 +167,7 @@ if contains(fname,'dyadic') && length(fid{2}) < 6
 end
 
 % Construct data table(s)
-tbl{1}                      = CPR_construct_table(sbj{1}, fname, d, trl, idx, true);
+tbl{1}                      = CPR_construct_table(sbj{1}, fname, d, cyc, idx, true);
     
 if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
     % Define fields that index variables of subject 2
@@ -199,7 +191,7 @@ if size(sbj,2) > 1 && isfield(idx,'JS2_dir')
     idx2.reward           	= idx.reward2;
     
     % Construct data table for subject2
-    tbl{2}               	= CPR_construct_table(sbj{2}, fname, d, trl, idx2, true);
+    tbl{2}               	= CPR_construct_table(sbj{2}, fname, d, cyc, idx2, true);
 end
 
 % Plot performance summary

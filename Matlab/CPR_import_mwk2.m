@@ -52,6 +52,7 @@ if nargin < 1 || isempty(fname)
 end
 
 %% Import data file
+
 if iscell(fname)                                                            % If multiple files ...
     if isfile([fname{1}(1:12) '_merged.mat']) && write_file == false   
 %         tmp         = load([fname{1}(1:34) '_merged.mat']);             	% Load if merged file already exists
@@ -63,8 +64,7 @@ if iscell(fname)                                                            % If
         d.value     = [];
         
         for i = 1:size(fname,2)
-            tmp    	= MW_readFile(fname{i}, 'include', var_lst, ...
-                '~typeOutcomeCheck','dotPositions');
+            tmp    	= MW_readFile(fname{i}, 'include', var_lst, '~typeOutcomeCheck','dotPositions');
             
             d.time  = [d.time tmp.time];
             d.event = [d.event tmp.event];
@@ -74,14 +74,9 @@ if iscell(fname)                                                            % If
         if write_file
             disp('Save struct...')
 
-            if isfile([fname{1}(1:12) '_CPR_merged.h5'])
-                delete([fname{1}(1:12) '_CPR_merged.h5'])
-            end
-
-%             MW_writeH5(d, [fname{1}(1:12) '_CPR_merged.h5']);	% Save as .h5 file
-%             cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/MW_readFile_FS.cfg';
-%             MW_writeH5_WIP(d, [fname{1}(1:12) '_CPR_merged.h5'], 'privateCFG', cfg_pth);	% Save as .h5 file
-   
+            cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/MW_readFile_FS.cfg';
+            MW_writeH5(d, [fname{1}(1:end-5) 'CPR_merged.h5'], 'replace', 'privateCFG', cfg_pth)
+            
             disp('Done!')
         end
     end
@@ -89,21 +84,13 @@ else
     if isfile([fname '.h5']) && write_file == false                         % If file available...
         d       = MW_readH5([fname '.h5']);                                 % ...load .h5 file
     else
-%         d     	= MW_readFile(fname, 'include', var_lst, ...
-%                 '~typeOutcomeCheck');                                   	% Import .mwk2 sesion file
-        d     	= MW_readFile(fname, 'include', var_lst, ...
-        '~typeOutcomeCheck','dotPositions');   % Import .mwk2 sesion file
+        d     	= MW_readFile(fname, 'include', var_lst, '~typeOutcomeCheck','dotPositions'); % Import .mwk2 file
         
         if write_file
             disp('Save struct...')
-
-            if isfile([fname '.h5'])
-                delete([fname '.h5'])
-            end
             
-%             MW_writeH5(d, [fname '.h5']);	% Save as .h5 file
-%             cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/MW_readFile_FS.cfg';
-%             MW_writeH5_WIP(d, [fname '.h5'], 'privateCFG', cfg_pth);            % Save as .h5 file
+            cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/MW_readFile_FS.cfg';
+            MW_writeH5(d, [fname(1:end-5) '.h5'], 'replace', 'privateCFG', cfg_pth) % Save to .h5
 
             disp('Done!')
         end

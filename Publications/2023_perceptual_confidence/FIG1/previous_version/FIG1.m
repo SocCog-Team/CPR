@@ -1,7 +1,7 @@
 %% FIG1 RDP ELEMENTS %%
 % State sequence
 f               = figure;
-dest_dir        = '/Users/fschneider/ownCloud/Documents/Publications/CPR_psychophysics/Figures/FIG1/raw';
+dest_dir        = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 
 dur             = [0 randi([125 250],1,10)];
 height          = 100;
@@ -12,10 +12,10 @@ cl            	= cl(randperm(length(cl)));
 
 % Direction
 for j = 1:length(dur)-1
-x               = [sum(dur(1:j)) sum(dur(1:j+1)) sum(dur(1:j+1)) sum(dur(1:j))];
-y             	= [0 0 height height];
-p               = patch(x,y,[cl(j) cl(j) cl(j)]);
-p.EdgeColor     = 'none';
+    x               = [sum(dur(1:j)) sum(dur(1:j+1)) sum(dur(1:j+1)) sum(dur(1:j))];
+    y             	= [0 0 height height];
+    p               = patch(x,y,[cl(j) cl(j) cl(j)]);
+    p.EdgeColor     = 'none';
 end
 
 % Coherence
@@ -29,23 +29,23 @@ cl              = linspace(maxcol,0,10);
 cl            	= cl(randperm(length(cl)));
 
 for j = 1:length(cdur)-1
-x               = [sum(cdur(1:j)) sum(cdur(1:j+1)) sum(cdur(1:j+1)) sum(cdur(1:j))];
-y             	= [height*(m-1) height*(m-1) height*m height*m];
-p               = patch(x,y,[fixcol cl(j) cl(j)]);
-p.EdgeColor     = 'none';
+    x               = [sum(cdur(1:j)) sum(cdur(1:j+1)) sum(cdur(1:j+1)) sum(cdur(1:j))];
+    y             	= [height*(m-1) height*(m-1) height*m height*m];
+    p               = patch(x,y,[fixcol cl(j) cl(j)]);
+    p.EdgeColor     = 'none';
 end
 
 % Cycle
 mm              = 9;
 xmat            = [0 sum(dur)*.2 sum(dur)*.2 0;...
-                    sum(dur)*.25 sum(dur)*.75 sum(dur)*.75 sum(dur)*.25; ...
-                    sum(dur)*.8 sum(dur) sum(dur) sum(dur)*.8];
+    sum(dur)*.25 sum(dur)*.75 sum(dur)*.75 sum(dur)*.25; ...
+    sum(dur)*.8 sum(dur) sum(dur) sum(dur)*.8];
 y             	= [height*(mm-1) height*(mm-1) height*mm height*mm];
 
 for i = 1:size(xmat,1)
-p               = patch(xmat(i,:),y,[1 1 1]);
-p.EdgeColor     = [0 0 0];
-p.LineWidth     = 2;
+    p               = patch(xmat(i,:),y,[1 1 1]);
+    p.EdgeColor     = [0 0 0];
+    p.LineWidth     = 2;
 end
 
 % Connection lines
@@ -111,34 +111,29 @@ print(f, [dest_dir '/lgnd_coh'], '-r300', '-dpng');
 
 %% State sequence - actual data
 
-load('/Users/fschneider/Documents/CPR_psychophysics/Dyad14/summary/20220325_LaS_CPRdyadic_block2_tbl.mat')
+dyad = 51;
+block = 1;
+cycle = 15;
+load(['/Volumes/T7_Shield/CPR_psychophysics/Dyad51/summary/20230124_aaa_CPRdyadic_block1_tbl.mat'])
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 
-trl             = [1 31 61];
+cycle           = 15;
 lw              = 2;
 col             = [0 0 0];
 c_bkg           = .7;
 fs              = 16;
-ts1             = t.trl_frme_ts{1}(1);
-ts_end          = t.trl_frme_ts{61}(end);
+ts1             = t.frme_ts{find(t.trl_no == 15,1,'first')}(1);
+ts_end          = t.frme_ts{find(t.trl_no == 15,1,'last')}(end);
 ax_ofs          = .04;
 
 % Targets
-f = figure;
-f.Color = [1 1 1];
-ax3 = subplot(3,1,3); hold on
-maxh = 1;
-minh = -.01;
-for iTrl = 1:length(trl)
-    ts_on(iTrl) = (t.trl_frme_ts{trl(iTrl)}(1) - ts1)  ./ 1e6;
-    ts_off(iTrl) = (t.trl_frme_ts{trl(iTrl)}(end) - ts1)  ./ 1e6;
-    
-    p = patch([ts_on(iTrl) ts_on(iTrl) ts_off(iTrl) ts_off(iTrl)],[minh maxh maxh minh],col+c_bkg);
-    p.EdgeColor = 'none';
-end
+f               = figure;
+f.Color         = [1 1 1];
+ax3             = subplot(3,1,3); hold on
 
+% Target timestamps
 tts = [];
-for iState = 1:90
+for iState = 1:30
     if t.trg_shown(iState) == 1
         tts = [tts (t.trg_ts{iState}-ts1)./1e6];
     end
@@ -158,19 +153,11 @@ ax3.Position(2) = ax3.Position(2)+ax_ofs*2;
 ax2 = subplot(3,1,2); hold on
 maxh = 361;
 minh = -.01;
-for iTrl = 1:length(trl)
-    ts_on(iTrl) = (t.trl_frme_ts{trl(iTrl)}(1) - ts1)  ./ 1e6;
-    ts_off(iTrl) = (t.trl_frme_ts{trl(iTrl)}(end) - ts1)  ./ 1e6;
-    
-    p = patch([ts_on(iTrl) ts_on(iTrl) ts_off(iTrl) ts_off(iTrl)],[minh maxh maxh minh],col+c_bkg);
-    p.EdgeColor = 'none';
-end
 
-for iTrl = 1:length(trl)
-    p = plot((t.trl_frme_ts{trl(iTrl)}-ts1)./1e6, t.trl_rdp_dir{trl(iTrl)});
-    p.Color = col;
-    p.LineWidth = lw;
-end
+p = plot((t.frme_ts{cycle(iCyc)}-ts1)./1e6, repmat(t.rdp_dir(cycle));
+p.Color = col;
+p.LineWidth = lw;
+
 ax2.XLim = [0 (ts_end-ts1)./1e6];
 ax2.XAxis.Visible = 'off';
 ax2.YTick = [0 180 360];
@@ -183,16 +170,16 @@ ax2.Position(2) = ax2.Position(2)+ax_ofs;
 ax1 = subplot(3,1,1); hold on
 maxh = 1;
 minh = -.01;
-for iTrl = 1:length(trl)
-    ts_on(iTrl) = (t.trl_frme_ts{trl(iTrl)}(1) - ts1)  ./ 1e6;
-    ts_off(iTrl) = (t.trl_frme_ts{trl(iTrl)}(end) - ts1)  ./ 1e6;
+for iCyc = 1:length(cycle)
+    ts_on(iCyc) = (t.trl_frme_ts{cycle(iCyc)}(1) - ts1)  ./ 1e6;
+    ts_off(iCyc) = (t.trl_frme_ts{cycle(iCyc)}(end) - ts1)  ./ 1e6;
     
-    p = patch([ts_on(iTrl) ts_on(iTrl) ts_off(iTrl) ts_off(iTrl)],[minh maxh maxh minh],col+c_bkg);
+    p = patch([ts_on(iCyc) ts_on(iCyc) ts_off(iCyc) ts_off(iCyc)],[minh maxh maxh minh],col+c_bkg);
     p.EdgeColor = 'none';
 end
 
-for iTrl = 1:length(trl)
-    p = plot((t.trl_frme_ts{trl(iTrl)}-ts1)  ./ 1e6, t.trl_rdp_coh{trl(iTrl)});
+for iCyc = 1:length(cycle)
+    p = plot((t.trl_frme_ts{cycle(iCyc)}-ts1)  ./ 1e6, t.trl_rdp_coh{cycle(iCyc)});
     p.Color = col;
     p.LineWidth = lw;
     
@@ -226,27 +213,27 @@ export_fig(f, [dest_dir '/state_sequence_data'], '-r300', '-dpng')
 
 %% RDP - Joystick example
 
-trl         = 31;
+cycle         = 31;
 js          = [];
 rdp         = [];
 str         = [];
 
-for i = trl:trl+10
-js          = [js t.js_dir{i}];
-str         = [str t.js_str{i}];
-rdp         = [rdp repmat(t.rdp_dir(i),1,length(t.js_dir{i}))];
+for i = cycle:cycle+10
+    js          = [js t.js_dir{i}];
+    str         = [str t.js_str{i}];
+    rdp         = [rdp repmat(t.rdp_dir(i),1,length(t.js_dir{i}))];
 end
 
 str(isnan(str)) = 0;
 
 for j = 1:length(js)-1
-d1          = deg2rad(js(j));
-d2          = deg2rad(js(j+1));
-df_js(j)    = rad2deg(circ_dist(d1,d2));
-
-d1          = deg2rad(rdp(j));
-d2          = deg2rad(rdp(j+1));
-df_rdp(j)   = rad2deg(circ_dist(d1,d2));
+    d1          = deg2rad(js(j));
+    d2          = deg2rad(js(j+1));
+    df_js(j)    = rad2deg(circ_dist(d1,d2));
+    
+    d1          = deg2rad(rdp(j));
+    d2          = deg2rad(rdp(j+1));
+    df_rdp(j)   = rad2deg(circ_dist(d1,d2));
 end
 
 df_js(isnan(df_js)) = 0;
@@ -266,10 +253,10 @@ plt         = plot(cs_rdp(idx), 'k', 'LineWidth', 5);
 hold on
 
 for i = idx
-sc                  = scatter(i-(idx(1)-1), cs_js(i));
-sc.MarkerFaceColor  = [str(i) 0 0];
-sc.MarkerEdgeColor  = [str(i) 0 0];
-sc.SizeData         = 50;
+    sc                  = scatter(i-(idx(1)-1), cs_js(i));
+    sc.MarkerFaceColor  = [str(i) 0 0];
+    sc.MarkerEdgeColor  = [str(i) 0 0];
+    sc.SizeData         = 50;
 end
 
 box off

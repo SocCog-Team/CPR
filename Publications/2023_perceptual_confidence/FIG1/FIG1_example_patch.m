@@ -8,8 +8,8 @@ cycle = 15;
 %% IMPORT %%%
 
 xpth                = pwd;
-dpth                = ['/Users/fschneider/Documents/CPR_psychophysics/Dyad' num2str(dyad) '/summary'];
-dest_dir            = '/Users/fschneider/ownCloud/Documents/Publications/CPR_psychophysics/Figures/FIG1/raw';
+dpth                = ['/Volumes/T7_Shield/CPR_psychophysics/Dyad' num2str(dyad) '/summary'];
+dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 
 cd(dpth)
 mat_files           = dir('*.mat');
@@ -48,16 +48,16 @@ p2_ecc              = [];
 
 % Append to vector
 for iState = 1:size(tp1,1)
-    ts              = [ts (tp1.frme_ts{iState}-ts1)./1e6];
-    trg_ts          = [trg_ts (tp1.trg_ts{iState}-ts1)./1e6];
-    trg_dir         = [trg_dir repmat(tp1.rdp_dir(iState),1,length(tp1.trg_ts{iState}))];
+    ts              = [ts (tp1.frme_ts{iState}-ts1)./1e6];                                      % Timestamps
+    trg_ts          = [trg_ts (tp1.trg_ts{iState}-ts1)./1e6];                                   % Target timestamps
+    trg_dir         = [trg_dir repmat(tp1.rdp_dir(iState),1,length(tp1.trg_ts{iState}))];       % Target direction
     
     rdp_coh         = [rdp_coh repmat(tp1.rdp_coh(iState),1,length(tp1.frme_ts{iState}))];
     rdp_dir         = [rdp_dir repmat(tp1.rdp_dir(iState),1,length(tp1.frme_ts{iState}))];
     p1_dir          = [p1_dir tp1.js_dir{iState}];
     p2_dir          = [p2_dir tp2.js_dir{iState}];
-    p1_ecc          = [p1_ecc tp1.js_str{iState}];
-    p2_ecc          = [p2_ecc tp2.js_str{iState}];
+    p1_ecc          = [p1_ecc tp1.js_ecc{iState}];
+    p2_ecc          = [p2_ecc tp2.js_ecc{iState}];
 end
 
 trg_dir(isnan(trg_ts)) = [];
@@ -69,6 +69,16 @@ trg_cl              = [.9 .5 .3];
 
 f                	= figure('units','normalized','position',[0 0 .5 .5]);
 ax                  = gca; hold on
+
+change_idx       	= [1 find(diff(rdp_coh))+1 length(rdp_coh)];
+coh_id              = round(rdp_coh(change_idx(1:3)),2);
+ccol                = [.85 .85 .85;.95 .95 .95; .9 .9 .9];
+for iCoh = 1:3
+%     ccol            = [rdp_coh(change_idx(iCoh)) .8 .8]
+    pt(iCoh)           	= patch([ts(change_idx(iCoh)) ts(change_idx(iCoh)) ts(change_idx(iCoh+1)) ts(change_idx(iCoh+1))],[0 360 360 0],ccol(iCoh,:));
+    pt(iCoh).EdgeColor  	= 'none';
+end
+
 p                   = plot(ts,rdp_dir,'LineWidth',lw*1.5,'Color', [0 0 0]);
 sc                  = scatter(trg_ts, trg_dir);
 sc.SizeData         = 50;
@@ -82,23 +92,22 @@ ax.YLabel.String    = {'JS direction';'raw [deg]'};
 ax.XLabel.String    = 'Time [s]';
 ax.FontSize         = fs;
 
-yyaxis right
-coh_cl              = [.5 .5 .5];
-p                   = plot(ts,rdp_coh,'LineStyle', '--','LineWidth',lw*1.5,'Color', coh_cl);
-ax.YLabel.String    = {'RDP coherence';'[%]'};
-ax.YTick            = [0 .25 .5 .75 1];
-ax.YAxis(2).Color   = coh_cl;
+lg                  = legend(pt,{num2str(coh_id(1)),num2str(coh_id(2)),num2str(coh_id(3))});
+lg.Location         = 'south';
+lg.Box              = 'on';
 
-print(f, [dest_dir '/rdp_example'], '-r300', '-dpng');
+print(f, [dest_dir '/rdp_example_patch'], '-r500', '-dpng');
 
-%%
-
-pidx                = 2450:4100;
+%% Partial response profile
 
 f                   = figure;
 ax                  = gca; hold on
+
+% Plot RDP stepfunction
+pidx                = 2450:4100; % Sample index
 p                   = plot(ts(pidx),rdp_dir(pidx),'LineWidth',lw*1.5,'Color', [0 0 0]);
 
+% Use scatter to color-code 2D joystick response
 for i = pidx
     if ~isnan(p1_ecc(i))
         sc                  = scatter(ts(i), p1_dir(i));
@@ -119,4 +128,4 @@ end
 ax.YAxis.Visible =  'off';
 ax.XAxis.Visible =  'off';
 
-print(f, [dest_dir '/js_example_response'], '-r300', '-dpng');
+print(f, [dest_dir '/js_example_response'], '-r500', '-dpng');

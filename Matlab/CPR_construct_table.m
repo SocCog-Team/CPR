@@ -1,4 +1,4 @@
-function t = CPR_construct_table(subj, fname, d, trl, idx, write_file)
+function t = CPR_construct_table(subj, fname, d, cyc, idx, write_file)
 
 % This function constructs a state-wise data table based on a previously
 % imported .mwk2 data structure.
@@ -6,7 +6,7 @@ function t = CPR_construct_table(subj, fname, d, trl, idx, write_file)
 % Input:  	.subj           String, Subject ID
 %           .fid            String, File identifier
 %           .d              Structure, Contains raw data
-%          	.trl            Structure, Contains trial information
+%          	.cyc            Structure, Contains cycle information
 %           .idx            Structure, Contains variable-wise indices
 %           .write_file     Boolean, Indicates if table is to be saved
 %
@@ -14,7 +14,7 @@ function t = CPR_construct_table(subj, fname, d, trl, idx, write_file)
 %                           stimulus parameters as well as behavioural
 %                           responses
 %
-% Example:	t = CPR_construct_table('fxs','20210504',d, trl, idx, true)
+% Example:	t = CPR_construct_table('fxs','20210504',d, cyc, idx, true)
 %
 % Known bugs:
 %
@@ -36,8 +36,8 @@ var     = {'ID', 'string'; ...              % Subject identity
     'exp', 'string'; ...                    % Trial/Block number
     'setup', 'string'; ...                  % Setup
     'block', 'double'; ...                  % Experimental block
-    'trl_no', 'double'; ...                 % Trial/Block number
-    'trl_dur', 'double'; ...                % Trial/Block duration
+    'cyc_no', 'double'; ...                 % Trial/Block number
+    'cyc_dur', 'double'; ...                % Trial/Block duration
     'ss_no', 'double'; ...                  % Steady state number
     'ss_dur', 'double'; ...                 % Steady state duration
     'rdp_coh', 'double'; ...                % RDP coherence
@@ -78,11 +78,11 @@ else
 end
 
 % Stimulus cycle (i.e. trial) loop
-for iTrl = 1:length(trl.tEnd)
+for iCyc = 1:length(cyc.cEnd)
     
     % Trial index
-    trlIdx                  = [];
-    trlIdx                  = d.time >= trl.tOn(iTrl) & d.time <= trl.tEnd(iTrl);
+    cycIdx                  = [];
+    cycIdx                  = d.time >= cyc.cOn(iCyc) & d.time <= cyc.cEnd(iCyc);
     
     % Extract dots
     tmp_dp                	= d.value(idx.RDP_dot);
@@ -90,24 +90,24 @@ for iTrl = 1:length(trl.tEnd)
     tmp_frme_ts             = d.time(idx.frame);
     
     % Stimulus trial data
-    tmp_dir_ts              = getTrialData(d.time, trlIdx, idx.RDP_dir);                    % RDP_direction timestamps
-    tmp_dir                 = getTrialData(d.value, trlIdx, idx.RDP_dir);                   % RDP_direction
-    tmp_coh                 = getTrialData(d.value, trlIdx, idx.RDP_coh);                   % RDP coherence
-    tmp_coh_ts            	= getTrialData(d.time, trlIdx, idx.RDP_coh);                    % RDP coherence timestamps
+    tmp_dir_ts              = getTrialData(d.time, cycIdx, idx.RDP_dir);                    % RDP_direction timestamps
+    tmp_dir                 = getTrialData(d.value, cycIdx, idx.RDP_dir);                   % RDP_direction
+    tmp_coh                 = getTrialData(d.value, cycIdx, idx.RDP_coh);                   % RDP coherence
+    tmp_coh_ts            	= getTrialData(d.time, cycIdx, idx.RDP_coh);                    % RDP coherence timestamps
     
     % Remove first entries -> similar to last stimulus state at RDP_onset
-    trl.state_ts{iTrl}      = tmp_dir_ts(2:end);                                            % State ON duration timestamps
-    trl.state_dur{iTrl}    	= diff([tmp_dir_ts(2:end) trl.tEnd(iTrl)]) ./ 1e3;              % Steady state duration for this trials [ms]
-    trl.dir{iTrl}           = tmp_dir(2:end);                                               % Trial RDP direction
+    cyc.state_ts{iCyc}      = tmp_dir_ts(2:end);                                            % State ON duration timestamps
+    cyc.state_dur{iCyc}    	= diff([tmp_dir_ts(2:end) cyc.cEnd(iCyc)]) ./ 1e3;              % Steady state duration for this trials [ms]
+    cyc.dir{iCyc}           = tmp_dir(2:end);                                               % Trial RDP direction
     
     % Stimulus state loop
-    for iSS = 1:length(trl.state_dur{iTrl})
+    for iSS = 1:length(cyc.state_dur{iCyc})
         
         % Steady state index
-        if iSS < length(trl.state_dur{iTrl})
-            ssIdx           = d.time >= trl.state_ts{iTrl}(iSS) & d.time < trl.state_ts{iTrl}(iSS+1);
+        if iSS < length(cyc.state_dur{iCyc})
+            ssIdx           = d.time >= cyc.state_ts{iCyc}(iSS) & d.time < cyc.state_ts{iCyc}(iSS+1);
         else
-            ssIdx           = d.time >= trl.state_ts{iTrl}(iSS) & d.time <= trl.tEnd(iTrl);
+            ssIdx           = d.time >= cyc.state_ts{iCyc}(iSS) & d.time <= cyc.cEnd(iCyc);
         end
         
         % Trial/State/Stimulus parameter
@@ -117,12 +117,12 @@ for iTrl = 1:length(trl.tEnd)
         t.exp{cc}           = fid{3};                                                       % Experimental condition
         t.setup{cc}         = setup;                                                        % Setup
         t.block(cc)         = str2double(fid{4}(end));                                      % Experimental block
-        t.trl_no(cc)        = iTrl;                                                         % Trial number
-        t.trl_dur(cc)       = (trl.tEnd(iTrl) - trl.tOn(iTrl)) ./ 1e3;                      % Trial duration [ms]
+        t.cyc_no(cc)        = iCyc;                                                         % Trial number
+        t.cyc_dur(cc)       = (cyc.cEnd(iCyc) - cyc.cOn(iCyc)) ./ 1e3;                      % Trial duration [ms]
         t.ss_no(cc)         = cc;                                                           % Stimulus state counter
-        t.ss_dur(cc)        = trl.state_dur{iTrl}(iSS);                                     % Steady state duration
-        t.rdp_coh(cc)       = tmp_coh(find(tmp_coh_ts <= trl.state_ts{iTrl}(iSS),1,'last'));% Stimulus state coherence
-        t.rdp_dir(cc)       = mod(trl.dir{iTrl}(iSS),360);                                  % Stimulus direction
+        t.ss_dur(cc)        = cyc.state_dur{iCyc}(iSS);                                     % Steady state duration
+        t.rdp_coh(cc)       = tmp_coh(find(tmp_coh_ts <= cyc.state_ts{iCyc}(iSS),1,'last'));% Stimulus state coherence
+        t.rdp_dir(cc)       = mod(cyc.dir{iCyc}(iSS),360);                                  % Stimulus direction
         
         % Behavioural response: TMP_ variables based on joystick sampling rate
         tmp_js_ts{cc}       = getTrialData(d.time, ssIdx, idx.JS_str);                      % Timestamps: Joystick strength
@@ -162,7 +162,7 @@ outcome_ts                          = d.time(idx.outcome);
 rew_score                           = d.value(idx.reward);                                      % Reward scores
 rew_ts                              = d.time(idx.reward);                                       % Reward scores
 
-%bExtract state and joystick parameter
+% Extract state and joystick parameter
 state_on                            = cellfun(@(x) x(1), t.frme_ts);                            % State onset timestamps
 js_dir_val                       	= d.value(idx.JS_dir);
 js_ecc_val                       	= d.value(idx.JS_str);
