@@ -111,6 +111,7 @@ ax.XLabel.String    = 'Time [s]';
 ax.FontSize         = fs;
 
 print(f, [dest_dir '/rdp_example_line_dir'], '-r500', '-dpng');
+print(f, [dest_dir '/rdp_example_line_dir'], '-r500', '-dsvg');
 
 f                	= figure('units','normalized','position',[0 0 .5 .25]);
 ax                  = gca; hold on
