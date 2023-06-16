@@ -65,33 +65,23 @@ for iSubj = 1:length(solo_cr)
     end
 end
 
-avg_pk_pos = cellfun(@median,pk_pos);
+avg_pk_pos = cellfun(@mean,pk_pos);
 std_pk_pos = cellfun(@std,pk_pos);
 
-f                   = figure;
-bx                  = boxplot((avg_pk_pos - nLag) * frme_ms, 'Color', [0 0 0]);
+figure
+bx                  = boxplot((avg_pk_pos - nLag) * frme_ms);
 ax                  = gca;
 ax.YLabel.String    = 'Avg lag [ms]';
-ax.XTick            = 1:7;
-ax.XTickLabel       = round(snr,2);
-ax.XLabel.String    = 'Coherence [%]';
+ax.XTick            = [0 75 150 225 300];
+ax.XTickLabel       = round((cellfun(@str2num, ax.XTickLabel)-nLag) * frme_ms);
+ax.YLabel.String    = 'XCorr coef [norm]';
+ax.YLim             = [0 .15];
 ax.FontSize      	= lb_fs;
-set(bx,'LineWidth', 2);
-print(f, [dest_dir '/pop_lag_median'], '-r500', '-dpng');
-print(f, [dest_dir '/pop_lag_median'], '-r500', '-dsvg');
 
-f                   = figure;
-bx                  = boxplot(std_pk_pos, 'Color', [0 0 0]);
-ax                  = gca;
-ax.YLabel.String    = 'Std lag [ms]';
-ax.XTick            = 1:7;
-ax.XTickLabel       = round(snr,2);
-ax.XLabel.String    = 'Coherence [%]';
-ax.FontSize      	= lb_fs;
-set(bx,'LineWidth', 2);
-print(f, [dest_dir '/pop_lag_std'], '-r500', '-dpng');
-print(f, [dest_dir '/pop_lag_std'], '-r500', '-dsvg');
 
+figure
+bx = boxplot(std_pk_pos);
+shg
 %% Peak-Average Ratio
 
 f                           = figure;hold on
