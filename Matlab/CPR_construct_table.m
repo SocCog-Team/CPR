@@ -65,15 +65,19 @@ fprintf('Building table...\n')
 % Extract title information
 fid          	= strsplit(fname,'_');
 
-if strcmp(fid{5},'psycho4') || strcmp(fid{5},'psycho3') || strcmp(fid{5},'physio4') || strcmp(fid{5},'physio3')
-    setup   	= fid{5};
+if size(fid,2) == 1
+    setup       = 'physio4';
 else
-    psy4 = strcmp(fid{2}(1:3),subj);
-    
-    if psy4 == 1
-        setup 	= 'psycho4';
+    if strcmp(fid{5},'psycho4') || strcmp(fid{5},'psycho3') || strcmp(fid{5},'physio4') || strcmp(fid{5},'physio3')
+        setup   	= fid{5};
     else
-        setup 	= 'psycho3';
+        psy4 = strcmp(fid{2}(1:3),subj);
+        
+        if psy4 == 1
+            setup 	= 'psycho4';
+        else
+            setup 	= 'psycho3';
+        end
     end
 end
 

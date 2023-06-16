@@ -89,7 +89,7 @@ for iSubj = 1:length(sbj_lst)
             solo_perf{iSubj}      	= response_readout(solo_tbl, nSample);
             
             % Extract stimulus cycles for correlation analysis
-            cyc_boundary        	= [0; find(diff(solo_tbl.trl_no) ~= 0)];
+            cyc_boundary        	= [0; find(diff(solo_tbl.cyc_no) ~= 0)];
             [tmp_solo, sc_cnt]   	= extractCycles(cyc_boundary, solo_tbl, tmp_solo, sc_cnt);
             
             % Correlation analysis
@@ -106,7 +106,7 @@ for iSubj = 1:length(sbj_lst)
             dyad_perf{iSubj}      	= response_readout(dyad_tbl, nSample);
             
             % Extract stimulus cycles for correlation analysis
-            cyc_boundary        	= [0; find(diff(dyad_tbl.trl_no) ~= 0)];
+            cyc_boundary        	= [0; find(diff(dyad_tbl.cyc_no) ~= 0)];
             [tmp_dyad, dc_cnt]   	= extractCycles(cyc_boundary, dyad_tbl, tmp_dyad, dc_cnt);
             
             % Correlation analysis
@@ -478,6 +478,32 @@ lg                          = legend('solo','dyadic');
 lg.Location                 = 'southeast';
 lg.FontSize                 = 10;
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lag difference
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% dim                         = [.15 .15];
+% ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
+% 
+% for iL = 1:length(lag)
+%     pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
+%     pl(iL).Color          	= [.5 .5 .5 alp];
+%     pl(iL).LineWidth      	= lw;
+% end
+% 
+% bx                          = boxplot(lag, 'Colors', 'k');
+% set(bx,'MarkerEdgeColor','k')
+% set(bx, {'linew'},{lw})
+% 
+% ax6.YLabel.String           = 'Time [ms]';
+% ax6.XTick                   = [1 2];
+% ax6.XLim                    = [.5 2.5];
+% ax6.XTickLabel              = {'Solo','Agnt'};
+% ax6.FontSize                = lb_fs;
+% ax6.XTickLabelRotation      = 0;
+% ax6.Position                = [clmns(1) height(3) dim];
+% ax6.Box                     = 'off';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Annotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -496,9 +522,9 @@ print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [tmp, cc] = extractCycles(trl_break, tbl, tmp, cc)
-for iTrl = 2:length(trl_break)
-    tidx                    = trl_break(iTrl-1)+1 : trl_break(iTrl);
+function [tmp, cc] = extractCycles(cyc_break, tbl, tmp, cc)
+for iCyc = 2:length(cyc_break)
+    tidx                    = cyc_break(iCyc-1)+1 : cyc_break(iCyc);
     tt                      = tbl(tidx,:);
     
     % Initiate cell

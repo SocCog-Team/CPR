@@ -30,7 +30,7 @@ skip_processed_files    = false;
 copy_if_present         = false;
 
 % Preprocess data
-for iSubj = 20:length(sbj_lst) %
+for iSubj = 1:length(sbj_lst) %
     
     disp(['Processing subject: ' sbj_lst{iSubj}])
     
@@ -103,7 +103,7 @@ end
 
 xd                      = readtable([local_pth fname],'Sheet','Dyads');
 
-for iDyad = 18:xd.Dyad'
+for iDyad = 63:67%xd.Dyad'
     % Specify directories
     data_pth            = [local_pth 'Dyad' num2str(iDyad) '/raw/'];
     summ_pth            = [local_pth 'Dyad' num2str(iDyad) '/summary/'];

@@ -121,7 +121,7 @@ idx.frame                   = d.event == 'STIM_displayUpdate';
 idx.RDP_onset               = d.event == 'STIM_RDP_onset';
 idx.RDP_dir                 = d.event == 'STIM_RDP_direction';
 idx.RDP_coh                 = d.event == 'STIM_RDP_coherence';
-idx.RDP_dot                	= d.event == 'STIM_RDP_dot_positions';
+idx.RDP_dot                	= d.event == 'STIM_RDP_dotPositions';
 idx.trg_on                  = d.event == 'STIM_target_onset';
 idx.JS_dir                  = d.event == 'IO_joystickDirection';
 idx.JS_str                  = d.event == 'IO_joystickStrength';
@@ -197,6 +197,5 @@ end
 % Plot performance summary
 % [summ,crr]                  = CPR_plot_performance_summary(d,idx,tbl,rew_str,sbj,fname); % buggy
 % [~]                         = CPR_target_reward(tbl{1});
-summ = [];
-crr = [];
+summ = []; crr = [];
 end

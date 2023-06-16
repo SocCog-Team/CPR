@@ -126,7 +126,7 @@ group CTRL {
     var CTRL_nTarget 						= 0
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
-    var CTRL_snr_list                       = [.1,.3,.9]
+    var CTRL_snr_list                       = [.2,.4,.9]
     var CTRL_directionChange_list           = [45,90,135]
     var CTRL_ITI_ms                         = 0
     var CTRL_cpr_treshold                   = 0
@@ -192,6 +192,10 @@ group CTRL {
 
     var CTRL_refreshRate_ideal              = 120
     var CTRL_refreshRate_tolerance          = 2
+
+    var CTRL_mouse_flag                     = 0
+    var CTRL_rectangle_size_x               = 0
+    var CTRL_rectangle_size_y               = 0
 }
 
 group CTRL_MAPPING {
@@ -785,6 +789,23 @@ stimulus/r_d_p RDP_explore (
     autoplay                                = YES
     )
 
+stimulus/advstimulus rectangle (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_rectangle_size_x
+    y_size                                  = CTRL_rectangle_size_y
+    x_position                              = IO_mouse_x
+    y_position                              = IO_mouse_y
+    shape                                   = format("rectangle")
+    color                                   = COL_rdp_r,COL_rdp_g,COL_rdp_b
+    rotation                                = RDP_direction
+    alpha_multiplier                        = 1
+    version                                 = 1
+    autoplay                                = YES
+    )
+
 //
 // Filters
 //
@@ -981,8 +1002,10 @@ protocol 'Calibration-9p' {
 
 
 protocol 'RF_exploration' {
+    start_device_io (Eyelink)
+    start_device_io (mIO)
     start_device_io (Mouse)
-       
+        
     CTRL_reward_ml                          = .2
     CTRL_fixationWidth_dva                  = 3
     CTRL_fixation_size                      = 1
@@ -994,6 +1017,9 @@ protocol 'RF_exploration' {
     CTRL_ITI_ms                             = 1000
     TRIAL_start                             = 0
     TRIAL_end                               = 0
+    RDP_coherence                           = 1
+    RDP_radius                              = 3
+    
 
     trial 'Main Task System' {
         task LOOP {
@@ -1087,7 +1113,7 @@ protocol 'RF_exploration' {
                 play_sound (Failure_sound)
 
                 TRIAL_outcome           = 'fixation break'
-
+                INFO_ErrorCounter       += 1
                 goto ('End trial')
             }
 
@@ -1095,6 +1121,9 @@ protocol 'RF_exploration' {
                 play_sound (Reward_sound)
 
                 TRIAL_outcome           = 'hit'
+                INFO_HitCounter         += 1
+                
+                INFO_Juice_ml           += CTRL_reward_ml
                 IO_rewardA              = CTRL_reward_ml
 
                 goto ('End trial')
@@ -1127,6 +1156,9 @@ protocol 'RF_exploration' {
             }
         }
     }
+    stop_device_io (Eyelink)
+    stop_device_io (mIO)
+    stop_device_io (Mouse)
 }
 
 
@@ -1173,13 +1205,13 @@ protocol 'RF_Mapping' {
     ML_sync                                 = 1
     INFO_task                               = "RF_mapping"
 
-    CTRL_reward_ml                          = .5
-    CTRL_NoStimuli                          = 1500
+    CTRL_reward_ml                          = .3
+    CTRL_NoStimuli                          = 1620 //9x* 9y * 20reps/pos
     CTRL_fixationWidth_dva                  = 3
     CTRL_fixation_size                      = 1
-    CTRL_fixation_hold_ms                   = 1000
-    CTRL_ITI_ms                             = 2000
-    CTRL_RDP_ms                             = 100
+    CTRL_fixation_hold_ms                   = 2000
+    CTRL_ITI_ms                             = 1000
+    CTRL_RDP_ms                             = 200
     CTRL_RDP_flag                           = 0
 
     RDP_radius                              = 2
@@ -1228,7 +1260,7 @@ protocol 'RF_Mapping' {
             }
 
             state 'New trial' {
-                ML_sync                 = 0
+                ML_sync                 = 1
 
                 action/omniplex_strobe (
                     variable            = TRIAL_start
@@ -1287,7 +1319,8 @@ protocol 'RF_Mapping' {
 
                 RDP_x                   = CTRL_position_x[INFO_StateCounter]
                 RDP_y                   = CTRL_position_y[INFO_StateCounter]
-                TRIAL_type              = format("X%dY%d", (integer)RDP_x, (integer)RDP_y)
+                RDP_radius              = RDP_radius
+                TRIAL_type              = format("X%d_Y%d", (integer)RDP_x, (integer)RDP_y)
 
                 RDP_alpha               = 1
                 CTRL_RDP_flag           = 1
@@ -1306,7 +1339,8 @@ protocol 'RF_Mapping' {
                 INFO_StateCounter       += 1
                 RDP_x                   = CTRL_position_x[INFO_StateCounter]
                 RDP_y                   = CTRL_position_y[INFO_StateCounter]
-                TRIAL_type              = format("X%dY%d", (integer)RDP_x, (integer)RDP_y)
+                RDP_radius              = RDP_radius
+                TRIAL_type              = format("X%d_Y%d", (integer)RDP_x, (integer)RDP_y)
 
                 update_stimulus_display ()
 
@@ -1476,13 +1510,13 @@ protocol 'RF_Tuning' {
     ML_sync                                 = 1
     INFO_task                               = "RF_tuning"
     
-    CTRL_reward_ml                          = .5
+    CTRL_reward_ml                          = .3
     CTRL_NoStimuli                          = 300
     CTRL_fixationWidth_dva                  = 3
     CTRL_fixation_size                      = 1
     CTRL_fixation_hold_ms                   = 1000
-    CTRL_ITI_ms                             = 2000
-    CTRL_RDP_ms                             = 250
+    CTRL_ITI_ms                             = 1000
+    CTRL_RDP_ms                             = 200
     CTRL_RDP_flag                           = 0
 
     RDP_radius                              = 30
@@ -1492,7 +1526,7 @@ protocol 'RF_Tuning' {
     RDP_x                                   = 0
     RDP_y                                   = 0
 
-    CTRL_start_area_size                    = 10
+    CTRL_start_area_size                    = 8
     CTRL_start_area_alpha                   = 1 
        
     COL_start_area_r                        = 0
@@ -1600,6 +1634,7 @@ protocol 'RF_Tuning' {
 
                 RDP_direction           = SEL_dir
                 RDP_alpha               = 1
+                TRIAL_type              = format("Dir%d", (integer)RDP_direction)
                 CTRL_RDP_flag           = 1
 
                 start_timer (
@@ -1616,6 +1651,7 @@ protocol 'RF_Tuning' {
                 accept_selections (SEL_dir)
 
                 RDP_direction           = SEL_dir
+                TRIAL_type              = format("Dir%d", (integer)RDP_direction)
 
                 update_stimulus_display ()
 
@@ -1793,9 +1829,9 @@ protocol 'CPR_solo' {
     ML_sync                                     = 1
     INFO_task                                   = "CPR_solo_stepfunction_neutral"
     CTRL_reward_ml                              = 1 // Post-cycle reward
-    CTRL_reward_max_ml                          = 1 // Max reward volume
+    CTRL_reward_max_ml                          = .8 // Max reward volume
     CTRL_reward_min_ml                          = .1 // Min reward volume
-    CTRL_reward_power                           = 2 // Exponential scaling
+    CTRL_reward_power                           = 1.5 // Exponential scaling
     CTRL_reward_penalty_ml                      = .2 // Negative reward in cumulative setting for missed targets
     CTRL_direct_reward_flag                     = true
 
@@ -1804,7 +1840,7 @@ protocol 'CPR_solo' {
     CTRL_NoCoherenceStates                      = 5 
     CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
-    CTRL_nTarget 								= 99 // 1%
+    CTRL_nTarget 								= 79 // 99 = 1%
     CTRL_cpr_treshold                           = .2 // Initial threshold to start cycle
     
     CTRL_arc_alpha                              = 1
@@ -1819,24 +1855,24 @@ protocol 'CPR_solo' {
     CTRL_target_deg                             = 30
     CTRL_target_offset                          = .8
     CTRL_target_duration_ms                     = 50
-    CTRL_target_ITI_ms                          = 300
+    CTRL_target_ITI_ms                          = 500
     CTRL_target_ban_duration_ms                 = 300
 
-    CTRL_ITI_ms                                 = 2000
+    CTRL_ITI_ms                                 = 1000
     CTRL_minFixBreak_duration_ms                = 300
 
     COL_start_area_r                            = .2 // Grey: 11.93cd/m^2 -- Red: 11.69cd/m^2
     COL_start_area_g                            = .2
     COL_start_area_b                            = .2
 
-    RDP_radius                                  = 12
-    RDP_y                                       = 3
-    RDP_x                                       = -15
+    RDP_radius                                  = 8
+    RDP_y                                       = -5
+    RDP_x                                       = -13
     RDP_density                                 = 2
     RDP_dotsize                                 = 0.18
     
     TMP_dva_pre                                 = 1.5
-    TMP_dva_trial                               = 4
+    TMP_dva_trial                               = 5
 
     // Reset counters
     TRIAL_start                                 = 0
@@ -2050,7 +2086,7 @@ protocol 'CPR_solo' {
                     INFO_CoherenceStateCounter  = 0
                 }
                 INFO_CoherenceStateCounter      = INFO_CoherenceStateCounter + 1
-                TRIAL_type                      = format("Coh%d", (float)RDP_coherence)
+                TRIAL_type                      = format("Coh%d_Dir%d", (float)RDP_coherence,(float)RDP_direction)
 
                 start_timer (
                     timer                       = StateDurationTimer

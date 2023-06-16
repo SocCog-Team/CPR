@@ -77,7 +77,9 @@ ax0.Position(1:2)           = [.15 .17];
 hofs                        = .135;
 vofs                        = .16;
 snr                         = unique(t.rdp_coh);
-cmap_coh                    = jet(size(snr,1));
+
+% cmap_coh                    = jet(size(snr,1));
+cmap_coh                    = cool(size(snr,1));
 
 % Add targets
 for iCoh = 1:length(snr)
@@ -112,3 +114,4 @@ ax0v.YAxis.Visible          = 'off';
 
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 print(f, [dest_dir '/target_distribution'], '-r500', '-dpng');
+print(f, [dest_dir '/target_distribution'], '-r500', '-dsvg');
