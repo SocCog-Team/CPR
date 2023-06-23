@@ -5,11 +5,17 @@ lb_fs               = 16;
 alp                 = .2;
 frme_ms             = 1000/120;
 nLag                = 150;
-subj_id             = 17;
 snr                 = unique(solo_cr{1}.coh);
+
+%% Population plot
+
+%%% start at sample 150 %%%
+
+%% Example subject
+subj_id             = 17;
 col                 = cool(length(snr));
 
-f = figure;hold on
+f                   = figure;hold on
 ln                  = line([150 150],[0 .15], 'LineWidth', lw, 'LineStyle', ':', 'Color', [0 0 0]);
 
 for iCoh = 1:length(snr)
@@ -70,6 +76,7 @@ std_pk_pos = cellfun(@std,pk_pos);
 
 f                   = figure;
 bx                  = boxplot((avg_pk_pos - nLag) * frme_ms, 'Color', [0 0 0]);
+%%% Face Color ---> Coherence label
 ax                  = gca;
 ax.YLabel.String    = 'Avg lag [ms]';
 ax.XTick            = 1:7;
