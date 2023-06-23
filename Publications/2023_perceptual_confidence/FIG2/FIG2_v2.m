@@ -232,17 +232,19 @@ ax4.XAxis.Visible           = 'off';
 %%% SUBPLOT: DYADIC - Hit rate raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax5                         = axes('Position', [colmn(2) height(1) dim]); hold on
-[ax5,pl]                    = plotData(ax5,dyad_hir,true,lw,alp,col_dat,col_ci);
-ax5.XLim                    = [1 size(dyad_hir,2)];
-ax5.YLim                    = [10 70];
-ax5.XLabel.String           = 'Coherence [%]';
-ax5.YLabel.String           = [];
-ax5.XTick                   = 1:length(snr);
-ax5.XTickLabel              = round(snr,2)*100;
-ax5.FontSize                = lb_fs;
-ax5.XTickLabelRotation      = 0;
-ax5.XAxis.Visible           = 'off';
-ax5.YAxis.Visible           = 'off';
+[ax5]                       = plotScatter(ax5, solo_hir, dyad_hir, snr, lb_fs, true);
+
+% [ax5,pl]                    = plotData(ax5,dyad_hir,true,lw,alp,col_dat,col_ci);
+% ax5.XLim                    = [1 size(dyad_hir,2)];
+% ax5.YLim                    = [10 70];
+% ax5.XLabel.String           = 'Coherence [%]';
+% ax5.YLabel.String           = [];
+% ax5.XTick                   = 1:length(snr);
+% ax5.XTickLabel              = round(snr,2)*100;
+% ax5.FontSize                = lb_fs;
+% ax5.XTickLabelRotation      = 0;
+% ax5.XAxis.Visible           = 'off';
+% ax5.YAxis.Visible           = 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Dyadic - Lag %%%
@@ -259,49 +261,74 @@ for iSubj = 1:size(dyad_cr,2)
     end
 end
 
+solo_mlag(sum(dyad_mlag,2) == 0,:) = [];
+dyad_mlag(sum(dyad_mlag,2) == 0,:) = [];
+
 ax6                         = axes('Position', [colmn(2) height(4) dim]); hold on
-[ax6,pl]                    = plotData(ax6,dyad_mlag,false,lw,alp,col_dat,col_ci);
-ax6.XLim                    = [1 size(dyad_mlag,2)];
-ax6.YLim                    = [300 1000];
-ax6.XLabel.String           = 'Coherence [%]';
-ax6.YLabel.String           = 'Lag [ms]';
-ax6.XTick                   = 1:length(snr);
-ax6.XTickLabel              = round(snr,2)*100;
-ax6.FontSize                = lb_fs;
-ax6.XTickLabelRotation      = 0;
-ax6.YAxis.Visible           = 'off';
+ln                          = line([0 1000],[0 1000]);
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+[ax6]                       = plotScatter(ax6, solo_mlag(1:31,:), dyad_mlag, snr, lb_fs, false);
+
+ax6.XLim                 	= [350 1000];
+ax6.YLim                    = [250 1000];
+
+% [ax6,pl]                    = plotData(ax6,dyad_mlag,false,lw,alp,col_dat,col_ci);
+% ax6.XLim                    = [1 size(dyad_mlag,2)];
+% ax6.YLim                    = [300 1000];
+% ax6.XLabel.String           = 'Coherence [%]';
+% ax6.YLabel.String           = 'Lag [ms]';
+% ax6.XTick                   = 1:length(snr);
+% ax6.XTickLabel              = round(snr,2)*100;
+% ax6.FontSize                = lb_fs;
+% ax6.XTickLabelRotation      = 0;
+% ax6.YAxis.Visible           = 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax7                         = axes('Position', [colmn(2) height(2) dim]); hold on
-[ax7,pl]                    = plotData(ax7,dyad_macc,true,lw,alp,col_dat,col_ci);
-ax7.XLim                    = [1 size(dyad_macc,2)];
-ax7.YLim                    = [30 100];
-ax7.XLabel.String           = 'Coherence [%]';
-ax7.YLabel.String           = [];
-ax7.XTick                   = 1:length(snr);
-ax7.XTickLabel              = round(snr,2)*100;
-ax7.FontSize                = lb_fs;
-ax7.XTickLabelRotation      = 0;
-ax7.XAxis.Visible           = 'off';
-ax7.YAxis.Visible           = 'off';
+[ax7]                       = plotScatter(ax7, solo_macc, dyad_macc, snr, lb_fs, true);
+
+ax7.XLim                 	= [0 1];
+ax7.YLim                    = [0 1];
+ax7.XTick                   = [.1 .5 .9];
+ax7.YTick                   = [.1 .5 .9];
+ 
+% [ax7,pl]                    = plotData(ax7,dyad_macc,true,lw,alp,col_dat,col_ci);
+% ax7.XLim                    = [1 size(dyad_macc,2)];
+% ax7.YLim                    = [30 100];
+% ax7.XLabel.String           = 'Coherence [%]';
+% ax7.YLabel.String           = [];
+% ax7.XTick                   = 1:length(snr);
+% ax7.XTickLabel              = round(snr,2)*100;
+% ax7.FontSize                = lb_fs;
+% ax7.XTickLabelRotation      = 0;
+% ax7.XAxis.Visible           = 'off';
+% ax7.YAxis.Visible           = 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC - Avg eccentricity raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax8                         = axes('Position', [colmn(2) height(3) dim]); hold on
-[ax8,pl]                    = plotData(ax8,dyad_mecc,true,lw,alp,col_dat,col_ci);
-ax8.XLim                    = [1 size(dyad_mecc,2)];
-ax8.YLim                    = [20 100];
-ax8.XLabel.String           = 'Coherence [%]';
-ax8.YLabel.String           = [];
-ax8.XTick                   = 1:length(snr);
-ax8.XTickLabel              = round(snr,2)*100;
-ax8.FontSize                = lb_fs;
-ax8.XTickLabelRotation      = 0;
-ax8.XAxis.Visible           = 'off';
-ax8.YAxis.Visible           = 'off';
+[ax8]                       = plotScatter(ax8, solo_mecc, dyad_mecc, snr, lb_fs, false);
+
+ax8.XLim                 	= [0 1];
+ax8.YLim                    = [0 1];
+ax8.XTick                   = [.1 .5 .9];
+ax8.YTick                   = [.1 .5 .9];
+
+% [ax8,pl]                    = plotData(ax8,dyad_mecc,true,lw,alp,col_dat,col_ci);
+% ax8.XLim                    = [1 size(dyad_mecc,2)];
+% ax8.YLim                    = [20 100];
+% ax8.XLabel.String           = 'Coherence [%]';
+% ax8.YLabel.String           = [];
+% ax8.XTick                   = 1:length(snr);
+% ax8.XTickLabel              = round(snr,2)*100;
+% ax8.FontSize                = lb_fs;
+% ax8.XTickLabelRotation      = 0;
+% ax8.XAxis.Visible           = 'off';
+% ax8.YAxis.Visible           = 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBPLOT: Hit rate comparison %%%
@@ -424,59 +451,59 @@ ax17.XAxis.Visible         	= 'on';
 % Accuracy-based psychometric curves
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-c = 0;
-for iSubj = 1:length(dyad_perf)
-    
-    if isempty(dyad_perf{iSubj})
-        continue
-    end
-    
-    if ~strcmp(dyad_perf{iSubj}.id, solo_perf{iSubj}.id) 
-        error('Subject confusion')
-    end
-    
-    c                     	= c+1;
-    crit                      = .875; % +/- 45 degrees
-    s                     	= cellfun(@(x) x > crit, solo_perf{iSubj}.acc_trg, 'UniformOutput', false);
-    d                     	= cellfun(@(x) x > crit, dyad_perf{iSubj}.acc_trg, 'UniformOutput', false);
-    
-    [param_solo(c,:) model_solo{c}] = fit_logistic_fct(solo_perf{iSubj}.carr, cellfun(@sum,s), cellfun(@length,s));
-    [param_dyad(c,:) model_dyad{c}] = fit_logistic_fct(dyad_perf{iSubj}.carr, cellfun(@sum,d), cellfun(@length,d));  
-    
-end
-
-col                         = jet(size(param_solo,1));
-
-ax18                       	= axes('Position', [colmn(2) height(5) .1 dim(2)]); hold on
-dat                         = param_solo(:,1) - param_dyad(:,1);
-xpos                        = randi([90 110],1,length(dat))./100;
-bx                          = boxplot(dat,'Color','k');
-sc                          = scatter(1:length(dat), dat, Color, col, Marker,'x');
-ax18.YLim                   = [-.25 .25];
-ax18.XLim                   = [.8 1.2];
-ax18.XTick                  = [];
-ax18.YLabel.String          = 'd(Treshold)';
-ax18.FontSize               = lb_fs;
-
-ax19                       	= axes('Position', [colmn(2)+.15 height(5) .1 dim(2)]); hold on
-bx                          = boxplot(param_solo(:,2) - param_dyad(:,2),'Color','k');
-ax19.XLim                   = [.8 1.2];
-ax19.XTick                  = [];
-ax19.YLabel.String          = 'd(Slope)';
-ax19.FontSize               = lb_fs;
-
-ax20                       	= axes('Position', [colmn(1) height(5) dim]); hold on
-ex_id                       = 26;
-psolo                       = plot(model_solo{ex_id}(param_solo(ex_id,:),[0:.01:1]),'LineWidth',lw); hold on
-psolo.Color                 = [0 0 0 .5];
-pdyad                       = plot(model_dyad{ex_id}(param_dyad(ex_id,:),[0:.01:1]),'Color',[.75 0 0 .5],'LineWidth',lw);
-pdyad.Color                 = [.6 0 0 .5];
-ax20.XLabel.String          = 'Coherence';
-ax20.YLabel.String          = 'Hit rate [%]';
-ax20.FontSize               = lb_fs;
-lg                          = legend('solo','dyadic');
-lg.Location                 = 'southeast';
-lg.FontSize                 = 10;
+% c = 0;
+% for iSubj = 1:length(dyad_perf)
+%     
+%     if isempty(dyad_perf{iSubj})
+%         continue
+%     end
+%     
+%     if ~strcmp(dyad_perf{iSubj}.id, solo_perf{iSubj}.id) 
+%         error('Subject confusion')
+%     end
+%     
+%     c                     	= c+1;
+%     crit                      = .875; % +/- 45 degrees
+%     s                     	= cellfun(@(x) x > crit, solo_perf{iSubj}.acc_trg, 'UniformOutput', false);
+%     d                     	= cellfun(@(x) x > crit, dyad_perf{iSubj}.acc_trg, 'UniformOutput', false);
+%     
+%     [param_solo(c,:) model_solo{c}] = fit_logistic_fct(solo_perf{iSubj}.carr, cellfun(@sum,s), cellfun(@length,s));
+%     [param_dyad(c,:) model_dyad{c}] = fit_logistic_fct(dyad_perf{iSubj}.carr, cellfun(@sum,d), cellfun(@length,d));  
+%     
+% end
+% 
+% col                         = jet(size(param_solo,1));
+% 
+% ax18                       	= axes('Position', [colmn(2) height(5) .1 dim(2)]); hold on
+% dat                         = param_solo(:,1) - param_dyad(:,1);
+% xpos                        = randi([90 110],1,length(dat))./100;
+% bx                          = boxplot(dat,'Color','k');
+% sc                          = scatter(1:length(dat), dat, 'Marker','x');%, 'Color', col);
+% ax18.YLim                   = [-.25 .25];
+% ax18.XLim                   = [.8 1.2];
+% ax18.XTick                  = [];
+% ax18.YLabel.String          = 'd(Treshold)';
+% ax18.FontSize               = lb_fs;
+% 
+% ax19                       	= axes('Position', [colmn(2)+.15 height(5) .1 dim(2)]); hold on
+% bx                          = boxplot(param_solo(:,2) - param_dyad(:,2),'Color','k');
+% ax19.XLim                   = [.8 1.2];
+% ax19.XTick                  = [];
+% ax19.YLabel.String          = 'd(Slope)';
+% ax19.FontSize               = lb_fs;
+% 
+% ax20                       	= axes('Position', [colmn(1) height(5) dim]); hold on
+% ex_id                       = 26;
+% psolo                       = plot(model_solo{ex_id}(param_solo(ex_id,:),[0:.01:1]),'LineWidth',lw); hold on
+% psolo.Color                 = [0 0 0 .5];
+% pdyad                       = plot(model_dyad{ex_id}(param_dyad(ex_id,:),[0:.01:1]),'Color',[.75 0 0 .5],'LineWidth',lw);
+% pdyad.Color                 = [.6 0 0 .5];
+% ax20.XLabel.String          = 'Coherence';
+% ax20.YLabel.String          = 'Hit rate [%]';
+% ax20.FontSize               = lb_fs;
+% lg                          = legend('solo','dyadic');
+% lg.Location                 = 'southeast';
+% lg.FontSize                 = 10;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Lag difference
@@ -660,6 +687,32 @@ fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'Face
 pl                          = plot(mean(dat), 'LineWidth', lw, 'Color', col_dat);
 end
 
+function [ax] = plotScatter(ax, solo_dat, dyad_dat, snr, lb_fs, ax_flag)
+
+hold on
+
+ln                          = line([0 1],[0 1]);
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+coh_col                     = cool(length(snr));
+
+for iCoh = 1:size(solo_dat,2)
+    sc                      = scatter(solo_dat(:,iCoh),dyad_dat(:,iCoh));
+    sc.MarkerFaceColor      = coh_col(iCoh,:);
+    sc.MarkerEdgeColor      = 'none';
+    sc.MarkerFaceAlpha      = .4;
+end
+
+ax.FontSize                 = lb_fs;
+ax.YLabel.String            = 'Solo';
+ax.XLabel.String            = 'Dyad';
+
+if ax_flag 
+    ax.XAxis.Visible        = 'off';
+end
+
+end
+
 function ax = plotAUROC(ax,dat,str,lb_fs,snr,alp,lw,col_dat,col_ci)
 
 axes(ax); hold on
@@ -717,10 +770,10 @@ neg = (dat < .5) & (p_mat < p_val);
 all = size(dat,1);
 
 bp                          = bar( (sum(pos)/all) .*100);
-bp.FaceColor                = [0 .6 0];
+bp.FaceColor                = [.4 .4 .4];
 
 bn                          = bar( -(sum(neg)/all) .*100);
-bn.FaceColor                = [.6 0 0];
+bn.FaceColor                = [.1 .1 .1];
 
 ax.YLim                     = [-60 60];
 ax.YLabel.String            = '[%]';

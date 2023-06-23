@@ -1,29 +1,30 @@
-f                           = figure('units','normalized','position',[0 0 .4 .5]);
-lb_fs                       = 16;
+f                           = figure('units','normalized','position',[0 0 .4 .6]);
+lb_fs                       = 20;
 lw                          = 3;
 cmap                        = [0 0 0; gray(256)];
-c                           = 0;
+cmap                        = flipud(cmap);
 pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';
-tbl                         = load([pth 'AnM/summary/20220629_anm_CPRsolo_block2_tbl.mat']);
-exmpl_col                   = [.5 0 .5 .5];
-t                           = tbl.t;
 
-% Extract experimental data
-clear trg_acc trg_conf trg_coh trg_hit
-for iState = 1:size(t,1)
-    if t.trg_shown(iState) == false
-        continue
+for iSubj = 1:2
+    
+    if iSubj == 1
+        tbl             	= load([pth '/Dyad22/summary/20220510_anm_CPRdyadic_block1_tbl.mat']);
+    else
+        tbl             	= load([pth '/Dyad22/summary/20220510_akn_CPRdyadic_block1_tbl.mat']);
     end
     
-    for iTarget = 1:length(t.trg_ts{iState})
-        c                   = c+1;
-        trg_acc(c)          = t.trg_acc{iState}(iTarget);
-        trg_conf(c)         = t.trg_ecc{iState}(iTarget);
-        trg_coh(c)          = t.rdp_coh(iState);
-        trg_hit(c)          = t.trg_hit{iState}(iTarget);
+    c                       = 0;
+    t                    	= tbl.t;
+    
+    for iState = 1:size(t,1)
+        if t.trg_shown(iState) == false
+            continue
+        end
         
-        if trg_acc(c) < .5 && trg_hit(c) == 1
-            disp([num2str(iState) ' ' num2str(iTarget) ' ' num2str(c) ])
+        for iTarget = 1:length(t.trg_ts{iState})
+            c                   = c+1;
+            trg_acc{iSubj}(c)  	= t.trg_acc{iState}(iTarget);
+            trg_conf{iSubj}(c)	= t.trg_ecc{iState}(iTarget);
         end
     end
 end
@@ -39,13 +40,13 @@ for j = 1:length(conf)
 end
 
 % Cap arc width at target width (2dva == 12.7587deg at chosen position)
-aidx                        = arc < 12.7587;
-arc(aidx)                   = 12.7587;
+trg_idx                  	= arc < 12.7587;
+arc(trg_idx)                = 12.7587;
 
 % For each confidence level, calculate minimum accuracy required to hit
 % the target at given arc width - normalised values
 hit_width_acc               = 1 - ((arc/2) / 180);
-hit_width_acc(aidx)         = 1 - (12.7587/2)/180; % arc width fixed
+hit_width_acc(trg_idx)   	= 1 - (12.7587/2)/180; % arc width fixed
 
 % Remove position that cannot yield reward from reward matrix
 for iAcc = 1:length(acc)
@@ -54,8 +55,7 @@ for iAcc = 1:length(acc)
 end
 
 % Plot reward matrix
-ax0 = gca;
-hold on
+ax0                         = gca; hold on
 im                          = imagesc(acc,conf,rew);
 ax0.XLabel.String           = 'Accuracy';
 ax0.YLabel.String           = 'Eccentricity';
@@ -69,49 +69,130 @@ ax0.XTickLabelRotation      = 0;
 
 colormap(cmap)
 cb                          = colorbar;
-cb.Label.String             = '% Reward';
-cb.Location                 = 'eastoutside';
-
-% Adjust axes position
-ax0.Position(1:2)           = [.15 .17];
-hofs                        = .135;
-vofs                        = .16;
-snr                         = unique(t.rdp_coh);
-
-% cmap_coh                    = jet(size(snr,1));
-cmap_coh                    = cool(size(snr,1));
+cb.Label.String             = 'Score';
+cb.Location                 = 'northoutside';
 
 % Add targets
-for iCoh = 1:length(snr)
-    cidx                    = trg_coh == snr(iCoh);
-    sc                      = scatter(trg_acc(cidx), trg_conf(cidx), 'filled');
-    sc.CData            	= cmap_coh(iCoh,:);
-    sc.SizeData             = 50;
-    sc.MarkerFaceAlpha      = .85;
-end
+sc1                         = scatter(trg_acc{1}, trg_conf{1}, 'filled');
+sc1.CData                   = [.69 0 0];
+sc1.SizeData                = 40;
+sc1.MarkerFaceAlpha         = .75;
+
+sc2                         = scatter(trg_acc{2}, trg_conf{2}, 'filled');
+sc2.CData                   = [0 .69 0];
+sc2.SizeData                = 40;
+sc2.MarkerFaceAlpha         = .75;
+
+ax0.Position                = [.25 .19 .65 .65];
 
 % Add histograms on both axes
 nBin                        = 25;
-ax0h                        = axes('Position', [ax0.Position(1)-hofs ax0.Position(2) ax0.Position(3)/15 ax0.Position(4)]); hold on
-[h, edg]                    = histcounts(trg_conf,nBin);
-cntr                        = edg(1:end-1) + diff(edg) ./ 2;
-st                          = stairs(-h,cntr);
-st.LineWidth                = lw/1.5;
-st.Color                    = [0 0 0];
-ax0h.YLim                   = [0 1];
-ax0h.XAxis.Visible          = 'off';
-ax0h.YAxis.Visible          = 'off';
+vofs                        = .175;
+hofs                        = .175;
 
-ax0v                        = axes('Position', [ax0.Position(1) ax0.Position(2)-vofs ax0.Position(3) ax0.Position(4)/15]); hold on
-[v, edg]                    = histcounts(trg_acc,nBin);
-cntr                        = edg(1:end-1) + diff(edg) ./ 2;
-st                          = stairs(cntr,-v);
-st.LineWidth                = lw/1.5;
-st.Color                    = [0 0 0];
-ax0v.XLim                   = [0 1];
-ax0v.XAxis.Visible          = 'off';
-ax0v.YAxis.Visible          = 'off';
+axh                        = axes('Position', [ax0.Position(1)-vofs ax0.Position(2) ax0.Position(3)/10 ax0.Position(4)]); hold on
+for iSubj = 1:2
+    [h, edg]            	= histcounts(trg_conf{iSubj},nBin);
+    cntr                 	= edg(1:end-1) + diff(edg) ./ 2;
+    st                     	= stairs(-h,cntr);
+    st.LineWidth          	= lw;
+    if iSubj == 1
+        st.Color          	= [.65 0 0];
+    else
+        st.Color          	= [0 .65 0];
+    end
+    axh.YLim              	= [0 1];
+    axh.XAxis.Visible     	= 'off';
+    axh.YAxis.Visible       = 'off';
+end
+
+axv                         = axes('Position', [ax0.Position(1) ax0.Position(2)-vofs ax0.Position(3) ax0.Position(4)/10]); hold on
+for iSubj = 1:2
+    [v, edg]              	= histcounts(trg_acc{iSubj},nBin);
+    cntr                   	= edg(1:end-1) + diff(edg) ./ 2;
+    st                     	= stairs(cntr,-v);
+    st.LineWidth          	= lw;
+    if iSubj == 1
+        st.Color          	= [.65 0 0];
+    else
+        st.Color          	= [0 .65 0];
+    end
+    axv.XLim              	= [0 1];
+    axv.XAxis.Visible     	= 'off';
+    axv.YAxis.Visible    	= 'off';
+end
 
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
-print(f, [dest_dir '/target_distribution'], '-r500', '-dpng');
-print(f, [dest_dir '/target_distribution'], '-r500', '-dsvg');
+print(f, [dest_dir '/target_distribution_dyad'], '-r500', '-dpng');
+print(f, [dest_dir '/target_distribution_dyad'], '-r500', '-dsvg');
+
+%% Histograms: Target count
+
+f                           = figure;
+tcount                      = cellfun(@length,t.trg_ts);
+tcount(t.trg_shown == false) = 0;
+h                           = histogram(tcount);
+h.FaceColor                 = [0 0 0];
+h.FaceAlpha                 = 1;
+ax                          = gca;
+ax.XTick                    = 0:4;
+ax.XLabel.String            = 'Targets per state';
+ax.YLabel.String            = '[#]';
+ax.FontSize                 = lb_fs;
+ax.Box                      = 'off';
+
+print(f, [dest_dir '/histogram_target_count'], '-r500', '-dpng');
+print(f, [dest_dir '/histogram_target_count'], '-r500', '-dsvg');
+
+% Histograms: Target time
+f                           = figure;
+cnt                         = 0;
+state_on                    = cellfun(@(x) x(1),t.frme_ts);
+
+for iState = 1:length(state_on)
+    for iTrg = 1:length(t.trg_ts{iState})
+        cnt             = cnt+1;
+        tcount(cnt)       	= t.trg_ts{iState}(iTrg) - state_on(iState);
+    end
+end
+
+h                           = histogram(tcount./1e3,10);
+h.FaceColor                 = [0 0 0];
+h.FaceAlpha                 = 1;
+ax                          = gca;
+ax.XLabel.String            = 'Time after direction change [ms]';
+ax.YLabel.String            = 'Target appearance [#]';
+ax.FontSize                 = lb_fs;
+ax.Box                      = 'off';
+
+print(f, [dest_dir '/histogram_target_time'], '-r500', '-dpng');
+print(f, [dest_dir '/histogram_target_time'], '-r500', '-dsvg');
+
+% Histograms: State duration
+f                           = figure;
+h                           = histogram(t.ss_dur,10);
+h.FaceColor                 = [0 0 0];
+h.FaceAlpha                 = 1;
+ax                          = gca;
+ax.XLabel.String            = 'State duration [ms]';
+ax.YLabel.String            = '[#]';
+ax.FontSize                 = lb_fs;
+ax.Box                      = 'off';
+
+print(f, [dest_dir '/histogram_state duration'], '-r500', '-dpng');
+print(f, [dest_dir '/histogram_state_duration'], '-r500', '-dsvg');
+
+
+% Histograms: Cycle duration
+f                           = figure;
+h                           = histogram(t.cyc_dur./1e3,10);
+h.FaceColor                 = [0 0 0];
+h.FaceAlpha                 = 1;
+ax                          = gca;
+ax.XLabel.String            = 'Cycle duration [s]';
+ax.YLabel.String            = '[#]';
+ax.FontSize                 = lb_fs;
+ax.Box                      = 'off';
+
+print(f, [dest_dir '/histogram_cyce duration'], '-r500', '-dpng');
+print(f, [dest_dir '/histogram_cycle_duration'], '-r500', '-dsvg');
