@@ -144,6 +144,32 @@ ax.Box                      = 'off';
 print(f, [dest_dir '/histogram_target_count'], '-r500', '-dpng');
 print(f, [dest_dir '/histogram_target_count'], '-r500', '-dsvg');
 
+% Histogram: Target interval
+f                           = figure;
+cnt                         = 0;
+
+for iState = 1:length(state_on)
+    for iTrg = 1:length(t.trg_ts{iState})
+        cnt                 = cnt+1;
+        trg_ts(cnt)      	= t.trg_ts{iState}(iTrg);
+    end
+end
+
+trg_ts(isnan(trg_ts))       = [];
+iti                         = diff(trg_ts)./1e3;
+
+h                           = histogram(iti);
+h.FaceColor                 = [0 0 0];
+h.FaceAlpha                 = 1;
+ax                          = gca;
+ax.XLabel.String            = 'Inter-target interval [ms]';
+ax.YLabel.String            = '[#]';
+ax.FontSize                 = lb_fs;
+ax.Box                      = 'off';
+
+print(f, [dest_dir '/histogram_inter_target_interval'], '-r500', '-dpng');
+print(f, [dest_dir '/histogram_inter_target_interval'], '-r500', '-dsvg');
+
 % Histograms: Target time
 f                           = figure;
 cnt                         = 0;
