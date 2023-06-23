@@ -128,16 +128,23 @@ print(f, [dest_dir '/target_distribution_dyad'], '-r500', '-dsvg');
 
 %% Histograms: Target count
 
+hist_col                    = [.3 .3 .3];
+hist_alpha                  = 1;
+nBin                        = 12;
+
 f                           = figure;
 tcount                      = cellfun(@length,t.trg_ts);
 tcount(t.trg_shown == false) = 0;
-h                           = histogram(tcount);
-h.FaceColor                 = [0 0 0];
-h.FaceAlpha                 = 1;
+[N,EDGES]                   = histcounts(tcount,4,'Normalization','probability');
+h                           = histogram('BinEdges', EDGES,'BinCounts',N);
+h.FaceColor                 = hist_col;
+h.EdgeColor                 = hist_col;
+h.FaceAlpha                 = hist_alpha;
+h.EdgeAlpha                 = hist_alpha;
 ax                          = gca;
 ax.XTick                    = 0:4;
 ax.XLabel.String            = 'Targets per state';
-ax.YLabel.String            = '[#]';
+ax.YLabel.String            = 'Probability [%]';
 ax.FontSize                 = lb_fs;
 ax.Box                      = 'off';
 
@@ -158,12 +165,15 @@ end
 trg_ts(isnan(trg_ts))       = [];
 iti                         = diff(trg_ts)./1e3;
 
-h                           = histogram(iti);
-h.FaceColor                 = [0 0 0];
-h.FaceAlpha                 = 1;
+[N,EDGES]                   = histcounts(iti,nBin,'Normalization','probability');
+h                           = histogram('BinEdges', EDGES,'BinCounts',N);
+h.FaceColor                 = hist_col;
+h.EdgeColor                 = hist_col;
+h.FaceAlpha                 = hist_alpha;
+h.EdgeAlpha                 = hist_alpha;
 ax                          = gca;
 ax.XLabel.String            = 'Inter-target interval [ms]';
-ax.YLabel.String            = '[#]';
+ax.YLabel.String            = 'Probability [%]';
 ax.FontSize                 = lb_fs;
 ax.Box                      = 'off';
 
@@ -182,12 +192,15 @@ for iState = 1:length(state_on)
     end
 end
 
-h                           = histogram(tcount./1e3,10);
-h.FaceColor                 = [0 0 0];
-h.FaceAlpha                 = 1;
+[N,EDGES]                   = histcounts(tcount./1e3,nBin,'Normalization','probability');
+h                           = histogram('BinEdges', EDGES,'BinCounts',N);
+h.FaceColor                 = hist_col;
+h.EdgeColor                 = hist_col;
+h.FaceAlpha                 = hist_alpha;
+h.EdgeAlpha                 = hist_alpha;
 ax                          = gca;
 ax.XLabel.String            = 'Time after direction change [ms]';
-ax.YLabel.String            = 'Target appearance [#]';
+ax.YLabel.String            = 'Probability [%]';
 ax.FontSize                 = lb_fs;
 ax.Box                      = 'off';
 
@@ -196,12 +209,15 @@ print(f, [dest_dir '/histogram_target_time'], '-r500', '-dsvg');
 
 % Histograms: State duration
 f                           = figure;
-h                           = histogram(t.ss_dur,10);
-h.FaceColor                 = [0 0 0];
-h.FaceAlpha                 = 1;
+[N,EDGES]                   = histcounts(t.ss_dur,nBin,'Normalization','probability');
+h                           = histogram('BinEdges', EDGES,'BinCounts',N);
+h.FaceColor                 = hist_col;
+h.EdgeColor                 = hist_col;
+h.FaceAlpha                 = hist_alpha;
+h.EdgeAlpha                 = hist_alpha;
 ax                          = gca;
 ax.XLabel.String            = 'State duration [ms]';
-ax.YLabel.String            = '[#]';
+ax.YLabel.String            = 'Probability [%]';
 ax.FontSize                 = lb_fs;
 ax.Box                      = 'off';
 
@@ -211,12 +227,15 @@ print(f, [dest_dir '/histogram_state_duration'], '-r500', '-dsvg');
 
 % Histograms: Cycle duration
 f                           = figure;
-h                           = histogram(t.cyc_dur./1e3,10);
-h.FaceColor                 = [0 0 0];
-h.FaceAlpha                 = 1;
+[N,EDGES]                   = histcounts(t.cyc_dur./1e3,nBin,'Normalization','probability');
+h                           = histogram('BinEdges', EDGES,'BinCounts',N);
+h.FaceColor                 = hist_col;
+h.EdgeColor                 = hist_col;
+h.FaceAlpha                 = hist_alpha;
+h.EdgeAlpha                 = hist_alpha;
 ax                          = gca;
 ax.XLabel.String            = 'Cycle duration [s]';
-ax.YLabel.String            = '[#]';
+ax.YLabel.String            = 'Probability [%]';
 ax.FontSize                 = lb_fs;
 ax.Box                      = 'off';
 
