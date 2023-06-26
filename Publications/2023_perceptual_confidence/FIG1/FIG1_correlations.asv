@@ -119,37 +119,29 @@ print(f, [dest_dir '/pop_lag_std'], '-r500', '-dsvg');
 
 %% Peak-Average Ratio
 
-for iSub = 1:size(solo_cr,2)
+f                           = figure;hold on
+
+for iSub = 1:size(sxc,1)
     
     sxc = solo_cr{iSub}.sxc;
     coh = solo_cr{iSub}.coh;
-    for iCoh = 1:size(snr,2)
+    for iCoh = 1:size(sxc,2)
         
-        msxc = mean(sxc(coh == snr(iCoh),:));
-        par(iSub,iCoh)   	= max(msxc) / mean(msxc);
+        msxc{iSub,iCoh};
+        par(iSub,iCoh)   	= max(x) / mean(x);
     end
 end
 
-f                          = figure;hold on
-bx                         = boxplot(par, 'Color', [0 0 0]);
 ax                         = gca;
-ax.YLabel.String           = 'Response reliability [ms]';
-ax.XTick                   = 1:7;
-ax.XLim                    = [.5 7.5];
-ax.XTickLabel              = round(snr,2);
-ax.XLabel.String           = 'Coherence [%]';
+% bx                         = boxplot(par, 'Color', [0 0 0]);
+[ax,pl]                    = plotData(ax,par,false,lw,alp,exmpl_id,exmpl_col,avg_mult);
+ax.XLim                    = [1 7];
+ax.XTick                   = [1 4 7];
+ax.XTickLabel              = round([snr(1) snr(4) snr(7)],2)*100;
+ax.XLabel.String           = {'Coherence'; '[%]'};
+ax.YLabel.String           = {'Peak-Average ratio'};
 ax.FontSize                = lb_fs;
-
-set(bx,'MarkerEdgeColor','k')
-set(bx,'LineWidth', 2);
-
-h = findobj(ax,'Tag','Box');
-for j=1:length(h)
-    patch(get(h(j),'XData'),get(h(j),'YData'),col(j,:),'FaceAlpha',.5);
-end
-
-print(f, [dest_dir '/pop_response_reliability'], '-r500', '-dpng');
-print(f, [dest_dir '/pop_response_reliability'], '-r500', '-dsvg');
+ax.XTickLabelRotation      = 0;
 
 %% Response lag - RT comparison
 
@@ -161,10 +153,9 @@ sbj_lst(cellfun(@isempty,sbj_lst)) = [];
 for iSubj = 1:length(sbj_lst)
     load([pth sbj_lst{iSubj} '/summary/' sbj_lst{iSubj} '_RT.mat'])
     mrt(iSubj)              = median(rt.dat);
-    lag(iSubj)              = median(solo_cr{iSubj}.lag);
 end
 
-f = figure; hold on
+f = figure;
 for iS = 1:length(lag)
     pl(iS)               	= plot([1 2],[mrt(iS) lag(iS)]);
     pl(iS).Color          	= [.5 .5 .5 .3];
@@ -172,18 +163,16 @@ for iS = 1:length(lag)
 end
 
 bx                      	= boxplot([mrt' lag'], 'Colors', 'k');
-
+% set(bx(end,:),'Visible','off')
 set(bx,'MarkerEdgeColor','k')
-set(bx, {'linew'},{lw})
+set(bx, {'linew'},{lw/2})
 
 ax                          = gca;
 ax.YLabel.String            = 'Time [ms]';
 ax.XTick                    = [1 2];
 ax.XLim                     = [.5 2.5];
-ax.XTickLabel               = {'Reaction time','CPRsolo'};
+ax.XTickLabel               = {'RT','CPR'};
 ax.FontSize                 = lb_fs;
 ax.XTickLabelRotation       = 0;
+ax.Position                 = [xof height(4) dim];
 ax.Box                      = 'off';
-
-print(f, [dest_dir '/rt_lag_comparison'], '-r500', '-dpng');
-print(f, [dest_dir '/rt_lag_comparison'], '-r500', '-dsvg');
