@@ -445,6 +445,9 @@ ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--'
 ax13                        = plotData(ax13, auc_acc, {'Accuracy diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
 ax13.Position             	= [clmns(3) height(4) dim];
 
+text(3.75,0.825, 'Agnt > Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
+text(3.75,0.175, 'Agnt < Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Annotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
