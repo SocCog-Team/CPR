@@ -161,161 +161,43 @@ col_ci                      = [.3 0 0];
 snr                         = solo_perf{end}.carr;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Example subject joystick response %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-row                         = .79;
-clm                         = .15;
-pl_dim                      = dim*1.2;
-
-cmap                        = [1 1 1; flipud(gray(256))];
-steps                       = .05;
-bins                        = 0:steps:1;
-c                           = 0;
-tbl                         = load([pth 'AnM/summary/20220629_anm_CPRsolo_block2_tbl.mat']);
-t                           = tbl.t;
-
-ax0h                        = axes('Position', [clm-.082 row pl_dim(1)/5 pl_dim(2)]); hold on
-ax0v                       	= axes('Position', [clm row-.065 pl_dim(1) pl_dim(2)/5]); hold on
-ax0                       	= axes('Position', [clm row pl_dim]); hold on
-
-% Extracte experimental data
-clear trg_acc trg_conf trg_coh trg_hit
-for iState = 1:size(t,1)
-    if t.trg_shown(iState) == false
-        continue
-    end
-    
-    for iTarget = 1:length(t.trg_ts{iState})
-        c                   = c+1;
-        trg_acc(c)          = t.trg_acc{iState}(iTarget);
-        trg_conf(c)         = t.trg_ecc{iState}(iTarget);
-        trg_coh(c)          = t.rdp_coh(iState);
-        trg_hit(c)          = t.trg_hit{iState}(iTarget);
-        
-        if trg_acc(c) < .5 && trg_hit(c) == 1
-            disp([num2str(iState) ' ' num2str(iTarget) ' ' num2str(c) ])
-        end
-    end
-end
-
-% Calculate reward matrix
-acc                         = 0:.001:1;
-conf                        = 0:.001:1;
-rew                         = acc' .* conf;
-
-% Determine arc width for each confidence level
-for j = 1:length(conf)
-    arc(j)                  = 180 - (180 * conf(j));
-end
-
-% Cap arc width at target width (2dva == 12.7587deg at chosen position)
-aidx                        = arc < 12.7587;
-arc(aidx)                   = 12.7587;
-
-% For each confidence level, calculate minimum accuracy required to hit
-% the target at given arc width - normalised values
-hit_width_acc               = 1 - ((arc/2) / 180);
-hit_width_acc(aidx)         = 1 - (12.7587/2)/180; % arc width fixed
-
-% Remove position that cannot yield reward from reward matrix
-for iAcc = 1:length(acc)
-    indx                    = conf < hit_width_acc(iAcc);
-    rew(iAcc,indx)          = nan;
-end
-
-% Plot reward matrix
-hold on
-im                          = imagesc(acc,conf,rew);
-ax0.XLabel.String           = 'Accuracy';
-ax0.YLabel.String           = 'Eccentricity';
-ax0.FontSize                = lb_fs;
-ax0.XLim                    = [0 1];
-ax0.YLim                    = [0 1];
-ax0.XLim                    = [0 1];
-ax0.XTick                   = [0:.2:1];
-ax0.YTick                   = [0:.2:1];
-ax0.XTickLabelRotation      = 0;
-ax0.YLabel.Position(1)      = -.4;
-ax0.XLabel.Position(2)      = -.22;
-
-cb                          = colorbar;
-cb.Label.String             = 'Reward';
-cb.Location                 = 'eastoutside';
-colormap(cmap)
-cmap_coh                    = cool(size(snr,2));
-
-for iCoh = 1:length(snr)
-    cidx                    = trg_coh == snr(iCoh);
-    sc(iCoh)                = scatter(trg_acc(cidx), trg_conf(cidx), 'filled');
-    sc(iCoh).CData        	= cmap_coh(iCoh,:);
-    sc(iCoh).SizeData      	= 15;
-    sc(iCoh).MarkerFaceAlpha = .9;
-    lg_str{iCoh}            = num2str(round(snr(iCoh)*100));
-end
-
-ax0.Position                = [clm row pl_dim];
-
-lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 2);
-lg0.Box                     = 'off';
-lg0.Position(1:2)           = [.82 .61];
-
-nBin                        = 40;
-axes(ax0h)
-[h, edg]                    = histcounts(trg_conf,nBin);
-cntr                        = edg(1:end-1) + diff(edg) ./ 2;
-st                          = stairs(-h,cntr);
-st.LineWidth                = lw/1.5;
-st.Color                    = [0 0 0];
-ax0h.YLim                   = [0 1];
-ax0h.XAxis.Visible          = 'off';
-ax0h.YAxis.Visible          = 'off';
-
-axes(ax0v)
-[v, edg]                    = histcounts(trg_acc,nBin);
-cntr                        = edg(1:end-1) + diff(edg) ./ 2;
-st                          = stairs(cntr,-v);
-st.LineWidth                = lw/1.5;
-st.Color                    = [0 0 0];
-ax0v.XLim                   = [0 1];
-ax0v.XAxis.Visible          = 'off';
-ax0v.YAxis.Visible          = 'off';
-uistack(ax0v,'bottom')
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Score comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 sbjs = cellfun(@lower, sbj_lst, 'UniformOutput', false);
-cnt = 0;
+
+pl_dim                      = dim*1.33;
+row                         = .79;
+
+ax20                    	= axes('Position', [colmn(1) row pl_dim]); hold on
+
 for iSubj = 1:length(dyad_perf)
     if isempty(dyad_perf{iSubj})
         continue
     end
-    cnt = cnt+1;
-    xsolo(cnt) = mean(dyad_perf{iSubj}.score_final);   
     sidx = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);
-    ydyad(cnt) = mean(solo_perf{sidx}.score_final);   
+    for iCoh = 1:length(snr)
+        sc(iCoh)                    = scatter(solo_perf{iSubj}.trg_mscore(iCoh),dyad_perf{sidx}.trg_mscore(iCoh));
+        sc(iCoh) .MarkerFaceColor   = cmap_coh(iCoh,:);
+        sc(iCoh) .MarkerFaceAlpha   = alp;
+        sc(iCoh) .MarkerEdgeColor   = 'none';
+        lg_str{iCoh}               	= num2str(round(snr(iCoh),2)*100);
+    end
 end
 
-row                         = .79;
-pl_dim                      = dim*1.2;
-ax20                    	= axes('Position', [colmn(3) row pl_dim]); hold on
-sc                          = scatter(xsolo,ydyad);
-sc.MarkerFaceColor          = [0 0 0];                         
-sc.MarkerEdgeColor          = 'none';                       
-ln                          = line([0 400],[0 400]);
+ln                          = line([0 1],[0 1]);
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
-ax20.XTick                  = [0:100:400];
-ax20.YTick                  = [0:100:400];
+
 ax20.FontSize               = lb_fs;
 ax20.FontSize               = lb_fs;
-ax20.YLabel.String          = 'Dyad';
-ax20.XLabel.String          = 'Solo';
-ax20.Title.FontWeight       = 'normal';
-ax20.Title.String           = 'Mean cumulative Score';
-ax20.Title.String           = 'Mean cumulative Score';
+ax20.YLabel.String          = 'Dyad score [a.u.]';
+ax20.XLabel.String          = 'Solo score [a.u.]';
 ax20.XTickLabelRotation     = 0;
+
+lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
+lg0.Box                     = 'off';
+lg0.Position(1)             = .4;
 
 % Implement gramm solution later!
 % clear g
@@ -488,6 +370,8 @@ for j = 1:size(dyad_perf,2)
     end
 end
 
+cnt = 0;
+
 for iSubj = 1:size(dyad_perf,2)
     
     d.sp                  	= solo_perf{iSubj};                             % Performance data
@@ -506,28 +390,30 @@ for iSubj = 1:size(dyad_perf,2)
         continue
     end
     
+    cnt = cnt+1;
     for iCoh = 1:length(snr)
-        auc_acc(iSubj,iCoh)  	= f_auroc(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
-%         auc_acc(iSubj,iCoh)  	= f_auroc(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
-        auc_ecc(iSubj,iCoh)   	= f_auroc(d.sp.ecc{iCoh},d.dp.ecc{iCoh});
-        auc_score(iSubj,iCoh)  	= f_auroc(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
+        auc_acc(cnt,iCoh)       = f_auroc(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
+%         auc_acc(iScntubj,iCoh)  	= f_auroc(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
+        auc_ecc(cnt,iCoh)   	= f_auroc(d.sp.ecc{iCoh},d.dp.ecc{iCoh});
+        auc_score(cnt,iCoh)  	= f_auroc(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
         
-        auc_cc(iSubj,iCoh)    	= f_auroc(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
-        auc_xcp(iSubj,iCoh)   	= f_auroc(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
-        auc_xc(iSubj,iCoh)    	= f_auroc(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
-        auc_lag(iSubj,iCoh)    	= f_auroc(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
-        
-        kk(iSubj,iCoh) = mean(d.sc.lag(snr(iCoh) == d.sc.coh))-mean(d.dc.lag(snr(iCoh) == d.dc.coh));
-        
-        p_acc(iSubj,iCoh)      	= ranksum(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
-%         p_acc(iSubj,iCoh)      	= ranksum(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
-        p_ecc(iSubj,iCoh)      	= ranksum(d.sp.ecc{iCoh},d.dp.ecc{iCoh});
-        p_score(iSubj,iCoh)  	= ranksum(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
-        p_cc(iSubj,iCoh)      	= ranksum(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
-        p_xcp(iSubj,iCoh)      	= ranksum(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
-        p_xc(iSubj,iCoh)       	= ranksum(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
-        p_lag(iSubj,iCoh)      	= ranksum(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
+        auc_cc(cnt,iCoh)    	= f_auroc(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
+        auc_xcp(cnt,iCoh)   	= f_auroc(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
+        auc_xc(cnt,iCoh)    	= f_auroc(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
+        auc_lag(cnt,iCoh)    	= f_auroc(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
+                
+        p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
+%         p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
+        p_ecc(cnt,iCoh)      	= ranksum(d.sp.ecc{iCoh},d.dp.ecc{iCoh});
+        p_score(cnt,iCoh)       = ranksum(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
+        p_cc(cnt,iCoh)      	= ranksum(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
+        p_xcp(cnt,iCoh)      	= ranksum(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
+        p_xc(cnt,iCoh)       	= ranksum(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
+        p_lag(cnt,iCoh)      	= ranksum(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
     end
+    
+    p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
+    auc_ecc_pooled(cnt)         = f_auroc(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
 end
 
 ax9                       	= axes('Position', [colmn(3) height(4) dim]); hold on
@@ -540,11 +426,23 @@ ax11                       	= axes('Position', [colmn(3) height(3) dim]); hold o
 % pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
 % pt                         	= patch([0 8 8 0], [0 0 .5 .5], [.5 .5 .5], 'FaceAlpha',.1, 'EdgeColor','none');
 
-ax9                     	= plotAUROC(ax9,auc_lag,'Effect Size',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax9                     	= plotAUROC(ax9,auc_lag,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
 ax9.XAxis.Visible         	= 'on';
-ax10                     	= plotAUROC(ax10,auc_acc,'Effect Size',lb_fs,snr,alp,lw,col_dat,col_ci);
-ax11                    	= plotAUROC(ax11,auc_ecc,'Effect Size',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax10                     	= plotAUROC(ax10,auc_acc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax11                    	= plotAUROC(ax11,auc_ecc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
 
+ax12                       	= axes('Position', [colmn(3) row pl_dim]); hold on
+hs                          = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),15);
+hs.FaceColor                = [.3 .3 .3];
+hs.FaceAlpha                = 1;
+ax12.FontSize               = lb_fs;
+ax12.YLim                   = [0 5];
+ax12.YLabel.String          = '# Subjects';
+ax12.XLabel.String          = 'AUROC';
+ln                          = line([.5 .5],[0 5]);
+ln.LineWidth                = 1.5;
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % AUROC Significance testing
@@ -562,90 +460,6 @@ ax17                       	= axes('Position', [colmn(4) height(4) .1 dim(2)]); 
 ax17                      	= plotBar(ax17, auc_lag, p_lag, sig_boundary, lb_fs, snr);
 ax17.XAxis.Visible         	= 'on';
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Accuracy-based psychometric curves
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% c = 0;
-% for iSubj = 1:length(dyad_perf)
-%     
-%     if isempty(dyad_perf{iSubj})
-%         continue
-%     end
-%     
-%     if ~strcmp(dyad_perf{iSubj}.id, solo_perf{iSubj}.id) 
-%         error('Subject confusion')
-%     end
-%     
-%     c                     	= c+1;
-%     crit                      = .875; % +/- 45 degrees
-%     s                     	= cellfun(@(x) x > crit, solo_perf{iSubj}.acc_trg, 'UniformOutput', false);
-%     d                     	= cellfun(@(x) x > crit, dyad_perf{iSubj}.acc_trg, 'UniformOutput', false);
-%     
-%     [param_solo(c,:) model_solo{c}] = fit_logistic_fct(solo_perf{iSubj}.carr, cellfun(@sum,s), cellfun(@length,s));
-%     [param_dyad(c,:) model_dyad{c}] = fit_logistic_fct(dyad_perf{iSubj}.carr, cellfun(@sum,d), cellfun(@length,d));  
-%     
-% end
-% 
-% col                         = jet(size(param_solo,1));
-% 
-% ax18                       	= axes('Position', [colmn(2) height(5) .1 dim(2)]); hold on
-% dat                         = param_solo(:,1) - param_dyad(:,1);
-% xpos                        = randi([90 110],1,length(dat))./100;
-% bx                          = boxplot(dat,'Color','k');
-% sc                          = scatter(1:length(dat), dat, 'Marker','x');%, 'Color', col);
-% ax18.YLim                   = [-.25 .25];
-% ax18.XLim                   = [.8 1.2];
-% ax18.XTick                  = [];
-% ax18.YLabel.String          = 'd(Treshold)';
-% ax18.FontSize               = lb_fs;
-% 
-% ax19                       	= axes('Position', [colmn(2)+.15 height(5) .1 dim(2)]); hold on
-% bx                          = boxplot(param_solo(:,2) - param_dyad(:,2),'Color','k');
-% ax19.XLim                   = [.8 1.2];
-% ax19.XTick                  = [];
-% ax19.YLabel.String          = 'd(Slope)';
-% ax19.FontSize               = lb_fs;
-% 
-% ax20                       	= axes('Position', [colmn(1) height(5) dim]); hold on
-% ex_id                       = 26;
-% psolo                       = plot(model_solo{ex_id}(param_solo(ex_id,:),[0:.01:1]),'LineWidth',lw); hold on
-% psolo.Color                 = [0 0 0 .5];
-% pdyad                       = plot(model_dyad{ex_id}(param_dyad(ex_id,:),[0:.01:1]),'Color',[.75 0 0 .5],'LineWidth',lw);
-% pdyad.Color                 = [.6 0 0 .5];
-% ax20.XLabel.String          = 'Coherence';
-% ax20.YLabel.String          = 'Hit rate [%]';
-% ax20.FontSize               = lb_fs;
-% lg                          = legend('solo','dyadic');
-% lg.Location                 = 'southeast';
-% lg.FontSize                 = 10;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Lag difference
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% dim                         = [.15 .15];
-% ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
-% 
-% for iL = 1:length(lag)
-%     pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
-%     pl(iL).Color          	= [.5 .5 .5 alp];
-%     pl(iL).LineWidth      	= lw;
-% end
-% 
-% bx                          = boxplot(lag, 'Colors', 'k');
-% set(bx,'MarkerEdgeColor','k')
-% set(bx, {'linew'},{lw})
-% 
-% ax6.YLabel.String           = 'Time [ms]';
-% ax6.XTick                   = [1 2];
-% ax6.XLim                    = [.5 2.5];
-% ax6.XTickLabel              = {'Solo','Agnt'};
-% ax6.FontSize                = lb_fs;
-% ax6.XTickLabelRotation      = 0;
-% ax6.Position                = [clmns(1) height(3) dim];
-% ax6.Box                     = 'off';
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Annotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -653,24 +467,32 @@ ax17.XAxis.Visible         	= 'on';
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG2/';
 ax00                         = axes('Position',[0 0 1 1],'Visible','off');
 
-vofs = .075;
-hofs = .16;
-text(colmn(1)-vofs,.98, 'A', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
-text(colmn(3)-.125,.98, 'B', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
-text(colmn(1)-vofs,height(1)+hofs, 'C', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
-text(colmn(1)-vofs,height(2)+hofs, 'D', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
-text(colmn(1)-vofs,height(3)+hofs, 'E', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
-text(colmn(1)-vofs,height(4)+hofs, 'F', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+% vofs = .075;
+% hofs = .16;
+% text(colmn(1)-vofs,.98, 'A', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+% text(colmn(3)-.125,.98, 'B', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+% text(colmn(1)-vofs,height(1)+hofs, 'C', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+% text(colmn(1)-vofs,height(2)+hofs, 'D', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+% text(colmn(1)-vofs,height(3)+hofs, 'E', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+% text(colmn(1)-vofs,height(4)+hofs, 'F', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 
 ofs = 0;
-text(colmn(1)+ofs,.71, 'Solo data', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(2)+ofs,.71, 'Solo v Dyadic', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(1)+ofs,.71, 'Solo condition', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
 text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(4)+ofs,.71, 'Coherence [%]', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
 text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
 
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2'], '-r500', '-dsvg');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Reported stats
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Eccentricity [coherence pooled, within subject]
+sign_bool      	= p_ecc_pooled < ( .05 / length(p_ecc_pooled));
+perc_sign       = sum(sign_bool) / length(sign_bool);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -981,3 +803,210 @@ disp(message);
 message = sprintf('p-value: %6.4f',pDev);
 disp(message);
 end
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %%% SUBPLOT: Example subject joystick response %%%
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% row                         = .79;
+% clm                         = .15;
+% pl_dim                      = dim*1.2;
+% 
+% cmap                        = [1 1 1; flipud(gray(256))];
+% steps                       = .05;
+% bins                        = 0:steps:1;
+% c                           = 0;
+% tbl                         = load([pth 'AnM/summary/20220629_anm_CPRsolo_block2_tbl.mat']);
+% t                           = tbl.t;
+% 
+% ax0h                        = axes('Position', [clm-.082 row pl_dim(1)/5 pl_dim(2)]); hold on
+% ax0v                       	= axes('Position', [clm row-.065 pl_dim(1) pl_dim(2)/5]); hold on
+% ax0                       	= axes('Position', [clm row pl_dim]); hold on
+% 
+% % Extracte experimental data
+% clear trg_acc trg_conf trg_coh trg_hit
+% for iState = 1:size(t,1)
+%     if t.trg_shown(iState) == false
+%         continue
+%     end
+%     
+%     for iTarget = 1:length(t.trg_ts{iState})
+%         c                   = c+1;
+%         trg_acc(c)          = t.trg_acc{iState}(iTarget);
+%         trg_conf(c)         = t.trg_ecc{iState}(iTarget);
+%         trg_coh(c)          = t.rdp_coh(iState);
+%         trg_hit(c)          = t.trg_hit{iState}(iTarget);
+%         
+%         if trg_acc(c) < .5 && trg_hit(c) == 1
+%             disp([num2str(iState) ' ' num2str(iTarget) ' ' num2str(c) ])
+%         end
+%     end
+% end
+% 
+% % Calculate reward matrix
+% acc                         = 0:.001:1;
+% conf                        = 0:.001:1;
+% rew                         = acc' .* conf;
+% 
+% % Determine arc width for each confidence level
+% for j = 1:length(conf)
+%     arc(j)                  = 180 - (180 * conf(j));
+% end
+% 
+% % Cap arc width at target width (2dva == 12.7587deg at chosen position)
+% aidx                        = arc < 12.7587;
+% arc(aidx)                   = 12.7587;
+% 
+% % For each confidence level, calculate minimum accuracy required to hit
+% % the target at given arc width - normalised values
+% hit_width_acc               = 1 - ((arc/2) / 180);
+% hit_width_acc(aidx)         = 1 - (12.7587/2)/180; % arc width fixed
+% 
+% % Remove position that cannot yield reward from reward matrix
+% for iAcc = 1:length(acc)
+%     indx                    = conf < hit_width_acc(iAcc);
+%     rew(iAcc,indx)          = nan;
+% end
+% 
+% % Plot reward matrix
+% hold on
+% im                          = imagesc(acc,conf,rew);
+% ax0.XLabel.String           = 'Accuracy';
+% ax0.YLabel.String           = 'Eccentricity';
+% ax0.FontSize                = lb_fs;
+% ax0.XLim                    = [0 1];
+% ax0.YLim                    = [0 1];
+% ax0.XLim                    = [0 1];
+% ax0.XTick                   = [0:.2:1];
+% ax0.YTick                   = [0:.2:1];
+% ax0.XTickLabelRotation      = 0;
+% ax0.YLabel.Position(1)      = -.4;
+% ax0.XLabel.Position(2)      = -.22;
+% 
+% cb                          = colorbar;
+% cb.Label.String             = 'Reward';
+% cb.Location                 = 'eastoutside';
+% colormap(cmap)
+% cmap_coh                    = cool(size(snr,2));
+% 
+% for iCoh = 1:length(snr)
+%     cidx                    = trg_coh == snr(iCoh);
+%     sc(iCoh)                = scatter(trg_acc(cidx), trg_conf(cidx), 'filled');
+%     sc(iCoh).CData        	= cmap_coh(iCoh,:);
+%     sc(iCoh).SizeData      	= 15;
+%     sc(iCoh).MarkerFaceAlpha = .9;
+%     lg_str{iCoh}            = num2str(round(snr(iCoh)*100));
+% end
+% 
+% ax0.Position                = [clm row pl_dim];
+% 
+% lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 2);
+% lg0.Box                     = 'off';
+% lg0.Position(1:2)           = [.82 .61];
+% 
+% nBin                        = 40;
+% axes(ax0h)
+% [h, edg]                    = histcounts(trg_conf,nBin);
+% cntr                        = edg(1:end-1) + diff(edg) ./ 2;
+% st                          = stairs(-h,cntr);
+% st.LineWidth                = lw/1.5;
+% st.Color                    = [0 0 0];
+% ax0h.YLim                   = [0 1];
+% ax0h.XAxis.Visible          = 'off';
+% ax0h.YAxis.Visible          = 'off';
+% 
+% axes(ax0v)
+% [v, edg]                    = histcounts(trg_acc,nBin);
+% cntr                        = edg(1:end-1) + diff(edg) ./ 2;
+% st                          = stairs(cntr,-v);
+% st.LineWidth                = lw/1.5;
+% st.Color                    = [0 0 0];
+% ax0v.XLim                   = [0 1];
+% ax0v.XAxis.Visible          = 'off';
+% ax0v.YAxis.Visible          = 'off';
+% uistack(ax0v,'bottom')
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Accuracy-based psychometric curves
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% c = 0;
+% for iSubj = 1:length(dyad_perf)
+%     
+%     if isempty(dyad_perf{iSubj})
+%         continue
+%     end
+%     
+%     if ~strcmp(dyad_perf{iSubj}.id, solo_perf{iSubj}.id) 
+%         error('Subject confusion')
+%     end
+%     
+%     c                     	= c+1;
+%     crit                      = .875; % +/- 45 degrees
+%     s                     	= cellfun(@(x) x > crit, solo_perf{iSubj}.acc_trg, 'UniformOutput', false);
+%     d                     	= cellfun(@(x) x > crit, dyad_perf{iSubj}.acc_trg, 'UniformOutput', false);
+%     
+%     [param_solo(c,:) model_solo{c}] = fit_logistic_fct(solo_perf{iSubj}.carr, cellfun(@sum,s), cellfun(@length,s));
+%     [param_dyad(c,:) model_dyad{c}] = fit_logistic_fct(dyad_perf{iSubj}.carr, cellfun(@sum,d), cellfun(@length,d));  
+%     
+% end
+% 
+% col                         = jet(size(param_solo,1));
+% 
+% ax18                       	= axes('Position', [colmn(2) height(5) .1 dim(2)]); hold on
+% dat                         = param_solo(:,1) - param_dyad(:,1);
+% xpos                        = randi([90 110],1,length(dat))./100;
+% bx                          = boxplot(dat,'Color','k');
+% sc                          = scatter(1:length(dat), dat, 'Marker','x');%, 'Color', col);
+% ax18.YLim                   = [-.25 .25];
+% ax18.XLim                   = [.8 1.2];
+% ax18.XTick                  = [];
+% ax18.YLabel.String          = 'd(Treshold)';
+% ax18.FontSize               = lb_fs;
+% 
+% ax19                       	= axes('Position', [colmn(2)+.15 height(5) .1 dim(2)]); hold on
+% bx                          = boxplot(param_solo(:,2) - param_dyad(:,2),'Color','k');
+% ax19.XLim                   = [.8 1.2];
+% ax19.XTick                  = [];
+% ax19.YLabel.String          = 'd(Slope)';
+% ax19.FontSize               = lb_fs;
+% 
+% ax20                       	= axes('Position', [colmn(1) height(5) dim]); hold on
+% ex_id                       = 26;
+% psolo                       = plot(model_solo{ex_id}(param_solo(ex_id,:),[0:.01:1]),'LineWidth',lw); hold on
+% psolo.Color                 = [0 0 0 .5];
+% pdyad                       = plot(model_dyad{ex_id}(param_dyad(ex_id,:),[0:.01:1]),'Color',[.75 0 0 .5],'LineWidth',lw);
+% pdyad.Color                 = [.6 0 0 .5];
+% ax20.XLabel.String          = 'Coherence';
+% ax20.YLabel.String          = 'Hit rate [%]';
+% ax20.FontSize               = lb_fs;
+% lg                          = legend('solo','dyadic');
+% lg.Location                 = 'southeast';
+% lg.FontSize                 = 10;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lag difference
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% dim                         = [.15 .15];
+% ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
+% 
+% for iL = 1:length(lag)
+%     pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
+%     pl(iL).Color          	= [.5 .5 .5 alp];
+%     pl(iL).LineWidth      	= lw;
+% end
+% 
+% bx                          = boxplot(lag, 'Colors', 'k');
+% set(bx,'MarkerEdgeColor','k')
+% set(bx, {'linew'},{lw})
+% 
+% ax6.YLabel.String           = 'Time [ms]';
+% ax6.XTick                   = [1 2];
+% ax6.XLim                    = [.5 2.5];
+% ax6.XTickLabel              = {'Solo','Agnt'};
+% ax6.FontSize                = lb_fs;
+% ax6.XTickLabelRotation      = 0;
+% ax6.Position                = [clmns(1) height(3) dim];
+% ax6.Box                     = 'off';

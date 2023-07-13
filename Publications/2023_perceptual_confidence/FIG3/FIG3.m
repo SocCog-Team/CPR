@@ -41,11 +41,10 @@ for iSubj = 1:length(sbj_lst)
     end
 end
 
-
 %% Extract subject data
 
 nSample                                 = 30;
-s_cnt                                   = 0;
+scnt                                    = 0;
 nLag                                    = 150;
 
 for iSub = 1:length(sbj_lst)
@@ -55,9 +54,8 @@ for iSub = 1:length(sbj_lst)
             fname                       = fname_solo;
         else
             fname                       = fname_agnt;
-        end
-        
-        
+        end  
+      
         fname_id                        = cellfun(@(x) x(1:12), fname, 'UniformOutput', false);
         fidx                            = find(cellfun(@(x) contains(x,lower(sbj_lst{iSub})),fname_id));
         tc                              = 0;
@@ -90,12 +88,29 @@ for iSub = 1:length(sbj_lst)
         nLag                        = 150;
         [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
         lag(iSub,iExp)           	= median(cr.lag);
-
+        
         perf{iSub,iExp}           	= response_readout(t, nSample);
         
     end
     
-    hir_df(iSub,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
+    %%% Calculate difference between conditions
+    if isempty(perf{iSub,2})
+        continue
+    end
+    scnt                            = scnt+1;
+    hir_df(scnt,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
+    
+    for iCoh = 1:length(snr)
+        auc_acc(scnt,iCoh)          = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
+        auc_ecc(scnt,iCoh)          = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
+        auc_score(scnt,iCoh)        = f_auroc(perf{iSub,1}.trg_score{iCoh},perf{iSub,2}.trg_score{iCoh});
+    end
+    
+    %%% Load all dyadic sessions of subjects
+    dyad_tbl                        = getDyadicSessions(pth,sbj_lst{iSub});
+    if ~isempty(dyad_tbl)
+        perf{iSub,3}             	= response_readout(dyad_tbl, nSample);
+    end
 end
 
 % Calculate area under receiver operating characteristics
@@ -108,20 +123,7 @@ end
 % histogram(b, 50)
 % f_auroc(a, b)
 
-scnt = 0;
-for iSub = 1:length(sbj_lst)
-    if isempty(perf{iSub,2})
-        continue
-    end
-    scnt                            = scnt+1;
-    for iCoh = 1:length(snr)
-        auc_acc(scnt,iCoh)      = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
-        auc_ecc(scnt,iCoh)      = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
-        auc_score(scnt,iCoh)    = f_auroc(perf{iSub,1}.trg_score{iCoh},perf{iSub,2}.trg_score{iCoh});
-    end
-end
-
-%% Load agent data
+%% Load all agent sessions
 
 t_agnt                              = [];
 sxc                                 = [];
@@ -166,8 +168,8 @@ end
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-height                    	= fliplr(linspace(.06,.75,4));
-clmns                      	= linspace(.15,.75,3);
+height                    	= fliplr(linspace(.03,.8,4));
+clmns                      	= linspace(.11,.75,3);
 lb_fs                       = 14;
 lg_fs                       = 10;
 lw                          = 3;
@@ -180,15 +182,16 @@ avg_mult                    = 1.5;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dim                         = [0.2 0.2]*1.5;
 row                         = .65;
+clm                         = .14; 
 hofs                        = .1;
 cmap                        = [0 0 0; gray(256)];
 steps                       = .05;
 bins                        = 0:steps:1;
 c                           = 0;
 
-ax0v                       	= axes('Position', [clmns(1) row-hofs dim(1) dim(2)/5]); hold on
-ax0h                        = axes('Position', [clmns(1)-hofs row dim(1)/5 dim(2)]); hold on
-ax0                       	= axes('Position', [clmns(1) row dim]); hold on
+ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); hold on
+ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
+ax0                       	= axes('Position', [clm row dim]); hold on
 
 dte                         = unique(t_agnt.date);
 t_agnt_plot                 = t_agnt(t_agnt.date == dte(6),:);
@@ -268,7 +271,7 @@ for iCoh = 1:length(snr)
     sc.MarkerFaceAlpha      = .9;
 end
 
-ax0.Position                = [clmns(1) row dim];
+ax0.Position                = [clm row dim];
 
 nBin                        = 40;
 axes(ax0h)
@@ -297,7 +300,7 @@ uistack(ax0v,'bottom')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .075;
 xof                         = .075;
-ax4                         = axes('Position', [clmns(3)-xof row-yof dim(1)/1.25 dim(2)/2]); hold on
+ax4                         = axes('Position', [clm-xof row-yof dim(1)/1.25 dim(2)/2]); hold on
 cmap                        = cbrewer('div', 'PRGn', 4, 'PCHIP');
 
 [pl1, ci1]                 	= plotAvgCI(macc_agnt, cmap(1,:), alp, lw);
@@ -329,7 +332,7 @@ lg.Position(2)              = .67;
 %%% SUBPLOT: Crosscorrelation AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .16;
-ax3                         = axes('Position', [clmns(3)-xof row+yof dim(1)/1.25 dim(2)/2]); hold on
+ax3                         = axes('Position', [clm-xof row+yof dim(1)/1.25 dim(2)/2]); hold on
 cmap                        = cool(size(snr,1));
 
 for iCoh = 1:size(snr,1)
@@ -378,27 +381,97 @@ lg.Position(2)              = .67;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBPLOT: Lag difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dim                         = [.2 .2];
-ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
+% ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
+% 
+% for iL = 1:length(lag)
+%     pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
+%     pl(iL).Color          	= [.5 .5 .5 alp];
+%     pl(iL).LineWidth      	= lw;
+% end
+% 
+% bx                          = boxplot(lag, 'Colors', 'k');
+% set(bx,'MarkerEdgeColor','k')
+% set(bx, {'linew'},{lw})
+% 
+% ax6.YLabel.String           = 'Time [ms]';
+% ax6.XTick                   = [1 2];
+% ax6.XLim                    = [.5 2.5];
+% ax6.XTickLabel              = {'Solo','Agnt'};
+% ax6.FontSize                = lb_fs;
+% ax6.XTickLabelRotation      = 0;
+% ax6.Position                = [clmns(1) height(3) dim];
+% ax6.Box                     = 'off';
 
-for iL = 1:length(lag)
-    pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
-    pl(iL).Color          	= [.5 .5 .5 alp];
-    pl(iL).LineWidth      	= lw;
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SUBPLOT: Score difference AGNT - SOLO %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+dim                         = [.2 .2];
+
+ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
+ln                          = line([0 1], [0 1]);
+ln.LineStyle                = '--';
+ln.LineWidth                = lw/2;
+ln.Color                    = [0 0 0];
+
+
+for iSubj = 1:size(perf,1)
+    if ~isempty(perf{iSubj,2})
+        sc_agnt            	= scatter(mean(cell2mat(perf{iSubj,2}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+    end
+    
+    if ~isempty(perf{iSubj,3})
+        sc_dyad            	= scatter(mean(cell2mat(perf{iSubj,3}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+    end
 end
 
-bx                          = boxplot(lag, 'Colors', 'k');
-set(bx,'MarkerEdgeColor','k')
-set(bx, {'linew'},{lw})
-
-ax6.YLabel.String           = 'Time [ms]';
-ax6.XTick                   = [1 2];
-ax6.XLim                    = [.5 2.5];
-ax6.XTickLabel              = {'Solo','Agnt'};
+ax6.XLabel.String           = {'Avg reward score', '[Dyad]'};
+ax6.YLabel.String           = {'Avg reward score', '[Solo]'};
 ax6.FontSize                = lb_fs;
-ax6.XTickLabelRotation      = 0;
-ax6.Position                = [clmns(1) height(3) dim];
-ax6.Box                     = 'off';
+
+lg                          = legend([sc_agnt(1) sc_dyad(1)], 'AGNT','HUMAN' );
+lg.Location                 = 'southeast';
+lg.FontSize                 = lg_fs;
+lg.Box                      = 'on';
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SUBPLOT: Hit rate comparison %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+for iSub = 1:size(perf,1)
+    hir.solo(iSub)   	= perf{iSub,1}.hir_pool;
+    if ~isempty(perf{iSub,2})
+        hir.agnt(iSub) 	= perf{iSub,2}.hir_pool;
+    else
+        hir.agnt(iSub) 	= nan;
+    end
+    if ~isempty(perf{iSub,3})
+        hir.dyad(iSub) 	= perf{iSub,3}.hir_pool;
+    else
+        hir.dyad(iSub) 	= nan;
+  	end
+end
+
+nRep = 500;
+e.solo                      = bootci(nRep, {@mean, hir.solo},'alpha', .001);
+e.agnt                      = bootci(nRep, {@nanmean, hir.agnt},'alpha', .001);
+e.dyad                      = bootci(nRep, {@nanmean, hir.dyad},'alpha', .001);
+
+ax1                      	= axes('Position', [clmns(1) height(4) dim]); hold on
+bp                          = bar([1:3],[mean(hir.solo) nanmean(hir.agnt) nanmean(hir.dyad)]);
+bp.FaceColor                = [.5 .5 .5];
+bp.EdgeColor                = 'none';
+
+er                          = errorbar([1:3],[mean(hir.solo) nanmean(hir.agnt) nanmean(hir.dyad)],[nanmean(hir.solo)-e.solo(2) nanmean(hir.agnt)-e.agnt(2) nanmean(hir.dyad)-e.dyad(2)],[e.solo(1)-mean(hir.solo) e.agnt(1)-nanmean(hir.agnt) e.dyad(1)-nanmean(hir.dyad)]);    
+er.Color                    = [0 0 0];                            
+er.LineStyle                = 'none';
+er.LineWidth                = lw/1.5;
+
+ax1.YLabel.String           = 'Avg hit rate';
+ax1.XLim                    = [.5 3.5];
+ax1.YLim                    = [.3 .6];
+ax1.YTick                 	= .3:.1:.6;
+ax1.XTickLabel              = {'Solo','Agnt','Dyad'};
+ax1.FontSize                = lb_fs;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Hit rate difference AGNT - SOLO %%%
@@ -494,6 +567,36 @@ for iTrl = 1:tbl.t.cyc_no(end)
 end
 end
 
+function dyad_tbl = getDyadicSessions(pth,ID)
+    dyad_cnt                    = 0;
+    dyad_tbl                    = [];
+    
+    for iDyad = 19:61
+        cd([pth ['Dyad' num2str(iDyad)] '/summary/'])
+        mat_files              	= dir('*.mat');
+        
+        if isempty(mat_files)
+            continue
+        end
+        
+        dyad_cnt                = dyad_cnt+1;
+        tmp1                    = split(mat_files(1).name,'_');
+        tmp3                    = split(mat_files(3).name,'_');
+        id_dyad(dyad_cnt,:)    	= [{tmp1{2}}, {tmp3{2}}];
+        n_dyad(dyad_cnt,:)      = iDyad;
+        
+        % Check if subject part of this dyad
+        for iFile = 1:size(mat_files,1)
+            is_player(iFile) = contains(mat_files(iFile).name,lower(ID));
+            
+            if is_player(iFile)
+                tmp_tbl      	= load(mat_files(iFile).name);
+                dyad_tbl      	= [dyad_tbl; tmp_tbl.t];                % Organise dyadic data
+            end
+        end
+    end
+end
+
 function out = response_readout(in, nSample)
 
 c                           = 0;
@@ -528,7 +631,7 @@ for iDate = 1:length(dte)
     out.score_final_exp(iDate) = unique(score_exp(dte_idx));
     dte_score               = score(dte_idx);
     score_cum               = cumsum(dte_score(~isnan(dte_score)));
-    out.score_final(iDate)  = score_cum(end);
+    out.score_norm(iDate)   = score_cum(end) ./ length(dte_score(~isnan(dte_score)));
 end
 
 for iCoh = 1:length(snr)
