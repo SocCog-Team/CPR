@@ -408,7 +408,7 @@ lg.Position(2)              = .67;
 dim                         = [.2 .2];
 
 ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
-ln                          = line([0 1], [0 1]);
+ln                          = line([0 600], [0 600]);
 ln.LineStyle                = '--';
 ln.LineWidth                = lw/2;
 ln.Color                    = [0 0 0];
@@ -416,16 +416,18 @@ ln.Color                    = [0 0 0];
 
 for iSubj = 1:size(perf,1)
     if ~isempty(perf{iSubj,2})
-        sc_agnt            	= scatter(mean(cell2mat(perf{iSubj,2}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+        sc_agnt            	= scatter(mean(perf{iSubj,2}.score_final),mean(perf{iSubj,1}.score_final), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
     end
     
     if ~isempty(perf{iSubj,3})
-        sc_dyad            	= scatter(mean(cell2mat(perf{iSubj,3}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+        sc_dyad            	= scatter(mean(perf{iSubj,3}.score_final),mean(perf{iSubj,1}.score_final), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
     end
 end
 
 ax6.XLabel.String           = {'Avg reward score', '[Dyad]'};
 ax6.YLabel.String           = {'Avg reward score', '[Solo]'};
+% ax6.XLim                    = [0 600];
+% ax6.YLim                    = [0 600];
 ax6.FontSize                = lb_fs;
 
 lg                          = legend([sc_agnt(1) sc_dyad(1)], 'AGNT','HUMAN' );
@@ -631,7 +633,12 @@ for iDate = 1:length(dte)
     out.score_final_exp(iDate) = unique(score_exp(dte_idx));
     dte_score               = score(dte_idx);
     score_cum               = cumsum(dte_score(~isnan(dte_score)));
+    out.score_final(iDate)  = score_cum(end);
     out.score_norm(iDate)   = score_cum(end) ./ length(dte_score(~isnan(dte_score)));
+end
+
+if sum(out.score_final > 600) > 0
+   disp('yay!')
 end
 
 for iCoh = 1:length(snr)

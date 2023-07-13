@@ -128,11 +128,11 @@ print(f, [dest_dir '/rdp_example_line_coh'], '-r500', '-dsvg');
 
 %% Partial response profile
 
-f                	= figure('units','centimeters','position',[0 0 20 15]);
+f                	= figure;
 ax                  = gca; hold on
 
 % Plot RDP stepfunction
-pidx                = 2000:6000; % Sample index
+pidx                = 2200:6000; % Sample index
 % pidx                = 2450:4100; % Sample index
 p                   = plot(ts(pidx),rdp_dir(pidx),'LineWidth',lw*1.5,'Color', [0 0 0]);
 

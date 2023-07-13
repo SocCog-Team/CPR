@@ -460,6 +460,90 @@ ax17                       	= axes('Position', [colmn(4) height(4) .1 dim(2)]); 
 ax17                      	= plotBar(ax17, auc_lag, p_lag, sig_boundary, lb_fs, snr);
 ax17.XAxis.Visible         	= 'on';
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Accuracy-based psychometric curves
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% c = 0;
+% for iSubj = 1:length(dyad_perf)
+%     
+%     if isempty(dyad_perf{iSubj})
+%         continue
+%     end
+%     
+%     if ~strcmp(dyad_perf{iSubj}.id, solo_perf{iSubj}.id) 
+%         error('Subject confusion')
+%     end
+%     
+%     c                     	= c+1;
+%     crit                      = .875; % +/- 45 degrees
+%     s                     	= cellfun(@(x) x > crit, solo_perf{iSubj}.acc_trg, 'UniformOutput', false);
+%     d                     	= cellfun(@(x) x > crit, dyad_perf{iSubj}.acc_trg, 'UniformOutput', false);
+%     
+%     [param_solo(c,:) model_solo{c}] = fit_logistic_fct(solo_perf{iSubj}.carr, cellfun(@sum,s), cellfun(@length,s));
+%     [param_dyad(c,:) model_dyad{c}] = fit_logistic_fct(dyad_perf{iSubj}.carr, cellfun(@sum,d), cellfun(@length,d));  
+%     
+% end
+% 
+% col                         = jet(size(param_solo,1));
+% 
+% ax18                       	= axes('Position', [colmn(2) height(5) .1 dim(2)]); hold on
+% dat                         = param_solo(:,1) - param_dyad(:,1);
+% xpos                        = randi([90 110],1,length(dat))./100;
+% bx                          = boxplot(dat,'Color','k');
+% sc                          = scatter(1:length(dat), dat, 'Marker','x');%, 'Color', col);
+% ax18.YLim                   = [-.25 .25];
+% ax18.XLim                   = [.8 1.2];
+% ax18.XTick                  = [];
+% ax18.YLabel.String          = 'd(Treshold)';
+% ax18.FontSize               = lb_fs;
+% 
+% ax19                       	= axes('Position', [colmn(2)+.15 height(5) .1 dim(2)]); hold on
+% bx                          = boxplot(param_solo(:,2) - param_dyad(:,2),'Color','k');
+% ax19.XLim                   = [.8 1.2];
+% ax19.XTick                  = [];
+% ax19.YLabel.String          = 'd(Slope)';
+% ax19.FontSize               = lb_fs;
+% 
+% ax20                       	= axes('Position', [colmn(1) height(5) dim]); hold on
+% ex_id                       = 26;
+% psolo                       = plot(model_solo{ex_id}(param_solo(ex_id,:),[0:.01:1]),'LineWidth',lw); hold on
+% psolo.Color                 = [0 0 0 .5];
+% pdyad                       = plot(model_dyad{ex_id}(param_dyad(ex_id,:),[0:.01:1]),'Color',[.75 0 0 .5],'LineWidth',lw);
+% pdyad.Color                 = [.6 0 0 .5];
+% ax20.XLabel.String          = 'Coherence';
+% ax20.YLabel.String          = 'Hit rate [%]';
+% ax20.FontSize               = lb_fs;
+% lg                          = legend('solo','dyadic');
+% lg.Location                 = 'southeast';
+% lg.FontSize                 = 10;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Lag difference
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% dim                         = [.15 .15];
+% ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
+% 
+% for iL = 1:length(lag)
+%     pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
+%     pl(iL).Color          	= [.5 .5 .5 alp];
+%     pl(iL).LineWidth      	= lw;
+% end
+% 
+% bx                          = boxplot(lag, 'Colors', 'k');
+% set(bx,'MarkerEdgeColor','k')
+% set(bx, {'linew'},{lw})
+% 
+% ax6.YLabel.String           = 'Time [ms]';
+% ax6.XTick                   = [1 2];
+% ax6.XLim                    = [.5 2.5];
+% ax6.XTickLabel              = {'Solo','Agnt'};
+% ax6.FontSize                = lb_fs;
+% ax6.XTickLabelRotation      = 0;
+% ax6.Position                = [clmns(1) height(3) dim];
+% ax6.Box                     = 'off';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Annotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -925,88 +1009,3 @@ end
 % ax0v.XAxis.Visible          = 'off';
 % ax0v.YAxis.Visible          = 'off';
 % uistack(ax0v,'bottom')
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Accuracy-based psychometric curves
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% c = 0;
-% for iSubj = 1:length(dyad_perf)
-%     
-%     if isempty(dyad_perf{iSubj})
-%         continue
-%     end
-%     
-%     if ~strcmp(dyad_perf{iSubj}.id, solo_perf{iSubj}.id) 
-%         error('Subject confusion')
-%     end
-%     
-%     c                     	= c+1;
-%     crit                      = .875; % +/- 45 degrees
-%     s                     	= cellfun(@(x) x > crit, solo_perf{iSubj}.acc_trg, 'UniformOutput', false);
-%     d                     	= cellfun(@(x) x > crit, dyad_perf{iSubj}.acc_trg, 'UniformOutput', false);
-%     
-%     [param_solo(c,:) model_solo{c}] = fit_logistic_fct(solo_perf{iSubj}.carr, cellfun(@sum,s), cellfun(@length,s));
-%     [param_dyad(c,:) model_dyad{c}] = fit_logistic_fct(dyad_perf{iSubj}.carr, cellfun(@sum,d), cellfun(@length,d));  
-%     
-% end
-% 
-% col                         = jet(size(param_solo,1));
-% 
-% ax18                       	= axes('Position', [colmn(2) height(5) .1 dim(2)]); hold on
-% dat                         = param_solo(:,1) - param_dyad(:,1);
-% xpos                        = randi([90 110],1,length(dat))./100;
-% bx                          = boxplot(dat,'Color','k');
-% sc                          = scatter(1:length(dat), dat, 'Marker','x');%, 'Color', col);
-% ax18.YLim                   = [-.25 .25];
-% ax18.XLim                   = [.8 1.2];
-% ax18.XTick                  = [];
-% ax18.YLabel.String          = 'd(Treshold)';
-% ax18.FontSize               = lb_fs;
-% 
-% ax19                       	= axes('Position', [colmn(2)+.15 height(5) .1 dim(2)]); hold on
-% bx                          = boxplot(param_solo(:,2) - param_dyad(:,2),'Color','k');
-% ax19.XLim                   = [.8 1.2];
-% ax19.XTick                  = [];
-% ax19.YLabel.String          = 'd(Slope)';
-% ax19.FontSize               = lb_fs;
-% 
-% ax20                       	= axes('Position', [colmn(1) height(5) dim]); hold on
-% ex_id                       = 26;
-% psolo                       = plot(model_solo{ex_id}(param_solo(ex_id,:),[0:.01:1]),'LineWidth',lw); hold on
-% psolo.Color                 = [0 0 0 .5];
-% pdyad                       = plot(model_dyad{ex_id}(param_dyad(ex_id,:),[0:.01:1]),'Color',[.75 0 0 .5],'LineWidth',lw);
-% pdyad.Color                 = [.6 0 0 .5];
-% ax20.XLabel.String          = 'Coherence';
-% ax20.YLabel.String          = 'Hit rate [%]';
-% ax20.FontSize               = lb_fs;
-% lg                          = legend('solo','dyadic');
-% lg.Location                 = 'southeast';
-% lg.FontSize                 = 10;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Lag difference
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% dim                         = [.15 .15];
-% ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
-% 
-% for iL = 1:length(lag)
-%     pl(iL)               	= plot([1 2],[lag(iL,1) lag(iL,2)]);
-%     pl(iL).Color          	= [.5 .5 .5 alp];
-%     pl(iL).LineWidth      	= lw;
-% end
-% 
-% bx                          = boxplot(lag, 'Colors', 'k');
-% set(bx,'MarkerEdgeColor','k')
-% set(bx, {'linew'},{lw})
-% 
-% ax6.YLabel.String           = 'Time [ms]';
-% ax6.XTick                   = [1 2];
-% ax6.XLim                    = [.5 2.5];
-% ax6.XTickLabel              = {'Solo','Agnt'};
-% ax6.FontSize                = lb_fs;
-% ax6.XTickLabelRotation      = 0;
-% ax6.Position                = [clmns(1) height(3) dim];
-% ax6.Box                     = 'off';
