@@ -111,12 +111,12 @@ for iSub = 1:length(sbj_lst)
         continue
     end
     scnt                            = scnt+1;
-    hir_df(scnt,:)                  = perf{iSub,1}.hir - perf{iSub,2}.hir;
-
+    hir_df(scnt,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
+    
     for iCoh = 1:length(snr)
-            auc_acc(scnt,iCoh)      = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
-            auc_ecc(scnt,iCoh)      = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
-            auc_score(scnt,iCoh)    = f_auroc(perf{iSub,1}.trg_score{iCoh},perf{iSub,2}.trg_score{iCoh});
+        auc_acc(scnt,iCoh)      = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
+        auc_ecc(scnt,iCoh)      = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
+        auc_score(scnt,iCoh)    = f_auroc(perf{iSub,1}.trg_score{iCoh},perf{iSub,2}.trg_score{iCoh});
     end
 end
 
@@ -165,9 +165,8 @@ end
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-% height                      = [.81 .6 .35 .1];
 height                    	= fliplr(linspace(.1,.75,4));
-clmns                      	= linspace(.09,.83,4);
+clmns                      	= linspace(.15,clm(3),3);
 lb_fs                       = 14;
 lg_fs                       = 10;
 lw                          = 3;
@@ -179,7 +178,6 @@ avg_mult                    = 1.5;
 %%% SUBPLOT: Example agent joystick response %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dim                         = [0.2 0.2]*1.5;
-clm                         = .16;
 row                         = .65;
 hofs                        = .1;
 cmap                        = [0 0 0; gray(256)];
@@ -187,9 +185,9 @@ steps                       = .05;
 bins                        = 0:steps:1;
 c                           = 0;
 
-ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); hold on
-ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
-ax0                       	= axes('Position', [clm row dim]); hold on
+ax0v                       	= axes('Position', [clmns(1) row-hofs dim(1) dim(2)/5]); hold on
+ax0h                        = axes('Position', [clmns(1)-hofs row dim(1)/5 dim(2)]); hold on
+ax0                       	= axes('Position', [clmns(1) row dim]); hold on
 
 dte                         = unique(t_agnt.date);
 t_agnt_plot                 = t_agnt(t_agnt.date == dte(6),:);
@@ -269,7 +267,7 @@ for iCoh = 1:length(snr)
     sc.MarkerFaceAlpha      = .9;
 end
 
-ax0.Position                = [clm row dim];
+ax0.Position                = [clmns(1) row dim];
 
 nBin                        = 40;
 axes(ax0h)
@@ -327,7 +325,7 @@ lg.Position(1)              = .71;
 lg.Position(2)              = .67;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% SUBPLOT: Crosscorrelation AGNT %%%
+%%% SUBPLOT: Crosscorrelation AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .16;
 ax3                         = axes('Position', [clm+xof row+yof dim(1)/1.25 dim(2)/2]); hold on
@@ -377,9 +375,9 @@ lg.Position(1)              = .17;
 lg.Position(2)              = .67;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% SUBPLOT: Lag difference AGNT - SOLO %%%
+% SUBPLOT: Lag difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dim                         = [.15 .15];
+dim                         = [.175 .175];
 ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
 
 for iL = 1:length(lag)
@@ -404,46 +402,47 @@ ax6.Box                     = 'off';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Hit rate difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax10                      	= axes('Position', [clmns(3) height(3) dim]); hold on
+ax10                      	= axes('Position', [clmns(2) height(3) dim]); hold on
 
 ln                          = line([0 8],[0 0], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
 
-excl                        = sum(squeeze(hir(:,1,:)),2) == 0 | sum(squeeze(hir(:,2,:)),2) == 0;
-dat                         = squeeze(hir(~excl,2,:) - hir(~excl,1,:));
-
-ax10                        = plotData(ax10, dat, 'Hit rate diff', snr, alp, lw, lb_fs, avg_mult,true);
-ax10.YLim                 	= [-.15 .22];
-ax10.Position             	= [clmns(3) height(3) dim];
+ax10                        = plotData(ax10, hir_df, 'Hit rate diff', snr, alp, lw, lb_fs, avg_mult,true);
+ax10.YLim                 	= [-.1 .4];
+ax10.YLim                 	= [-.2 .4];
+ax10.YTick                  = [-.2 0 .2 .4];
+ax10.Position             	= [clmns(2) height(3) dim];
+ax10.XAxis.Visible          = 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Score difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax11                    	= axes('Position', [clmns(4) height(3) dim]); hold on
+ax11                    	= axes('Position', [clmns(3) height(3) dim]); hold on
 
 ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
 
 ax11                        = plotData(ax11, auc_score, {'Score diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax11.Position           	= [clmns(4) height(3) dim];
+ax11.Position           	= [clmns(3) height(3) dim];
+ax11.XAxis.Visible          = 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Eccentricity difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax12                        = axes('Position', [clmns(3) height(4) dim]); hold on
+ax12                        = axes('Position', [clmns(2) height(4) dim]); hold on
 
 ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
 
 ax12                        = plotData(ax12, auc_ecc, {'Eccentricity diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax12.Position           	= [clmns(3) height(4) dim];
+ax12.Position           	= [clmns(2) height(4) dim];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Accuracy difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax13                     	= axes('Position', [clmns(4) height(4) dim]); hold on
+ax13                     	= axes('Position', [clmns(3) height(4) dim]); hold on
 
 ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
 
 ax13                        = plotData(ax13, auc_acc, {'Accuracy diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax13.Position             	= [clmns(4) height(4) dim];
+ax13.Position             	= [clmns(3) height(4) dim];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Annotations
@@ -456,12 +455,13 @@ text(0.6,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 text(0.6,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 
 lofs                        = .175;
-text(0.002,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(0.49,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 
 text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/ownCloud/Documents/Publications/CPR_psychophysics/Figures/FIG3/FIG3', '-r400', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r400', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r400', '-dsvg');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -604,13 +604,13 @@ if nargin < 9
     flag = false;
 end
 
-if flag == false
-    pt                      = patch([0 8 8 0], [.5 .5 1 1], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-    pt                      = patch([0 8 8 0], [0 0 .5 .5], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-else
-    pt                      = patch([0 8 8 0], [0 0 .5 .5], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-    pt                      = patch([0 8 8 0], [-.5 -.5 0 0], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-end
+% if flag == false
+%     pt                      = patch([0 8 8 0], [.5 .5 1 1], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+%     pt                      = patch([0 8 8 0], [0 0 .5 .5], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+% else
+%     pt                      = patch([0 8 8 0], [0 0 .5 .5], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+%     pt                      = patch([0 8 8 0], [-.5 -.5 0 0], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+% end
 
 for iL = 1:size(dat,1)
     pl(iL)               	= plot(dat(iL,:));
@@ -618,6 +618,19 @@ for iL = 1:size(dat,1)
     pl(iL).LineWidth      	= lw/2;
 end
 
+% Boostrap confidence intervals
+nRep                        = 1000;
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+
+% Prepare filled area
+vec                         = 1:length(CI);
+x_spacing                   = [vec fliplr(vec)];
+ci                          = [CI(1,:) fliplr(CI(2,:))];
+
+% Overlay confidence intervals
+fl                          = fill(x_spacing,ci,[.3 0 0],'EdgeColor','none', 'FaceAlpha', alp);
+
+% Plot mean curve
 pm                          = plot(nanmedian(dat),'LineWidth', lw*avg_mult, 'Color', [0 0 0]);
 
 ax.XLim                     = [1 size(dat,2)];
@@ -627,6 +640,7 @@ ax.XTick                    = [1 4 length(snr)];
 ax.XTickLabel               = round([snr(1) snr(4) snr(end)],2)*100;
 ax.FontSize                 = lb_fs;
 ax.YLim                     = [.1 .9];
+ax.YTick                    = [.25 .5 .75];
 ax.XTickLabelRotation       = 0;
 
 box off
