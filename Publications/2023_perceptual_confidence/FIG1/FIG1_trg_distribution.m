@@ -1,4 +1,4 @@
-f                           = figure('units','normalized','position',[0 0 .4 .6]);
+f                           = figure('units','normalized','position',[0 0 .4 .635]);
 lb_fs                       = 20;
 lw                          = 3;
 cmap                        = [0 0 0; gray(256)];
@@ -123,6 +123,7 @@ for iSubj = 1:2
 end
 
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
+
 print(f, [dest_dir '/target_distribution_dyad'], '-r500', '-dpng');
 print(f, [dest_dir '/target_distribution_dyad'], '-r500', '-dsvg');
 
@@ -135,7 +136,7 @@ nBin                        = 12;
 f                           = figure;
 tcount                      = cellfun(@length,t.trg_ts);
 tcount(t.trg_shown == false) = 0;
-[N,EDGES]                   = histcounts(tcount,4,'Normalization','probability');
+[N,EDGES]                   = histcounts(tcount,5,'Normalization','probability');
 h                           = histogram('BinEdges', EDGES,'BinCounts',N);
 h.FaceColor                 = hist_col;
 h.EdgeColor                 = hist_col;
@@ -151,9 +152,10 @@ ax.Box                      = 'off';
 print(f, [dest_dir '/histogram_target_count'], '-r500', '-dpng');
 print(f, [dest_dir '/histogram_target_count'], '-r500', '-dsvg');
 
-% Histogram: Target interval
+%% Histogram: Target interval
 f                           = figure;
 cnt                         = 0;
+state_on                    = cellfun(@(x) x(1),t.frme_ts);
 
 for iState = 1:length(state_on)
     for iTrg = 1:length(t.trg_ts{iState})
@@ -183,7 +185,6 @@ print(f, [dest_dir '/histogram_inter_target_interval'], '-r500', '-dsvg');
 % Histograms: Target time
 f                           = figure;
 cnt                         = 0;
-state_on                    = cellfun(@(x) x(1),t.frme_ts);
 
 for iState = 1:length(state_on)
     for iTrg = 1:length(t.trg_ts{iState})

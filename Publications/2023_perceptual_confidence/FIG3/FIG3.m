@@ -90,72 +90,9 @@ for iSub = 1:length(sbj_lst)
         nLag                        = 150;
         [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
         lag(iSub,iExp)           	= median(cr.lag);
-        
-        % Target score
-        clear tscore score_cum score_hi score_coh
-        c                           = 0;
-        for iState = 1:size(t.trg_ts,1)
-            for iTrg = 1:length(t.trg_ts{iState})
-                c                   = c +1;
-                score_cum(c)        = t.trg_score{iState}(iTrg);
-                score_coh(c)        = t.rdp_coh(iState);
-                score_hi(c)         = t.trg_hit{iState}(iTrg);
-            end
-        end
-        
-        tmp_score                   = score_cum(~isnan(score_cum));
-        tscore(~isnan(score_cum))   = [0 diff(tmp_score)];
-        tscore(tscore < 0)          = nan;
-        
-        
-        trg_states                 	= t.trg_hit(logical(t.trg_shown));
-        hir_pool(iSub,iExp)       	= sum(cellfun(@sum,trg_states)) / sum(cellfun(@numel,trg_states));
 
-        for iCoh = 1:length(snr)
-            clear cIdx tIdx nhi ntrg
-            
-            cIdx = t.rdp_coh == snr(iCoh);
-            tIdx = logical(t.trg_shown);
-            
-            tIdx(cellfun(@length,t.js_str) < 100) = false;
-            cIdx(cellfun(@length,t.js_str) < 100) = false;
-            
-            % Hit rate
-            nhi                     = sum(cellfun(@sum,t.trg_hit(cIdx & tIdx)));
-            ntrg                    = sum(cellfun(@numel,t.trg_hit(cIdx & tIdx)));
-            hir(iSub,iExp,iCoh)  	= nhi / ntrg;
-            
-            % Target score
-            trg_score{iSub,iExp,iCoh} 	= tscore(score_coh  == snr(iCoh) & score_hi == true);
-            
-            % Joystick displacement
-            mstr{iSub,iExp,iCoh}        = cellfun(@(x) nanmedian(x(end-nSample:end)), t.js_str(cIdx));
-            
-            % Joystick accuracy before first target
-            t1_ts                   = cellfun(@(x) x(1), t.trg_ts);
-            f1_ts                   = cellfun(@(x) x(1), t.frme_ts);
-            trgIdx                  = (t1_ts-f1_ts) > 1e6;
-            rdp_dir                 = t.rdp_dir(cIdx & t.trg_shown & trgIdx);
-            js_dir                  = t.js_dir(cIdx & t.trg_shown & trgIdx);
-            frmes                   = t.frme_ts(cIdx & t.trg_shown & trgIdx);
-            trg1_ts                 = t1_ts(cIdx & t.trg_shown & trgIdx);
-            
-            clear js_acc js dev
-            for iState = 1:length(rdp_dir)
-                clear js_dev
-                smpl_idx            = find(frmes{iState} < trg1_ts(iState),1,'last')-nSample : find(frmes{iState} < trg1_ts(iState),1,'last');
-                js_dev              = rad2deg(circ_dist(deg2rad(js_dir{iState}(smpl_idx)),deg2rad(rdp_dir(iState))));  % Minimum RDP-Joystick difference
-                js_acc(iState)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
-            end
-            
-            carr(iSub,iExp,iCoh)  	= snr(iCoh);                                % Coherence
-            macc{iSub,iExp,iCoh}  	= js_acc;                                   % Avg accuracy
-            sxc{iSub,iExp,iCoh}   	= cr.sxc(cr.coh == snr(iCoh),:);            % Smoothed cross-correlation
-            mR{iSub,iExp,iCoh}   	= cr.maxR(cr.coh == snr(iCoh));             % Avg crosscorrelation coefficient
-            mcc{iSub,iExp,iCoh}   	= cr.cc(cr.coh == snr(iCoh));               % Avg circular correlation coefficient
-            mpk{iSub,iExp,iCoh}   	= cr.posPk(cr.coh == snr(iCoh));            % Avg crosscorrelation peak
-            spk(iSub,iExp,iCoh)   	= std(cr.posPk(cr.coh == snr(iCoh)));       % Avg standard deviation of cross-correlation peak
-        end
+        perf{iSub,iExp}           	= response_readout(t, nSample);
+        
     end
 end
 
@@ -168,30 +105,26 @@ end
 % histogram(a, 50)
 % histogram(b, 50)
 % f_auroc(a, b)
-
+scnt = 0;
 for iSub = 1:length(sbj_lst)
+    if isempty(perf{iSub,2})
+        continue
+    end
+    scnt                            = scnt+1;
+    hir_df(scnt,:)                  = perf{iSub,1}.hir - perf{iSub,2}.hir;
+
     for iCoh = 1:length(snr)
-        try
-            auc_acc(iSub,iCoh)      = f_auroc(macc{iSub,1,iCoh},macc{iSub,2,iCoh});
-            auc_ecc(iSub,iCoh)      = f_auroc(mstr{iSub,1,iCoh},mstr{iSub,2,iCoh});
-            auc_score(iSub,iCoh)    = f_auroc(trg_score{iSub,1,iCoh},trg_score{iSub,2,iCoh});
-            auc_cc(iSub,iCoh)       = f_auroc(mcc{iSub,1,iCoh},mcc{iSub,2,iCoh});
-            auc_xcp(iSub,iCoh)      = f_auroc(mpk{iSub,1,iCoh},mpk{iSub,2,iCoh});
-            auc_xc(iSub,iCoh)       = f_auroc(mR{iSub,1,iCoh},mR{iSub,2,iCoh});
-        catch
-            auc_acc(iSub,iCoh)      = nan;
-            auc_ecc(iSub,iCoh)      = nan;
-            auc_score(iSub,iCoh)    = nan;
-            auc_cc(iSub,iCoh)       = nan;
-            auc_xcp(iSub,iCoh)   	= nan;
-            auc_xc(iSub,iCoh)       = nan;
-        end
+            auc_acc(scnt,iCoh)      = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
+            auc_ecc(scnt,iCoh)      = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
+            auc_score(scnt,iCoh)    = f_auroc(perf{iSub,1}.trg_score{iCoh},perf{iSub,2}.trg_score{iCoh});
     end
 end
 
 %% Load agent data
 
 t_agnt                              = [];
+sxc                                 = [];
+coh                                 = [];
 
 for iSub = 1:length(sbj_lst)
     
@@ -216,64 +149,17 @@ for iSub = 1:length(sbj_lst)
             lag_agnt(iSub)            	= median(cr.lag);
         end
     end
-    
-    % Target score
-    clear score score_hi score_coh
-    c                           = 0;
-    for iState = 1:size(t_agnt.trg_ts,1)
-        for iTrg = 1:length(t_agnt.trg_ts{iState})
-            c                   = c +1;
-            score_cum(c)        = t_agnt.trg_score{iState}(iTrg);
-            score_coh(c)        = t_agnt.rdp_coh(iState);
-            score_hi(c)         = t_agnt.trg_hit{iState}(iTrg);
-        end
-    end
-    
-    tmp_score                   = score_cum(~isnan(score_cum));
-    tscore(~isnan(score_cum))   = [0 diff(tmp_score)];
-    tscore(tscore < 0)          = nan;
-    
-    for iCoh = 1:length(snr)
-        clear cIdx rdp_dir t.js_dir
-        
-        cIdx = t_agnt.rdp_coh == snr(iCoh);
-        cIdx(cellfun(@length,t_agnt.js_str) < 100) = false;
-        
-        % Hit rate
-        nhi                         = sum(cellfun(@sum,t_agnt.trg_hit(cIdx)));
-        ntrg                        = sum(cellfun(@numel,t_agnt.trg_hit(cIdx)));
-        hir_agnt(iSub,iCoh)         = nhi / ntrg;
-        
-        % Target score
-        trg_score_agnt(iSub,iCoh)	= nanmean(tscore(score_coh  == snr(iCoh) & score_hi == true));
-        
-        % Joystick displacement
-        mstr_agnt(iSub,iCoh)        = nanmedian(cellfun(@(x) nanmedian(x(end-nSample:end)), t_agnt.js_str(cIdx)));
-        
-        % Joystick accuracy before first target
-        t1_ts                       = cellfun(@(x) x(1), t_agnt.trg_ts);
-        f1_ts                       = cellfun(@(x) x(1), t_agnt.frme_ts);
-        trgIdx                      = (t1_ts-f1_ts) > 1e6;
-        rdp_dir                     = t_agnt.rdp_dir(cIdx & t_agnt.trg_shown & trgIdx);
-        js_dir                      = t_agnt.js_dir(cIdx & t_agnt.trg_shown & trgIdx);
-        frmes                       = t_agnt.frme_ts(cIdx & t_agnt.trg_shown & trgIdx);
-        trg1_ts                     = t1_ts(cIdx & t_agnt.trg_shown & trgIdx);
-        
-        for iState = 1:length(rdp_dir)
-            clear js_dev
-            smpl_idx                = find(frmes{iState} < trg1_ts(iState),1,'last')-nSample : find(frmes{iState} < trg1_ts(iState),1,'last');
-            js_dev                  = rad2deg(circ_dist(deg2rad(js_dir{iState}(smpl_idx)),deg2rad(rdp_dir(iState))));  % Minimum RDP-Joystick difference
-            js_acc(iState)          = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
-        end
-        
-        carr_agnt(iSub,iCoh)         = snr(iCoh);                                   % Coherence
-        macc_agnt(iSub,iCoh)         = nanmedian(js_acc);                           % Avg accuracy
-        sxc_agnt{iSub,iCoh}          = cr.sxc(cr.coh == snr(iCoh),:);               % Smoothed cross-correlation
-        mR_agnt(iSub,iCoh)           = nanmean(cr.maxR(cr.coh == snr(iCoh)));       % Avg crosscorrelation coefficient
-        mcc_agnt(iSub,iCoh)          = nanmean(cr.cc(cr.coh == snr(iCoh)));         % Avg circular correlation coefficient
-        mpk_agnt(iSub,iCoh)          = nanmedian(cr.posPk(cr.coh == snr(iCoh)));	% Avg crosscorrelation peak
-        spk_agnt(iSub,iCoh)          = std(cr.posPk(cr.coh == snr(iCoh)));          % Avg standard deviation of cross-correlation peak
-    end
+  
+    agnt(iSub)                       	= response_readout(t_agnt, nSample);
+    sxc                                 = [sxc; cr.sxc];
+    coh                                 = [coh; cr.coh];
+end
+
+for iSess = 1:length(agnt)
+    macc_agnt(iSess,:)  	= agnt(iSess).macc_trg;
+    mecc_agnt(iSess,:)    	= agnt(iSess).mecc;
+    hir_agnt(iSess,:)      	= agnt(iSess).hir;
+    trg_score_agnt(iSess,:)	= agnt(iSess).trg_mscore;
 end
 
 %% PLOT
@@ -295,12 +181,15 @@ avg_mult                    = 1.5;
 dim                         = [0.2 0.2]*1.5;
 clm                         = .16;
 row                         = .65;
-hofs                        = .13;
-ax0                       	= axes('Position', [clm row dim]); hold on
+hofs                        = .1;
 cmap                        = [0 0 0; gray(256)];
 steps                       = .05;
 bins                        = 0:steps:1;
 c                           = 0;
+
+ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); hold on
+ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
+ax0                       	= axes('Position', [clm row dim]); hold on
 
 dte                         = unique(t_agnt.date);
 t_agnt_plot                 = t_agnt(t_agnt.date == dte(6),:);
@@ -365,10 +254,12 @@ ax0.XLim                    = [0 1];
 ax0.XTick                   = [0:.2:1];
 ax0.YTick                   = [0:.2:1];
 ax0.XTickLabelRotation      = 0;
+ax0.YLabel.Position(1)      = -.35;
+ax0.XLabel.Position(2)      = -.22;
 
 colormap(cmap)
 
-cmap_coh                    = jet(size(snr,1));
+cmap_coh                    = cool(size(snr,1));
 
 for iCoh = 1:length(snr)
     cidx                    = trg_coh == snr(iCoh);
@@ -378,11 +269,10 @@ for iCoh = 1:length(snr)
     sc.MarkerFaceAlpha      = .9;
 end
 
-
 ax0.Position                = [clm row dim];
 
 nBin                        = 40;
-ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
+axes(ax0h)
 [h, edg]                    = histcounts(trg_conf,nBin);
 cntr                        = edg(1:end-1) + diff(edg) ./ 2;
 st                          = stairs(-h,cntr);
@@ -392,7 +282,7 @@ ax0h.YLim                   = [0 1];
 ax0h.XAxis.Visible          = 'off';
 ax0h.YAxis.Visible          = 'off';
 
-ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); hold on
+axes(ax0v)
 [v, edg]                    = histcounts(trg_acc,nBin);
 cntr                        = edg(1:end-1) + diff(edg) ./ 2;
 st                          = stairs(cntr,-v);
@@ -401,6 +291,7 @@ st.Color                    = [0 0 0];
 ax0v.XLim                   = [0 1];
 ax0v.XAxis.Visible          = 'off';
 ax0v.YAxis.Visible          = 'off';
+uistack(ax0v,'bottom')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Performance AGNT %%%
@@ -412,7 +303,7 @@ cmap                        = cbrewer('div', 'PRGn', 4, 'PCHIP');
 
 [pl1, ci1]                 	= plotAvgCI(macc_agnt, cmap(1,:), alp, lw);
 [pl2, ci2]               	= plotAvgCI(hir_agnt, cmap(2,:), alp, lw);
-[pl3, ci3]                	= plotAvgCI(mstr_agnt, cmap(3,:), alp, lw);
+[pl3, ci3]                	= plotAvgCI(mecc_agnt, cmap(3,:), alp, lw);
 [pl4, ci4]                	= plotAvgCI(trg_score_agnt, cmap(4,:), alp, lw);
 
 ax4.YLim                    = [40 100];
@@ -423,7 +314,7 @@ ax4.XTick                   = 1:length(snr);
 ax4.XTickLabel              = round(snr,2)*100;
 ax4.FontSize                = lb_fs;
 ax4.XTickLabelRotation      = 0;
-ax4.Position                = [clm++xof row-yof dim(1)/1.25 dim(2)/2];
+ax4.Position                = [clm+xof row-yof dim(1)/1.25 dim(2)/2];
 % ax4.XAxis.Visible           = 'off';
 
 box off
@@ -436,20 +327,19 @@ lg.Position(1)              = .71;
 lg.Position(2)              = .67;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Crosscorrelation AGNT %%%
+%% SUBPLOT: Crosscorrelation AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .16;
 ax3                         = axes('Position', [clm+xof row+yof dim(1)/1.25 dim(2)/2]); hold on
-cmap                        = jet(size(snr,1));
+cmap                        = cool(size(snr,1));
 
-msxc                       = cellfun(@mean,sxc_agnt,'UniformOutput',false);
-for iCoh = 1:size(msxc,2)
-    avg_sxc{iCoh}        	= cell2mat(msxc(:,iCoh));
+for iCoh = 1:size(snr,1)
+    avg_sxc{iCoh} = mean(sxc(coh == snr(iCoh),:));
 end
 
 clear pl
-for iCoh = 1:size(msxc,2)
-    mmat(iCoh, :)           = mean(avg_sxc{iCoh});
+for iCoh = 1:size(avg_sxc,2)
+    mmat(iCoh, :)           = avg_sxc{iCoh};
     pl(iCoh)               	= plot(mmat(iCoh, :),'LineWidth', lw, 'Color', [cmap(iCoh,:) .75]);
     lg_str{iCoh}            = num2str(round(snr(iCoh)*100));
 end
@@ -487,7 +377,7 @@ lg.Position(1)              = .17;
 lg.Position(2)              = .67;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Lag difference AGNT - SOLO %%%
+%% SUBPLOT: Lag difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 dim                         = [.15 .15];
 ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
@@ -510,40 +400,6 @@ ax6.FontSize                = lb_fs;
 ax6.XTickLabelRotation      = 0;
 ax6.Position                = [clmns(1) height(3) dim];
 ax6.Box                     = 'off';
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: XC coefficient difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax7                         = axes('Position', [clmns(2) height(3) dim]); hold on
-
-ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax7                         = plotData(ax7, auc_xc, {'XC coef diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax7.Position                = [clmns(2) height(3) dim];
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Peak position difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax8                         = axes('Position', [clmns(1) height(4) dim]); hold on
-
-ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax8                         = plotData(ax8, auc_xcp, {'XC peak diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax8.Position                = [clmns(1) height(4) dim];
-
-text(1.25,.825, 'Agnt > Solo', 'FontSize', lb_fs, 'Color', 'k')
-text(1.25,.175, 'Agnt < Solo', 'FontSize', lb_fs, 'Color', 'k')
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Circular correlation difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax9                         = axes('Position', [clmns(2) height(4) dim]); hold on
-
-ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax9                         = plotData(ax9, auc_cc, {'CC coef diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax9.Position                = [clmns(2) height(4) dim];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Hit rate difference AGNT - SOLO %%%
@@ -611,8 +467,8 @@ print(f, '/Users/fschneider/ownCloud/Documents/Publications/CPR_psychophysics/Fi
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [tmp, tc] = extractTrials(tbl, tmp, tc)
-for iTrl = 1:tbl.t.trl_no(end)
-    tidx                    = tbl.t.trl_no == iTrl;             % Trial index
+for iTrl = 1:tbl.t.cyc_no(end)
+    tidx                    = tbl.t.cyc_no == iTrl;             % Trial index
     tt                      = tbl.t(tidx,:);                    % Relevant stimulus cycles
     
     % Initiate cell
@@ -621,7 +477,7 @@ for iTrl = 1:tbl.t.trl_no(end)
     tmp.rdp_dir{tc}         = [];
     tmp.rdp_coh{tc}     	= [];
     tmp.js_dir{tc}      	= [];
-    tmp.js_str{tc}      	= [];
+    tmp.js_ecc{tc}      	= [];
     tmp.refresh{tc}         = [];
     
     % Extract and add data
@@ -630,9 +486,103 @@ for iTrl = 1:tbl.t.trl_no(end)
         tmp.rdp_dir{tc}  	= [tmp.rdp_dir{tc} repmat(tt.rdp_dir(iState),1,length(tt.frme_ts{iState}))];
         tmp.rdp_coh{tc}  	= [tmp.rdp_coh{tc} repmat(tt.rdp_coh(iState),1,length(tt.frme_ts{iState}))];
         tmp.js_dir{tc}  	= [tmp.js_dir{tc} tt.js_dir{iState}];
-        tmp.js_str{tc}  	= [tmp.js_str{tc} tt.js_str{iState}];
+        tmp.js_ecc{tc}  	= [tmp.js_ecc{tc} tt.js_ecc{iState}];
         tmp.refresh{tc}     = [tmp.refresh{tc} median(diff(tmp.frme_ts{tc}))];
     end
+end
+end
+
+function out = response_readout(in, nSample)
+
+c                           = 0;
+snr                         = unique(in.rdp_coh);
+
+% Target score
+clear tscore score_cum score_hi score_coh score_dte score_exp trg_states
+for iState = 1:size(in.trg_ts,1)
+    for iTrg = 1:length(in.trg_ts{iState})
+        try
+            c                   = c +1;
+            score_hi(c)         = in.trg_hit{iState}(iTrg);
+            score(c)            = double(in.trg_score{iState}(iTrg));
+            score_coh(c)        = in.rdp_coh(iState);
+            score_dte(c)        = in.date(iState);
+            score_exp(c)        = in.exp(iState);
+        catch
+            warning(['Skipped state/target: ' num2str(iState) '/' num2str(iTrg)])
+        end
+    end
+end
+
+trg_states                 	= in.trg_hit(logical(in.trg_shown));
+out.hir_pool                = sum(cellfun(@sum,trg_states)) / sum(cellfun(@numel,trg_states));
+
+dte = unique(score_dte);
+dte(ismissing(dte)) = [];
+
+for iDate = 1:length(dte)
+    clear dte_idx score_cum dte_score
+    dte_idx                 = score_dte == dte(iDate);
+    out.score_final_exp(iDate) = unique(score_exp(dte_idx));
+    dte_score               = score(dte_idx);
+    score_cum               = cumsum(dte_score(~isnan(dte_score)));
+    out.score_final(iDate)  = score_cum(end);
+end
+
+for iCoh = 1:length(snr)
+    clear cIdx tIdx nhi ntrg
+    
+    cIdx = in.rdp_coh == snr(iCoh);
+    tIdx = logical(in.trg_shown);
+    
+    tIdx(cellfun(@length,in.js_ecc) < 100) = false;
+    cIdx(cellfun(@length,in.js_ecc) < 100) = false;
+    
+    % Hit rate
+    nhi                     = sum(cellfun(@sum,in.trg_hit(cIdx & tIdx)));
+    ntrg                    = sum(cellfun(@numel,in.trg_hit(cIdx & tIdx)));
+    out.hir(iCoh)           = nhi / ntrg;
+    
+    % Target score [hits only]
+    out.trg_mscore(iCoh)	= nanmean(score(score_coh  == snr(iCoh) & score_hi == true));
+    out.trg_score{iCoh}  	= score(score_coh  == snr(iCoh) & score_hi == true);
+    
+    % Joystick displacement
+    out.mecc(iCoh)         	= nanmedian(cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx)));
+    out.ecc{iCoh}           = cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx));
+    
+    % Joystick accuracy [state-wise]
+    for iState = 1:length(in.rdp_dir)
+        % At least 100 frames
+        if length(in.js_dir{iState}) < 100
+            continue
+        end
+        js_dev              = rad2deg(circ_dist(deg2rad(in.js_dir{iState}(end-nSample:end)),deg2rad(in.rdp_dir(iState))));  % Minimum RDP-Joystick difference
+        js_acc(iState)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
+    end
+    out.macc_state(iCoh)  	= nanmedian(js_acc);
+    out.acc_state{iCoh}    	= js_acc;
+    
+    % Joystick accuracy [before first target]
+    t1_ts                   = cellfun(@(x) x(1), in.trg_ts);
+    f1_ts                   = cellfun(@(x) x(1), in.frme_ts);
+    trgIdx                  = (t1_ts-f1_ts) >= 1e6;
+    rdp_dir                 = in.rdp_dir(cIdx & in.trg_shown & trgIdx);
+    js_dir                  = in.js_dir(cIdx & in.trg_shown & trgIdx);
+    frmes                   = in.frme_ts(cIdx & in.trg_shown & trgIdx);
+    trg1_ts                 = t1_ts(cIdx & in.trg_shown & trgIdx);
+    
+    clear js_acc
+    for iState = 1:length(rdp_dir)
+        clear js_dev
+        smpl_idx            = find(frmes{iState} < trg1_ts(iState),1,'last')-nSample : find(frmes{iState} < trg1_ts(iState),1,'last');
+        js_dev              = rad2deg(circ_dist(deg2rad(js_dir{iState}(smpl_idx)),deg2rad(rdp_dir(iState))));  % Minimum RDP-Joystick difference
+        js_acc(iState)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
+    end
+    
+    out.macc_trg(iCoh)      = nanmedian(js_acc);
+    out.acc_trg{iCoh}     	= js_acc;
+    out.carr(iCoh)         	= snr(iCoh);
 end
 end
 

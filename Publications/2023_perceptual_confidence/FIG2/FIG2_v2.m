@@ -87,7 +87,7 @@ for iSubj = 1:length(sbj_lst)
         if ~isempty(solo_tbl)
             % Performance [time window analysis]
             solo_perf{iSubj}      	= response_readout(solo_tbl, nSample);
-            
+
             % Extract stimulus cycles for correlation analysis
             cyc_boundary        	= [0; find(diff(solo_tbl.cyc_no) ~= 0)];
             [tmp_solo, sc_cnt]   	= extractCycles(cyc_boundary, solo_tbl, tmp_solo, sc_cnt);
@@ -148,17 +148,167 @@ end
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-height                      = [linspace(.82, .32,4) .1];
+height                      = [linspace(.555, .056,4) .1];
 colmn                       = linspace(.075, .85,4);
 lb_fs                       = 14;
 lg_fs                       = 10;
 lw                          = 3;
 frme_ms                     = 1000/120;
-alp                         = .25;
+alp                         = .4;
 dim                         = [.18 .15];
 col_dat                     = [0 0 0];
 col_ci                      = [.3 0 0];
 snr                         = solo_perf{end}.carr;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SUBPLOT: Example subject joystick response %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+row                         = .81;
+clm                         = .15;
+pl_dim                      = dim*1.2;
+
+cmap                        = [1 1 1; flipud(gray(256))];
+steps                       = .05;
+bins                        = 0:steps:1;
+c                           = 0;
+tbl                         = load([pth 'AnM/summary/20220629_anm_CPRsolo_block2_tbl.mat']);
+t                           = tbl.t;
+
+ax0h                        = axes('Position', [clm-.082 row pl_dim(1)/5 pl_dim(2)]); hold on
+ax0v                       	= axes('Position', [clm row-.065 pl_dim(1) pl_dim(2)/5]); hold on
+ax0                       	= axes('Position', [clm row pl_dim]); hold on
+
+% Extracte experimental data
+clear trg_acc trg_conf trg_coh trg_hit
+for iState = 1:size(t,1)
+    if t.trg_shown(iState) == false
+        continue
+    end
+    
+    for iTarget = 1:length(t.trg_ts{iState})
+        c                   = c+1;
+        trg_acc(c)          = t.trg_acc{iState}(iTarget);
+        trg_conf(c)         = t.trg_ecc{iState}(iTarget);
+        trg_coh(c)          = t.rdp_coh(iState);
+        trg_hit(c)          = t.trg_hit{iState}(iTarget);
+        
+        if trg_acc(c) < .5 && trg_hit(c) == 1
+            disp([num2str(iState) ' ' num2str(iTarget) ' ' num2str(c) ])
+        end
+    end
+end
+
+% Calculate reward matrix
+acc                         = 0:.001:1;
+conf                        = 0:.001:1;
+rew                         = acc' .* conf;
+
+% Determine arc width for each confidence level
+for j = 1:length(conf)
+    arc(j)                  = 180 - (180 * conf(j));
+end
+
+% Cap arc width at target width (2dva == 12.7587deg at chosen position)
+aidx                        = arc < 12.7587;
+arc(aidx)                   = 12.7587;
+
+% For each confidence level, calculate minimum accuracy required to hit
+% the target at given arc width - normalised values
+hit_width_acc               = 1 - ((arc/2) / 180);
+hit_width_acc(aidx)         = 1 - (12.7587/2)/180; % arc width fixed
+
+% Remove position that cannot yield reward from reward matrix
+for iAcc = 1:length(acc)
+    indx                    = conf < hit_width_acc(iAcc);
+    rew(iAcc,indx)          = nan;
+end
+
+% Plot reward matrix
+hold on
+im                          = imagesc(acc,conf,rew);
+ax0.XLabel.String           = 'Accuracy';
+ax0.YLabel.String           = 'Eccentricity';
+ax0.FontSize                = lb_fs;
+ax0.XLim                    = [0 1];
+ax0.YLim                    = [0 1];
+ax0.XLim                    = [0 1];
+ax0.XTick                   = [0:.2:1];
+ax0.YTick                   = [0:.2:1];
+ax0.XTickLabelRotation      = 0;
+ax0.YLabel.Position(1)      = -.4;
+ax0.XLabel.Position(2)      = -.22;
+
+cb                          = colorbar;
+cb.Label.String             = 'Reward';
+cb.Location                 = 'eastoutside';
+colormap(cmap)
+cmap_coh                    = cool(size(snr,2));
+
+for iCoh = 1:length(snr)
+    cidx                    = trg_coh == snr(iCoh);
+    sc(iCoh)                = scatter(trg_acc(cidx), trg_conf(cidx), 'filled');
+    sc(iCoh).CData        	= cmap_coh(iCoh,:);
+    sc(iCoh).SizeData      	= 15;
+    sc(iCoh).MarkerFaceAlpha = .9;
+    lg_str{iCoh}            = num2str(round(snr(iCoh)*100));
+end
+
+ax0.Position                = [clm row pl_dim];
+
+lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 2);
+lg0.Box                     = 'off';
+lg0.Position(1:2)           = [.82 .61];
+
+nBin                        = 40;
+axes(ax0h)
+[h, edg]                    = histcounts(trg_conf,nBin);
+cntr                        = edg(1:end-1) + diff(edg) ./ 2;
+st                          = stairs(-h,cntr);
+st.LineWidth                = lw/1.5;
+st.Color                    = [0 0 0];
+ax0h.YLim                   = [0 1];
+ax0h.XAxis.Visible          = 'off';
+ax0h.YAxis.Visible          = 'off';
+
+axes(ax0v)
+[v, edg]                    = histcounts(trg_acc,nBin);
+cntr                        = edg(1:end-1) + diff(edg) ./ 2;
+st                          = stairs(cntr,-v);
+st.LineWidth                = lw/1.5;
+st.Color                    = [0 0 0];
+ax0v.XLim                   = [0 1];
+ax0v.XAxis.Visible          = 'off';
+ax0v.YAxis.Visible          = 'off';
+uistack(ax0v,'bottom')
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SUBPLOT: Score comparison %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+sbjs = cellfun(@lower, sbj_lst, 'UniformOutput', false);
+cnt = 0;
+for iSubj = 1:length(dyad_perf)
+    if isempty(dyad_perf{iSubj})
+        continue
+    end
+    cnt = cnt+1;
+    xsolo(cnt) = mean(dyad_perf{iSubj}.score_final);   
+    sidx = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);
+    ydyad(cnt) = mean(solo_perf{sidx}.score_final);   
+end
+
+row                         = .81;
+pl_dim                      = dim*1.2;
+ax20                    	= axes('Position', [colmn(3) row pl_dim]); hold on
+sc                          = scatter(xsolo,ydyad);
+sc.MarkerFaceColor          = [0 0 0];                         
+sc.MarkerEdgeColor          = 'none';                       
+ln                          = line([0 400],[0 400]);
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+ax20.FontSize               = lb_fs;
+ax20.YLabel.String          = {'Avg cum score';'[Dyad]'};
+ax20.XLabel.String          = 'Avg cum score [Solo]';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: SOLO - Hit rate raw %%%
@@ -169,6 +319,7 @@ ax1.YLim                    = [10 70];
 ax1.XLim                    = [1 size(solo_hir,2)];
 ax1.XLabel.String           = 'Coherence [%]';
 ax1.YLabel.String           = 'Hit rate [%]';
+ax1.YLabel.Position(1)      = -.5;
 ax1.XTick                   = 1:length(snr);
 ax1.XTickLabel              = round(snr,2)*100;
 ax1.FontSize                = lb_fs;
@@ -180,6 +331,8 @@ ax1.XAxis.Visible           = 'off';
 %%% SUBPLOT: SOLO - Lag %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 for iSubj = 1:size(solo_cr,2)
+    solo_mlag_id{iSubj} = solo_cr{iSubj}.id;
+
     for iCoh = 1:length(snr)
         clear cIdx
         cIdx             	= solo_cr{iSubj}.coh == snr(iCoh);
@@ -188,11 +341,12 @@ for iSubj = 1:size(solo_cr,2)
 end
 
 ax2                         = axes('Position', [colmn(1) height(4) dim]); hold on
-[ax2,pl]                    = plotData(ax2,solo_mlag,false,lw,alp,col_dat,col_ci);
+[ax2,pl]                    = plotData(ax2,solo_mlag ./ 1e3,false,lw,alp,col_dat,col_ci);
 ax2.XLim                    = [1 size(solo_mlag,2)];
-ax2.YLim                    = [300 1000];
+ax2.YLim                    = [.3 1];
 ax2.XLabel.String           = 'Coherence [%]';
-ax2.YLabel.String           = 'Lag [ms]';
+ax2.YLabel.String           = 'Lag [s]';
+ax2.YLabel.Position(1)      = -.5;
 ax2.XTick                   = 1:length(snr);
 ax2.XTickLabel              = round(snr,2)*100;
 ax2.FontSize                = lb_fs;
@@ -206,7 +360,8 @@ ax3                         = axes('Position', [colmn(1) height(2) dim]); hold o
 ax3.XLim                    = [1 size(solo_macc,2)];
 ax3.YLim                    = [30 100];
 ax3.XLabel.String           = 'Coherence [%]';
-ax3.YLabel.String           = 'Acc [%]';
+ax3.YLabel.String           = 'Accuracy [%]';
+ax3.YLabel.Position(1)      = -.5;
 ax3.XTick                   = 1:length(snr);
 ax3.XTickLabel              = round(snr,2)*100;
 ax3.FontSize                = lb_fs;
@@ -221,7 +376,8 @@ ax4                         = axes('Position', [colmn(1) height(3) dim]); hold o
 ax4.XLim                    = [1 size(solo_mecc,2)];
 ax4.YLim                    = [20 100];
 ax4.XLabel.String           = 'Coherence [%]';
-ax4.YLabel.String           = 'Ecc [%]';
+ax4.YLabel.String           = 'Eccentricity [%]';
+ax4.YLabel.Position(1)      = -.5;
 ax4.XTick                   = 1:length(snr);
 ax4.XTickLabel              = round(snr,2)*100;
 ax4.FontSize                = lb_fs;
@@ -234,55 +390,35 @@ ax4.XAxis.Visible           = 'off';
 ax5                         = axes('Position', [colmn(2) height(1) dim]); hold on
 [ax5]                       = plotScatter(ax5, solo_hir, dyad_hir, snr, lb_fs, true);
 
-% [ax5,pl]                    = plotData(ax5,dyad_hir,true,lw,alp,col_dat,col_ci);
-% ax5.XLim                    = [1 size(dyad_hir,2)];
-% ax5.YLim                    = [10 70];
-% ax5.XLabel.String           = 'Coherence [%]';
-% ax5.YLabel.String           = [];
-% ax5.XTick                   = 1:length(snr);
-% ax5.XTickLabel              = round(snr,2)*100;
-% ax5.FontSize                = lb_fs;
-% ax5.XTickLabelRotation      = 0;
-% ax5.XAxis.Visible           = 'off';
-% ax5.YAxis.Visible           = 'off';
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Dyadic - Lag %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+sub_cnt = 0;
 for iSubj = 1:size(dyad_cr,2)
     if isempty(dyad_cr{iSubj})
         continue
     end
     
+    sub_cnt                     = sub_cnt+1;
+    dyad_mlag_id{sub_cnt}     	= dyad_cr{iSubj}.id;
+        
     for iCoh = 1:length(snr)
         clear cIdx
-        cIdx             	= dyad_cr{iSubj}.coh == snr(iCoh);
-        dyad_mlag(iSubj,iCoh) = mean(dyad_cr{iSubj}.lag(cIdx));
+        cIdx                	= dyad_cr{iSubj}.coh == snr(iCoh);
+        dyad_mlag(sub_cnt,iCoh)	= mean(dyad_cr{iSubj}.lag(cIdx));
     end
 end
 
-solo_mlag(sum(dyad_mlag,2) == 0,:) = [];
-dyad_mlag(sum(dyad_mlag,2) == 0,:) = [];
+for iSubj = 1:size(dyad_mlag_id,2)
+    idx                         = cellfun(@(x) strcmp(x,dyad_mlag_id{iSubj}),solo_mlag_id);
+    solo_mlag_sorted(iSubj,:)   = solo_mlag(idx,:);
+end
 
 ax6                         = axes('Position', [colmn(2) height(4) dim]); hold on
 ln                          = line([0 1000],[0 1000]);
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
-[ax6]                       = plotScatter(ax6, solo_mlag(1:31,:), dyad_mlag, snr, lb_fs, false);
-
-ax6.XLim                 	= [350 1000];
-ax6.YLim                    = [250 1000];
-
-% [ax6,pl]                    = plotData(ax6,dyad_mlag,false,lw,alp,col_dat,col_ci);
-% ax6.XLim                    = [1 size(dyad_mlag,2)];
-% ax6.YLim                    = [300 1000];
-% ax6.XLabel.String           = 'Coherence [%]';
-% ax6.YLabel.String           = 'Lag [ms]';
-% ax6.XTick                   = 1:length(snr);
-% ax6.XTickLabel              = round(snr,2)*100;
-% ax6.FontSize                = lb_fs;
-% ax6.XTickLabelRotation      = 0;
-% ax6.YAxis.Visible           = 'off';
+[ax6]                       = plotScatter(ax6, solo_mlag_sorted ./ 1e3, dyad_mlag ./ 1e3, snr, lb_fs, false);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC - Avg accuracy raw %%%
@@ -290,61 +426,28 @@ ax6.YLim                    = [250 1000];
 ax7                         = axes('Position', [colmn(2) height(2) dim]); hold on
 [ax7]                       = plotScatter(ax7, solo_macc, dyad_macc, snr, lb_fs, true);
 
-ax7.XLim                 	= [0 1];
-ax7.YLim                    = [0 1];
-ax7.XTick                   = [.1 .5 .9];
-ax7.YTick                   = [.1 .5 .9];
- 
-% [ax7,pl]                    = plotData(ax7,dyad_macc,true,lw,alp,col_dat,col_ci);
-% ax7.XLim                    = [1 size(dyad_macc,2)];
-% ax7.YLim                    = [30 100];
-% ax7.XLabel.String           = 'Coherence [%]';
-% ax7.YLabel.String           = [];
-% ax7.XTick                   = 1:length(snr);
-% ax7.XTickLabel              = round(snr,2)*100;
-% ax7.FontSize                = lb_fs;
-% ax7.XTickLabelRotation      = 0;
-% ax7.XAxis.Visible           = 'off';
-% ax7.YAxis.Visible           = 'off';
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC - Avg eccentricity raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax8                         = axes('Position', [colmn(2) height(3) dim]); hold on
-[ax8]                       = plotScatter(ax8, solo_mecc, dyad_mecc, snr, lb_fs, false);
-
-ax8.XLim                 	= [0 1];
-ax8.YLim                    = [0 1];
-ax8.XTick                   = [.1 .5 .9];
-ax8.YTick                   = [.1 .5 .9];
-
-% [ax8,pl]                    = plotData(ax8,dyad_mecc,true,lw,alp,col_dat,col_ci);
-% ax8.XLim                    = [1 size(dyad_mecc,2)];
-% ax8.YLim                    = [20 100];
-% ax8.XLabel.String           = 'Coherence [%]';
-% ax8.YLabel.String           = [];
-% ax8.XTick                   = 1:length(snr);
-% ax8.XTickLabel              = round(snr,2)*100;
-% ax8.FontSize                = lb_fs;
-% ax8.XTickLabelRotation      = 0;
-% ax8.XAxis.Visible           = 'off';
-% ax8.YAxis.Visible           = 'off';
+[ax8]                       = plotScatter(ax8, solo_mecc, dyad_mecc, snr, lb_fs, true);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBPLOT: Hit rate comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 cnt = 0;
-for iSubj = 1:30%size(sbj_lst,1)
+for iSubj = 1:size(dyad_perf,2)
     if ~isempty(dyad_perf{iSubj})
-        cnt = cnt+1;
-        df_hir(cnt,:) = solo_perf{iSubj}.hir - dyad_perf{iSubj}.hir;
-        df_hir_pool(cnt,:) = solo_perf{iSubj}.hir_pool - dyad_perf{iSubj}.hir_pool;
+        idx                         = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),lower(sbj_lst));        
+        cnt                         = cnt+1;
+        df_hir(cnt,:)               = solo_perf{idx}.hir - dyad_perf{iSubj}.hir;
+        df_hir_pool(cnt,:)          = solo_perf{idx}.hir_pool - dyad_perf{iSubj}.hir_pool;
     end
 end
 
 ax13                      	= axes('Position', [colmn(3) height(1) dim]); hold on
-pt                        	= patch([0 8 8 0], [0 0 25 25], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-pt                       	= patch([0 8 8 0], [-25 -25 0 0], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+% pt                        	= patch([0 8 8 0], [0 0 25 25], [.7 .7 .7], 'FaceAlpha',.2, 'EdgeColor','none');
+% pt                       	= patch([0 8 8 0], [-25 -25 0 0], [.3 .3 .3], 'FaceAlpha',.2, 'EdgeColor','none');
 tx                        	= text(1.25,18, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
 tx                       	= text(1.25,-18, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
 
@@ -354,9 +457,7 @@ ax13.XLim                   = [1 size(df_hir,2)];
 ax13.FontSize               = lb_fs;
 ax13.YLabel.String          = 'Difference';
 ax13.XAxis.Visible          = 'off';
-
-% ax17                       	= axes('Position', [colmn(4) height(1) .1 dim(2)]); hold on
-% ax17                      	= plotBar(ax17, df_hir, lb_fs,snr);
+ax13.YLim                   = [-25 25];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % AUROC solo - dyadic
@@ -381,7 +482,7 @@ for iSubj = 1:size(dyad_perf,2)
     end
     
     d.dp                  	= dyad_perf{sIdx};
-    d.dc                  	= dyad_cr{iSubj};
+    d.dc                  	= dyad_cr{sIdx};
          
     if isempty(d.dc)
         continue
@@ -412,23 +513,19 @@ for iSubj = 1:size(dyad_perf,2)
 end
 
 ax9                       	= axes('Position', [colmn(3) height(4) dim]); hold on
-pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-pt                         	= patch([0 8 8 0], [0 0 .5 .5], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
 
 ax10                     	= axes('Position', [colmn(3) height(2) dim]); hold on
-pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-pt                         	= patch([0 8 8 0], [0 0 .5 .5], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
 tx                        	= text(1.25,.9, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
 tx                       	= text(1.25,.1, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
 
 ax11                       	= axes('Position', [colmn(3) height(3) dim]); hold on
-pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 1 .75], 'FaceAlpha',.1, 'EdgeColor','none');
-pt                         	= patch([0 8 8 0], [0 0 .5 .5], [1 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+% pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
+% pt                         	= patch([0 8 8 0], [0 0 .5 .5], [.5 .5 .5], 'FaceAlpha',.1, 'EdgeColor','none');
 
-ax9                     	= plotAUROC(ax9,auc_lag,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax9                     	= plotAUROC(ax9,auc_lag,'Effect Size',lb_fs,snr,alp,lw,col_dat,col_ci);
 ax9.XAxis.Visible         	= 'on';
-ax10                     	= plotAUROC(ax10,auc_acc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
-ax11                    	= plotAUROC(ax11,auc_ecc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax10                     	= plotAUROC(ax10,auc_acc,'Effect Size',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax11                    	= plotAUROC(ax11,auc_ecc,'Effect Size',lb_fs,snr,alp,lw,col_dat,col_ci);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -536,12 +633,21 @@ ax17.XAxis.Visible         	= 'on';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG2/';
-ax0                         = axes('Position',[0 0 1 1],'Visible','off');
+ax00                         = axes('Position',[0 0 1 1],'Visible','off');
 
-text(0.12,.98, 'Solo', 'Parent', ax0, 'FontSize', 22, 'Color', 'k')
-text(0.37,.98, 'Dyadic', 'Parent', ax0, 'FontSize', 22, 'Color', 'k')
-text(0.61,.98, 'Contrast', 'Parent', ax0, 'FontSize', 22, 'Color', 'k')
-text(0.85,.98, 'Stats', 'Parent', ax0, 'FontSize', 22, 'Color', 'k')
+ofs = .075;
+text(colmn(1)-ofs,.98, 'A', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+text(colmn(3)-.125,.98, 'B', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+text(colmn(1)-ofs,.72, 'C', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+text(colmn(2)-ofs,.72, 'D', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+text(colmn(3)-ofs,.72, 'E', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+
+ofs = 0;
+text(colmn(1)+ofs,.71, 'Solo data', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(2)+ofs,.71, 'Solo v Dyadic', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(4)+ofs,.71, 'Coherence [%]', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
 
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 
@@ -581,7 +687,7 @@ c                           = 0;
 snr                         = unique(in.rdp_coh);
 
 % Target score
-clear tscore score_cum score_hi score_coh trg_states
+clear tscore score_cum score_hi score_coh score_dte score_exp trg_states
 for iState = 1:size(in.trg_ts,1)
     for iTrg = 1:length(in.trg_ts{iState})
         try
@@ -589,6 +695,8 @@ for iState = 1:size(in.trg_ts,1)
             score_hi(c)         = in.trg_hit{iState}(iTrg);
             score(c)            = double(in.trg_score{iState}(iTrg));
             score_coh(c)        = in.rdp_coh(iState);
+            score_dte(c)        = in.date(iState);
+            score_exp(c)        = in.exp(iState);
         catch
             warning(['Skipped state/target: ' num2str(iState) '/' num2str(iTrg)])
         end
@@ -597,6 +705,18 @@ end
 
 trg_states                 	= in.trg_hit(logical(in.trg_shown));
 out.hir_pool                = sum(cellfun(@sum,trg_states)) / sum(cellfun(@numel,trg_states));
+
+dte = unique(score_dte);
+dte(ismissing(dte)) = [];
+
+for iDate = 1:length(dte)
+    clear dte_idx score_cum dte_score
+    dte_idx                 = score_dte == dte(iDate);
+    out.score_final_exp(iDate) = unique(score_exp(dte_idx));
+    dte_score               = score(dte_idx);
+    score_cum               = cumsum(dte_score(~isnan(dte_score)));
+    out.score_final(iDate)  = score_cum(end);
+end
 
 for iCoh = 1:length(snr)
     clear cIdx tIdx nhi ntrg
@@ -677,7 +797,7 @@ ci                          = [CI(1,:) fliplr(CI(2,:))];
 % Plot subject-wise data
 hold on
 for iL = 1:size(dat,1)
-    pl(iL)                  = plot(dat(iL,:), 'LineWidth', lw/3, 'Color', [.5 .5 .5 alp]);
+    pl(iL)                  = plot(dat(iL,:), 'LineWidth', lw/2, 'Color', [.5 .5 .5 alp]);
 end
 
 % Overlay confidence intervals
@@ -690,10 +810,6 @@ end
 function [ax] = plotScatter(ax, solo_dat, dyad_dat, snr, lb_fs, ax_flag)
 
 hold on
-
-ln                          = line([0 1],[0 1]);
-ln.LineStyle                = ':';
-ln.Color                    = [0 0 0];
 coh_col                     = cool(length(snr));
 
 for iCoh = 1:size(solo_dat,2)
@@ -704,12 +820,21 @@ for iCoh = 1:size(solo_dat,2)
 end
 
 ax.FontSize                 = lb_fs;
-ax.YLabel.String            = 'Solo';
-ax.XLabel.String            = 'Dyad';
+ax.XLabel.String            = 'Solo';
+ax.YLabel.String            = 'Dyad';
+ax.XLim                 	= [0 1];
+ax.YLim                     = [0 1];
+ax.XTick                    = [.1 .5 .9];
+ax.YTick                    = [.1 .5 .9];
 
 if ax_flag 
     ax.XAxis.Visible        = 'off';
 end
+
+ln                          = line([0 1],[0 1]);
+ln.LineWidth                = 1.5;
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
 
 end
 
@@ -717,8 +842,11 @@ function ax = plotAUROC(ax,dat,str,lb_fs,snr,alp,lw,col_dat,col_ci)
 
 axes(ax); hold on
 
-% Remoe zero rows
+% Remove zero rows
 dat(sum(dat == 0,2) == size(dat,2),:) = [];
+
+% Absolute effect size - effect direction not considered
+% dat                         = abs(dat - .5);
 
 % Plot subject-wise data
 for iL = 1:size(dat,1)
@@ -748,13 +876,14 @@ ax.FontSize               	= lb_fs;
 ax.YLabel.String           	= str;
 ax.XLabel.String           	= 'Coherence [%]';
 ax.XTick                 	= 1:7;
-ax.YTick                  	= [.2 .5 .8];
+ax.YTick                  	= [.1 .5 .9];
+% ax.YTick                  	= [.1 .25 .4];
 ax.XTickLabel            	= round(snr,2).*100;
 ax.XTickLabelRotation      	= 0;
 ax.XAxis.Visible            = 'off';
 
-n                           = .05;
-crit                        = [.5-n .5+n];
+% n                           = .05;
+% crit                        = [.5-n .5+n];
 lm                          = line([1 7],[.5 .5], 'Color', 'k', 'LineStyle', '--', 'LineWidth',lw);
 % ll                          = line([1 7],[crit(1) crit(1)], 'Color', 'k', 'LineStyle', '-.', 'LineWidth',lw/2);
 % lh                          = line([1 7],[crit(2) crit(2)], 'Color', 'k', 'LineStyle', '-.', 'LineWidth',lw/2);
