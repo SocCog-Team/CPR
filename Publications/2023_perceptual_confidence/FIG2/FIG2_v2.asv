@@ -163,7 +163,7 @@ snr                         = solo_perf{end}.carr;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Example subject joystick response %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-row                         = .79;
+row                         = .81;
 clm                         = .15;
 pl_dim                      = dim*1.2;
 
@@ -297,7 +297,7 @@ for iSubj = 1:length(dyad_perf)
     ydyad(cnt) = mean(solo_perf{sidx}.score_final);   
 end
 
-row                         = .79;
+row                         = .81;
 pl_dim                      = dim*1.2;
 ax20                    	= axes('Position', [colmn(3) row pl_dim]); hold on
 sc                          = scatter(xsolo,ydyad);
@@ -312,21 +312,23 @@ ax20.FontSize               = lb_fs;
 ax20.FontSize               = lb_fs;
 ax20.YLabel.String          = 'Dyad';
 ax20.XLabel.String          = 'Solo';
-ax20.Title.FontWeight       = 'normal';
 ax20.Title.String           = 'Mean cumulative Score';
-ax20.Title.String           = 'Mean cumulative Score';
-ax20.XTickLabelRotation     = 0;
 
-% Implement gramm solution later!
-% clear g
-% g=gramm('x',xsolo,'y',ydyad,'color',[0 0 0]);
-% g.facet_grid([],b);
-% g.geom_point();
-% g.stat_cornerhist('aspect',0.5);
-% g.geom_abline();
-% g.set_title('Visualize x-y with stat_cornerhist()');
-% figure('Position',[100 100 800 600]);
-% g.draw();
+clear g
+g=gramm('x',xsolo,'y',ydyad,'color',[0 0 0]);
+g.facet_grid([],b);
+g.geom_point();
+g.stat_cornerhist('edges',-4:0.1:2,'aspect',0.5);
+g.geom_abline();
+
+g.set_title('Visualize x-y with stat_cornerhist()');
+figure('Position',[100 100 800 600]);
+g.draw();
+
+%Possibility to use axe handles of the inset axes to add elements or change
+%properties
+plot(g.results.stat_cornerhist(2).child_axe_handle,[-2 -2],[0 50],'k:','LineWidth',2)
+%set([g.results.stat_cornerhist.child_axe_handle],'XTick',[])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: SOLO - Hit rate raw %%%
@@ -337,7 +339,7 @@ ax1.YLim                    = [10 70];
 ax1.XLim                    = [1 size(solo_hir,2)];
 ax1.XLabel.String           = 'Coherence [%]';
 ax1.YLabel.String           = 'Hit rate [%]';
-ax1.YLabel.Position(1)      = -.4;
+ax1.YLabel.Position(1)      = -.5;
 ax1.XTick                   = 1:length(snr);
 ax1.XTickLabel              = round(snr,2)*100;
 ax1.FontSize                = lb_fs;
@@ -364,7 +366,7 @@ ax2.XLim                    = [1 size(solo_mlag,2)];
 ax2.YLim                    = [.3 1];
 ax2.XLabel.String           = 'Coherence [%]';
 ax2.YLabel.String           = 'Lag [s]';
-ax2.YLabel.Position(1)      = -.4;
+ax2.YLabel.Position(1)      = -.5;
 ax2.XTick                   = 1:length(snr);
 ax2.XTickLabel              = round(snr,2)*100;
 ax2.FontSize                = lb_fs;
@@ -379,7 +381,7 @@ ax3.XLim                    = [1 size(solo_macc,2)];
 ax3.YLim                    = [30 100];
 ax3.XLabel.String           = 'Coherence [%]';
 ax3.YLabel.String           = 'Accuracy [%]';
-ax3.YLabel.Position(1)      = -.4;
+ax3.YLabel.Position(1)      = -.5;
 ax3.XTick                   = 1:length(snr);
 ax3.XTickLabel              = round(snr,2)*100;
 ax3.FontSize                = lb_fs;
@@ -395,7 +397,7 @@ ax4.XLim                    = [1 size(solo_mecc,2)];
 ax4.YLim                    = [20 100];
 ax4.XLabel.String           = 'Coherence [%]';
 ax4.YLabel.String           = 'Eccentricity [%]';
-ax4.YLabel.Position(1)      = -.4;
+ax4.YLabel.Position(1)      = -.5;
 ax4.XTick                   = 1:length(snr);
 ax4.XTickLabel              = round(snr,2)*100;
 ax4.FontSize                = lb_fs;
@@ -533,8 +535,8 @@ end
 ax9                       	= axes('Position', [colmn(3) height(4) dim]); hold on
 
 ax10                     	= axes('Position', [colmn(3) height(2) dim]); hold on
-tx                        	= text(1.25,.8, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(1.25,.2, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                        	= text(1.25,.9, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(1.25,.1, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
 
 ax11                       	= axes('Position', [colmn(3) height(3) dim]); hold on
 % pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
@@ -654,10 +656,10 @@ dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publicatio
 ax00                         = axes('Position',[0 0 1 1],'Visible','off');
 
 vofs = .075;
-hofs = .16;
+hofs = .15;
 text(colmn(1)-vofs,.98, 'A', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 text(colmn(3)-.125,.98, 'B', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
-text(colmn(1)-vofs,height(1)+hofs, 'C', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
+text(colmn(1)-ofs,height(1)+hofs, 'C', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 text(colmn(1)-vofs,height(2)+hofs, 'D', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 text(colmn(1)-vofs,height(3)+hofs, 'E', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 text(colmn(1)-vofs,height(4)+hofs, 'F', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
@@ -889,7 +891,7 @@ fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'Face
 pm                          = plot(mean(dat),'LineWidth', lw, 'Color', col_dat);
 
 ax.XLim                  	= [1 length(snr)];
-ax.YLim                  	= [.1 .9];
+ax.YLim                  	= [.2 .8];
 ax.FontSize               	= lb_fs;
 ax.YLabel.String           	= str;
 ax.XLabel.String           	= 'Coherence [%]';
