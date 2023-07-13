@@ -94,6 +94,8 @@ for iSub = 1:length(sbj_lst)
         perf{iSub,iExp}           	= response_readout(t, nSample);
         
     end
+    
+    hir_df(iSub,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
 end
 
 % Calculate area under receiver operating characteristics
@@ -105,14 +107,13 @@ end
 % histogram(a, 50)
 % histogram(b, 50)
 % f_auroc(a, b)
+
 scnt = 0;
 for iSub = 1:length(sbj_lst)
     if isempty(perf{iSub,2})
         continue
     end
     scnt                            = scnt+1;
-    hir_df(scnt,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
-    
     for iCoh = 1:length(snr)
         auc_acc(scnt,iCoh)      = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
         auc_ecc(scnt,iCoh)      = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
@@ -165,8 +166,8 @@ end
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-height                    	= fliplr(linspace(.1,.75,4));
-clmns                      	= linspace(.15,.71,3);
+height                    	= fliplr(linspace(.06,.75,4));
+clmns                      	= linspace(.15,.75,3);
 lb_fs                       = 14;
 lg_fs                       = 10;
 lw                          = 3;
@@ -295,8 +296,8 @@ uistack(ax0v,'bottom')
 %%% SUBPLOT: Performance AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .075;
-xof                         = .55;
-ax4                         = axes('Position', [clm+xof row-yof dim(1)/1.25 dim(2)/2]); hold on
+xof                         = .075;
+ax4                         = axes('Position', [clmns(3)-xof row-yof dim(1)/1.25 dim(2)/2]); hold on
 cmap                        = cbrewer('div', 'PRGn', 4, 'PCHIP');
 
 [pl1, ci1]                 	= plotAvgCI(macc_agnt, cmap(1,:), alp, lw);
@@ -312,7 +313,7 @@ ax4.XTick                   = 1:length(snr);
 ax4.XTickLabel              = round(snr,2)*100;
 ax4.FontSize                = lb_fs;
 ax4.XTickLabelRotation      = 0;
-ax4.Position                = [clm+xof row-yof dim(1)/1.25 dim(2)/2];
+ax4.Position                = [clmns(3)-xof row-yof dim(1)/1.25 dim(2)/2];
 % ax4.XAxis.Visible           = 'off';
 
 box off
@@ -321,14 +322,14 @@ lg                          = legend([pl1 pl2 pl3 pl4],{'Accuracy', 'Hit rate','
 lg.Box                      = 'off';
 lg.FontSize                 = lg_fs;
 lg.Location                 = 'northeast';
-lg.Position(1)              = .71;
+lg.Position(1)              = .675;
 lg.Position(2)              = .67;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Crosscorrelation AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .16;
-ax3                         = axes('Position', [clm+xof row+yof dim(1)/1.25 dim(2)/2]); hold on
+ax3                         = axes('Position', [clmns(3)-xof row+yof dim(1)/1.25 dim(2)/2]); hold on
 cmap                        = cool(size(snr,1));
 
 for iCoh = 1:size(snr,1)
@@ -364,7 +365,7 @@ ax3.YLim                    = [0 .16];
 ax3.XTick                   = [0 150 avg_peak_pos 300];
 ax3.FontSize              	= lb_fs;
 ax3.XTickLabel              = round((cellfun(@str2num, ax3.XTickLabel)-nLag) * frme_ms);
-ax3.Position                = [clm+xof row+yof dim(1)/1.25 dim(2)/2];
+ax3.Position                = [clmns(3)-xof row+yof dim(1)/1.25 dim(2)/2];
 ax3.XTickLabelRotation      = 0;
 
 lg                          = legend(pl,lg_str,'Location','northwest','NumColumns', 2);
@@ -377,7 +378,7 @@ lg.Position(2)              = .67;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBPLOT: Lag difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dim                         = [.175 .175];
+dim                         = [.2 .2];
 ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
 
 for iL = 1:length(lag)
@@ -449,12 +450,10 @@ ax13.Position             	= [clmns(3) height(4) dim];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ax0                         = axes('Position',[0 0 1 1],'Visible','off');
-lofs                        = .2;
-text(0.03,height(1)+lofs, 'A', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(0.6,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(0.6,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-
-lofs                        = .175;
+lofs                        = .225;
+text(clmns(1)-.1,height(1)+lofs, 'A', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+text(clmns(3)-.175,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+text(clmns(3)-.175,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 

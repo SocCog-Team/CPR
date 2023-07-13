@@ -94,6 +94,8 @@ for iSub = 1:length(sbj_lst)
         perf{iSub,iExp}           	= response_readout(t, nSample);
         
     end
+    
+    hir_df(iSub,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
 end
 
 % Calculate area under receiver operating characteristics
@@ -105,14 +107,13 @@ end
 % histogram(a, 50)
 % histogram(b, 50)
 % f_auroc(a, b)
+
 scnt = 0;
 for iSub = 1:length(sbj_lst)
     if isempty(perf{iSub,2})
         continue
     end
     scnt                            = scnt+1;
-    hir_df(scnt,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
-    
     for iCoh = 1:length(snr)
         auc_acc(scnt,iCoh)      = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
         auc_ecc(scnt,iCoh)      = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
@@ -165,8 +166,8 @@ end
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-height                    	= fliplr(linspace(.1,.75,4));
-clmns                      	= linspace(.15,clm(3),3);
+height                    	= fliplr(linspace(.05,.75,4));
+clmns                      	= linspace(.15,.75,3);
 lb_fs                       = 14;
 lg_fs                       = 10;
 lw                          = 3;
@@ -295,8 +296,8 @@ uistack(ax0v,'bottom')
 %%% SUBPLOT: Performance AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .075;
-xof                         = .55;
-ax4                         = axes('Position', [clm+xof row-yof dim(1)/1.25 dim(2)/2]); hold on
+xof                         = .3;
+ax4                         = axes('Position', [colmn(3)-xof row-yof dim(1)/1.25 dim(2)/2]); hold on
 cmap                        = cbrewer('div', 'PRGn', 4, 'PCHIP');
 
 [pl1, ci1]                 	= plotAvgCI(macc_agnt, cmap(1,:), alp, lw);
@@ -328,7 +329,7 @@ lg.Position(2)              = .67;
 %%% SUBPLOT: Crosscorrelation AGNT %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .16;
-ax3                         = axes('Position', [clm+xof row+yof dim(1)/1.25 dim(2)/2]); hold on
+ax3                         = axes('Position', [colmn(3)-xof row+yof dim(1)/1.25 dim(2)/2]); hold on
 cmap                        = cool(size(snr,1));
 
 for iCoh = 1:size(snr,1)
@@ -377,7 +378,7 @@ lg.Position(2)              = .67;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % SUBPLOT: Lag difference AGNT - SOLO %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-dim                         = [.175 .175];
+dim                         = [.2 .2];
 ax6                         = axes('Position', [clmns(1) height(3) dim]); hold on
 
 for iL = 1:length(lag)
