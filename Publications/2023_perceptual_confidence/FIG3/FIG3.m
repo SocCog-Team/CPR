@@ -36,9 +36,14 @@ for iSubj = 1:length(sbj_lst)
             if contains(mat_files(iFile).name,'CPRagent')
                 cc              = cc+1;
                 fname_agnt{cc} 	= mat_files(iFile).name;
+                dir_agnt{cc}    = data_pth;
             end
         end
     end
+end
+
+for i= 1:length(fname_agnt)
+    agnt_bool(i) = contains(fname_agnt{i},'agnt');
 end
 
 %% Extract subject data
@@ -48,38 +53,40 @@ scnt                                    = 0;
 nLag                                    = 150;
 
 for iSub = 1:length(sbj_lst)
-    
+        
+    disp(['Processing subject: ' sbj_lst{iSub}])
+
     for iExp = 1:2
         if iExp == 1
-            fname                       = fname_solo;
+            fname                   = fname_solo;
         else
-            fname                       = fname_agnt;
+            fname                	= fname_agnt(~agnt_bool);
         end  
       
-        fname_id                        = cellfun(@(x) x(1:12), fname, 'UniformOutput', false);
-        fidx                            = find(cellfun(@(x) contains(x,lower(sbj_lst{iSub})),fname_id));
-        tc                              = 0;
-        t                               = [];
-        all                             = [];
-        tmp                             = {};
+        fname_id                 	= cellfun(@(x) x(1:12), fname, 'UniformOutput', false);
+        fidx                    	= find(cellfun(@(x) contains(x,lower(sbj_lst{iSub})),fname_id));
+        tc                      	= 0;
+        t                       	= [];
+        all                      	= [];
+        tmp                     	= {};
         
         if isempty(fidx)
-            lag(iSub,iExp)              = nan;
-            id{iSub,iExp}               = nan;
+            lag(iSub,iExp)        	= nan;
+            id{iSub,iExp}        	= nan;
             continue
         end
         
         % Load experimental blocks
         for iBlock = 1:length(fidx)
-            tbl                         = [];
-            tbl                         = load([pth sbj_lst{iSub} '/summary/' fname{fidx(iBlock)}]);
+            tbl                 	= [];
+            tbl                 	= load([pth sbj_lst{iSub} '/summary/' fname{fidx(iBlock)}]);
             
             if sum(unique(tbl.t.rdp_coh) < .1) > 2
                 continue
             end
             
-            t                           = [t; tbl.t];                       % Concatenate data tables
-            [tmp, tc]                   = extractTrials(tbl, tmp, tc);     	% Extract trials for correlation analysis
+            t                   	= [t; tbl.t];                       % Concatenate data tables
+            [tmp, tc]               = extractTrials(tbl, tmp, tc);     	% Extract trials for correlation analysis
         end
         
         clear cr ps
@@ -88,7 +95,6 @@ for iSub = 1:length(sbj_lst)
         nLag                        = 150;
         [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
         lag(iSub,iExp)           	= median(cr.lag);
-        
         perf{iSub,iExp}           	= response_readout(t, nSample);
         
     end
@@ -125,44 +131,37 @@ end
 
 %% Load all agent sessions
 
-t_agnt                              = [];
 sxc                                 = [];
 coh                                 = [];
+fname                               = fname_agnt(agnt_bool);
+dirs                                = dir_agnt(agnt_bool);
 
-for iSub = 1:length(sbj_lst)
+for iSess = 1:length(fname)
     
-    cd([pth sbj_lst{iSub} '/summary/'])
-    mat_files                           = dir('*.mat');
-    tc                                  = 0;
-    tmp                                 = {};
+    tc                           	= 0;
+    tmp                           	= {};
+    tbl                             = [];
+    tbl                             = load([dirs{iSess} fname{iSess}]);
     
-    for iFile = 1:length(mat_files)
-        if contains(mat_files(iFile).name,'agnt')
-            tbl                         = load(mat_files(iFile).name);
-            t_agnt                      = [t_agnt; tbl.t];
-            
-            if sum(unique(tbl.t.rdp_coh) < .1) > 2
-                continue
-            end
-            
-            [tmp, tc]                   = extractTrials(tbl, tmp, tc);     	% Extract trials for correlation analysis  
-            id{iSub}                    = sbj_lst{iSub};
-            nLag                        = 150;
-            [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
-            lag_agnt(iSub)            	= median(cr.lag);
-        end
+    if sum(unique(tbl.t.rdp_coh) < .1) > 2
+        continue
     end
-  
-    agnt(iSub)                       	= response_readout(t_agnt, nSample);
-    sxc                                 = [sxc; cr.sxc];
-    coh                                 = [coh; cr.coh'];
+    
+    [tmp, tc]                   = extractTrials(tbl, tmp, tc);     	% Extract trials for correlation analysis
+    nLag                        = 150;
+    [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
+    lag_agnt(iSess)            	= median(cr.lag);
+    sxc                        	= [sxc; cr.sxc];
+    coh                        	= [coh; cr.coh'];
+    agnt(iSess)                	= response_readout(tbl.t, nSample);
+
 end
 
 for iSess = 1:length(agnt)
-    macc_agnt(iSess,:)  	= agnt(iSess).macc_trg;
-    mecc_agnt(iSess,:)    	= agnt(iSess).mecc;
-    hir_agnt(iSess,:)      	= agnt(iSess).hir;
-    trg_score_agnt(iSess,:)	= agnt(iSess).trg_mscore;
+    macc_agnt(iSess,:)          = agnt(iSess).macc_trg;
+    mecc_agnt(iSess,:)          = agnt(iSess).mecc;
+    hir_agnt(iSess,:)           = agnt(iSess).hir;
+    trg_score_agnt(iSess,:)     = agnt(iSess).trg_mscore;
 end
 
 %% PLOT
@@ -193,8 +192,7 @@ ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); 
 ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
 ax0                       	= axes('Position', [clm row dim]); hold on
 
-dte                         = unique(t_agnt.date);
-t_agnt_plot                 = t_agnt(t_agnt.date == dte(6),:);
+t_agnt_plot                 = tbl.t;
 
 % Extracte experimental data
 clear trg_acc trg_conf trg_coh trg_hit
@@ -451,7 +449,7 @@ for iSub = 1:size(perf,1)
   	end
 end
 
-nRep = 500;
+nRep                        = 500;
 e.solo                      = bootci(nRep, {@mean, hir.solo},'alpha', .001);
 e.agnt                      = bootci(nRep, {@nanmean, hir.agnt},'alpha', .001);
 e.dyad                      = bootci(nRep, {@nanmean, hir.dyad},'alpha', .001);
@@ -535,8 +533,9 @@ text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k
 
 text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r400', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r400', '-dsvg');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-5400', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-depsc2', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -736,7 +735,7 @@ ci                          = [CI(1,:) fliplr(CI(2,:))];
 fl                          = fill(x_spacing,ci,[.3 0 0],'EdgeColor','none', 'FaceAlpha', alp);
 
 % Plot mean curve
-pm                          = plot(nanmedian(dat),'LineWidth', lw*avg_mult, 'Color', [0 0 0]);
+pm                          = plot(nanmean(dat),'LineWidth', lw*avg_mult, 'Color', [0 0 0]);
 
 ax.XLim                     = [1 size(dat,2)];
 ax.XLabel.String            = 'Coherence [%]';

@@ -147,7 +147,8 @@ end
 
 %% PLOT
 
-f                           = figure('units','normalized','position',[0 0 .5 1]);
+% f                           = figure('units','normalized','position',[0 0 .5 1]);
+f                           = figure('units','centimeters','position',[0 0 21 29.7]);
 height                      = [linspace(.555, .056,4) .1];
 colmn                       = linspace(.075, .85,4);
 lb_fs                       = 14;
@@ -168,6 +169,7 @@ sbjs = cellfun(@lower, sbj_lst, 'UniformOutput', false);
 
 pl_dim                      = dim*1.33;
 row                         = .79;
+cmap_coh                    = cool(size(snr,2));
 
 ax20                    	= axes('Position', [colmn(1) row pl_dim]); hold on
 
@@ -177,7 +179,7 @@ for iSubj = 1:length(dyad_perf)
     end
     sidx = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);
     for iCoh = 1:length(snr)
-        sc(iCoh)                    = scatter(solo_perf{iSubj}.trg_mscore(iCoh),dyad_perf{sidx}.trg_mscore(iCoh));
+        sc(iCoh)                    = scatter(solo_perf{sidx}.trg_mscore(iCoh),dyad_perf{iSubj}.trg_mscore(iCoh));
         sc(iCoh) .MarkerFaceColor   = cmap_coh(iCoh,:);
         sc(iCoh) .MarkerFaceAlpha   = alp;
         sc(iCoh) .MarkerEdgeColor   = 'none';
@@ -189,7 +191,6 @@ ln                          = line([0 1],[0 1]);
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
 
-ax20.FontSize               = lb_fs;
 ax20.FontSize               = lb_fs;
 ax20.YLabel.String          = 'Dyad score [a.u.]';
 ax20.XLabel.String          = 'Solo score [a.u.]';
@@ -209,6 +210,41 @@ lg0.Position(1)             = .4;
 % g.set_title('Visualize x-y with stat_cornerhist()');
 % figure('Position',[100 100 800 600]);
 % g.draw();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SUBPLOT: Cumulative score comparison %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+cnt = 0;
+for iSubj = 1:length(dyad_perf)
+    if isempty(dyad_perf{iSubj})
+        continue
+    end
+    
+    cnt                     = cnt+1;
+    sidx                    = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);        
+    mscore_solo(cnt)    	= mean(solo_perf{sidx}.score_norm);
+    mscore_dyadic(cnt)   	= mean(dyad_perf{iSubj}.score_norm);
+end
+
+ax21                    	= axes('Position', [colmn(2)+.05 row pl_dim]); hold on
+
+ln                          = line([0 1],[0 1]);
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+
+sc                          = scatter(mscore_solo,mscore_dyadic);
+sc.MarkerFaceColor          = [.3 .3 .3];
+sc.MarkerFaceAlpha          = 1;
+sc.MarkerEdgeColor          = 'none';
+
+ax21.FontSize               = lb_fs;
+ax21.YLim                   = [0 .4];
+ax21.XLim                   = [0 .4];
+ax21.YTick                  = [0 .2 .4];
+ax21.XTick                  = [0 .2 .4];
+ax21.YLabel.String          = 'Dyad score [a.u.]';
+ax21.XLabel.String          = 'Solo score [a.u.]';
+ax21.XTickLabelRotation     = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: SOLO - Hit rate raw %%%
@@ -346,7 +382,7 @@ for iSubj = 1:size(dyad_perf,2)
 end
 
 ax13                      	= axes('Position', [colmn(3) height(1) dim]); hold on
-% pt                        	= patch([0 8 8 0], [0 0 25 25], [.7 .7 .7], 'FaceAlpha',.2, 'EdgeColor','none');
+% pt                        = patch([0 8 8 0], [0 0 25 25], [.7 .7 .7], 'FaceAlpha',.2, 'EdgeColor','none');
 % pt                       	= patch([0 8 8 0], [-25 -25 0 0], [.3 .3 .3], 'FaceAlpha',.2, 'EdgeColor','none');
 tx                        	= text(1.25,18, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
 tx                       	= text(1.25,-18, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
@@ -414,6 +450,9 @@ for iSubj = 1:size(dyad_perf,2)
     
     p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
     auc_ecc_pooled(cnt)         = f_auroc(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
+    
+    p_acc_pooled(cnt)           = ranksum(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
+    auc_acc_pooled(cnt)         = f_auroc(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
 end
 
 ax9                       	= axes('Position', [colmn(3) height(4) dim]); hold on
@@ -431,8 +470,12 @@ ax9.XAxis.Visible         	= 'on';
 ax10                     	= plotAUROC(ax10,auc_acc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
 ax11                    	= plotAUROC(ax11,auc_ecc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
 
-ax12                       	= axes('Position', [colmn(3) row pl_dim]); hold on
-hs                          = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),15);
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AUROC Significant subjects histogram
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+nBin                        = 15;
+ax12                       	= axes('Position', [colmn(3)+.08 row pl_dim]); hold on
+hs                          = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),nBin);
 hs.FaceColor                = [.3 .3 .3];
 hs.FaceAlpha                = 1;
 ax12.FontSize               = lb_fs;
@@ -483,8 +526,8 @@ text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', 16, 'Color', '
 text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
 
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
-print(f, [dest_dir '/FIG2'], '-r500', '-dsvg');
-
+print(f, [dest_dir '/FIG2'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG2'], '-r500', '-depsc2', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Reported stats
@@ -494,6 +537,9 @@ print(f, [dest_dir '/FIG2'], '-r500', '-dsvg');
 sign_bool      	= p_ecc_pooled < ( .05 / length(p_ecc_pooled));
 perc_sign       = sum(sign_bool) / length(sign_bool);
 
+% Accuracy [coherence pooled, within subject]
+sign_bool      	= p_acc_pooled < ( .05 / length(p_acc_pooled));
+perc_sign       = sum(sign_bool) / length(sign_bool);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -559,6 +605,7 @@ for iDate = 1:length(dte)
     dte_score               = score(dte_idx);
     score_cum               = cumsum(dte_score(~isnan(dte_score)));
     out.score_final(iDate)  = score_cum(end);
+    out.score_norm(iDate)   = score_cum(end) ./ length(dte_score(~isnan(dte_score)));
 end
 
 for iCoh = 1:length(snr)
@@ -754,56 +801,7 @@ ax.YLabel.String           	= '[%]';
 ax.XLabel.String           	= 'Coherence [%]';
 end
 
-function [paramsValues, PF] = fit_logistic_fct(snr, HitNo, OutOfNum)
-
-PF = @PAL_Logistic;
-
-%Threshold and Slope are free parameters, guess and lapse rate are fixed
-paramsFree = [1 1 0 0];  %1: free parameter, 0: fixed parameter
-
-%Parameter grid defining parameter space through which to perform a
-%brute-force search for values to be used as initial guesses in iterative
-%parameter search.
-searchGrid.alpha = snr(1):.001:snr(end); % threshold
-searchGrid.beta = logspace(0,2,101); % slope
-searchGrid.gamma = 0;  % guess-rate
-searchGrid.lambda = 0.02;  % lapse-rate
-
-%Perform fit
-disp('Fitting function.....');
-[paramsValues LL exitflag] = PAL_PFML_Fit(snr,HitNo,OutOfNum,searchGrid,paramsFree,PF);
-
-disp('done:')
-message = sprintf('Threshold estimate: %6.4f',paramsValues(1));
-disp(message);
-message = sprintf('Slope estimate: %6.4f\r',paramsValues(2));
-disp(message);
-
-%Number of simulations to perform to determine standard error
-B=400;
-disp('Determining standard errors.....');
-
-[SD paramsSim LLSim converged] = PAL_PFML_BootstrapNonParametric(snr,HitNo, OutOfNum, [], paramsFree, B, PF,'searchGrid',searchGrid);
-
-disp('done:');
-message = sprintf('Standard error of Threshold: %6.4f',SD(1));
-disp(message);
-message = sprintf('Standard error of Slope: %6.4f\r',SD(2));
-disp(message);
-
-%Number of simulations to perform to determine Goodness-of-Fit
-B=1000;
-disp('Determining Goodness-of-fit.....');
-
-[Dev pDev] = PAL_PFML_GoodnessOfFit(snr,HitNo,OutOfNum,paramsValues, paramsFree, B, PF, 'searchGrid', searchGrid);
-
-disp('done:');
-message = sprintf('Deviance: %6.4f',Dev);
-disp(message);
-message = sprintf('p-value: %6.4f',pDev);
-disp(message);
-end
-
+%% STUFF NO LONGER NEEDED 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % %%% SUBPLOT: Example subject joystick response %%%
@@ -1010,3 +1008,53 @@ end
 % ax6.XTickLabelRotation      = 0;
 % ax6.Position                = [clmns(1) height(3) dim];
 % ax6.Box                     = 'off';
+% 
+% function [paramsValues, PF] = fit_logistic_fct(snr, HitNo, OutOfNum)
+% 
+% PF = @PAL_Logistic;
+% 
+% %Threshold and Slope are free parameters, guess and lapse rate are fixed
+% paramsFree = [1 1 0 0];  %1: free parameter, 0: fixed parameter
+% 
+% %Parameter grid defining parameter space through which to perform a
+% %brute-force search for values to be used as initial guesses in iterative
+% %parameter search.
+% searchGrid.alpha = snr(1):.001:snr(end); % threshold
+% searchGrid.beta = logspace(0,2,101); % slope
+% searchGrid.gamma = 0;  % guess-rate
+% searchGrid.lambda = 0.02;  % lapse-rate
+% 
+% %Perform fit
+% disp('Fitting function.....');
+% [paramsValues LL exitflag] = PAL_PFML_Fit(snr,HitNo,OutOfNum,searchGrid,paramsFree,PF);
+% 
+% disp('done:')
+% message = sprintf('Threshold estimate: %6.4f',paramsValues(1));
+% disp(message);
+% message = sprintf('Slope estimate: %6.4f\r',paramsValues(2));
+% disp(message);
+% 
+% %Number of simulations to perform to determine standard error
+% B=400;
+% disp('Determining standard errors.....');
+% 
+% [SD paramsSim LLSim converged] = PAL_PFML_BootstrapNonParametric(snr,HitNo, OutOfNum, [], paramsFree, B, PF,'searchGrid',searchGrid);
+% 
+% disp('done:');
+% message = sprintf('Standard error of Threshold: %6.4f',SD(1));
+% disp(message);
+% message = sprintf('Standard error of Slope: %6.4f\r',SD(2));
+% disp(message);
+% 
+% %Number of simulations to perform to determine Goodness-of-Fit
+% B=1000;
+% disp('Determining Goodness-of-fit.....');
+% 
+% [Dev pDev] = PAL_PFML_GoodnessOfFit(snr,HitNo,OutOfNum,paramsValues, paramsFree, B, PF, 'searchGrid', searchGrid);
+% 
+% disp('done:');
+% message = sprintf('Deviance: %6.4f',Dev);
+% disp(message);
+% message = sprintf('p-value: %6.4f',pDev);
+% disp(message);
+% end
