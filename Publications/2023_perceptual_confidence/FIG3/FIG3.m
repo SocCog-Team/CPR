@@ -525,15 +525,15 @@ text(3.75,0.175, 'Agnt < Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0
 
 ax0                         = axes('Position',[0 0 1 1],'Visible','off');
 lofs                        = .225;
-text(clmns(1)-.1,height(1)+lofs, 'A', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(3)-.175,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(3)-.175,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(1)-.1,height(1)+lofs, 'A', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(3)-.175,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(3)-.175,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 
 text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-5400', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-500', '-dpng');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dsvg', '-painters');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-depsc2', '-painters');
 
