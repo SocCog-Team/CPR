@@ -361,9 +361,9 @@ ln.Color                    = [0 0 0];
 
 ax3.YLabel.String           = 'XC Coef';
 ax3.XLabel.String           = 'Lag [ms]';
-ax3.XLim                    = [0 301];
+ax3.XLim                    = [150 301];
 ax3.YLim                    = [0 .16];
-ax3.XTick                   = [0 150 avg_peak_pos 300];
+ax3.XTick                   = [150 avg_peak_pos 300];
 ax3.FontSize              	= lb_fs;
 ax3.XTickLabel              = round((cellfun(@str2num, ax3.XTickLabel)-nLag) * frme_ms);
 ax3.Position                = [clmns(3)-xof row+yof dim(1)/1.25 dim(2)/2];
@@ -414,19 +414,19 @@ ln.Color                    = [0 0 0];
 
 for iSubj = 1:size(perf,1)
     if ~isempty(perf{iSubj,2})
-        sc_agnt            	= scatter(mean(cell2mat(perf{iSubj,2}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+        sc_agnt            	= scatter(mean(cell2mat(perf{iSubj,1}.trg_score)),mean(cell2mat(perf{iSubj,2}.trg_score)), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
     end
     
     if ~isempty(perf{iSubj,3})
-        sc_dyad            	= scatter(mean(cell2mat(perf{iSubj,3}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+        sc_dyad            	= scatter(mean(cell2mat(perf{iSubj,1}.trg_score)), mean(cell2mat(perf{iSubj,3}.trg_score)), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
     end
 end
 
-ax6.XLabel.String           = {'Avg reward score', '[Dyad]'};
-ax6.YLabel.String           = {'Avg reward score', '[Solo]'};
+ax6.YLabel.String           = {'Avg reward score', '[Dyad]'};
+ax6.XLabel.String           = {'Avg reward score', '[Solo]'};
 ax6.FontSize                = lb_fs;
 
-lg                          = legend([sc_agnt(1) sc_dyad(1)], 'AGNT','HUMAN' );
+lg                          = legend([sc_agnt(1) sc_dyad(1)], 'COMP','HUMAN' );
 lg.Location                 = 'southeast';
 lg.FontSize                 = lg_fs;
 lg.Box                      = 'on';
@@ -468,7 +468,7 @@ ax1.YLabel.String           = 'Avg hit rate';
 ax1.XLim                    = [.5 3.5];
 ax1.YLim                    = [.3 .6];
 ax1.YTick                 	= .3:.1:.6;
-ax1.XTickLabel              = {'Solo','Agnt','Dyad'};
+ax1.XTickLabel              = {'Solo','Comp','Dyad'};
 ax1.FontSize                = lb_fs;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
