@@ -148,7 +148,7 @@ end
 %% PLOT
 
 % f                           = figure('units','normalized','position',[0 0 .5 1]);
-f                           = figure('units','centimeters','position',[0 0 21 29.7]);
+f                           = figure('units','centimeters','position',[0 0 18 29.7]);
 height                      = [linspace(.555, .056,4) .1];
 colmn                       = linspace(.075, .85,4);
 lb_fs                       = 14;

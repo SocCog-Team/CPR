@@ -148,11 +148,11 @@ end
 %% PLOT
 
 % f                           = figure('units','normalized','position',[0 0 .5 1]);
-f                           = figure('units','centimeters','position',[0 0 21 29.7]);
+f                           = figure('units','centimeters','position',[0 0 18 20]);
 height                      = [linspace(.555, .056,4) .1];
 colmn                       = linspace(.075, .85,4);
-lb_fs                       = 14;
-lg_fs                       = 10;
+lb_fs                       = 8;
+lg_fs                       = 8;
 lw                          = 3;
 frme_ms                     = 1000/120;
 alp                         = .4;
@@ -519,11 +519,12 @@ ax00                         = axes('Position',[0 0 1 1],'Visible','off');
 % text(colmn(1)-vofs,height(3)+hofs, 'E', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 % text(colmn(1)-vofs,height(4)+hofs, 'F', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 
+titl_fs = 10;
 ofs = 0;
-text(colmn(1)+ofs,.71, 'Solo condition', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(1)+ofs,.71, 'Solo condition', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2'], '-r500', '-dsvg', '-painters');
