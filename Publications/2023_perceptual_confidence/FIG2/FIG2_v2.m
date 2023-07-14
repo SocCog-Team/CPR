@@ -457,6 +457,11 @@ for iSubj = 1:length(dyad_perf)
     end
 end
 
+lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
+lg0.Box                     = 'off';
+lg0.Position(1)             = .25;
+lg0.Position(2)             = .1;
+
 ln                          = line([0 1],[0 1]);
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
@@ -466,10 +471,6 @@ ax20.YLabel.String          = 'Dyad score [a.u.]';
 ax20.XLabel.String          = 'Solo score [a.u.]';
 ax20.XTickLabelRotation     = 0;
 axis tight
-
-% lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
-% lg0.Box                     = 'off';
-% lg0.Position(1)             = .4;
 
 % Implement gramm solution later!
 % clear g
@@ -485,6 +486,8 @@ axis tight
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Cumulative score comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% BUG HERE> CHECK SCORES < 20%
 cnt = 0;
 for iSubj = 1:length(dyad_perf)
     if isempty(dyad_perf{iSubj})

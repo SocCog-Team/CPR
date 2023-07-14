@@ -465,6 +465,7 @@ ax20.FontSize               = lb_fs;
 ax20.YLabel.String          = 'Dyad score [a.u.]';
 ax20.XLabel.String          = 'Solo score [a.u.]';
 ax20.XTickLabelRotation     = 0;
+axis tight
 
 % lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
 % lg0.Box                     = 'off';
@@ -484,6 +485,8 @@ ax20.XTickLabelRotation     = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Cumulative score comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% BUG HERE> CHECK SCORES < 20%
 cnt = 0;
 for iSubj = 1:length(dyad_perf)
     if isempty(dyad_perf{iSubj})
@@ -497,7 +500,8 @@ for iSubj = 1:length(dyad_perf)
 end
 
 % ax21                    	= axes('Position', [colmn(2)+.05 row pl_dim]); hold on
-ax21 = subplot(1,3,2); hold on
+ax21                        = subplot(1,3,2); hold on
+axis tight
 
 ln                          = line([0 1],[0 1]);
 ln.LineStyle                = ':';
@@ -535,6 +539,13 @@ ln                          = line([.5 .5],[0 5]);
 ln.LineWidth                = 1.5;
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
+axis tight
+
+% PRINT
+print(f, [dest_dir '/FIG2_a'], '-r500', '-dpng');
+print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG2_a'], '-r500', '-depsc2', '-painters');
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Reported stats
