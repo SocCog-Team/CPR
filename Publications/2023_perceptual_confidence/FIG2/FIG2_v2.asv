@@ -148,11 +148,11 @@ end
 %% PLOT
 
 % f                           = figure('units','normalized','position',[0 0 .5 1]);
-f                           = figure('units','centimeters','position',[0 0 18 29.7]);
+f                           = figure('units','centimeters','position',[0 0 14 16]);
 height                      = [linspace(.555, .056,4) .1];
 colmn                       = linspace(.075, .85,4);
-lb_fs                       = 14;
-lg_fs                       = 10;
+lb_fs                       = 8;
+lg_fs                       = 8;
 lw                          = 3;
 frme_ms                     = 1000/120;
 alp                         = .4;
@@ -160,91 +160,6 @@ dim                         = [.18 .15];
 col_dat                     = [0 0 0];
 col_ci                      = [.3 0 0];
 snr                         = solo_perf{end}.carr;
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Score comparison %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-sbjs = cellfun(@lower, sbj_lst, 'UniformOutput', false);
-
-pl_dim                      = dim*1.33;
-row                         = .79;
-cmap_coh                    = cool(size(snr,2));
-
-ax20                    	= axes('Position', [colmn(1) row pl_dim]); hold on
-
-for iSubj = 1:length(dyad_perf)
-    if isempty(dyad_perf{iSubj})
-        continue
-    end
-    sidx = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);
-    for iCoh = 1:length(snr)
-        sc(iCoh)                    = scatter(solo_perf{sidx}.trg_mscore(iCoh),dyad_perf{iSubj}.trg_mscore(iCoh));
-        sc(iCoh) .MarkerFaceColor   = cmap_coh(iCoh,:);
-        sc(iCoh) .MarkerFaceAlpha   = alp;
-        sc(iCoh) .MarkerEdgeColor   = 'none';
-        lg_str{iCoh}               	= num2str(round(snr(iCoh),2)*100);
-    end
-end
-
-ln                          = line([0 1],[0 1]);
-ln.LineStyle                = ':';
-ln.Color                    = [0 0 0];
-
-ax20.FontSize               = lb_fs;
-ax20.YLabel.String          = 'Dyad score [a.u.]';
-ax20.XLabel.String          = 'Solo score [a.u.]';
-ax20.XTickLabelRotation     = 0;
-
-lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
-lg0.Box                     = 'off';
-lg0.Position(1)             = .4;
-
-% Implement gramm solution later!
-% clear g
-% g=gramm('x',xsolo,'y',ydyad,'color',[0 0 0]);
-% g.facet_grid([],b);
-% g.geom_point();
-% g.stat_cornerhist('aspect',0.5);
-% g.geom_abline();
-% g.set_title('Visualize x-y with stat_cornerhist()');
-% figure('Position',[100 100 800 600]);
-% g.draw();
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Cumulative score comparison %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-cnt = 0;
-for iSubj = 1:length(dyad_perf)
-    if isempty(dyad_perf{iSubj})
-        continue
-    end
-    
-    cnt                     = cnt+1;
-    sidx                    = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);        
-    mscore_solo(cnt)    	= mean(solo_perf{sidx}.score_norm);
-    mscore_dyadic(cnt)   	= mean(dyad_perf{iSubj}.score_norm);
-end
-
-ax21                    	= axes('Position', [colmn(2)+.05 row pl_dim]); hold on
-
-ln                          = line([0 1],[0 1]);
-ln.LineStyle                = ':';
-ln.Color                    = [0 0 0];
-
-sc                          = scatter(mscore_solo,mscore_dyadic);
-sc.MarkerFaceColor          = [.3 .3 .3];
-sc.MarkerFaceAlpha          = 1;
-sc.MarkerEdgeColor          = 'none';
-
-ax21.FontSize               = lb_fs;
-ax21.YLim                   = [0 .4];
-ax21.XLim                   = [0 .4];
-ax21.YTick                  = [0 .2 .4];
-ax21.XTick                  = [0 .2 .4];
-ax21.YLabel.String          = 'Dyad score [a.u.]';
-ax21.XLabel.String          = 'Solo score [a.u.]';
-ax21.XTickLabelRotation     = 0;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: SOLO - Hit rate raw %%%
@@ -471,23 +386,6 @@ ax10                     	= plotAUROC(ax10,auc_acc,'AUROC',lb_fs,snr,alp,lw,col_
 ax11                    	= plotAUROC(ax11,auc_ecc,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% AUROC Significant subjects histogram
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-nBin                        = 15;
-ax12                       	= axes('Position', [colmn(3)+.08 row pl_dim]); hold on
-hs                          = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),nBin);
-hs.FaceColor                = [.3 .3 .3];
-hs.FaceAlpha                = 1;
-ax12.FontSize               = lb_fs;
-ax12.YLim                   = [0 5];
-ax12.YLabel.String          = '# Subjects';
-ax12.XLabel.String          = 'AUROC';
-ln                          = line([.5 .5],[0 5]);
-ln.LineWidth                = 1.5;
-ln.LineStyle                = ':';
-ln.Color                    = [0 0 0];
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % AUROC Significance testing
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -519,15 +417,124 @@ ax00                         = axes('Position',[0 0 1 1],'Visible','off');
 % text(colmn(1)-vofs,height(3)+hofs, 'E', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 % text(colmn(1)-vofs,height(4)+hofs, 'F', 'Parent', ax00, 'FontSize', 22, 'Color', 'k')
 
+titl_fs = 10;
 ofs = 0;
-text(colmn(1)+ofs,.71, 'Solo condition', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
-text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', 16, 'Color', 'k')
+text(colmn(1)+ofs,.71, 'Solo condition', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(3)+ofs,.71, 'Effect size', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG2'], '-r500', '-depsc2', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SUBPLOT: Score comparison %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f                           = figure('units','centimeters','position',[0 0 17.2 5.2]);
+
+sbjs = cellfun(@lower, sbj_lst, 'UniformOutput', false);
+
+% pl_dim                      = dim*1.33;
+row                         = .79;
+cmap_coh                    = cool(size(snr,2));
+
+% ax20                    	= axes('Position', [colmn(1) row pl_dim]); hold on
+ax20 = subplot(1,3,1); hold on
+
+for iSubj = 1:length(dyad_perf)
+    if isempty(dyad_perf{iSubj})
+        continue
+    end
+    sidx = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);
+    for iCoh = 1:length(snr)
+        sc(iCoh)                    = scatter(solo_perf{sidx}.trg_mscore(iCoh),dyad_perf{iSubj}.trg_mscore(iCoh));
+        sc(iCoh) .MarkerFaceColor   = cmap_coh(iCoh,:);
+        sc(iCoh) .MarkerFaceAlpha   = alp;
+        sc(iCoh) .MarkerEdgeColor   = 'none';
+        lg_str{iCoh}               	= num2str(round(snr(iCoh),2)*100);
+    end
+end
+
+ln                          = line([0 1],[0 1]);
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+
+ax20.FontSize               = lb_fs;
+ax20.YLabel.String          = 'Dyad score [a.u.]';
+ax20.XLabel.String          = 'Solo score [a.u.]';
+ax20.XTickLabelRotation     = 0;
+
+% lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
+% lg0.Box                     = 'off';
+% lg0.Position(1)             = .4;
+
+% Implement gramm solution later!
+% clear g
+% g=gramm('x',xsolo,'y',ydyad,'color',[0 0 0]);
+% g.facet_grid([],b);
+% g.geom_point();
+% g.stat_cornerhist('aspect',0.5);
+% g.geom_abline();
+% g.set_title('Visualize x-y with stat_cornerhist()');
+% figure('Position',[100 100 800 600]);
+% g.draw();
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% SUBPLOT: Cumulative score comparison %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+cnt = 0;
+for iSubj = 1:length(dyad_perf)
+    if isempty(dyad_perf{iSubj})
+        continue
+    end
+    
+    cnt                     = cnt+1;
+    sidx                    = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);        
+    mscore_solo(cnt)    	= mean(solo_perf{sidx}.score_norm);
+    mscore_dyadic(cnt)   	= mean(dyad_perf{iSubj}.score_norm);
+end
+
+% ax21                    	= axes('Position', [colmn(2)+.05 row pl_dim]); hold on
+ax21 = subplot(1,3,2); hold on
+
+ln                          = line([0 1],[0 1]);
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+
+sc                          = scatter(mscore_solo,mscore_dyadic);
+sc.MarkerFaceColor          = [.3 .3 .3];
+sc.MarkerFaceAlpha          = 1;
+sc.MarkerEdgeColor          = 'none';
+
+ax21.FontSize               = lb_fs;
+ax21.YLim                   = [0 .4];
+ax21.XLim                   = [0 .4];
+ax21.YTick                  = [0 .2 .4];
+ax21.XTick                  = [0 .2 .4];
+ax21.YLabel.String          = 'Dyad score [a.u.]';
+ax21.XLabel.String          = 'Solo score [a.u.]';
+ax21.XTickLabelRotation     = 0;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% AUROC Significant subjects histogram
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+nBin                        = 15;
+% ax12                       	= axes('Position', [colmn(3)+.08 row pl_dim]); hold on
+ax12 = subplot(1,3,3); hold on
+
+hs                          = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),nBin);
+hs.FaceColor                = [.3 .3 .3];
+hs.FaceAlpha                = 1;
+ax12.FontSize               = lb_fs;
+ax12.YLim                   = [0 5];
+ax12.YLabel.String          = '# Subjects';
+ax12.XLabel.String          = 'AUROC';
+ln                          = line([.5 .5],[0 5]);
+ln.LineWidth                = 1.5;
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Reported stats
@@ -540,6 +547,7 @@ perc_sign       = sum(sign_bool) / length(sign_bool);
 % Accuracy [coherence pooled, within subject]
 sign_bool      	= p_acc_pooled < ( .05 / length(p_acc_pooled));
 perc_sign       = sum(sign_bool) / length(sign_bool);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -167,7 +167,7 @@ end
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-height                    	= fliplr(linspace(.03,.8,4));
+height                    	= fliplr(linspace(.06,.85,4));
 clmns                      	= linspace(.11,.75,3);
 lb_fs                       = 14;
 lg_fs                       = 10;
