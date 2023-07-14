@@ -354,10 +354,10 @@ ln.LineStyle                = ':';
 ln.LineWidth                = lw/2;
 ln.Color                    = [.5 .5 .5];
 
-ln                          = line([150 150],[0 .2]);
-ln.LineStyle                = ':';
-ln.LineWidth                = lw;
-ln.Color                    = [0 0 0];
+% ln                          = line([150 150],[0 .2]);
+% ln.LineStyle                = ':';
+% ln.LineWidth                = lw;
+% ln.Color                    = [0 0 0];
 
 ax3.YLabel.String           = 'XC Coef';
 ax3.XLabel.String           = 'Lag [ms]';
@@ -422,8 +422,8 @@ for iSubj = 1:size(perf,1)
     end
 end
 
-ax6.YLabel.String           = {'Avg reward score', '[Dyad]'};
-ax6.XLabel.String           = {'Avg reward score', '[Solo]'};
+ax6.YLabel.String           = {'Dyadic'};
+ax6.XLabel.String           = {'Solo'};
 ax6.FontSize                = lb_fs;
 
 lg                          = legend([sc_agnt(1) sc_dyad(1)], 'COMP','HUMAN' );
