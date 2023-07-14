@@ -531,9 +531,9 @@ lofs                        = .225;
 % text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 % text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 
-text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
+% text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dpng');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dsvg', '-painters');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-depsc2', '-painters');
 
