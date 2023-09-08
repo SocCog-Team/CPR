@@ -55,9 +55,7 @@ end
 
 if iscell(fname)                                                            % If multiple files ...
     if isfile([fname{1}(1:12) '_merged.mat']) && write_file == false   
-%         tmp         = load([fname{1}(1:34) '_merged.mat']);             	% Load if merged file already exists
-%         d           = tmp.d;
-        d           = MW_readH5(d, [fname{1}(1:34) '_merged.h5']);
+        d           = MW_readH5([fname{1}(1:34) '_merged.h5']);
     else
         d.time      = [];                                                  	% Otherwise, import & merge...
         d.event     = [];
@@ -89,7 +87,7 @@ else
         if write_file
             disp('Save struct...')
             
-            cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/MW_readFile_FS.cfg';
+            cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/felix.cfg';
             MW_writeH5(d, [fname(1:end-5) '.h5'], 'replace', 'privateCFG', cfg_pth) % Save to .h5
 
             disp('Done!')

@@ -26,11 +26,11 @@ sbj_lst                 = x.Abbreviation;
 sbj_lst(cellfun(@isempty,sbj_lst)) = [];
 
 % Set params
-skip_processed_files    = false;
+skip_processed_files    = true;
 copy_if_present         = false;
 
 % Preprocess data
-for iSubj = 1:length(sbj_lst) %
+for iSubj = 31:length(sbj_lst)
     
     disp(['Processing subject: ' sbj_lst{iSubj}])
     
@@ -100,29 +100,29 @@ for iSubj = 1:length(sbj_lst) %
 end
 
 %% Import dyadic data
-
-xd                      = readtable([local_pth fname],'Sheet','Dyads');
-
-for iDyad = 63:67%xd.Dyad'
-    % Specify directories
-    data_pth            = [local_pth 'Dyad' num2str(iDyad) '/raw/'];
-    summ_pth            = [local_pth 'Dyad' num2str(iDyad) '/summary/'];
-    [status,msg,msgID] 	= mkdir(data_pth);
-    [status,msg,msgID] 	= mkdir(summ_pth);
-    
-    % Extract .mwk2 file names from source directory
-    cd([source_pth 'Dyad' num2str(iDyad) '/raw/'])
-    mwk2_files              = dir('*.mwk2');
-
-    for iFile = 1:length(mwk2_files)
-        % Copy file to local directory
-        if copy_if_present || ~isfile([data_pth mwk2_files(iFile).name])
-            [status,msg,msgID]	= copyfile([source_pth 'Dyad' num2str(iDyad) '/raw/' mwk2_files(iFile).name], data_pth);
-        end 
-        
-        if contains(mwk2_files(iFile).name,'CPRdyadic')
-            % Import CPRdyadic data
-            [t,d,s]         = CPR_psych_import(data_pth, mwk2_files(iFile).name);
-        end
-    end
-end
+% 
+% xd                      = readtable([local_pth fname],'Sheet','Dyads');
+% 
+% for iDyad = 19:71
+%     % Specify directories
+%     data_pth            = [local_pth 'Dyad' num2str(iDyad) '/raw/'];
+%     summ_pth            = [local_pth 'Dyad' num2str(iDyad) '/summary/'];
+%     [status,msg,msgID] 	= mkdir(data_pth);
+%     [status,msg,msgID] 	= mkdir(summ_pth);
+%     
+%     % Extract .mwk2 file names from source directory
+%     cd([source_pth 'Dyad' num2str(iDyad) '/raw/'])
+%     mwk2_files              = dir('*.mwk2');
+% 
+%     for iFile = 1:length(mwk2_files)
+%         % Copy file to local directory
+%         if copy_if_present || ~isfile([data_pth mwk2_files(iFile).name])
+%             [status,msg,msgID]	= copyfile([source_pth 'Dyad' num2str(iDyad) '/raw/' mwk2_files(iFile).name], data_pth);
+%         end 
+%         
+%         if contains(mwk2_files(iFile).name,'CPRdyadic')
+%             % Import CPRdyadic data
+%             [t,d,s]         = CPR_psych_import(data_pth, mwk2_files(iFile).name);
+%         end
+%     end
+% end

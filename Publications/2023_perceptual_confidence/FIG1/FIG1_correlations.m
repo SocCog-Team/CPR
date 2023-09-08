@@ -1,4 +1,8 @@
-%%% Run FIG2 script first to get solo correlation data [cell, solo_cr] %%%
+close all
+clear all
+
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
 
 lw                  = 3;
 lb_fs               = 20;
@@ -6,10 +10,6 @@ alp                 = .2;
 frme_ms             = 1000/120;
 nLag                = 150;
 snr                 = unique(solo_cr{1}.coh);
-
-%% Population plot
-
-%%% start at sample 150 %%%
 
 %% Example subject
 subj_id             = 17;

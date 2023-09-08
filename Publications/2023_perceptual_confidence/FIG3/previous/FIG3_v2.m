@@ -10,163 +10,85 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-% Import subject summary table
-pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';
-x                           = readtable([pth 'Subjects_summary.xlsx']);
-sbj_lst                     = x.Abbreviation;
-sbj_lst(cellfun(@isempty,sbj_lst)) = [];
-c                           = 0;
-cc                          = 0;
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_comp_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_comp_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_human_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
 
-sbj_lst(cellfun(@(x) strcmp(x, 'RoH'),sbj_lst)) = [];
-
-% Extract file names of solo experiments
-for iSubj = 1:length(sbj_lst)
-    data_pth                = [pth sbj_lst{iSubj} '/summary/'];
-    
-    if isdir(data_pth)
-        cd(data_pth)
-        mat_files        	= dir('*.mat');
-        
-        for iFile = 1:length(mat_files)
-            if contains(mat_files(iFile).name,'CPRsolo')
-                c               = c+1;
-                fname_solo{c} 	= mat_files(iFile).name;
-            end
-            if contains(mat_files(iFile).name,'CPRagent')
-                cc              = cc+1;
-                fname_agnt{cc} 	= mat_files(iFile).name;
-                dir_agnt{cc}    = data_pth;
-            end
-        end
-    end
-end
-
-for i= 1:length(fname_agnt)
-    agnt_bool(i) = contains(fname_agnt{i},'agnt');
-end
-
-%% Extract subject data
+%% Compare conditions
 
 nSample                                 = 30;
 scnt                                    = 0;
-nLag                                    = 150;
+snr                                     = solo_perf{1}.carr;
 
-for iSub = 1:length(sbj_lst)
-    
-    for iExp = 1:2
-        if iExp == 1
-            fname                   = fname_solo;
-        else
-            fname                	= fname_agnt(~agnt_bool);
-        end  
-      
-        fname_id                 	= cellfun(@(x) x(1:12), fname, 'UniformOutput', false);
-        fidx                    	= find(cellfun(@(x) contains(x,lower(sbj_lst{iSub})),fname_id));
-        tc                      	= 0;
-        t                       	= [];
-        all                      	= [];
-        tmp                     	= {};
-        
-        if isempty(fidx)
-            lag(iSub,iExp)        	= nan;
-            id{iSub,iExp}        	= nan;
-            continue
-        end
-        
-        % Load experimental blocks
-        for iBlock = 1:length(fidx)
-            tbl                 	= [];
-            tbl                 	= load([pth sbj_lst{iSub} '/summary/' fname{fidx(iBlock)}]);
-            
-            if sum(unique(tbl.t.rdp_coh) < .1) > 2
-                continue
-            end
-            
-            t                   	= [t; tbl.t];                       % Concatenate data tables
-            [tmp, tc]               = extractTrials(tbl, tmp, tc);     	% Extract trials for correlation analysis
-        end
-        
-        clear cr ps
-        snr                         = unique(t.rdp_coh);
-        id{iSub,iExp}            	= sbj_lst{iSub};
-        nLag                        = 150;
-        [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
-        lag(iSub,iExp)           	= median(cr.lag);
-        perf{iSub,iExp}           	= response_readout(t, nSample);
-        
-    end
-    
-    %%% Calculate difference between conditions
-    if isempty(perf{iSub,2})
-        continue
-    end
-    scnt                            = scnt+1;
-    hir_df(scnt,:)                  = perf{iSub,2}.hir - perf{iSub,1}.hir;
-    
-    for iCoh = 1:length(snr)
-        auc_acc(scnt,iCoh)          = f_auroc(perf{iSub,1}.acc_trg{iCoh},perf{iSub,2}.acc_trg{iCoh});
-        auc_ecc(scnt,iCoh)          = f_auroc(perf{iSub,1}.ecc{iCoh},perf{iSub,2}.ecc{iCoh});
-        auc_score(scnt,iCoh)        = f_auroc(perf{iSub,1}.trg_score{iCoh},perf{iSub,2}.trg_score{iCoh});
-    end
-    
-    %%% Load all dyadic sessions of subjects
-    dyad_tbl                        = getDyadicSessions(pth,sbj_lst{iSub});
-    if ~isempty(dyad_tbl)
-        perf{iSub,3}             	= response_readout(dyad_tbl, nSample);
-    end
+for iSubj = 1:size(dyad_pc_perf,2)
+    if ~isempty(dyad_pc_perf{iSubj})
+        id_dyad_pc{iSubj}           	= dyad_pc_perf{iSubj}.id;
+    else
+        id_dyad_pc{iSubj}           	= 'empty';
+    end 
 end
 
-% Calculate area under receiver operating characteristics
-% Value > .5 --> 2nd input located to the right of first
-% input, i.e. more positive in this case
-% a = normrnd(0,1,[1 1000]);
-% b = normrnd(1,1,[1 1000]);
-% figure; hold on
-% histogram(a, 50)
-% histogram(b, 50)
-% f_auroc(a, b)
+for iSubj = 1:size(dyad_perf,2)
+    if ~isempty(dyad_perf{iSubj})
+        id_dyad{iSubj}           	= dyad_perf{iSubj}.id;
+    else
+        id_dyad{iSubj}           	= 'empty';
+    end 
+end
+
+for iSub = 1:length(solo_perf)
+
+    if isempty(solo_perf{iSub})
+        continue
+    end
+    
+    idx_pc                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad_pc);
+    
+    if sum(idx_pc > 0)
+        scnt                     	= scnt+1;
+        hir_df(scnt,:)            	= dyad_pc_perf{idx_pc}.hir - solo_perf{iSub}.hir;
+        
+        for iCoh = 1:length(snr)
+            
+            auc_acc(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},dyad_pc_perf{idx_pc}.acc_trg{iCoh});
+            auc_ecc(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc{iCoh},dyad_pc_perf{idx_pc}.ecc{iCoh});
+            auc_score(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},dyad_pc_perf{idx_pc}.trg_score{iCoh});
+         
+%             auc_acc(scnt,iCoh)          = f_auroc(solo_perf{iSub}.acc_trg{iCoh},dyad_pc_perf{idx_pc}.acc_trg{iCoh});
+%             auc_ecc(scnt,iCoh)          = f_auroc(solo_perf{iSub}.ecc{iCoh},dyad_pc_perf{idx_pc}.ecc{iCoh});
+%             auc_score(scnt,iCoh)        = f_auroc(solo_perf{iSub}.trg_score{iCoh},dyad_pc_perf{idx_pc}.trg_score{iCoh});
+        end
+    end
+end
 
 %% Load all agent sessions
 
-sxc                                 = [];
-coh                                 = [];
-fname                               = fname_agnt(agnt_bool);
-dirs                                = dir_agnt(agnt_bool);
+sxc_agnt                    = [];
+coh_agnt                    = [];
+c                        	= 0;
 
-for iSess = 1:length(fname)
+for iComp = 1:length(agnt_perf)
     
-    tc                           	= 0;
-    tmp                           	= {};
-    tbl                             = [];
-    tbl                             = load([dirs{iFile} fname{iFile}]);
-    
-    if sum(unique(tbl.t.rdp_coh) < .1) > 2
+    if isempty(agnt_perf{iComp})
         continue
     end
     
-    [tmp, tc]                   = extractTrials(tbl, tmp, tc);     	% Extract trials for correlation analysis
-    id{iSess}                   = sbj_lst{iSess};
-    nLag                        = 150;
-    [cr,ps]                     = CPR_correlation_analysis_WIP(tmp, nLag, false);
-    lag_agnt(iSess)            	= median(cr.lag);
-    sxc                        	= [sxc; cr.sxc];
-    coh                        	= [coh; cr.coh'];
-    agnt(iSess)                	= response_readout(tbl.t, nSample);
-
-end
-
-for iSess = 1:length(agnt)
-    macc_agnt(iSess,:)          = agnt(iSess).macc_trg;
-    mecc_agnt(iSess,:)          = agnt(iSess).mecc;
-    hir_agnt(iSess,:)           = agnt(iSess).hir;
-    trg_score_agnt(iSess,:)     = agnt(iSess).trg_mscore;
+    c                       = c+1;
+    macc_agnt(c,:)          = agnt_perf{iComp}.macc_trg;
+    mecc_agnt(c,:)          = agnt_perf{iComp}.mecc;
+    hir_agnt(c,:)           = agnt_perf{iComp}.hir;
+    trg_score_agnt(c,:)     = agnt_perf{iComp}.trg_mscore;
+    sxc_agnt                = [sxc_agnt; agnt_cr{iComp}.sxc];
+    coh_agnt                = [coh_agnt; agnt_cr{iComp}.coh'];
 end
 
 %% PLOT
 
 f                           = figure('units','normalized','position',[0 0 .5 1]);
-height                    	= fliplr(linspace(.03,.8,4));
+height                    	= fliplr(linspace(.06,.85,4));
 clmns                      	= linspace(.11,.75,3);
 lb_fs                       = 14;
 lg_fs                       = 10;
@@ -174,6 +96,7 @@ lw                          = 3;
 frme_ms                     = 1000/120;
 alp                         = .35;
 avg_mult                    = 1.5;
+nLag                        = 150;                                          % Cross-correlation lag       
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Example agent joystick response %%%
@@ -191,8 +114,8 @@ ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); 
 ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
 ax0                       	= axes('Position', [clm row dim]); hold on
 
-dte                         = unique(t_agnt.date);
-t_agnt_plot                 = agnt{6};
+load('/Volumes/T7_Shield/CPR_psychophysics/RoH/summary/20220622_agnt_CPRagent_block1_tbl.mat')
+t_agnt_plot                 = t;
 
 % Extracte experimental data
 clear trg_acc trg_conf trg_coh trg_hit
@@ -259,7 +182,7 @@ ax0.XLabel.Position(2)      = -.22;
 
 colormap(cmap)
 
-cmap_coh                    = cool(size(snr,1));
+cmap_coh                    = cool(size(snr,2));
 
 for iCoh = 1:length(snr)
     cidx                    = trg_coh == snr(iCoh);
@@ -331,10 +254,10 @@ lg.Position(2)              = .67;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 yof                         = .16;
 ax3                         = axes('Position', [clm-xof row+yof dim(1)/1.25 dim(2)/2]); hold on
-cmap                        = cool(size(snr,1));
+cmap                        = cool(size(snr,2));
 
-for iCoh = 1:size(snr,1)
-    avg_sxc{iCoh} = mean(sxc(coh == snr(iCoh),:));
+for iCoh = 1:size(snr,2)
+    avg_sxc{iCoh} = mean(sxc_agnt(coh_agnt == snr(iCoh),:));
 end
 
 clear pl
@@ -354,16 +277,16 @@ ln.LineStyle                = ':';
 ln.LineWidth                = lw/2;
 ln.Color                    = [.5 .5 .5];
 
-ln                          = line([150 150],[0 .2]);
-ln.LineStyle                = ':';
-ln.LineWidth                = lw;
-ln.Color                    = [0 0 0];
+% ln                          = line([150 150],[0 .2]);
+% ln.LineStyle                = ':';
+% ln.LineWidth                = lw;
+% ln.Color                    = [0 0 0];
 
 ax3.YLabel.String           = 'XC Coef';
 ax3.XLabel.String           = 'Lag [ms]';
-ax3.XLim                    = [0 301];
+ax3.XLim                    = [150 301];
 ax3.YLim                    = [0 .16];
-ax3.XTick                   = [0 150 avg_peak_pos 300];
+ax3.XTick                   = [150 avg_peak_pos 300];
 ax3.FontSize              	= lb_fs;
 ax3.XTickLabel              = round((cellfun(@str2num, ax3.XTickLabel)-nLag) * frme_ms);
 ax3.Position                = [clmns(3)-xof row+yof dim(1)/1.25 dim(2)/2];
@@ -411,22 +334,23 @@ ln.LineStyle                = '--';
 ln.LineWidth                = lw/2;
 ln.Color                    = [0 0 0];
 
-
-for iSubj = 1:size(perf,1)
-    if ~isempty(perf{iSubj,2})
-        sc_agnt            	= scatter(mean(cell2mat(perf{iSubj,2}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
-    end
+for iSubj = 1:size(solo_perf,2)
+    idx_pc              = cellfun(@(x) strcmp(x,solo_perf{iSubj}.id),id_dyad_pc);
+    idx_dy            	= cellfun(@(x) strcmp(x,solo_perf{iSubj}.id),id_dyad);
     
-    if ~isempty(perf{iSubj,3})
-        sc_dyad            	= scatter(mean(cell2mat(perf{iSubj,3}.trg_score)),mean(cell2mat(perf{iSubj,1}.trg_score)), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+    if sum(idx_pc>0) && sum(idx_dy>0)
+        sc_agnt       	= scatter(mean(solo_perf{iSubj}.score_norm),mean(dyad_pc_perf{idx_pc}.score_norm), 'MarkerFaceColor', [.5 .5 .5],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+        sc_dyad       	= scatter(mean(solo_perf{iSubj}.score_norm), mean(dyad_perf{idx_dy}.score_norm), 'MarkerFaceColor', [0 0 0],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
     end
 end
 
-ax6.XLabel.String           = {'Avg reward score', '[Dyad]'};
-ax6.YLabel.String           = {'Avg reward score', '[Solo]'};
+ax6.YLabel.String           = {'Dyadic'};
+ax6.XLabel.String           = {'Solo'};
 ax6.FontSize                = lb_fs;
+ax6.YLim                    = [0 .5];
+ax6.XLim                    = [0 .5];
 
-lg                          = legend([sc_agnt(1) sc_dyad(1)], 'AGNT','HUMAN' );
+lg                          = legend([sc_agnt(1) sc_dyad(1)], 'COMP','HUMAN' );
 lg.Location                 = 'southeast';
 lg.FontSize                 = lg_fs;
 lg.Box                      = 'on';
@@ -435,31 +359,34 @@ lg.Box                      = 'on';
 %%% SUBPLOT: Hit rate comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-for iSub = 1:size(perf,1)
-    hir.solo(iSub)   	= perf{iSub,1}.hir_pool;
-    if ~isempty(perf{iSub,2})
-        hir.agnt(iSub) 	= perf{iSub,2}.hir_pool;
+for iSub = 1:size(solo_perf,2)
+    hir.solo(iSub)   	= solo_perf{iSub}.hir_pool;
+    idx_pc              = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad_pc);
+    idx_dy            	= cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad);
+
+    if sum(idx_pc > 0)
+        hir.dyad_pc(iSub)	= dyad_pc_perf{idx_pc}.hir_pool;
     else
-        hir.agnt(iSub) 	= nan;
+        hir.dyad_pc(iSub) 	= nan;
     end
-    if ~isempty(perf{iSub,3})
-        hir.dyad(iSub) 	= perf{iSub,3}.hir_pool;
+    if sum(idx_dy > 0)
+        hir.dyad(iSub) 	= dyad_perf{idx_dy}.hir_pool;
     else
         hir.dyad(iSub) 	= nan;
   	end
 end
 
-nRep = 500;
+nRep                        = 500;
 e.solo                      = bootci(nRep, {@mean, hir.solo},'alpha', .001);
-e.agnt                      = bootci(nRep, {@nanmean, hir.agnt},'alpha', .001);
+e.dyad_pc               	= bootci(nRep, {@nanmean, hir.dyad_pc},'alpha', .001);
 e.dyad                      = bootci(nRep, {@nanmean, hir.dyad},'alpha', .001);
 
 ax1                      	= axes('Position', [clmns(1) height(4) dim]); hold on
-bp                          = bar([1:3],[mean(hir.solo) nanmean(hir.agnt) nanmean(hir.dyad)]);
+bp                          = bar([1:3],[mean(hir.solo) nanmean(hir.dyad_pc) nanmean(hir.dyad)]);
 bp.FaceColor                = [.5 .5 .5];
 bp.EdgeColor                = 'none';
 
-er                          = errorbar([1:3],[mean(hir.solo) nanmean(hir.agnt) nanmean(hir.dyad)],[nanmean(hir.solo)-e.solo(2) nanmean(hir.agnt)-e.agnt(2) nanmean(hir.dyad)-e.dyad(2)],[e.solo(1)-mean(hir.solo) e.agnt(1)-nanmean(hir.agnt) e.dyad(1)-nanmean(hir.dyad)]);    
+er                          = errorbar([1:3],[mean(hir.solo) nanmean(hir.dyad_pc) nanmean(hir.dyad)],[nanmean(hir.solo)-e.solo(2) nanmean(hir.dyad_pc)-e.dyad_pc(2) nanmean(hir.dyad)-e.dyad(2)],[e.solo(1)-mean(hir.solo) e.dyad_pc(1)-nanmean(hir.dyad_pc) e.dyad(1)-nanmean(hir.dyad)]);    
 er.Color                    = [0 0 0];                            
 er.LineStyle                = 'none';
 er.LineWidth                = lw/1.5;
@@ -468,7 +395,7 @@ ax1.YLabel.String           = 'Avg hit rate';
 ax1.XLim                    = [.5 3.5];
 ax1.YLim                    = [.3 .6];
 ax1.YTick                 	= .3:.1:.6;
-ax1.XTickLabel              = {'Solo','Agnt','Dyad'};
+ax1.XTickLabel              = {'Solo','Comp','Dyad'};
 ax1.FontSize                = lb_fs;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -516,8 +443,8 @@ ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--'
 ax13                        = plotData(ax13, auc_acc, {'Accuracy diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
 ax13.Position             	= [clmns(3) height(4) dim];
 
-text(3.75,0.825, 'Agnt > Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
-text(3.75,0.175, 'Agnt < Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
+text(3.5,0.825, 'Comp > Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
+text(3.5,0.175, 'Comp < Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Annotations
@@ -525,170 +452,21 @@ text(3.75,0.175, 'Agnt < Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0
 
 ax0                         = axes('Position',[0 0 1 1],'Visible','off');
 lofs                        = .225;
-text(clmns(1)-.1,height(1)+lofs, 'A', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(3)-.175,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(3)-.175,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
-text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(1)-.1,height(1)+lofs, 'A', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(3)-.175,height(1)+lofs, 'B', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(3)-.175,height(2)+lofs, 'C', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(1)-.1,height(3)+lofs, 'D', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
+% text(clmns(2)-.1,height(3)+lofs, 'E', 'Parent', ax0, 'FontSize', 30, 'Color', 'k')
 
-text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
+% text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-5400', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dpng');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dsvg', '-painters');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-depsc2', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [tmp, tc] = extractTrials(tbl, tmp, tc)
-for iTrl = 1:tbl.t.cyc_no(end)
-    tidx                    = tbl.t.cyc_no == iTrl;             % Trial index
-    tt                      = tbl.t(tidx,:);                    % Relevant stimulus cycles
-    
-    % Initiate cell
-    tc                      = tc+1;                             % Trial counter
-    tmp.frme_ts{tc}         = [];
-    tmp.rdp_dir{tc}         = [];
-    tmp.rdp_coh{tc}     	= [];
-    tmp.js_dir{tc}      	= [];
-    tmp.js_ecc{tc}      	= [];
-    tmp.refresh{tc}         = [];
-    
-    % Extract and add data
-    for iState = 1:size(tt,1)
-        tmp.frme_ts{tc}  	= [tmp.frme_ts{tc} tt.frme_ts{iState}];
-        tmp.rdp_dir{tc}  	= [tmp.rdp_dir{tc} repmat(tt.rdp_dir(iState),1,length(tt.frme_ts{iState}))];
-        tmp.rdp_coh{tc}  	= [tmp.rdp_coh{tc} repmat(tt.rdp_coh(iState),1,length(tt.frme_ts{iState}))];
-        tmp.js_dir{tc}  	= [tmp.js_dir{tc} tt.js_dir{iState}];
-        tmp.js_ecc{tc}  	= [tmp.js_ecc{tc} tt.js_ecc{iState}];
-        tmp.refresh{tc}     = [tmp.refresh{tc} median(diff(tmp.frme_ts{tc}))];
-    end
-end
-end
-
-function dyad_tbl = getDyadicSessions(pth,ID)
-    dyad_cnt                    = 0;
-    dyad_tbl                    = [];
-    
-    for iDyad = 19:61
-        cd([pth ['Dyad' num2str(iDyad)] '/summary/'])
-        mat_files              	= dir('*.mat');
-        
-        if isempty(mat_files)
-            continue
-        end
-        
-        dyad_cnt                = dyad_cnt+1;
-        tmp1                    = split(mat_files(1).name,'_');
-        tmp3                    = split(mat_files(3).name,'_');
-        id_dyad(dyad_cnt,:)    	= [{tmp1{2}}, {tmp3{2}}];
-        n_dyad(dyad_cnt,:)      = iDyad;
-        
-        % Check if subject part of this dyad
-        for iFile = 1:size(mat_files,1)
-            is_player(iFile) = contains(mat_files(iFile).name,lower(ID));
-            
-            if is_player(iFile)
-                tmp_tbl      	= load(mat_files(iFile).name);
-                dyad_tbl      	= [dyad_tbl; tmp_tbl.t];                % Organise dyadic data
-            end
-        end
-    end
-end
-
-function out = response_readout(in, nSample)
-
-c                           = 0;
-snr                         = unique(in.rdp_coh);
-
-% Target score
-clear tscore score_cum score_hi score_coh score_dte score_exp trg_states
-for iState = 1:size(in.trg_ts,1)
-    for iTrg = 1:length(in.trg_ts{iState})
-        try
-            c                   = c +1;
-            score_hi(c)         = in.trg_hit{iState}(iTrg);
-            score(c)            = double(in.trg_score{iState}(iTrg));
-            score_coh(c)        = in.rdp_coh(iState);
-            score_dte(c)        = in.date(iState);
-            score_exp(c)        = in.exp(iState);
-        catch
-            warning(['Skipped state/target: ' num2str(iState) '/' num2str(iTrg)])
-        end
-    end
-end
-
-trg_states                 	= in.trg_hit(logical(in.trg_shown));
-out.hir_pool                = sum(cellfun(@sum,trg_states)) / sum(cellfun(@numel,trg_states));
-
-dte = unique(score_dte);
-dte(ismissing(dte)) = [];
-
-for iDate = 1:length(dte)
-    clear dte_idx score_cum dte_score
-    dte_idx                 = score_dte == dte(iDate);
-    out.score_final_exp(iDate) = unique(score_exp(dte_idx));
-    dte_score               = score(dte_idx);
-    score_cum               = cumsum(dte_score(~isnan(dte_score)));
-    out.score_norm(iDate)   = score_cum(end) ./ length(dte_score(~isnan(dte_score)));
-end
-
-for iCoh = 1:length(snr)
-    clear cIdx tIdx nhi ntrg
-    
-    cIdx = in.rdp_coh == snr(iCoh);
-    tIdx = logical(in.trg_shown);
-    
-    tIdx(cellfun(@length,in.js_ecc) < 100) = false;
-    cIdx(cellfun(@length,in.js_ecc) < 100) = false;
-    
-    % Hit rate
-    nhi                     = sum(cellfun(@sum,in.trg_hit(cIdx & tIdx)));
-    ntrg                    = sum(cellfun(@numel,in.trg_hit(cIdx & tIdx)));
-    out.hir(iCoh)           = nhi / ntrg;
-    
-    % Target score [hits only]
-    out.trg_mscore(iCoh)	= nanmean(score(score_coh  == snr(iCoh) & score_hi == true));
-    out.trg_score{iCoh}  	= score(score_coh  == snr(iCoh) & score_hi == true);
-    
-    % Joystick displacement
-    out.mecc(iCoh)         	= nanmedian(cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx)));
-    out.ecc{iCoh}           = cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx));
-    
-    % Joystick accuracy [state-wise]
-    for iState = 1:length(in.rdp_dir)
-        % At least 100 frames
-        if length(in.js_dir{iState}) < 100
-            continue
-        end
-        js_dev              = rad2deg(circ_dist(deg2rad(in.js_dir{iState}(end-nSample:end)),deg2rad(in.rdp_dir(iState))));  % Minimum RDP-Joystick difference
-        js_acc(iState)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
-    end
-    out.macc_state(iCoh)  	= nanmedian(js_acc);
-    out.acc_state{iCoh}    	= js_acc;
-    
-    % Joystick accuracy [before first target]
-    t1_ts                   = cellfun(@(x) x(1), in.trg_ts);
-    f1_ts                   = cellfun(@(x) x(1), in.frme_ts);
-    trgIdx                  = (t1_ts-f1_ts) >= 1e6;
-    rdp_dir                 = in.rdp_dir(cIdx & in.trg_shown & trgIdx);
-    js_dir                  = in.js_dir(cIdx & in.trg_shown & trgIdx);
-    frmes                   = in.frme_ts(cIdx & in.trg_shown & trgIdx);
-    trg1_ts                 = t1_ts(cIdx & in.trg_shown & trgIdx);
-    
-    clear js_acc
-    for iState = 1:length(rdp_dir)
-        clear js_dev
-        smpl_idx            = find(frmes{iState} < trg1_ts(iState),1,'last')-nSample : find(frmes{iState} < trg1_ts(iState),1,'last');
-        js_dev              = rad2deg(circ_dist(deg2rad(js_dir{iState}(smpl_idx)),deg2rad(rdp_dir(iState))));  % Minimum RDP-Joystick difference
-        js_acc(iState)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
-    end
-    
-    out.macc_trg(iCoh)      = nanmedian(js_acc);
-    out.acc_trg{iCoh}     	= js_acc;
-    out.carr(iCoh)         	= snr(iCoh);
-end
-end
 
 function [pl, ci] = plotAvgCI(dat, col, alp, lw)
 
@@ -719,7 +497,7 @@ end
 for iL = 1:size(dat,1)
     pl(iL)               	= plot(dat(iL,:));
     pl(iL).Color          	= [.5 .5 .5 alp];
-    pl(iL).LineWidth      	= lw/2;
+    pl(iL).LineWidth      	= lw/lw;
 end
 
 % Boostrap confidence intervals
@@ -735,7 +513,7 @@ ci                          = [CI(1,:) fliplr(CI(2,:))];
 fl                          = fill(x_spacing,ci,[.3 0 0],'EdgeColor','none', 'FaceAlpha', alp);
 
 % Plot mean curve
-pm                          = plot(nanmedian(dat),'LineWidth', lw*avg_mult, 'Color', [0 0 0]);
+pm                          = plot(nanmean(dat),'LineWidth', lw/1.5, 'Color', [0 0 0]);
 
 ax.XLim                     = [1 size(dat,2)];
 ax.XLabel.String            = 'Coherence [%]';
@@ -750,3 +528,14 @@ ax.XTickLabelRotation       = 0;
 box off
 end
 
+function [out] = getAUROC(in1, in2)
+
+if size(in1,1) == 1
+    in1         = in1';
+    in2         = in2';
+end
+
+lab          	= [zeros(length(in1),1); ones(length(in2),1)];
+[~,~,~,out]     = perfcurve(lab,[in1; in2],1);
+
+end

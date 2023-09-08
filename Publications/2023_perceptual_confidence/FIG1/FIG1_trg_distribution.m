@@ -74,12 +74,12 @@ cb.Location                 = 'northoutside';
 
 % Add targets
 sc1                         = scatter(trg_acc{1}, trg_conf{1}, 'filled');
-sc1.CData                   = [.69 0 0];
+sc1.CData                   = [0 0 1];
 sc1.SizeData                = 40;
 sc1.MarkerFaceAlpha         = .75;
 
 sc2                         = scatter(trg_acc{2}, trg_conf{2}, 'filled');
-sc2.CData                   = [0 .69 0];
+sc2.CData                   = [0 .65 0];
 sc2.SizeData                = 40;
 sc2.MarkerFaceAlpha         = .75;
 
@@ -97,7 +97,7 @@ for iSubj = 1:2
     st                     	= stairs(-h,cntr);
     st.LineWidth          	= lw;
     if iSubj == 1
-        st.Color          	= [.65 0 0];
+        st.Color          	= [0 0 1];
     else
         st.Color          	= [0 .65 0];
     end
@@ -113,7 +113,7 @@ for iSubj = 1:2
     st                     	= stairs(cntr,-v);
     st.LineWidth          	= lw;
     if iSubj == 1
-        st.Color          	= [.65 0 0];
+        st.Color          	= [0 0 1];
     else
         st.Color          	= [0 .65 0];
     end

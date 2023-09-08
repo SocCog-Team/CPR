@@ -131,31 +131,44 @@ print(f, [dest_dir '/rdp_example_line_coh'], '-r500', '-dsvg');
 f                	= figure;
 ax                  = gca; hold on
 
+time_bar                    = line([25 27],[130 130]); % 2s
+time_bar.LineStyle          = '-';
+time_bar.LineWidth          = 2;
+time_bar.Color              = [0 0 0];
+
 % Plot RDP stepfunction
-pidx                = 2200:6000; % Sample index
-% pidx                = 2450:4100; % Sample index
-p                   = plot(ts(pidx),rdp_dir(pidx),'LineWidth',lw*1.5,'Color', [0 0 0]);
+pidx                        = 2450:6000; % Sample index
+p                           = plot(ts(pidx),rdp_dir(pidx),'LineWidth',lw*1.5,'Color', [0 0 0]);
+lum                         = 0;
+alp                         = .75;
 
-% Use scatter to color-code 2D joystick response
-for i = pidx
-    if ~isnan(p1_ecc(i))
-        sc                  = scatter(ts(i), p1_dir(i));
-        sc.MarkerFaceColor  = [p1_ecc(i) 0 0];
-        sc.MarkerEdgeColor  = [p1_ecc(i) 0 0];
-        sc.SizeData         = 50;
-    end
-    
-    if ~isnan(p2_ecc(i))
-        sc                  = scatter(ts(i), p2_dir(i));
-        sc.MarkerFaceColor  = [0 p2_ecc(i) 0];
-        sc.MarkerEdgeColor  = [0 p2_ecc(i) 0];
-        sc.SizeData         = 50;
-    end
-end
+sc1                         = scatter(ts(pidx), p1_dir(pidx),'filled');
+sc1.CData                   = [zeros(length(ts(pidx)),1)+lum zeros(length(ts(pidx)),1)+lum p1_ecc(pidx)'];
+sc1.MarkerFaceAlpha         = alp;
+sc1.MarkerEdgeAlpha         = alp;
 
+sc2                         = scatter(ts(pidx), p2_dir(pidx),'filled');
+sc2.CData                   = [zeros(length(ts(pidx)),1)+lum p2_ecc(pidx)' zeros(length(ts(pidx)),1)+lum];
+sc2.MarkerFaceAlpha         = alp;
+sc2.MarkerEdgeAlpha         = alp;
 
-ax.YAxis.Visible =  'off';
-ax.XAxis.Visible =  'off';
+ax.YAxis.Visible            =  'off';
+ax.XAxis.Visible            =  'off';
 
 print(f, [dest_dir '/js_example_response'], '-r500', '-dpng');
 print(f, [dest_dir '/js_example_response'], '-r500', '-dsvg');
+print(f, [dest_dir '/js_example_response'], '-r500', '-depsc2');
+
+%% Coherence legend
+
+f               = figure;
+cb              = colorbar;
+cb.Ticks        = [];
+cb.Position     = [.4 .1 .2 .8];
+cb.Box          = 'off';
+cl              = linspace(0,.9,256)';
+
+axis off
+colormap([cl cl cl])
+
+print(f, [dest_dir '/lgnd_coh'], '-r300', '-dpng');
