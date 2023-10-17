@@ -1,10 +1,5 @@
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/WIP/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
-addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes
 
@@ -13,10 +8,10 @@ clear all
 
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_human_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_human_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_pairwise_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_pairwise_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_performance.mat')
 
 % Import subject summary spreadsheet
 pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
@@ -30,7 +25,7 @@ nLag                        = 150;                                          % Cr
 %% Convert relevant data to matrix for simplicity
 
 cnt                         = 0;
-for iSubj = 1:36%length(sbj_lst)
+for iSubj = 1:length(sbj_lst)
     if isempty(solo_perf{iSubj}.hir)
         continue
     end
@@ -208,8 +203,8 @@ end
 ax13                      	= axes('Position', [colmn(3) height(1) dim]); hold on
 % pt                        = patch([0 8 8 0], [0 0 25 25], [.7 .7 .7], 'FaceAlpha',.2, 'EdgeColor','none');
 % pt                       	= patch([0 8 8 0], [-25 -25 0 0], [.3 .3 .3], 'FaceAlpha',.2, 'EdgeColor','none');
-tx                        	= text(1.25,18, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(1.25,-18, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                        	= text(1.25,18, 'Dyadic > Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(1.25,-18, 'Solo > Dyadic', 'FontSize', lb_fs, 'Color', 'k');
 
 [ax13,pl]                   = plotData(ax13,df_hir,true,lw,alp,col_dat,col_ci);
 lm                          = line([1 7],[0 0], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
@@ -251,8 +246,13 @@ for iSubj = 1:size(dyad_perf,2)
     end
     
     cnt = cnt+1;
+
     for iCoh = 1:length(snr)
-        
+        bl_ecc(cnt,iCoh)     	= d.sp.mecc(iCoh);
+        bl_acc(cnt,iCoh)     	= d.sp.macc_trg(iCoh);
+        bl_scr(cnt,iCoh)     	= d.sp.trg_mscore(iCoh);
+        bl_hir(cnt,iCoh)     	= d.sp.hir(iCoh);
+
         auc_acc(cnt,iCoh)     	= getAUROC(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
         auc_ecc(cnt,iCoh)     	= getAUROC(d.sp.ecc{iCoh},d.dp.ecc{iCoh});
         auc_score(cnt,iCoh)    	= getAUROC(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
@@ -273,17 +273,17 @@ for iSubj = 1:size(dyad_perf,2)
     end
     
     p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
-    auc_ecc_pooled(cnt)         = f_auroc(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
+    auc_ecc_pooled(cnt)         = getAUROC(cell2mat(d.sp.ecc'),cell2mat(d.dp.ecc'));
     
     p_acc_pooled(cnt)           = ranksum(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
-    auc_acc_pooled(cnt)         = f_auroc(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
+    auc_acc_pooled(cnt)         = getAUROC(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
 end
 
 ax9                       	= axes('Position', [colmn(3) height(4) dim]); hold on
 
 ax10                     	= axes('Position', [colmn(3) height(2) dim]); hold on
-tx                        	= text(1.25,.8, 'Dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(1.25,.2, 'Dyad < Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                        	= text(1.25,.8, 'Dyadic > Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(1.25,.2, 'Solo > Dyadic', 'FontSize', lb_fs, 'Color', 'k');
 
 ax11                       	= axes('Position', [colmn(3) height(3) dim]); hold on
 % pt                         	= patch([0 8 8 0], [.5 .5 1 1], [.75 .75 .75], 'FaceAlpha',.1, 'EdgeColor','none');
@@ -387,7 +387,6 @@ axis tight
 %%% SUBPLOT: Cumulative score comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%% BUG HERE> CHECK SCORES < 20%
 cnt = 0;
 for iSubj = 1:length(dyad_perf)
     if isempty(dyad_perf{iSubj})
@@ -400,7 +399,6 @@ for iSubj = 1:length(dyad_perf)
     mscore_dyadic(cnt)   	= mean(dyad_perf{iSubj}.score_norm);
 end
 
-% ax21                    	= axes('Position', [colmn(2)+.05 row pl_dim]); hold on
 ax21                        = subplot(1,3,2); hold on
 axis tight
 
@@ -422,17 +420,29 @@ ax21.YLabel.String          = 'Dyad score [a.u.]';
 ax21.XLabel.String          = 'Solo score [a.u.]';
 ax21.XTickLabelRotation     = 0;
 
+[pv,h]                      = signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+tx                          = text(.05,.35,{['p = ' num2str(round(pv,2))]});
+tx.Color                    = [0 0 0];
+tx.FontSize                 = 8;
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % AUROC Significant subjects histogram
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 nBin                        = 15;
-% ax12                       	= axes('Position', [colmn(3)+.08 row pl_dim]); hold on
-ax12                        = subplot(2,3,3); hold on
-
-hs                          = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),nBin);
-hs.FaceColor                = [.3 .3 .3];
-hs.FaceAlpha                = 1;
+ax12                        = subplot(2,3,6); hold on
+hs1                         = histogram(auc_ecc_pooled(p_ecc_pooled < .05/length(p_ecc_pooled)),nBin);
+hs1.FaceColor               = [.3 .3 .3];
+hs1.EdgeColor               = 'none';
+hs1.FaceAlpha               = .5;
+hs2                         = histogram(auc_ecc_pooled(p_ecc_pooled >= .05/length(p_ecc_pooled)),nBin);
+edges                       = hs1.BinEdges;
+hs2.BinEdges                = edges;
+hs2.FaceColor               = [1 .3 .3];
+hs2.EdgeColor               = 'none';
+hs2.FaceAlpha               = .5;
 ax12.FontSize               = lb_fs;
+ax12.XTick                  = [.3 .5 .7];
+ax12.XLim                   = [.25 .75];
 ax12.YLim                   = [0 5];
 ax12.YLabel.String          = '# Subjects';
 ax12.XLabel.String          = 'AUROC';
@@ -440,73 +450,142 @@ ln                          = line([.5 .5],[0 6]);
 ln.LineWidth                = 1.5;
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
-axis tight
-ax12.Position               = [ax20.Position(1)+.6 ax20.Position(2)+.5 .15 .3];
+ax12.Position               = [ax20.Position(1)+.6 ax20.Position(2) .15 .3];
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Contrast single dyadic session with solo data pool
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ax13                        = subplot(2,3,3); hold on
+hs2                         = histogram(auc_acc_pooled(p_acc_pooled >= .05/length(p_acc_pooled)),nBin);
+hs2.BinEdges                = edges;
+hs2.FaceColor               = [1 .3 .3];
+hs2.EdgeColor               = 'none';
+hs2.FaceAlpha               = .5;
+hs1                         = histogram(auc_acc_pooled(p_acc_pooled < .05/length(p_acc_pooled)),nBin);
+hs1.BinEdges                = edges;
+hs1.FaceColor               = [.3 .3 .3];
+hs1.EdgeColor               = 'none';
+hs1.FaceAlpha               = .5;
+ax13.FontSize               = lb_fs;
+ax13.XTick                  = [.3 .5 .7];
+ax13.XLim                   = [.25 .75];
+ax13.YLim                   = [0 5];
+ax13.YLabel.String          = '# Subjects';
+ax13.XLabel.String          = 'AUROC';
+ln                          = line([.5 .5],[0 6]);
+ln.LineWidth                = 1.5;
+ln.LineStyle                = ':';
+ln.Color                    = [0 0 0];
+ax13.Position               = [ax20.Position(1)+.6 ax20.Position(2)+.5 .15 .3];
 
-for iSubj = 1:size(solo_perf,2)
-    solo_id{iSubj}          = solo_perf{iSubj}.id;
-end
-
-for iDyad = 1:size(dyad_pw_perf,1) 
-    % Calculate score difference of dyadic session
-%     dff(iDyad)              = dyad_pw_perf{iDyad,1}.score_norm - dyad_pw_perf{iDyad,2}.score_norm;
-    dff(iDyad)              = mean(dyad_pw_perf{iDyad,1}.macc_trg - dyad_pw_perf{iDyad,2}.macc_trg); % Mean accuracy difference
-    
-    % Fine solo data of subjects
-    idx_ply1                = cellfun(@(x) strcmp(x,dyad_pw_perf{iDyad,1}.id),solo_id);
-    idx_ply2                = cellfun(@(x) strcmp(x,dyad_pw_perf{iDyad,2}.id),solo_id);
-
-    % Contrast solo vs dyadic for each player
-    auc1(iDyad)           	= getAUROC(cell2mat(solo_perf{idx_ply1}.ecc'),cell2mat(dyad_pw_perf{iDyad,1}.ecc'));
-    auc2(iDyad)            	= getAUROC(cell2mat(solo_perf{idx_ply2}.ecc'),cell2mat(dyad_pw_perf{iDyad,2}.ecc'));
-%     auc1(iDyad)           	= getAUROC(cell2mat(solo_perf{idx_ply1}.acc_trg),cell2mat(dyad_pw_perf{iDyad,1}.acc_trg));
-%     auc2(iDyad)            	= getAUROC(cell2mat(solo_perf{idx_ply2}.acc_trg),cell2mat(dyad_pw_perf{iDyad,2}.acc_trg));
-end
-
-ax13                        = subplot(2,3,6); hold on
-effect_dff                  = auc1 - auc2;
-sc                          = scatter(abs(dff),abs(effect_dff));
-sc.MarkerFaceColor          = [.3 .3 .3];
-sc.MarkerFaceAlpha          = .75;
-sc.MarkerEdgeColor          = 'none';
-
-pf                          = polyfit(abs(dff),abs(effect_dff),1);
-xfit                        = 0:.01:.2;
-yfit                        = polyval(pf,xfit);
-p                           = plot(xfit,yfit);
-p.Color                     = [.65 0 0];
-
-xlabel('Accuracy difference')
-ylabel({'AUROC'; 'difference'})
-set(gca,'fontsize',lb_fs);
-ax13.YTick                  = [0 .25 .5];
-ax13.Position               = [ax20.Position(1)+.6 ax20.Position(2)+.05 .15 .3];
-
-[r,pv]                     	= corrcoef(abs(dff),abs(effect_dff));
-tx                          = text(.135,.375,{['r=' num2str(round(r(2),2))];['p=' num2str(round(pv(2),2))]});
-tx.Color                    = [0 0 0];
-tx.FontSize                 = lb_fs;
-
-% PRINT,.15
+% PRINT
 print(f, [dest_dir '/FIG2_a'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG2_a'], '-r500', '-depsc2', '-painters');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SUBPLOT: AUC - Solo scatter %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%   
+
+figure(1);hold on
+figure(2);hold on
+coh_col                     = cool(length(snr));
+
+for iPlot = 1:4
+    clear xdat
+    if iPlot == 1
+        xdat = bl_ecc;
+        str = 'Eccentricity';
+    elseif iPlot == 2
+        xdat = bl_acc;
+        str = 'Accuracy'; 
+     elseif iPlot == 3
+        xdat = bl_scr;
+        str = 'Hit score';  
+            elseif iPlot == 4
+        xdat = bl_hir;
+        str = 'Hit rate'; 
+    end
+    
+    figure(1)
+    ax = subplot(2,2,iPlot); hold on
+    ln = line([0 1],[.5 .5], 'Color','k', 'LineStyle', ':', 'LineWidth',1);
+    
+    for iCoh = 1:7
+        scatter(xdat(:,iCoh),auc_ecc(:,iCoh),'MarkerFaceColor', coh_col(iCoh,:),'MarkerEdgeColor','none')
+    end
+    
+    xlabel({str ' [Solo]'});
+    ylabel({'Eccentricity AUC'; '[Solo vs Dyadic]'});
+    xlim([0 1])
+    ylim([0 1])
+    set(ax,'fontsize', 14)
+    
+    figure(2)
+    ax = subplot(2,2,iPlot); hold on
+    
+    for iCoh = 1:7
+        [~,idx_solo] = sort(xdat(:,iCoh));
+        [~,idx_auc] = sort(auc_ecc(:,iCoh));
+        mat = [(1:34)' idx_solo idx_auc];
+        for j = 1:34
+            xx(j) = find(mat(:,2) == j);
+            yy(j) = find(mat(:,3) == j);
+        end
+        scatter(xx,yy,'MarkerFaceColor',coh_col(iCoh,:),'MarkerEdgeColor','none')
+    end
+    
+    xlabel({str ' [Solo rank]'});
+    ylabel('Rank AUC');
+    set(ax,'fontsize', 14)
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Reported stats
+%% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Eccentricity [coherence pooled, within subject]
-sign_bool      	= p_ecc_pooled < ( .05 / length(p_ecc_pooled));
-perc_sign       = sum(sign_bool) / length(sign_bool);
+% Hit rate drop for highest coherence level
+for iSubj = 1:length(solo_cr)
+    hir             = solo_perf{iSubj}.hir;
+    hir_drop(iSubj)	= hir(end-1) > hir(end);
+end
+n                   = sum(hir_drop);
+rate                = n / length(hir_drop);
+
+% Dyad vs solo scores comparison
+for iSubj = 1:size(solo_perf,2)
+    solo_id{iSubj}  = solo_perf{iSubj}.id;
+end
+
+cnt = 0;
+for iSubj = 1:length(dyad_perf)
+    if ~isempty(dyad_perf{iSubj})
+        cnt      	= cnt+1;
+        idx        	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
+        d_score     = mean(dyad_perf{iSubj}.score_norm);
+        s_score     = mean(solo_perf{idx}.score_norm);
+        
+        d_better(cnt) 	= (d_score - s_score) > 0;
+    end
+end
+n                   = sum(d_better);
+rate                = n / length(d_better);
+[pv,h]            	= signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
 
 % Accuracy [coherence pooled, within subject]
-sign_bool      	= p_acc_pooled < ( .05 / length(p_acc_pooled));
-perc_sign       = sum(sign_bool) / length(sign_bool);
+sign_bool           = p_acc_pooled < ( .05 / length(p_acc_pooled));
+perc_sign           = sum(sign_bool) / length(sign_bool);
+
+% Eccentricity [coherence pooled, within subject]
+sign_bool           = p_ecc_pooled < ( .05 / length(p_ecc_pooled));
+perc_sign           = sum(sign_bool) / length(sign_bool);
+
+% Coherence-wise: Eccentricity
+sig_boundary      	= .05 / (size(p_ecc,1) * size(p_ecc,2)); % Bonferroni correction
+pos = (auc_ecc > .5) & (p_ecc < sig_boundary);
+neg = (auc_ecc < .5) & (p_ecc < sig_boundary);
+
+percent_pos = (sum(pos)./size(auc_ecc,1)) .*100;
+[round(min(percent_pos)) round(max(percent_pos))]
+percent_neg = (sum(neg)./size(auc_ecc,1)) .*100;
+[round(min(percent_neg)) round(max(percent_neg))]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions

@@ -1,10 +1,5 @@
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/WIP/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
-addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 
 close all
@@ -60,13 +55,13 @@ for iSub = 1:length(solo_perf)
     hir_df_SH(scnt,:)               = dyad_perf{idx_pc}.hir - solo_perf{iSub}.hir;
     hir_df_CH(scnt,:)               = dyad_pc_perf{idx_pc}.hir - dyad_perf{idx_dy}.hir;
 
-    auc_acc_pooled_SC(scnt)         = f_auroc(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_pc_perf{idx_pc}.acc_trg));
-    auc_acc_pooled_SH(scnt)         = f_auroc(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
-    auc_acc_pooled_CH(scnt)         = f_auroc(cell2mat(dyad_pc_perf{idx_pc}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
+    auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_pc_perf{idx_pc}.acc_trg));
+    auc_acc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
+    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_pc_perf{idx_pc}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
     
-    auc_ecc_pooled_SC(scnt)         = f_auroc(cell2mat(solo_perf{iSub}.ecc'),cell2mat(dyad_pc_perf{idx_pc}.ecc'));
-    auc_ecc_pooled_SH(scnt)         = f_auroc(cell2mat(solo_perf{iSub}.ecc'),cell2mat(dyad_perf{idx_dy}.ecc'));
-    auc_ecc_pooled_CH(scnt)         = f_auroc(cell2mat(dyad_pc_perf{idx_pc}.ecc'),cell2mat(dyad_perf{idx_dy}.ecc'));
+    auc_ecc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc'),cell2mat(dyad_pc_perf{idx_pc}.ecc'));
+    auc_ecc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc'),cell2mat(dyad_perf{idx_dy}.ecc'));
+    auc_ecc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_pc_perf{idx_pc}.ecc'),cell2mat(dyad_perf{idx_dy}.ecc'));
 
     for iCoh = 1:length(snr)
         % Solo - Computer dyad
@@ -130,7 +125,7 @@ ax0.FontSize                = lb_fs;
 ax0.YLim                    = [0 .5];
 ax0.XLim                    = [0 .5];
 
-lg                          = legend([sc_agnt(1) sc_dyad(1)], 'COMP','HUMAN');
+lg                          = legend([sc_agnt(1) sc_dyad(1)], 'HC dyad','HH dyad');
 lg.Location                 = 'southeast';
 lg.Interpreter              = 'none';
 lg.FontSize                 = lg_fs;
@@ -163,12 +158,12 @@ for iSub = 1:size(solo_perf,2)
 end
 
 ax11                      	= axes('Position', [clmns(2) height(1) dim]); hold on
-ax11                     	= plotBar(ax11,scr,'Avg score',lb_fs,lw);
+ax11                     	= plotBar(ax11,scr,'Mean score',lb_fs,lw);
 ax11.YLim               	= [.2 .35];
 ax11.YTick                 	= .2:.05:.35;
 
 ax12                       	= axes('Position', [clmns(3) height(1) dim]); hold on
-ax12                     	= plotBar(ax12,hir,'Avg hit rate',lb_fs,lw);
+ax12                     	= plotBar(ax12,hir,'Mean hit rate',lb_fs,lw);
 ax12.YLim                	= [.3 .6];
 ax12.YTick                 	= .3:.1:.6;
 
@@ -184,16 +179,16 @@ ax2.FontSize                = lb_fs;
 ax2.YLabel.String           = 'Difference';
 ax2.XAxis.Visible           = 'off';
 ax2.YLim                    = [-40 15];
-tx                        	= text(2.75,10, 'Human > Computer', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(2.75,-35, 'Human < Computer', 'FontSize', lb_fs, 'Color', 'k');
+tx                        	= text(2.25,10, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(2.25,-35, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: AUROC Accuracy Computer-Human %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = axes('Position', [clmns(2) height(3) dim]); hold on
 ax3                         = plotAUROC(ax3,auc_acc_CH,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
-tx                        	= text(2.75,.9, 'Human > Computer', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(2.75,.1, 'Human < Computer', 'FontSize', lb_fs, 'Color', 'k');
+tx                        	= text(2.25,.9, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(2.25,.1, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: AUROC eccentricity Computer-Human %%%
@@ -226,21 +221,39 @@ legend off
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter subjetc-wise accuracy AUROC  %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax8                        	= axes('Position', [clmns(3) height(3) dim]); hold on
-ax8                         = scatterAUROC(ax8,auc_acc_CH, auc_acc_SC,lb_fs,coh_col);
+% ax8                        	= axes('Position', [clmns(3) height(3) dim]); hold on
+% ax8                         = scatterAUROC(ax8,auc_acc_CH, auc_acc_SC,lb_fs,coh_col);
+
+ax10                      	= axes('Position', [clmns(3) height(3) dim(1) dim(2)/2.1]); hold on
+ax10                        = histogramAUROC(ax10,auc_acc_CH,lb_fs,coh_col,lw);
+ax11                      	= axes('Position', [clmns(3) height(3)+dim(2)/2 dim(1) dim(2)/2.1]); hold on
+ax11                        = histogramAUROC(ax11,auc_acc_SC,lb_fs,coh_col,lw);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter subjetc-wise eccentricity AUROC  %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax9                        	= axes('Position', [clmns(3) height(4) dim]); hold on
-ax9                         = scatterAUROC(ax9,auc_ecc_CH, auc_ecc_SC,lb_fs,coh_col);
-ax9.XAxis.Visible         	= 'on';
+% ax9                        	= axes('Position', [clmns(3) height(4) dim]); hold on
+% ax9                         = scatterAUROC(ax9,auc_ecc_CH, auc_ecc_SC,lb_fs,coh_col);
+% ax9.XAxis.Visible         	= 'on';
+
+ax10                      	= axes('Position', [clmns(3) height(4) dim(1) dim(2)/2.1]); hold on
+ax10                        = histogramAUROC(ax10,auc_ecc_CH,lb_fs,coh_col,lw);
+ax10.XAxis.Visible          = 'on';
+ax11                      	= axes('Position', [clmns(3) height(4)+dim(2)/2 dim(1) dim(2)/2.1]); hold on
+ax11                        = histogramAUROC(ax11,auc_ecc_SC,lb_fs,coh_col,lw);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter subjetc-wise hit rate difference  %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax10                      	= axes('Position', [clmns(3) height(2) dim]); hold on
-ax10                    	= scatterAUROC(ax10,hir_df_CH, hir_df_SC,lb_fs,coh_col);
+% ax10                      	= axes('Position', [clmns(3) height(2) dim]); hold on
+% ax10                    	= scatterAUROC(ax10,hir_df_CH, hir_df_SC,lb_fs,coh_col);
+
+ax10                      	= axes('Position', [clmns(3) height(2) dim(1) dim(2)/2.1]); hold on
+ax10                        = histogramAUROC(ax10,hir_df_CH.*100,lb_fs,coh_col,lw,false);
+ax10.XAxis.Visible          = 'on';
+
+ax11                      	= axes('Position', [clmns(3) height(2)+dim(2)/2 dim(1) dim(2)/2.1]); hold on
+ax11                        = histogramAUROC(ax11,hir_df_SC.*100,lb_fs,coh_col,lw,false);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Export
@@ -272,7 +285,9 @@ er.LineWidth                = lw/1.5;
 
 ax.YLabel.String            = lab_str;
 ax.XLim                     = [.5 3.5];
-ax.XTickLabel               = {'Solo','Comp','Dyad'};
+ax.XTick                    = 1:3;
+ax.XTickLabel               = {'Solo','HC dyad','HH dyad'};
+ax.XTickLabelRotation      	= 15;
 ax.FontSize                 = lb_fs;
 end
 
@@ -373,8 +388,8 @@ for iSubj = 1:size(in_solo,2)
 end
 
 ax.FontSize                 = lb_fs;
-ax.XLabel.String            = 'Computer dyad';
-ax.YLabel.String            = 'Human dyad';
+ax.XLabel.String            = 'HC dyad';
+ax.YLabel.String            = 'HH dyad';
 ax.XLim                 	= [0 1];
 ax.YLim                     = [0 1];
 ax.XTick                    = [.1 .5 .9];
@@ -416,6 +431,48 @@ ln                          = line([0 1],[0 1]);
 ln.LineWidth                = 1.5;
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
+
+end
+
+function ax = histogramAUROC(ax,in,lb_fs,coh_col,lw,flag)
+
+axes(ax); hold on
+
+if nargin < 6
+    flag = true;
+end
+
+if flag
+    edges = 0:.05:1;
+else
+    edges = 0:2.5:50;
+end
+
+for iCoh = 1:size(in,2)
+    h = histogram(in(:,iCoh));
+    h.BinEdges = edges;
+    h.FaceColor = coh_col(iCoh,:);
+    h.EdgeColor = 'none';
+    h.FaceAlpha = .5;
+    h.EdgeAlpha = .5;
+end
+
+ax.FontSize                 = lb_fs;
+ax.YLabel.String            = '#';
+ax.XAxis.Visible            = 'off';
+
+if flag
+    lm                  	= line([.5 .5],[0 15], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
+    ax.XLabel.String     	= 'AUROC';
+    ax.XTick               	= [0 .5 1];
+    ax.YTick               	= [0 10];
+    ax.YLim               	= [0 15];
+else
+    ax.YLim             	= [0 12];
+    ax.XLim               	= [0 50];
+    ax.XTick              	= [0 25 50];
+    ax.XLabel.String     	= 'Difference';
+end
 
 end
 

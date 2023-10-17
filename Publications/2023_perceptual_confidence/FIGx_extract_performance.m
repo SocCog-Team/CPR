@@ -33,15 +33,15 @@ for iSubj = 1:length(sbj_lst)
     solo_tbl                     	= [];                                   % Initialise
     agnt_tbl                     	= [];                                   
     dyad_tbl                     	= [];
-    dyad_pc_tbl                     = [];
+    hc_dyad_tbl                     = [];
     tmp_solo                        = [];
     tmp_agnt                        = [];
     tmp_dyad                        = [];
-    tmp_dyad_pc                     = [];
+    tmp_hc_dyad                     = [];
     sc_cnt                       	= 0;                                    % Reset cycle counter
     ac_cnt                       	= 0;                                   
     dc_cnt                       	= 0;
-    dpc_cnt                       	= 0;
+    dhc_cnt                       	= 0;
     
     if isdir(data_pth)
         cd(data_pth)
@@ -67,10 +67,10 @@ for iSubj = 1:length(sbj_lst)
             % Computer - human dyads
             if contains(mat_files(iFile).name,'CPRagent') && ~contains(mat_files(iFile).name,'agnt') 
                 % Load pre-processed data table
-                tmp_dyad_pc      	= load(mat_files(iFile).name);
+                tmp_hc_dyad      	= load(mat_files(iFile).name);
                 
                 % Concatenate session summary tables
-                dyad_pc_tbl       	= [dyad_pc_tbl; tmp_dyad_pc.t];       	% Organise dyad[human-computer] data
+                hc_dyad_tbl       	= [hc_dyad_tbl; tmp_hc_dyad.t];       	% Organise dyad[human-computer] data
             end
             
             % Computer player performance
@@ -119,7 +119,7 @@ for iSubj = 1:length(sbj_lst)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         if ~isempty(solo_tbl)
-            %% Performance [time window analysis]
+            %%% Performance [time window analysis]
             solo_perf{iSubj}      	= response_readout(solo_tbl, nSample);
 
             % Extract stimulus cycles for correlation analysis
@@ -148,19 +148,19 @@ for iSubj = 1:length(sbj_lst)
             agnt_cr{iSubj}.id       = lower(sbj_lst{iSubj});
         end
         
-        if ~isempty(dyad_pc_tbl)
+        if ~isempty(hc_dyad_tbl)
             % Performance [time window analysis]
-            dyad_pc_perf{iSubj}   	= response_readout(dyad_pc_tbl, nSample);
+            hc_dyad_perf{iSubj}   	= response_readout(hc_dyad_tbl, nSample);
             
             % Extract stimulus cycles for correlation analysis
-            cyc_boundary          	= [0; find(diff(dyad_pc_tbl.cyc_no) ~= 0)];
-            [tmp_dyad_pc, dpc_cnt]	= extractCycles(cyc_boundary, dyad_pc_tbl, tmp_dyad_pc, dpc_cnt);
+            cyc_boundary          	= [0; find(diff(hc_dyad_tbl.cyc_no) ~= 0)];
+            [tmp_hc_dyad, dhc_cnt]	= extractCycles(cyc_boundary, hc_dyad_tbl, tmp_hc_dyad, dhc_cnt);
             
             % Correlation analysis
-            [dyad_pc_cr{iSubj},ps]	= CPR_correlation_analysis_WIP(tmp_dyad_pc, nLag, false);
+            [hc_dyad_cr{iSubj},ps]	= CPR_correlation_analysis_WIP(tmp_hc_dyad, nLag, false);
             
-            dyad_pc_perf{iSubj}.id 	= lower(sbj_lst{iSubj});
-            dyad_pc_cr{iSubj}.id  	= lower(sbj_lst{iSubj});
+            hc_dyad_perf{iSubj}.id 	= lower(sbj_lst{iSubj});
+            hc_dyad_cr{iSubj}.id  	= lower(sbj_lst{iSubj}); 
         end
         
         if ~isempty(dyad_tbl)
@@ -186,16 +186,16 @@ mkdir(dest_dir);
 
 save([dest_dir 'solo_performance.mat'], 'solo_perf', '-v7.3');
 save([dest_dir 'comp_performance.mat'], 'agnt_perf', '-v7.3');
-save([dest_dir 'dyad_human_comp_performance.mat'], 'dyad_pc_perf', '-v7.3');
-save([dest_dir 'dyad_human_human_performance.mat'], 'dyad_perf', '-v7.3');
+save([dest_dir 'hc_dyad_performance.mat'], 'hc_dyad_perf', '-v7.3');
+save([dest_dir 'hh_dyad_human_human_performance.mat'], 'dyad_perf', '-v7.3');
 save([dest_dir 'solo_correlation.mat'], 'solo_cr', '-v7.3');
 save([dest_dir 'comp_correlation.mat'], 'agnt_cr', '-v7.3');
-save([dest_dir 'dyad_human_human_correlation.mat'], 'dyad_cr', '-v7.3');
-save([dest_dir 'dyad_human_comp_correlation.mat'], 'dyad_pc_cr', '-v7.3');
+save([dest_dir 'hh_dyad_correlation.mat'], 'dyad_cr', '-v7.3');
+save([dest_dir 'hc_dyad_correlation.mat'], 'hc_dyad_cr', '-v7.3');
 
 %% Import dyadic data [human-human]
 
-disp('DYAD_WISE ANALYSIS')
+disp('HH-DYAD_WISE ANALYSIS')
 
 pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
 dyad_cnt                    = 0;
@@ -219,16 +219,18 @@ for iDyad = 19:71
     
     dyad_cnt                = dyad_cnt+1;
     tmp1                    = load(mat_files(1).name);
+    tmp2                    = load(mat_files(2).name);
     tmp3                    = load(mat_files(3).name);
+    tmp4                    = load(mat_files(4).name);
     id_dyad(dyad_cnt,:)    	= [{tmp1.t.ID(1)}, {tmp3.t.ID(1)}];
     n_dyad(dyad_cnt,:)      = iDyad;
     cnt                     = 0;
     
     for iPly = 1:2
         if iPly == 1
-            tbl             = tmp1.t;
+            tbl             = [tmp1.t;tmp2.t];
         else
-            tbl             = tmp3.t;
+            tbl             = [tmp3.t;tmp4.t];
         end
                        
         % Performance [time window analysis]
@@ -246,8 +248,70 @@ for iDyad = 19:71
     end 
 end
 
-save([dest_dir 'dyad_pairwise_performance.mat'], 'dyad_pw_perf', '-v7.3');
-save([dest_dir 'dyad_pairwise_correlation.mat'], 'dyad_pw_cr', '-v7.3');
+save([dest_dir 'hh_dyad_pairwise_performance.mat'], 'dyad_pw_perf', '-v7.3');
+save([dest_dir 'hh_dyad_pairwise_correlation.mat'], 'dyad_pw_cr', '-v7.3');
+
+%% Import dyadic data [computer-human]
+
+disp('HC-DYAD_WISE ANALYSIS')
+
+pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
+dyad_cnt                    = 0;
+nSample                     = 30;
+nLag                        = 150;
+
+for iSubj = 1:length(sbj_lst)
+    
+    disp(['iSubj:' num2str(iSubj)])
+   
+    cd([pth [sbj_lst{iSubj}] '/summary/'])
+    mat_files              	= dir('*.mat');
+    
+    cnt = 0;
+    hc_dyad_file = [];
+    for iFile = 1:length(mat_files)
+        if contains(mat_files(iFile).name,'CPRagent') 
+            cnt                 = cnt+1;
+            hc_dyad_file{cnt}   = mat_files(iFile).name;
+        end
+    end
+    
+    if isempty(hc_dyad_file)
+        continue
+    end
+    
+    dyad_cnt                = dyad_cnt+1;
+    tmp1                    = load(hc_dyad_file{1});
+    tmp2                    = load(hc_dyad_file{2});
+    tmp3                    = load(hc_dyad_file{3});
+    tmp4                    = load(hc_dyad_file{4});
+    id_dyad(dyad_cnt,:)    	= [{tmp1.t.ID(1)}, {tmp3.t.ID(1)}];
+    cnt                     = 0;
+
+    for iPly = 1:2
+        if iPly == 1
+            tbl             = [tmp1.t;tmp2.t];
+        else
+            tbl             = [tmp3.t;tmp4.t];
+        end
+                       
+        % Performance [time window analysis]
+        hc_dyad_pw_perf{dyad_cnt,iPly}     = response_readout(tbl, nSample);
+        
+        % Extract stimulus cycles for correlation analysis
+        cyc_boundary                    = [0; find(diff(tbl.cyc_no) ~= 0)];
+        [tmp_dyad, cnt]                 = extractCycles(cyc_boundary, tbl, [], cnt);
+
+        % Correlation analysis
+        [hc_dyad_pw_cr{dyad_cnt,iPly},ps] 	= CPR_correlation_analysis_WIP(tmp_dyad, nLag, false);
+        
+        hc_dyad_pw_perf{dyad_cnt,iPly}.id   = lower(tbl.ID(1));
+        hc_dyad_pw_cr{dyad_cnt,iPly}.id     = lower(tbl.ID(1));   
+    end 
+end
+
+save([dest_dir 'hc_dyad_pairwise_performance.mat'], 'dyad_pw_perf', '-v7.3');
+save([dest_dir 'hc_dyad_pairwise_correlation.mat'], 'dyad_pw_cr', '-v7.3');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -312,9 +376,8 @@ for iDate = 1:length(dte)
     dte_idx                 = score_dte == dte(iDate);
     out.score_final_exp(iDate) = unique(score_exp(dte_idx));
     dte_score               = score(dte_idx);
-    score_cum               = cumsum(dte_score(~isnan(dte_score)));
-    out.score_final(iDate)  = score_cum(end);
-    out.score_norm(iDate)   = score_cum(end) ./ length(dte_score(~isnan(dte_score)));
+    out.score_final(iDate)  = sum(dte_score(~isnan(dte_score)));
+    out.score_norm(iDate)   = out.score_final(iDate) ./ length(dte_score(~isnan(dte_score)));
 end
 
 for iCoh = 1:length(snr)
@@ -357,19 +420,23 @@ for iCoh = 1:length(snr)
     trgIdx                  = (t1_ts-f1_ts) >= 1e6;
     rdp_dir                 = in.rdp_dir(cIdx & in.trg_shown & trgIdx);
     js_dir                  = in.js_dir(cIdx & in.trg_shown & trgIdx);
+    js_ecc_tmp              = in.js_ecc(cIdx & in.trg_shown & trgIdx);
     frmes                   = in.frme_ts(cIdx & in.trg_shown & trgIdx);
     trg1_ts                 = t1_ts(cIdx & in.trg_shown & trgIdx);
     
-    clear js_acc
+    clear js_acc js_ecc
     for iState = 1:length(rdp_dir)
         clear js_dev
         smpl_idx            = find(frmes{iState} < trg1_ts(iState),1,'last')-nSample : find(frmes{iState} < trg1_ts(iState),1,'last');
         js_dev              = rad2deg(circ_dist(deg2rad(js_dir{iState}(smpl_idx)),deg2rad(rdp_dir(iState))));  % Minimum RDP-Joystick difference
         js_acc(iState)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
+        js_ecc(iState)      = nanmean(js_ecc_tmp{iState}(smpl_idx));
     end
     
     out.macc_trg(iCoh)      = nanmedian(js_acc);
+    out.mecc_trg(iCoh)      = nanmedian(js_ecc);
     out.acc_trg{iCoh}     	= js_acc;
+    out.ecc_trg{iCoh}       = js_ecc;
     out.carr(iCoh)         	= snr(iCoh);
 end
 end

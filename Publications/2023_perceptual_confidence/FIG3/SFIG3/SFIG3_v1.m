@@ -1,8 +1,4 @@
 % Add relevant directories
-addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/WIP/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
@@ -86,12 +82,11 @@ for iComp = 1:length(agnt_perf)
 end
 
 %% PLOT
-
-f                           = figure('units','normalized','position',[0 0 .5 1]);
+f                           = figure('units','centimeters','position',[0 0 16 16]);
 height                    	= fliplr(linspace(.06,.85,4));
 clmns                      	= linspace(.11,.75,3);
-lb_fs                       = 14;
-lg_fs                       = 10;
+lb_fs                       = 8;
+lg_fs                       = 8;
 lw                          = 3;
 frme_ms                     = 1000/120;
 alp                         = .35;
@@ -242,12 +237,12 @@ ax4.Position                = [clmns(3)-xof row-yof dim(1)/1.25 dim(2)/2];
 
 box off
 
-lg                          = legend([pl1 pl2 pl3 pl4],{'Accuracy', 'Hit rate','Eccentricity' 'Score'}, 'NumColumns', 2)';
-lg.Box                      = 'off';
+lg                          = legend([pl1 pl2 pl3 pl4],{'Accuracy', 'Hit rate','Eccentricity' 'Score'}, 'NumColumns', 1)';
+lg.Box                      = 'on';
 lg.FontSize                 = lg_fs;
 lg.Location                 = 'northeast';
-lg.Position(1)              = .675;
-lg.Position(2)              = .67;
+lg.Position(1)              = .71;
+lg.Position(2)              = .42;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Crosscorrelation AGNT %%%
@@ -296,8 +291,8 @@ lg                          = legend(pl,lg_str,'Location','northwest','NumColumn
 lg.Box                      = 'off';
 lg.TextColor                = [.99 .99 .99];
 lg.FontSize                 = lg_fs;
-lg.Position(1)              = .17;
-lg.Position(2)              = .67;
+lg.Position(1)              = .15;
+lg.Position(2)              = .66;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Hit rate difference AGNT - SOLO %%%

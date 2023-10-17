@@ -26,11 +26,11 @@ sbj_lst                 = x.Abbreviation;
 sbj_lst(cellfun(@isempty,sbj_lst)) = [];
 
 % Set params
-skip_processed_files    = true;
+skip_processed_files    = false;
 copy_if_present         = false;
 
 % Preprocess data
-for iSubj = 31:length(sbj_lst)
+for iSubj = 23 %:length(sbj_lst)
     
     disp(['Processing subject: ' sbj_lst{iSubj}])
     
@@ -46,7 +46,7 @@ for iSubj = 31:length(sbj_lst)
     % Extract .mwk2 file names from source directory
     mwk2_files              = dir('*.mwk2');
     
-    for iFile = 1:length(mwk2_files)
+    for iFile = 7:length(mwk2_files)
         
         % Skip irrelevant files
         if contains(mwk2_files(iFile).name, 'CPRtrain') || ...

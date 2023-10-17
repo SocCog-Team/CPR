@@ -4,8 +4,8 @@ clear all
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
 
-lw                  = 3;
-lb_fs               = 20;
+lw                  = 1.5;
+lb_fs               = 8;
 alp                 = .2;
 frme_ms             = 1000/120;
 nLag                = 150;
@@ -15,7 +15,7 @@ snr                 = unique(solo_cr{1}.coh);
 subj_id             = 17;
 col                 = cool(length(snr));
 
-f                	= figure('units','centimeters','position',[0 0 20 15]);
+f                	= figure('units','centimeters','position',[0 0 6 5]);
 hold on
 
 for iCoh = 1:length(snr)
@@ -51,10 +51,10 @@ ax.YLabel.String    = 'XCorr coef [norm]';
 ax.YLim             = [0 .15];
 ax.FontSize      	= lb_fs;
 
-lg                  = legend(pl,coh_id);
-lg.FontSize         = lb_fs;
-lg.Box              = 'off';
-lg.Location         = 'northwest';
+% lg                  = legend(pl,coh_id);
+% lg.FontSize         = lb_fs;
+% lg.Box              = 'off';
+% lg.Location         = 'northwest';
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 print(f, [dest_dir '/subj_correlation'], '-r500', '-dpng');
@@ -69,7 +69,7 @@ for iSubj = 1:length(solo_cr)
 
         for iBlock = 1:size(dat,1)
             % Find peak lag
-            pk_pos{iSubj,iCoh}(iBlock) = find(max(dat(iBlock,150:end)) == dat(iBlock,:));
+            pk_pos{iSubj,iCoh}(iBlock) = find(max(dat(iBlock,150:end)) == dat(iBlock,150:end));
         end
     end
 end
@@ -77,33 +77,34 @@ end
 avg_pk_pos = cellfun(@median,pk_pos);
 std_pk_pos = cellfun(@std,pk_pos);
 
-f                	= figure('units','centimeters','position',[0 0 22.5 15]);
-vl                  = violinplot( ((avg_pk_pos - nLag) * frme_ms) ./1e3);
+f                   = figure('units','centimeters','position',[0 0 5 6]); hold on
+ax = subplot(2,1,1);
+vl                  = violinplot( (avg_pk_pos * frme_ms) ./1e3);
 vl                  = improveViolin(vl,col);
 ax                  = gca;
 ax.YLabel.String    = 'Median lag [s]';
 ax.XTick            = 1:7;
-ax.XTickLabel       = round(snr,2);
+ax.XTickLabel       = round(snr,2)*100;
 ax.XLabel.String    = 'Coherence [%]';
 ax.FontSize      	= lb_fs;
 ax.Box              = 'off';
+ax.XAxis.Visible    = 'off';
+axis tight
 
-print(f, [dest_dir '/pop_lag_median'], '-r500', '-dpng');
-print(f, [dest_dir '/pop_lag_median'], '-r500', '-dsvg');
-
-f                	= figure('units','centimeters','position',[0 0 22.5 15]);
+ax                  = subplot(2,1,2);
 vl                  = violinplot(((std_pk_pos) * frme_ms) ./ 1e3);
 vl                  = improveViolin(vl,col);
 ax                  = gca;
 ax.YLabel.String    = 'Std lag [s]';
 ax.XTick            = 1:7;
-ax.XTickLabel       = round(snr,2);
+ax.XTickLabel       = round(snr,2)*100;
 ax.XLabel.String    = 'Coherence [%]';
 ax.FontSize      	= lb_fs;
 ax.Box              = 'off';
+axis tight
 
-print(f, [dest_dir '/pop_lag_std'], '-r500', '-dpng');
-print(f, [dest_dir '/pop_lag_std'], '-r500', '-dsvg');
+print(f, [dest_dir '/pop_lag'], '-r500', '-dpng');
+print(f, [dest_dir '/pop_lag'], '-r500', '-dsvg');
 
 % bx                  = boxplot((avg_pk_pos - nLag) * frme_ms, 'Color', [0 0 0]);
 % set(bx,'MarkerEdgeColor','k')
@@ -186,9 +187,10 @@ print(f, [dest_dir '/rt_lag_comparison'], '-r500', '-dsvg');
 function vl = improveViolin(vl,col_map)
 for iV=1:length(vl)
     vl(iV).BoxWidth                     = .025;
-    vl(iV).ViolinColor                  = col_map(iV,:);
-    vl(iV).ViolinAlpha                  = .4;
+    vl(iV).ViolinColor{1}               = col_map(iV,:);
+    vl(iV).ViolinAlpha{1}               = .8;
     vl(iV).ScatterPlot.MarkerFaceColor  = [.25 .25 .25];
     vl(iV).ScatterPlot.MarkerEdgeColor  = 'none';
+    vl(iV).ScatterPlot.SizeData         = 10;
 end
 end

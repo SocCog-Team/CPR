@@ -16,36 +16,6 @@ tbl_scr             = generate_table(solo_perf,'trg_score','perf');
 tbl_hir             = generate_table(solo_perf,'hir','hir');
 stats_hir           = LME_coherence_model(tbl_hir);
 
-%% Hit rate drop for highest coherence level
-for iSubj = 1:length(solo_cr)
-    hir             = solo_perf{iSubj}.hir;
-    hir_drop(iSubj)	= hir(end-1) > hir(end);
-end
-
-n                   = sum(hir_drop);
-rate                = n / length(hir_drop);
-
-%% Dyad vs solo scores comparison
-
-for iSubj = 1:size(solo_perf,2)
-    solo_id{iSubj}  = solo_perf{iSubj}.id;
-end
-
-cnt = 0;
-for iSubj = 1:length(dyad_perf)
-    if ~isempty(dyad_perf{iSubj})
-        cnt      	= cnt+1;
-        idx        	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
-        d_score     = mean(dyad_perf{iSubj}.score_norm);
-        s_score     = mean(solo_perf{idx}.score_norm);
-        
-        d_better(cnt) 	= (d_score - s_score) > 0;
-    end
-end
-
-n                   = sum(d_better);
-rate                = n / length(d_better);
-
 %% Average response lag
 for iSubj = 1:length(solo_cr)
     mlag(iSubj)     = median(solo_cr{iSubj}.lag); % coherence pooled
