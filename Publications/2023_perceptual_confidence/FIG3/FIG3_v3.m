@@ -7,9 +7,9 @@ clear all
 
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_comp_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_comp_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_human_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
 
 %% Compare conditions
@@ -19,11 +19,11 @@ scnt                                    = 0;
 snr                                     = solo_perf{1}.carr;
 
 % Extract subject sequence
-for iSubj = 1:size(dyad_pc_perf,2)
-    if ~isempty(dyad_pc_perf{iSubj})
-        id_dyad_pc{iSubj}           	= dyad_pc_perf{iSubj}.id;
+for iSubj = 1:size(hc_dyad_perf,2)
+    if ~isempty(hc_dyad_perf{iSubj})
+        id_hc_dyad{iSubj}           	= hc_dyad_perf{iSubj}.id;
     else
-        id_dyad_pc{iSubj}           	= 'empty';
+        id_hc_dyad{iSubj}           	= 'empty';
     end 
 end
 
@@ -43,7 +43,7 @@ for iSub = 1:length(solo_perf)
         continue
     end
     
-    idx_pc                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad_pc);
+    idx_pc                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_hc_dyad);
     idx_dy                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad);
     
     if sum(idx_pc) == 0 || sum(idx_dy) == 0
@@ -51,33 +51,33 @@ for iSub = 1:length(solo_perf)
     end
     
     scnt = scnt+1;
-    hir_df_SC(scnt,:)               = dyad_pc_perf{idx_pc}.hir - solo_perf{iSub}.hir;
+    hir_df_SC(scnt,:)               = hc_dyad_perf{idx_pc}.hir - solo_perf{iSub}.hir;
     hir_df_SH(scnt,:)               = dyad_perf{idx_pc}.hir - solo_perf{iSub}.hir;
-    hir_df_CH(scnt,:)               = dyad_pc_perf{idx_pc}.hir - dyad_perf{idx_dy}.hir;
+    hir_df_CH(scnt,:)               = hc_dyad_perf{idx_pc}.hir - dyad_perf{idx_dy}.hir;
 
-    auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_pc_perf{idx_pc}.acc_trg));
+    auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
     auc_acc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
-    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_pc_perf{idx_pc}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
+    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(hc_dyad_perf{idx_pc}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
     
-    auc_ecc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc'),cell2mat(dyad_pc_perf{idx_pc}.ecc'));
-    auc_ecc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc'),cell2mat(dyad_perf{idx_dy}.ecc'));
-    auc_ecc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_pc_perf{idx_pc}.ecc'),cell2mat(dyad_perf{idx_dy}.ecc'));
+    auc_ecc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
+    auc_ecc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc_state'),cell2mat(dyad_perf{idx_dy}.ecc_state'));
+    auc_ecc_pooled_CH(scnt)         = getAUROC(cell2mat(hc_dyad_perf{idx_pc}.ecc_state'),cell2mat(dyad_perf{idx_dy}.ecc_state'));
 
     for iCoh = 1:length(snr)
         % Solo - Computer dyad
-        auc_acc_SC(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},dyad_pc_perf{idx_pc}.acc_trg{iCoh});
-        auc_ecc_SC(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc{iCoh},dyad_pc_perf{idx_pc}.ecc{iCoh});
-        auc_score_SC(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},dyad_pc_perf{idx_pc}.trg_score{iCoh});
+        auc_acc_SC(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+        auc_ecc_SC(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
+        auc_score_SC(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},hc_dyad_perf{idx_pc}.trg_score{iCoh});
         
         % Solo - Human dyad
         auc_acc_SH(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},dyad_perf{idx_dy}.acc_trg{iCoh});
-        auc_ecc_SH(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc{iCoh},dyad_perf{idx_dy}.ecc{iCoh});
+        auc_ecc_SH(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},dyad_perf{idx_dy}.ecc_state{iCoh});
         auc_score_SH(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},dyad_perf{idx_dy}.trg_score{iCoh});
         
         % Human dyad - Computer dyad
-        auc_acc_CH(scnt,iCoh)       = getAUROC(dyad_pc_perf{idx_pc}.acc_trg{iCoh},dyad_perf{idx_dy}.acc_trg{iCoh});
-        auc_ecc_CH(scnt,iCoh)     	= getAUROC(dyad_pc_perf{idx_pc}.ecc{iCoh},dyad_perf{idx_dy}.ecc{iCoh});
-        auc_score_CH(scnt,iCoh)  	= getAUROC(dyad_pc_perf{idx_pc}.trg_score{iCoh},dyad_perf{idx_dy}.trg_score{iCoh});
+        auc_acc_CH(scnt,iCoh)       = getAUROC(hc_dyad_perf{idx_pc}.acc_trg{iCoh},dyad_perf{idx_dy}.acc_trg{iCoh});
+        auc_ecc_CH(scnt,iCoh)     	= getAUROC(hc_dyad_perf{idx_pc}.ecc_state{iCoh},dyad_perf{idx_dy}.ecc_state{iCoh});
+        auc_score_CH(scnt,iCoh)  	= getAUROC(hc_dyad_perf{idx_pc}.trg_score{iCoh},dyad_perf{idx_dy}.trg_score{iCoh});
     end
 end
 
@@ -109,11 +109,11 @@ ln.LineWidth                = lw/2;
 ln.Color                    = [0 0 0];
 
 for iSubj = 1:size(solo_perf,2)
-    idx_pc                  = cellfun(@(x) strcmp(x,solo_perf{iSubj}.id),id_dyad_pc);
+    idx_pc                  = cellfun(@(x) strcmp(x,solo_perf{iSubj}.id),id_hc_dyad);
     idx_dy                  = cellfun(@(x) strcmp(x,solo_perf{iSubj}.id),id_dyad);
     
     if sum(idx_pc>0) && sum(idx_dy>0)
-        sc_agnt             = scatter(mean(solo_perf{iSubj}.score_norm),mean(dyad_pc_perf{idx_pc}.score_norm), 'MarkerFaceColor', [.6 .6 .6],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
+        sc_agnt             = scatter(mean(solo_perf{iSubj}.score_norm),mean(hc_dyad_perf{idx_pc}.score_norm), 'MarkerFaceColor', [.6 .6 .6],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
         sc_dyad             = scatter(mean(solo_perf{iSubj}.score_norm), mean(dyad_perf{idx_dy}.score_norm), 'MarkerFaceColor', [.3 .3 .3],'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
 
     end
@@ -138,12 +138,12 @@ lg.Box                      = 'off';
 for iSub = 1:size(solo_perf,2)
     hir.solo(iSub)   	= solo_perf{iSub}.hir_pool;
     scr.solo(iSub)   	= mean(solo_perf{iSub}.score_norm);
-    idx_pc              = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad_pc);
+    idx_pc              = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_hc_dyad);
     idx_dy            	= cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad);
 
     if sum(idx_pc > 0)
-        hir.dyad_pc(iSub)	= dyad_pc_perf{idx_pc}.hir_pool;
-        scr.dyad_pc(iSub)   = mean(dyad_pc_perf{idx_pc}.score_norm);
+        hir.dyad_pc(iSub)	= hc_dyad_perf{idx_pc}.hir_pool;
+        scr.dyad_pc(iSub)   = mean(hc_dyad_perf{idx_pc}.score_norm);
     else
         hir.dyad_pc(iSub) 	= nan;
         scr.dyad_pc(iSub) 	= nan;
@@ -201,20 +201,20 @@ ax4.XAxis.Visible           = 'on';
 %%% SUBPLOT: Scatter accuracy average Human-Computer %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax7                     	= axes('Position', [clmns(1) height(2) dim]); hold on
-ax7                        	= plotScatter(ax7,solo_perf,dyad_pc_perf, dyad_perf,coh_col,'hir',lb_fs,id_dyad_pc,id_dyad,snr);
+ax7                        	= plotScatter(ax7,solo_perf,hc_dyad_perf, dyad_perf,coh_col,'hir',lb_fs,id_hc_dyad,id_dyad,snr);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter accuracy average Human-Computer %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax5                        	= axes('Position', [clmns(1) height(3) dim]); hold on
-ax5                       	= plotScatter(ax5,solo_perf,dyad_pc_perf, dyad_perf,coh_col,'macc_trg',lb_fs,id_dyad_pc,id_dyad,snr);
+ax5                       	= plotScatter(ax5,solo_perf,hc_dyad_perf, dyad_perf,coh_col,'macc_trg',lb_fs,id_hc_dyad,id_dyad,snr);
 legend off
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter eccentricity average Human-Computer %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax6                        	= axes('Position', [clmns(1) height(4) dim]); hold on
-ax6                      	= plotScatter(ax6,solo_perf,dyad_pc_perf, dyad_perf,coh_col,'mecc',lb_fs,id_dyad_pc,id_dyad,snr);
+ax6                      	= plotScatter(ax6,solo_perf,hc_dyad_perf, dyad_perf,coh_col,'mecc_state',lb_fs,id_hc_dyad,id_dyad,snr);
 ax6.XAxis.Visible       	= 'on';
 legend off
 

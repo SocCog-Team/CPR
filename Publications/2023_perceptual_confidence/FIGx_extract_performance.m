@@ -31,11 +31,11 @@ for iSubj = 1:length(sbj_lst)
     
     data_pth                     	= [pth sbj_lst{iSubj} '/summary/'];   	% Data path
     solo_tbl                     	= [];                                   % Initialise
-    agnt_tbl                     	= [];                                   
+    comp_tbl                     	= [];                                   
     dyad_tbl                     	= [];
     hc_dyad_tbl                     = [];
     tmp_solo                        = [];
-    tmp_agnt                        = [];
+    tmp_comp                        = [];
     tmp_dyad                        = [];
     tmp_hc_dyad                     = [];
     sc_cnt                       	= 0;                                    % Reset cycle counter
@@ -76,10 +76,10 @@ for iSubj = 1:length(sbj_lst)
             % Computer player performance
             if contains(mat_files(iFile).name,'agnt_CPRagent')
                 % Load pre-processed data table
-                tmp_agnt             = load(mat_files(iFile).name);
+                tmp_comp             = load(mat_files(iFile).name);
 
                 % Concatenate session summary tables
-                agnt_tbl           	= [agnt_tbl; tmp_agnt.t];                % Organise computer player data
+                comp_tbl           	 = [comp_tbl; tmp_comp.t];                % Organise computer player data
             end
         end
         
@@ -117,6 +117,11 @@ for iSubj = 1:length(sbj_lst)
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         %%% PERFORMANCE AND CORRELATION ANALYSIS %%%
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                             
+%         % Visualise target eccentricity
+%         plot_trg_response(solo_tbl)
+%         plot_trg_response(dyad_tbl)
+%         plot_trg_response(hc_dyad_tbl)
         
         if ~isempty(solo_tbl)
             %%% Performance [time window analysis]
@@ -133,19 +138,19 @@ for iSubj = 1:length(sbj_lst)
             solo_cr{iSubj}.id       = lower(sbj_lst{iSubj});
         end
         
-        if ~isempty(agnt_tbl)
+        if ~isempty(comp_tbl)
             % Performance [time window analysis]
-            agnt_perf{iSubj}      	= response_readout(agnt_tbl, nSample);
+            comp_perf{iSubj}      	= response_readout(comp_tbl, nSample);
 
             % Extract stimulus cycles for correlation analysis
-            cyc_boundary        	= [0; find(diff(agnt_tbl.cyc_no) ~= 0)];
-            [tmp_agnt, ac_cnt]   	= extractCycles(cyc_boundary, agnt_tbl, tmp_agnt, ac_cnt);
+            cyc_boundary        	= [0; find(diff(comp_tbl.cyc_no) ~= 0)];
+            [tmp_comp, ac_cnt]   	= extractCycles(cyc_boundary, comp_tbl, tmp_comp, ac_cnt);
             
             % Correlation analysis
-            [agnt_cr{iSubj},ps]     = CPR_correlation_analysis_WIP(tmp_agnt, nLag, false);
+            [comp_cr{iSubj},ps]     = CPR_correlation_analysis_WIP(tmp_comp, nLag, false);
             
-            agnt_perf{iSubj}.id     = lower(sbj_lst{iSubj});
-            agnt_cr{iSubj}.id       = lower(sbj_lst{iSubj});
+            comp_perf{iSubj}.id     = lower(sbj_lst{iSubj});
+            comp_cr{iSubj}.id       = lower(sbj_lst{iSubj});
         end
         
         if ~isempty(hc_dyad_tbl)
@@ -185,11 +190,11 @@ dest_dir = ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual
 mkdir(dest_dir);
 
 save([dest_dir 'solo_performance.mat'], 'solo_perf', '-v7.3');
-save([dest_dir 'comp_performance.mat'], 'agnt_perf', '-v7.3');
+save([dest_dir 'comp_performance.mat'], 'comp_perf', '-v7.3');
 save([dest_dir 'hc_dyad_performance.mat'], 'hc_dyad_perf', '-v7.3');
-save([dest_dir 'hh_dyad_human_human_performance.mat'], 'dyad_perf', '-v7.3');
+save([dest_dir 'hh_dyad_performance.mat'], 'dyad_perf', '-v7.3');
 save([dest_dir 'solo_correlation.mat'], 'solo_cr', '-v7.3');
-save([dest_dir 'comp_correlation.mat'], 'agnt_cr', '-v7.3');
+save([dest_dir 'comp_correlation.mat'], 'comp_cr', '-v7.3');
 save([dest_dir 'hh_dyad_correlation.mat'], 'dyad_cr', '-v7.3');
 save([dest_dir 'hc_dyad_correlation.mat'], 'hc_dyad_cr', '-v7.3');
 
@@ -269,38 +274,53 @@ for iSubj = 1:length(sbj_lst)
     
     cnt = 0;
     hc_dyad_file = [];
+    comp_tbl = [];
+    hum_tbl = [];
+    comp_flag = [];
+    
     for iFile = 1:length(mat_files)
         if contains(mat_files(iFile).name,'CPRagent') 
             cnt                 = cnt+1;
             hc_dyad_file{cnt}   = mat_files(iFile).name;
+            if contains(mat_files(iFile).name,'agnt')
+                comp_flag(cnt) = true;
+            else
+                comp_flag(cnt) = false;
+            end
         end
     end
     
     if isempty(hc_dyad_file)
         continue
     end
+        
+    for iComputer = find(comp_flag)
+        tmp                 = load(hc_dyad_file{iComputer});
+        comp_tbl            = [comp_tbl; tmp.t];
+    end
+    
+    for iHuman = find(~comp_flag)
+        tmp                 = load(hc_dyad_file{iHuman});
+        hum_tbl            = [hum_tbl; tmp.t];
+    end
     
     dyad_cnt                = dyad_cnt+1;
-    tmp1                    = load(hc_dyad_file{1});
-    tmp2                    = load(hc_dyad_file{2});
-    tmp3                    = load(hc_dyad_file{3});
-    tmp4                    = load(hc_dyad_file{4});
-    id_dyad(dyad_cnt,:)    	= [{tmp1.t.ID(1)}, {tmp3.t.ID(1)}];
+    id_dyad(dyad_cnt,:)    	= [{comp_tbl.ID(end)}, {hum_tbl.ID(end)}];
     cnt                     = 0;
 
     for iPly = 1:2
         if iPly == 1
-            tbl             = [tmp1.t;tmp2.t];
+            tbl             = comp_tbl;
         else
-            tbl             = [tmp3.t;tmp4.t];
+            tbl             = hum_tbl;
         end
                        
         % Performance [time window analysis]
         hc_dyad_pw_perf{dyad_cnt,iPly}     = response_readout(tbl, nSample);
         
         % Extract stimulus cycles for correlation analysis
-        cyc_boundary                    = [0; find(diff(tbl.cyc_no) ~= 0)];
-        [tmp_dyad, cnt]                 = extractCycles(cyc_boundary, tbl, [], cnt);
+        cyc_boundary                        = [0; find(diff(tbl.cyc_no) ~= 0)];
+        [tmp_dyad, cnt]                     = extractCycles(cyc_boundary, tbl, [], cnt);
 
         % Correlation analysis
         [hc_dyad_pw_cr{dyad_cnt,iPly},ps] 	= CPR_correlation_analysis_WIP(tmp_dyad, nLag, false);
@@ -310,8 +330,8 @@ for iSubj = 1:length(sbj_lst)
     end 
 end
 
-save([dest_dir 'hc_dyad_pairwise_performance.mat'], 'dyad_pw_perf', '-v7.3');
-save([dest_dir 'hc_dyad_pairwise_correlation.mat'], 'dyad_pw_cr', '-v7.3');
+save([dest_dir 'hc_dyad_pairwise_performance.mat'], 'hc_dyad_pw_perf', '-v7.3');
+save([dest_dir 'hc_dyad_pairwise_correlation.mat'], 'hc_dyad_pw_cr', '-v7.3');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -380,6 +400,12 @@ for iDate = 1:length(dte)
     out.score_norm(iDate)   = out.score_final(iDate) ./ length(dte_score(~isnan(dte_score)));
 end
 
+in.trg_score             	= cellfun(@double,in.trg_score,'UniformOutput', false);
+out.trg_all_outc          	= logical(cell2mat(in.trg_hit(logical(in.trg_shown))'));
+out.trg_all_score          	= cell2mat(in.trg_score(logical(in.trg_shown))');
+out.trg_all_ecc          	= cell2mat(in.trg_ecc(logical(in.trg_shown))');
+out.trg_all_acc           	= cell2mat(in.trg_acc(logical(in.trg_shown))');
+
 for iCoh = 1:length(snr)
     clear cIdx tIdx nhi ntrg
     
@@ -399,8 +425,8 @@ for iCoh = 1:length(snr)
     out.trg_score{iCoh}  	= score(score_coh  == snr(iCoh) & score_hi == true);
     
     % Joystick displacement
-    out.mecc(iCoh)         	= nanmedian(cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx)));
-    out.ecc{iCoh}           = cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx));
+    out.mecc_state(iCoh)  	= nanmedian(cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx)));
+    out.ecc_state{iCoh}   	= cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx));
    
     % Joystick accuracy [state-wise]
     for iState = 1:length(in.rdp_dir)
@@ -439,4 +465,48 @@ for iCoh = 1:length(snr)
     out.ecc_trg{iCoh}       = js_ecc;
     out.carr(iCoh)         	= snr(iCoh);
 end
+end
+
+function plot_trg_response(in)
+
+outc = logical(cell2mat(in.trg_hit(logical(in.trg_shown))'));
+ecc = cell2mat(in.trg_ecc(logical(in.trg_shown))');
+acc = cell2mat(in.trg_acc(logical(in.trg_shown))');
+acc_indx = acc > .9;
+edges = 0:.05:1;
+
+figure
+subplot(2,2,1)
+histogram(acc(outc),edges)
+hold on
+histogram(acc(~outc),edges)
+xlabel('Accuracy')
+ylabel('# Targets')
+title('Accuracy')
+legend('Hit', 'Miss', 'Location', 'northwest')
+
+subplot(2,2,2)
+histogram(ecc(outc),edges)
+hold on
+histogram(ecc(~outc),edges)
+xlabel('Eccentricity')
+ylabel('# Targets')
+title('Eccentricity')
+
+subplot(2,2,3)
+histogram(ecc(outc & acc_indx),edges)
+hold on
+histogram(ecc(outc & ~acc_indx),edges)
+xlabel('Eccentricity')
+ylabel('# Targets')
+title('Eccentricity [Hits]')
+legend('Acc > .9', 'Acc < .9', 'Location', 'northwest')
+
+subplot(2,2,4)
+histogram(ecc(~outc & acc_indx),edges)
+hold on
+histogram(ecc(~outc & ~acc_indx),edges)
+xlabel('Eccentricity')
+ylabel('# Targets')
+title('Eccentricity [Misses]')
 end

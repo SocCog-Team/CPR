@@ -1,13 +1,15 @@
-% addpath '/Users/fschneider/Documents/GitHub/CPR/Matlab/'
-% addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab/
-% cd /Users/fschneider/Desktop/tmp/
-% fname = '20220301_anm_CPRagent_block1_fxs.mwk2';
-% d = MW_readFile(fname, 'include', {'AGNT_direction','#stimDisplay'}, 'dotPositions');
+addpath '/Users/fschneider/Documents/GitHub/CPR/Matlab/'
+addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab/
+addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
+
+cd /Volumes/T7_Shield/CPR_psychophysics/AaA/raw/
+fname = '20230106_aaa_CPRagent_block1_psycho4_fxs.h5';
+d = MW_readH5(fname);
 
 clearvars -except d
 
 idx             = [];
-idx.dot         = d.event == 'STIM_RDP_dot_positions';
+idx.dot         = d.event == 'STIM_RDP_dotPositions';
 idx.rdp_dir     = d.event == 'STIM_RDP_direction';
 idx.rdp_coh     = d.event == 'STIM_RDP_coherence';
 idx.agnt_dir    = d.event == 'AGNT_direction'; % STIM_AGNT_arc_direction
@@ -28,7 +30,7 @@ xpos{1}         = dp{1}(xIdx);
 ypos{1}         = dp{1}(~xIdx);
 c               = 1;
 good_frme       = 1;
-n               = length(dp);
+n               = 1000;%length(dp);
 
 for iFrme = 2:n
     disp(['Frame: ' num2str(iFrme)])
@@ -39,7 +41,7 @@ for iFrme = 2:n
     
     % Dot position
     c                   = c+1;
-    xIdx                = logical(mod([1:size(dp{iFrme},2)],2));
+    xIdx                = logical(mod([1:size(dp{iFrme},1)],2));
     xpos                = dp{iFrme}(xIdx);
     ypos                = dp{iFrme}(~xIdx);
     xpos_last           = dp{good_frme}(xIdx);      	% Last frame: x-position

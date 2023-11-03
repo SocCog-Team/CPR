@@ -4,20 +4,17 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_pairwise_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_pairwise_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Within-dyad effect size %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[acc_df, ecc_df, auc_ecc1, auc_ecc2, auc_acc1, auc_acc2, score, ply1_flag, ply2_flag] = ...
-    dyad_effect_size(solo_perf, dyad_pw_perf, dyad_perf);
+[acc_df, ecc_df, auc_ecc1, auc_ecc2, auc_acc1, auc_acc2, ply1_flag, ply2_flag] = ...
+    dyad_effect_size(solo_perf, hc_dyad_pw_perf, comp_perf);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% PLOT: Scatter dyadic modulation %%%
@@ -46,43 +43,35 @@ for iPlot = 1:4
         plot_scatter(acc_df',auc_ecc1',auc_ecc2',label_neg, ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Eccentricity [AUROC: Solo vs Dyadic]';
         str                     = 'Accuracy';
-        ax.XLim                 = [-.1 .1];
-        ax.YLim                 = [.1 .9];
+        ax.YLim                 = [.1  .9];
         
     elseif iPlot == 2
         plot_scatter(ecc_df,auc_ecc1,auc_ecc2,label_neg,ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Eccentricity [AUROC: Solo vs Dyadic]';
         str                     = 'Eccentricity';
-        ax.XLim                 = [-.35 .35];
         ax.YLim                 = [.1 .9];
         
     elseif iPlot == 3
         plot_scatter(acc_df,auc_acc1,auc_acc2,label_neg,ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Accuracy [AUROC: Solo vs Dyadic]';
         str                     = 'Accuracy';
-        ax.XLim                 = [-.1 .1];
         ax.YLim                 = [.3 .7];
         
     elseif iPlot == 4
         plot_scatter(ecc_df,auc_acc1,auc_acc2,label_neg,ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Accuracy [AUROC: Solo vs Dyadic]';
         str                     = 'Eccentricity';
-        ax.XLim                 = [-.35 .35];
         ax.YLim                 = [.3 .7];
     end
     
+    ax.XLim                     = [-.4 .4];
     ax.Position(1)              = ax.Position(1) - ofs;
     ax.FontSize                 = lb_fs;
     ax.XLabel.String            = {'Within-dyad difference [P1 - P2]',str};
 end
 
-if label_neg
-    print(f, [dest_dir '/FIG4_auc_labelled'], '-r500', '-dpng');
-    print(f, [dest_dir '/FIG4_auc_labelled'], '-r500', '-dsvg', '-painters');
-else
-    print(f, [dest_dir '/FIG4_auc'], '-r500', '-dpng');
-    print(f, [dest_dir '/FIG4_auc'], '-r500', '-dsvg', '-painters');
-end
+print(f, [dest_dir '/FIG4_HC_auc'], '-r500', '-dpng');
+print(f, [dest_dir '/FIG4_HC_auc'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PLOT: Effect size difference
@@ -91,8 +80,8 @@ end
 subset_str = 'all';
 [f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc_ecc1,auc_ecc2,auc_acc1,auc_acc2,acc_df,ecc_df);
 
-print(f, [dest_dir '/FIG4_dff_scatter_' subset_str], '-r500', '-dpng');
-print(f, [dest_dir '/FIG4_dff_scatter_' subset_str], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG4_HC_dff_scatter_' subset_str], '-r500', '-dpng');
+print(f, [dest_dir '/FIG4_HC_dff_scatter_' subset_str], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Performance convergence over time?
@@ -111,39 +100,49 @@ pv
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [acc_df, ecc_df, auc_ecc1, auc_ecc2, auc_acc1, auc_acc2, score, ply1_flag, ply2_flag] = dyad_effect_size(in_solo, in_dyad, dyad_pooled)
+function [acc_df, ecc_df, auc_ecc1, auc_ecc2, auc_acc1, auc_acc2, ply1_flag, ply2_flag] = dyad_effect_size(in_solo, in_dyad, in_comp)
 
 for iSubj = 1:size(in_solo,2)
     solo_id{iSubj}          = in_solo{iSubj}.id;
 end
 
-for iDyad = 1:size(in_dyad,1)
-    score(iDyad,:)          = [mean(in_dyad{iDyad,1}.trg_mscore) mean(in_dyad{iDyad,2}.trg_mscore)];
-    
+for iDyad = 1:size(in_dyad,1)    
     % Find solo data of subjects
-    idx_ply1                = cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),solo_id);
-    idx_ply2                = cellfun(@(x) strcmp(x,in_dyad{iDyad,2}.id),solo_id);
+    idx                 = cellfun(@(x) strcmp(x,in_dyad{iDyad,2}.id),solo_id);
     
     % Label subjects of interest
-    soi                     = ID_subj_negAUC(in_solo, dyad_pooled);
-    ply1_flag(iDyad)      	= logical(sum(cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),soi)));
-    ply2_flag(iDyad)      	= logical(sum(cellfun(@(x) strcmp(x,in_dyad{iDyad,2}.id),soi)));
+    ply1_flag(iDyad)  	= false;
+    ply2_flag(iDyad) 	= false;
     
     % Performance difference
-    acc_df(iDyad)      	= mean(in_solo{idx_ply1}.macc_trg) - mean(in_solo{idx_ply2}.macc_trg);
-    ecc_df(iDyad)     	= mean(in_solo{idx_ply1}.mecc_state) - mean(in_solo{idx_ply2}.mecc_state);
+    acc_df(iDyad)      	= mean(in_comp{idx}.macc_trg) - mean(in_solo{idx}.macc_trg);
+    ecc_df(iDyad)     	= mean(in_comp{idx}.mecc_state) - mean(in_solo{idx}.mecc_state);
     
     % Effect size: Solo vs Dyadic
-    [auc_ecc1(iDyad), auc_ecc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'ecc_state');
-    [auc_acc1(iDyad), auc_acc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'acc_trg');
+    [auc_ecc1(iDyad), auc_ecc2(iDyad)] = calcAUROC(in_solo, in_dyad, in_comp, idx, iDyad, 'ecc_state');
+    [auc_acc1(iDyad), auc_acc2(iDyad)] = calcAUROC(in_solo, in_dyad, in_comp, idx, iDyad, 'acc_trg');
 end
 end
 
-function [out1, out2] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, str)
+function [out1, out2] = calcAUROC(in_solo, in_dyad, in_comp, idx, iDyad, str)
 
-for i = 1:length(in_solo{idx_ply1}.(str))
-    out1(i)     = getAUROC(in_solo{idx_ply1}.(str){i},in_dyad{iDyad,1}.(str){i});
-    out2(i)     = getAUROC(in_solo{idx_ply2}.(str){i},in_dyad{iDyad,2}.(str){i});
+for i = 1:length(in_solo{idx}.(str))
+    
+    comp_pooled = [];
+    for iComp = 1:size(in_comp,2)
+        if isempty(in_comp{iComp})
+            continue
+        end
+        
+        if contains(str, 'ecc')
+            comp_pooled = [comp_pooled; in_comp{iComp}.(str){i}];
+        else
+            comp_pooled = [comp_pooled, in_comp{iComp}.(str){i}];
+        end
+    end
+    
+    out1(i)     = getAUROC(comp_pooled,in_dyad{iDyad,1}.(str){i});
+    out2(i)     = getAUROC(in_solo{idx}.(str){i},in_dyad{iDyad,2}.(str){i});
 end
 
 out1 = mean(out1);
@@ -160,45 +159,6 @@ end
 
 lab                 = [zeros(length(in1),1); ones(length(in2),1)];
 [~,~,~,out]         = perfcurve(lab,[in1; in2],1);
-
-end
-
-function out = ID_subj_negAUC(solo_perf, dyad_perf)
-
-for j = 1:size(dyad_perf,2)
-    if isempty(dyad_perf{j})
-        ply_id{j} = nan;
-    else
-        ply_id{j} = dyad_perf{j}.id;
-    end
-end
-
-cnt = 0;
-for iSubj = 1:size(solo_perf,2)
-    
-    d.sp                  	= solo_perf{iSubj}; % Performance data
-    sIdx                    = cellfun(@(x) strcmp(x,solo_perf{iSubj}.id),ply_id);
-    
-    if sum(sIdx) == 0
-        continue
-    end
-    
-    d.dp                  	= dyad_perf{sIdx};
-    
-    if isempty(d.dp)
-        continue
-    end
-    
-    cnt = cnt+1;
-    id_auc{cnt}             = dyad_perf{sIdx}.id;
-    
-    for iCoh = 1:length(d.sp.carr)
-        auc_ecc(cnt,iCoh)	= getAUROC(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
-    end
-end
-
-% Identify subjects
-out                         = id_auc(mean(auc_ecc,2)<.5);
 
 end
 
@@ -298,7 +258,7 @@ for i = 1:2
         sc2                     = scatter(acc_df_subset,df_subset,'LineWidth',lw,'MarkerEdgeColor',col{2},'Marker',marker{2});
         [x_fit, y_fit, r(i,1), pv(i,1)]	= regr_line(ax,ecc_df_subset,df_subset,col{1});
         [x_fit, y_fit, r(i,2), pv(i,2)]	= regr_line(ax,acc_df_subset,df_subset,col{2},.13);
-        ax.XLim                 = [-.35 .35];
+        ax.XLim                 = [-.4 .4];
         ax.YLim                 = [-.55 .55];
         ax.YTick                = [-.5:.25:.5];
         ax.YLabel.String        = {'Eccentricity Difference';' [AUROC_P1 - AUROC_P2]'};
@@ -308,7 +268,7 @@ for i = 1:2
         sc2                     = scatter(acc_df_subset,df_subset,'LineWidth',lw,'MarkerEdgeColor',col{2},'Marker',marker{2});
         [x_fit, y_fit, r(i,1), pv(i,1)]	= regr_line(ax,ecc_df_subset,df_subset,col{1});
         [x_fit, y_fit, r(i,2), pv(i,2)]	= regr_line(ax,acc_df_subset,df_subset,col{2},.13);
-        ax.XLim                 = [-.35 .35];
+        ax.XLim                 = [-.4 .4];
         ax.YLim                 = [-.25 .25];
         ax.YTick                = [-.2:.1:.2];
         ax.YLabel.String        = {'Accuracy Difference';' [AUROC_P1 - AUROC_P2]'};

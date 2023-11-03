@@ -8,9 +8,9 @@ clear all
 
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_comp_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_comp_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_human_human_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
 
 %% Compare conditions
@@ -19,11 +19,11 @@ nSample                                 = 30;
 scnt                                    = 0;
 snr                                     = solo_perf{1}.carr;
 
-for iSubj = 1:size(dyad_pc_perf,2)
-    if ~isempty(dyad_pc_perf{iSubj})
-        id_dyad_pc{iSubj}           	= dyad_pc_perf{iSubj}.id;
+for iSubj = 1:size(hc_dyad_perf,2)
+    if ~isempty(hc_dyad_perf{iSubj})
+        id_hc_dyad{iSubj}           	= hc_dyad_perf{iSubj}.id;
     else
-        id_dyad_pc{iSubj}           	= 'empty';
+        id_hc_dyad{iSubj}           	= 'empty';
     end 
 end
 
@@ -41,21 +41,16 @@ for iSub = 1:length(solo_perf)
         continue
     end
     
-    idx_pc                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad_pc);
+    idx_pc                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_hc_dyad);
     
     if sum(idx_pc > 0)
         scnt                     	= scnt+1;
-        hir_df(scnt,:)            	= dyad_pc_perf{idx_pc}.hir - solo_perf{iSub}.hir;
+        hir_df(scnt,:)            	= hc_dyad_perf{idx_pc}.hir - solo_perf{iSub}.hir;
         
-        for iCoh = 1:length(snr)
-            
-            auc_acc(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},dyad_pc_perf{idx_pc}.acc_trg{iCoh});
-            auc_ecc(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc{iCoh},dyad_pc_perf{idx_pc}.ecc{iCoh});
-            auc_score(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},dyad_pc_perf{idx_pc}.trg_score{iCoh});
-         
-%             auc_acc(scnt,iCoh)          = f_auroc(solo_perf{iSub}.acc_trg{iCoh},dyad_pc_perf{idx_pc}.acc_trg{iCoh});
-%             auc_ecc(scnt,iCoh)          = f_auroc(solo_perf{iSub}.ecc{iCoh},dyad_pc_perf{idx_pc}.ecc{iCoh});
-%             auc_score(scnt,iCoh)        = f_auroc(solo_perf{iSub}.trg_score{iCoh},dyad_pc_perf{idx_pc}.trg_score{iCoh});
+        for iCoh = 1:length(snr)          
+            auc_acc(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+            auc_ecc(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc{iCoh},hc_dyad_perf{idx_pc}.ecc{iCoh});
+            auc_score(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},hc_dyad_perf{idx_pc}.trg_score{iCoh});
         end
     end
 end
@@ -237,7 +232,7 @@ ax4.Position                = [clmns(3)-xof row-yof dim(1)/1.25 dim(2)/2];
 
 box off
 
-lg                          = legend([pl1 pl2 pl3 pl4],{'Accuracy', 'Hit rate','Eccentricity' 'Score'}, 'NumColumns', 1)';
+lg                          = legend([pl1 pl2 pl3 pl4],{'Accuracy', 'Hit rate','Eccentricity' 'Hit score'}, 'NumColumns', 1)';
 lg.Box                      = 'on';
 lg.FontSize                 = lg_fs;
 lg.Location                 = 'northeast';
