@@ -27,7 +27,7 @@ for iFile = 3:4
 end
 
 % Extract cycle data
-idx                 = p1.trl_no == cycle & p1.block == block;
+idx                 = p1.cyc_no == cycle & p1.block == block;
 tp1                 = p1(idx,:);
 tp2                 = p2(idx,:);
 ts1                 = tp1.frme_ts{1}(1);
@@ -104,7 +104,7 @@ f                   = figure;
 ax                  = gca; hold on
 
 % Plot RDP stepfunction
-pidx                = 2450:4100; % Sample index
+pidx                = 2450:length(ts); % Sample index
 p                   = plot(ts(pidx),rdp_dir(pidx),'LineWidth',lw*1.5,'Color', [0 0 0]);
 
 % Use scatter to color-code 2D joystick response
@@ -124,8 +124,16 @@ for i = pidx
     end
 end
 
+strt         	= 3600;
+fs              = 1000/120;
+len             = 2000; % 2sec
+height          = 225;
+ln              = line([ts(strt) ts(strt)+(len/fs)/100],[height height]);
+ln.Color        = [0 0 0];
+ln.LineWidth  	= 2;
 
 ax.YAxis.Visible =  'off';
 ax.XAxis.Visible =  'off';
 
 print(f, [dest_dir '/js_example_response'], '-r500', '-dpng');
+exportgraphics(f,[dest_dir '/js_example_response.pdf'],'ContentType','vector') 

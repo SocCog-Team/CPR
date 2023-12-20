@@ -84,17 +84,22 @@ print(f, [dest_dir '/FIG4_HC_dff_scatter_' subset_str], '-r500', '-dpng');
 print(f, [dest_dir '/FIG4_HC_dff_scatter_' subset_str], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Performance convergence over time?
+%% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Reported stats in paper
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Regression to mean problem
+nRep                        = 10000;
+auc_str                     = 'acc';
+solo_str                    = 'acc';
+n                           = 1;
+[shuffl_coeff, true_coeff]  = regr_ci(nRep,auc,raw,auc_str,solo_str);
+p_actual                    = mean(shuffl_coeff(:,1) <= true_coeff(1))
 
-all = size(pv,1) * size(pv,2);
-pv_corr = pv < (.05 / all);
-r
-pv
+%%% See coefficients here
+figure
+histogram(shuffl_coeff(:,n)) 
+line([true_coeff(n) true_coeff(n)],[0 1000],'Color',[0 0 0], 'LineWidth', 2, 'LineStyle','--')
+ylim([0 500])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -286,6 +291,29 @@ for i = 1:2
         lg.Box                  = 'off';
         lg.Position(2)          = lg.Position(2)-.11;
     end
+end
+end
+
+function [shuffl_coeff, true_coeff] = regr_ci(nRep,auc,raw,auc_str,solo_str)
+
+auc1                    = auc.([auc_str num2str(1)])';
+auc2                    = auc.([auc_str num2str(2)])';
+solo1                   = raw.([solo_str num2str(1)])';
+solo2                   = raw.([solo_str num2str(2)])';
+
+true_coeff              = polyfit(solo1-solo2, auc1-auc2, 1);
+
+for iRep = 1:nRep
+    idx                 = randperm(size(auc1,1));
+    shuffled_auc2       = auc2(idx);
+    shuffled_solo2      = solo2(idx);
+    auc_df              = auc1 - shuffled_auc2;
+    solo_df            	= solo1 - shuffled_solo2;
+    
+    excl                = solo_df == 0;
+    auc_df              = auc_df(~excl);
+    solo_df             = solo_df(~excl);
+    shuffl_coeff(iRep,:)= polyfit(solo_df, auc_df, 1);
 end
 end
 

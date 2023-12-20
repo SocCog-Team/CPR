@@ -186,7 +186,7 @@ tx                       	= text(2.25,-35, 'HC dyad > HH dyad', 'FontSize', lb_f
 %%% SUBPLOT: AUROC Accuracy Computer-Human %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = axes('Position', [clmns(2) height(3) dim]); hold on
-ax3                         = plotAUROC(ax3,auc_acc_CH,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax3                         = plotAUROC(ax3,auc_acc_CH,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
 tx                        	= text(2.25,.9, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
 tx                       	= text(2.25,.1, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
 
@@ -194,7 +194,7 @@ tx                       	= text(2.25,.1, 'HC dyad > HH dyad', 'FontSize', lb_fs
 %%% SUBPLOT: AUROC eccentricity Computer-Human %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax4                         = axes('Position', [clmns(2) height(4) dim]); hold on
-ax4                         = plotAUROC(ax4,auc_ecc_CH,'AUROC',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax4                         = plotAUROC(ax4,auc_ecc_CH,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
 ax4.XAxis.Visible           = 'on';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -262,6 +262,18 @@ ax11                        = histogramAUROC(ax11,hir_df_SC.*100,lb_fs,coh_col,l
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dpng');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-dsvg', '-painters');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/FIG3', '-r500', '-depsc2', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Reported stats
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% Accuracy effect
+better_all_coh  = sum(sum(auc_acc_CH < .5,2) == size(auc_acc_CH,2)) / size(auc_acc_CH,1);
+better_zero_coh = sum(auc_acc_CH(:,1) < .5) / size(auc_acc_CH,1);
+
+% Eccentricity effect
+worse_all_coh  = sum(sum(auc_ecc_CH > .5,2) == size(auc_ecc_CH,2)) / size(auc_ecc_CH,1);
+worse_98_coh = sum(auc_ecc_CH(:,end) > .5) / size(auc_ecc_CH,1);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -381,10 +393,26 @@ for iSubj = 1:size(in_solo,2)
     
     if sum(idx_pc>0) && sum(idx_dy>0)
         for iCoh = 1:length(snr)
-            sc(iCoh)        = scatter(in_pc{idx_pc}.(cond_str)(iCoh), in_hum{idx_dy}.(cond_str)(iCoh), 'MarkerFaceColor', coh_col(iCoh,:),'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .75);
-            lab{iCoh}       = num2str(round(snr(iCoh),2));
+            
+            x_mat(iSubj,iCoh)   = in_pc{idx_pc}.(cond_str)(iCoh);
+            y_mat(iSubj,iCoh)   = in_hum{idx_dy}.(cond_str)(iCoh);
+            sc(iCoh)            = scatter(in_pc{idx_pc}.(cond_str)(iCoh), in_hum{idx_dy}.(cond_str)(iCoh), 'MarkerFaceColor', coh_col(iCoh,:)./2,'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .3);
+            lab{iCoh}           = num2str(round(snr(iCoh),2));
         end
+    else
+        x_mat(iSubj,:)      = nan([1 length(snr)]);
+        y_mat(iSubj,:)      = nan([1 length(snr)]);
     end
+end
+
+for iCoh = 1:length(snr)
+    xx              = x_mat(:,iCoh);
+    yy              = y_mat(:,iCoh);
+    x_ci            = (bootci(500, {@nanmedian,  xx},'alpha', .001));
+    y_ci            = (bootci(500, {@nanmedian,  yy},'alpha', .001));
+    lny             = line([nanmedian(xx) nanmedian(xx)],[y_ci(1) y_ci(2)], 'Color', coh_col(iCoh,:),'LineWidth',1);
+    lnx             = line([x_ci(1) x_ci(2)],[nanmedian(yy) nanmedian(yy)], 'Color', coh_col(iCoh,:),'LineWidth',1);
+    sc              = scatter(nanmedian(xx),nanmedian(yy), 'MarkerFaceColor', coh_col(iCoh,:),'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', 1,'SizeData', 20);
 end
 
 ax.FontSize                 = lb_fs;
@@ -400,10 +428,6 @@ ln                          = line([0 1],[0 1]);
 ln.LineWidth                = 1.5;
 ln.LineStyle                = ':';
 ln.Color                    = [0 0 0];
-
-lg                          = legend(sc,lab,'NumColumns', 2);
-lg.Location                 = 'northwest';
-lg.Box                      = 'off';
 
 end
 
@@ -463,7 +487,7 @@ ax.XAxis.Visible            = 'off';
 
 if flag
     lm                  	= line([.5 .5],[0 15], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
-    ax.XLabel.String     	= 'AUROC';
+    ax.XLabel.String     	= 'AUC';
     ax.XTick               	= [0 .5 1];
     ax.YTick               	= [0 10];
     ax.YLim               	= [0 15];

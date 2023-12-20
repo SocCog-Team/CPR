@@ -16,7 +16,7 @@ load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confid
 %%% Within-dyad effect size %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[acc_df, ecc_df, auc_ecc1, auc_ecc2, auc_acc1, auc_acc2, score, ply1_flag, ply2_flag] = ...
+[acc_df, ecc_df, auc, score, ply1_flag, ply2_flag, raw] = ...
     dyad_effect_size(solo_perf, dyad_pw_perf, dyad_perf);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -43,29 +43,29 @@ for iPlot = 1:4
     ln.LineStyle           	= ':';
     
     if iPlot == 1
-        plot_scatter(acc_df',auc_ecc1',auc_ecc2',label_neg, ply1_flag,ply2_flag)
-        ax.YLabel.String        = 'Eccentricity [AUROC: Solo vs Dyadic]';
+        plot_scatter(acc_df',auc.ecc1',auc.ecc2',label_neg, ply1_flag,ply2_flag)
+        ax.YLabel.String        = 'Eccentricity [AUC: Solo vs Dyadic]';
         str                     = 'Accuracy';
         ax.XLim                 = [-.1 .1];
         ax.YLim                 = [.1 .9];
         
     elseif iPlot == 2
-        plot_scatter(ecc_df,auc_ecc1,auc_ecc2,label_neg,ply1_flag,ply2_flag)
-        ax.YLabel.String        = 'Eccentricity [AUROC: Solo vs Dyadic]';
+        plot_scatter(ecc_df,auc.ecc1,auc.ecc2,label_neg,ply1_flag,ply2_flag)
+        ax.YLabel.String        = 'Eccentricity [AUC: Solo vs Dyadic]';
         str                     = 'Eccentricity';
         ax.XLim                 = [-.35 .35];
         ax.YLim                 = [.1 .9];
         
     elseif iPlot == 3
-        plot_scatter(acc_df,auc_acc1,auc_acc2,label_neg,ply1_flag,ply2_flag)
-        ax.YLabel.String        = 'Accuracy [AUROC: Solo vs Dyadic]';
+        plot_scatter(acc_df,auc.acc1,auc.acc2,label_neg,ply1_flag,ply2_flag)
+        ax.YLabel.String        = 'Accuracy [AUC: Solo vs Dyadic]';
         str                     = 'Accuracy';
         ax.XLim                 = [-.1 .1];
         ax.YLim                 = [.3 .7];
         
     elseif iPlot == 4
-        plot_scatter(ecc_df,auc_acc1,auc_acc2,label_neg,ply1_flag,ply2_flag)
-        ax.YLabel.String        = 'Accuracy [AUROC: Solo vs Dyadic]';
+        plot_scatter(ecc_df,auc.acc1,auc.acc2,label_neg,ply1_flag,ply2_flag)
+        ax.YLabel.String        = 'Accuracy [AUC: Solo vs Dyadic]';
         str                     = 'Eccentricity';
         ax.XLim                 = [-.35 .35];
         ax.YLim                 = [.3 .7];
@@ -89,29 +89,44 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 subset_str = 'all';
-[f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc_ecc1,auc_ecc2,auc_acc1,auc_acc2,acc_df,ecc_df);
+[f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc,acc_df,ecc_df);
 
 print(f, [dest_dir '/FIG4_dff_scatter_' subset_str], '-r500', '-dpng');
 print(f, [dest_dir '/FIG4_dff_scatter_' subset_str], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Performance convergence over time?
+%% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Regression to mean problem
+nRep                        = 5000;
+auc_str                     = 'acc';
+solo_str                    = 'ecc';
+n                           = 1;
+[shuffl_coeff, true_coeff]  = regr_ci(nRep,auc,raw,auc_str,solo_str);
+p_actual                    = mean(shuffl_coeff(:,1) <= true_coeff(1));
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Reported stats in paper
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% See coefficients here
+% figure
+% histogram(shuffl_coeff(:,n)) 
+% line([true_coeff(n) true_coeff(n)],[0 1000],'Color',[0 0 0], 'LineWidth', 2, 'LineStyle','--')
+% ylim([0 500])
 
-all = size(pv,1) * size(pv,2);
-pv_corr = pv < (.05 / all);
-r
-pv
+% Dyadic improvement
+ecc_class       = sum([auc.ecc1' auc.ecc2']>.5,2);
+ecc_both_better = sum(ecc_class == 2) / length(ecc_class);
+ecc_both_worse  = sum(ecc_class == 0) / length(ecc_class);
+ecc_mixed       = sum(ecc_class == 1) / length(ecc_class);
+
+acc_class       = sum([auc.acc1' auc.acc2']>.5,2);
+acc_both_better = sum(acc_class == 2) / length(acc_class);
+acc_both_worse  = sum(acc_class == 0) / length(acc_class);
+acc_mixed       = sum(acc_class == 1) / length(acc_class);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [acc_df, ecc_df, auc_ecc1, auc_ecc2, auc_acc1, auc_acc2, score, ply1_flag, ply2_flag] = dyad_effect_size(in_solo, in_dyad, dyad_pooled)
+function [acc_df, ecc_df, auc, score, ply1_flag, ply2_flag,raw] = dyad_effect_size(in_solo, in_dyad, dyad_pooled)
 
 for iSubj = 1:size(in_solo,2)
     solo_id{iSubj}          = in_solo{iSubj}.id;
@@ -129,13 +144,19 @@ for iDyad = 1:size(in_dyad,1)
     ply1_flag(iDyad)      	= logical(sum(cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),soi)));
     ply2_flag(iDyad)      	= logical(sum(cellfun(@(x) strcmp(x,in_dyad{iDyad,2}.id),soi)));
     
+    % Raw performance
+    raw.acc1(iDyad)         = mean(in_solo{idx_ply1}.macc_trg);
+    raw.acc2(iDyad)         = mean(in_solo{idx_ply2}.macc_trg);
+    raw.ecc1(iDyad)         = mean(in_solo{idx_ply1}.mecc_state);
+    raw.ecc2(iDyad)         = mean(in_solo{idx_ply2}.mecc_state);
+    
     % Performance difference
     acc_df(iDyad)      	= mean(in_solo{idx_ply1}.macc_trg) - mean(in_solo{idx_ply2}.macc_trg);
     ecc_df(iDyad)     	= mean(in_solo{idx_ply1}.mecc_state) - mean(in_solo{idx_ply2}.mecc_state);
     
     % Effect size: Solo vs Dyadic
-    [auc_ecc1(iDyad), auc_ecc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'ecc_state');
-    [auc_acc1(iDyad), auc_acc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'acc_trg');
+    [auc.ecc1(iDyad), auc.ecc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'ecc_state');
+    [auc.acc1(iDyad), auc.acc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'acc_trg');
 end
 end
 
@@ -256,7 +277,7 @@ end
 
 end
 
-function [f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc_ecc1,auc_ecc2,auc_acc1,auc_acc2,acc_df,ecc_df)
+function [f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc,acc_df,ecc_df)
 
 f                               = figure('units','centimeters','position',[0 0 15 15]); hold on
 marker                          = {'x','+'};
@@ -272,10 +293,10 @@ else
     idx                     = true([length(acc_df) 1]);
 end
 
-auc_ecc1_subset             = auc_ecc1(idx);
-auc_ecc2_subset             = auc_ecc2(idx);
-auc_acc1_subset             = auc_acc1(idx);
-auc_acc2_subset             = auc_acc2(idx);
+auc_ecc1_subset             = auc.ecc1(idx);
+auc_ecc2_subset             = auc.ecc2(idx);
+auc_acc1_subset             = auc.acc1(idx);
+auc_acc2_subset             = auc.acc2(idx);
 acc_df_subset               = acc_df(idx);
 ecc_df_subset               = ecc_df(idx);
 
@@ -328,4 +349,91 @@ for i = 1:2
     end
 end
 end
+
+function [shuffl_coeff, true_coeff] = regr_ci(nRep,auc,raw,auc_str,solo_str)
+
+auc1                    = auc.([auc_str num2str(1)])';
+auc2                    = auc.([auc_str num2str(2)])';
+solo1                   = raw.([solo_str num2str(1)])';
+solo2                   = raw.([solo_str num2str(2)])';
+
+true_coeff              = polyfit(solo1-solo2, auc1-auc2, 1);
+
+for iRep = 1:nRep
+    idx                 = randperm(size(auc1,1));
+    shuffled_auc2       = auc2(idx);
+    shuffled_solo2      = solo2(idx);
+    auc_df              = auc1 - shuffled_auc2;
+    solo_df            	= solo1 - shuffled_solo2;
+    
+    excl                = solo_df == 0;
+    auc_df              = auc_df(~excl);
+    solo_df             = solo_df(~excl);
+    shuffl_coeff(iRep,:)= polyfit(solo_df, auc_df, 1);
+end
+end
+
+
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% %% REMOVED: Performance convergence over time?
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 
+% for iSubj = 1:size(solo_perf,2)
+%     solo_id{iSubj}          = solo_perf{iSubj}.id;
+% end
+% addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
+% 
+% for iDyad = 1:length(dyad_pw_perf) 
+% %     % Find solo data of subjects
+% %     idx_ply1                = cellfun(@(x) strcmp(x,dyad_pw_perf{iDyad,1}.id),solo_id);
+% %     idx_ply2                = cellfun(@(x) strcmp(x,dyad_pw_perf{iDyad,2}.id),solo_id);
+% % 
+% %     % hit_idx ??? always confounded by evidence accumulation
+% %     solo1 =  solo_perf{idx_ply1}.trg_all_ecc - solo_perf{idx_ply1}.trg_all_js_ecc100;
+% %     solo2 =  solo_perf{idx_ply2}.trg_all_ecc - solo_perf{idx_ply2}.trg_all_js_ecc100;
+% %     dyad1 =  dyad_pw_perf{iDyad,1}.trg_all_ecc - dyad_pw_perf{iDyad,1}.trg_all_js_ecc100;
+% %     dyad2 =  dyad_pw_perf{iDyad,2}.trg_all_ecc - dyad_pw_perf{iDyad,2}.trg_all_js_ecc100;
+% %     auc(iDyad,1) = getAUROC(solo1, dyad1) % is there a difference?
+% %     auc(iDyad,2) = getAUROC(solo2, dyad2) % is there a difference?
+% %     figure;plot(dyad1);lsline % Is there a slope?
+% 
+%     %High/Low confidence, high convergence of js
+%     js_dev =  rad2deg(circ_dist(deg2rad(dyad_pw_perf{iDyad,1}.trg_all_js_dir),deg2rad(dyad_pw_perf{iDyad,2}.trg_all_js_dir)))
+%     js_dev100 =  rad2deg(circ_dist(deg2rad(dyad_pw_perf{iDyad,1}.trg_all_js_dir100),deg2rad(dyad_pw_perf{iDyad,2}.trg_all_js_dir100)))
+%     
+%     eidx = dyad_pw_perf{iDyad,1}.trg_all_ecc > median(dyad_pw_perf{iDyad,1}.trg_all_ecc)
+% %         figure; hold on
+% %     scatter(abs(js_dev(eidx)),abs(js_dev100(eidx)))
+%     
+%     hit_vec = dyad_pw_perf{iDyad,1}.trg_all_outc & dyad_pw_perf{iDyad,2}.trg_all_outc;
+% figure;
+% subplot(2,2,1)
+% scatter(abs(js_dev(hit_vec&eidx)), abs(dyad_pw_perf{iDyad,1}.trg_all_ecc(hit_vec&eidx) - dyad_pw_perf{iDyad,2}.trg_all_ecc(hit_vec&eidx)))
+% title('Dual hit & High confidence')
+% ylabel('abs JS ecc dff')
+% lsline
+% set(gca,'fontsize',16);
+% 
+% subplot(2,2,2)
+% scatter(abs(js_dev(hit_vec&~eidx)), abs(dyad_pw_perf{iDyad,1}.trg_all_ecc(hit_vec&~eidx) - dyad_pw_perf{iDyad,2}.trg_all_ecc(hit_vec&~eidx)))
+% title('Dual hit & Low confidence')
+% lsline
+% set(gca,'fontsize',16);
+% 
+% subplot(2,2,3)
+% scatter(abs(js_dev(~hit_vec&eidx)), abs(dyad_pw_perf{iDyad,1}.trg_all_ecc(~hit_vec&eidx) - dyad_pw_perf{iDyad,2}.trg_all_ecc(~hit_vec&eidx)))
+% title('Dual miss & High confidence')
+% ylabel('abs JS ecc dff')
+% xlabel('abs JS deviation at Target')
+% lsline
+% set(gca,'fontsize',16);
+% 
+% subplot(2,2,4)
+% scatter(abs(js_dev(~hit_vec&~eidx)), abs(dyad_pw_perf{iDyad,1}.trg_all_ecc(~hit_vec&~eidx) - dyad_pw_perf{iDyad,2}.trg_all_ecc(~hit_vec&~eidx)))
+% title('Dual miss & Low confidence')
+% xlabel('abs JS deviation at Target')
+% lsline
+% set(gca,'fontsize',16);
+% 
+% end
 

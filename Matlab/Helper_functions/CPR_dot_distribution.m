@@ -143,7 +143,6 @@ ax.Title.String             = 'Estimation of signal coherence based dot movement
 ax.FontSize                 = 16;
 print(f, '/Users/fschneider/Desktop/dots_coh', '-r300', '-dpng');
 
-
 % Check evidence strength based on resultant vector length
 f                           = figure; hold on
 pl                          = plot(rlen, 'LineWidth',2,'Color','k');
@@ -155,7 +154,6 @@ ax.XTick                    = 1:length(snr);
 ax.XTickLabel               = snr;
 ax.FontSize                 = 16;
 print(f, '/Users/fschneider/Desktop/resultant_strength', '-r300', '-dpng');
-
 
 for k = [5000 10000 15000 20000]
     figure; hold on

@@ -38,15 +38,15 @@ for iExample = [13 20 37]
     c = c+1;
     for iCoh = 1:length(snr)
         lab{iCoh} = num2str(round(snr(iCoh),2)*100);
-        auc(c,iCoh) = getAUROC(solo_perf{iSub}.ecc{iCoh}, dyad_perf{idx_dy}.ecc{iCoh});
+        auc(c,iCoh) = getAUROC(solo_perf{iSub}.ecc_state{iCoh}, dyad_perf{idx_dy}.ecc_state{iCoh});
 
         for i = 1:2
             if i == 1
                 str = 'left';
-                dat = solo_perf{iSub}.ecc{iCoh};
+                dat = solo_perf{iSub}.ecc_state{iCoh};
             else
                 str = 'right';
-                dat = dyad_perf{idx_dy}.ecc{iCoh};
+                dat = dyad_perf{idx_dy}.ecc_state{iCoh};
             end
 
             vp = Violin({dat},iCoh,'HalfViolin',str);
@@ -129,7 +129,7 @@ for iSubj = 1:length(solo_perf)
         dyad_hir(cnt,:)       	= dyad_perf{iSubj}.hir;          % Hit rate
         dyad_trg_score(cnt,:)	= dyad_perf{iSubj}.trg_mscore;   % Avg target scores
         dyad_macc(cnt,:)     	= dyad_perf{iSubj}.macc_trg;     % Avg accuracy
-        dyad_mecc(cnt,:)    	= dyad_perf{iSubj}.mecc;         % Avg eccentricity
+        dyad_mecc(cnt,:)    	= dyad_perf{iSubj}.mecc_state;         % Avg eccentricity
     catch
         dyad_hir(cnt,:)       	= nan;
         dyad_trg_score(cnt,:)	= nan;
@@ -175,7 +175,7 @@ for iSubj = 1:size(dyad_cr,2)
     end
 end
 
-ax2                         = subplot(1,4,2); hold on
+ax2                         = subplot(1,4,4); hold on
 [ax2,pl]                    = plotData(ax2,dyad_mlag ./ 1e3,false,lw,alp,col_dat,col_ci);
 ax2.XLim                    = [1 size(dyad_mlag,2)];
 ax2.YLim                    = [.3 1];
@@ -189,7 +189,7 @@ ax2.XTickLabelRotation      = 0;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax3                         = subplot(1,4,3); hold on
+ax3                         = subplot(1,4,2); hold on
 [ax3,pl]                    = plotData(ax3,dyad_macc,true,lw,alp,col_dat,col_ci);
 ax3.XLim                    = [1 size(dyad_macc,2)];
 ax3.YLim                    = [30 100];
@@ -204,7 +204,7 @@ ax3.XAxis.Visible           = 'on';
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC - Avg eccentricity raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax4                         = subplot(1,4,4); hold on
+ax4                         = subplot(1,4,3); hold on
 [ax4,pl]                    = plotData(ax4,dyad_mecc,true,lw,alp,col_dat,col_ci);
 ax4.XLim                    = [1 size(dyad_mecc,2)];
 ax4.YLim                    = [20 100];

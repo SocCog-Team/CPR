@@ -99,7 +99,7 @@ for iSubj = 1:length(sbj_lst)
             end
             dyad_cnt                = dyad_cnt+1;
             tmp1                    = split(mat_files(1).name,'_');
-            tmp3                    = split(mat_files(3).name,'_');
+            tmp3                    = split(mat_files(end).name,'_');
             id_dyad(dyad_cnt,:)    	= [{tmp1{2}}, {tmp3{2}}];
             n_dyad(dyad_cnt,:)      = iDyad;
             
@@ -406,6 +406,41 @@ out.trg_all_score          	= cell2mat(in.trg_score(logical(in.trg_shown))');
 out.trg_all_ecc          	= cell2mat(in.trg_ecc(logical(in.trg_shown))');
 out.trg_all_acc           	= cell2mat(in.trg_acc(logical(in.trg_shown))');
 
+% % Quick fix: Raw js_dir at target + within-state time
+% tmp_trg_ts                  = in.trg_ts(logical(in.trg_shown));
+% tmp_frame1_ts               = cellfun(@(x) x(1), in.frme_ts(logical(in.trg_shown)));
+% tmp_frme_ts                 = in.frme_ts(logical(in.trg_shown));
+% tmp_js_dir                  = in.js_dir(logical(in.trg_shown));
+% tmp_js_ecc                  = in.js_ecc(logical(in.trg_shown));
+% 
+% for i = 1:length(tmp_trg_ts)
+%     tmp_trg_state_ts{i}     = (tmp_trg_ts{i} - tmp_frame1_ts(i)) ./ 1e3;
+%     
+%     for iTrg = 1:length(tmp_trg_ts{i})
+%         trg_pos             = find(tmp_frme_ts{i} > tmp_trg_ts{i}(iTrg),1,'first');
+% 
+%         if isempty(trg_pos)
+%             tmp_trg_js_dir{i}(iTrg) = nan;
+%             tmp_trg_js_dir100{i}(iTrg) = nan;
+%             tmp_trg_js_ecc100{i}(iTrg) = nan;
+%         else
+%             tmp_trg_js_dir{i}(iTrg) = tmp_js_dir{i}(trg_pos);
+%             try
+%                 tmp_trg_js_dir100{i}(iTrg) = tmp_js_dir{i}(trg_pos+100);
+%                 tmp_trg_js_ecc100{i}(iTrg) = tmp_js_ecc{i}(trg_pos+100);
+%             catch
+%                 tmp_trg_js_dir100{i}(iTrg) = nan;
+%                 tmp_trg_js_ecc100{i}(iTrg) = nan;
+%             end
+%         end
+%     end
+% end
+% 
+% out.trg_all_state_ts        = cell2mat(tmp_trg_state_ts);
+% out.trg_all_js_dir          = cell2mat(tmp_trg_js_dir);
+% out.trg_all_js_dir100       = cell2mat(tmp_trg_js_dir100);
+% out.trg_all_js_ecc100       = cell2mat(tmp_trg_js_ecc100);
+
 for iCoh = 1:length(snr)
     clear cIdx tIdx nhi ntrg
     
@@ -441,6 +476,7 @@ for iCoh = 1:length(snr)
     out.acc_state{iCoh}    	= js_acc;
     
     % Joystick accuracy [before first target]
+    t1_outc                 = cellfun(@(x) x(1), in.trg_hit,'UniformOutput', false);
     t1_ts                   = cellfun(@(x) x(1), in.trg_ts);
     f1_ts                   = cellfun(@(x) x(1), in.frme_ts);
     trgIdx                  = (t1_ts-f1_ts) >= 1e6;
@@ -463,6 +499,7 @@ for iCoh = 1:length(snr)
     out.mecc_trg(iCoh)      = nanmedian(js_ecc);
     out.acc_trg{iCoh}     	= js_acc;
     out.ecc_trg{iCoh}       = js_ecc;
+    out.outc_trg{iCoh}      = cell2mat(t1_outc(cIdx & in.trg_shown & trgIdx));
     out.carr(iCoh)         	= snr(iCoh);
 end
 end

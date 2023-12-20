@@ -8,33 +8,43 @@ load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confid
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_pairwise_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/dyad_pairwise_performance.mat')
 
-%% Scores increase with motion coherence
-tbl_scr             = generate_table(solo_perf,'trg_score','perf');
-[lmeStat,comp]    	= LME_coherence_model(tbl_scr);
+%%% METHODS %%%
+pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
+x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
+m_age                       = median(x.Age);                               
+iqr_age                     = iqr(x.Age);
+n_glasses                   = sum(cellfun(@(x) strcmp(x, 'Glasses'),x.Vision));
 
-%% Hit rate increases with motion coherence
-tbl_hir             = generate_table(solo_perf,'hir','hir');
-stats_hir           = LME_coherence_model(tbl_hir);
 
-%% Average response lag
-for iSubj = 1:length(solo_cr)
-    mlag(iSubj)     = median(solo_cr{iSubj}.lag); % coherence pooled
-end
 
-avg_lag_population = round(mean(mlag));
-std_lag_population = round(std(mlag));
 
-%% Faster responses for high motion coherence
-tbl_lag             = generate_table(solo_cr,'lag','cr');
-stats_lag           = LME_coherence_model(tbl_lag);
-
-%% Accuracy increases with motion coherence
-tbl_acc             = generate_table(solo_perf,'trg_score','perf');
-stats_acc           = LME_coherence_model(tbl_acc);
-
-%% Eccentricity increases with motion coherence
-tbl_ecc             = generate_table(solo_perf,'ecc','perf');
-stats_ecc           = LME_coherence_model(tbl_ecc);
+% %% Scores increase with motion coherence
+% tbl_scr             = generate_table(solo_perf,'trg_score','perf');
+% [lmeStat,comp]    	= LME_coherence_model(tbl_scr);
+% 
+% %% Hit rate increases with motion coherence
+% tbl_hir             = generate_table(solo_perf,'hir','hir');
+% stats_hir           = LME_coherence_model(tbl_hir);
+% 
+% %% Average response lag
+% for iSubj = 1:length(solo_cr)
+%     mlag(iSubj)     = median(solo_cr{iSubj}.lag); % coherence pooled
+% end
+% 
+% avg_lag_population = round(mean(mlag));
+% std_lag_population = round(std(mlag));
+% 
+% %% Faster responses for high motion coherence
+% tbl_lag             = generate_table(solo_cr,'lag','cr');
+% stats_lag           = LME_coherence_model(tbl_lag);
+% 
+% %% Accuracy increases with motion coherence
+% tbl_acc             = generate_table(solo_perf,'trg_score','perf');
+% stats_acc           = LME_coherence_model(tbl_acc);
+% 
+% %% Eccentricity increases with motion coherence
+% tbl_ecc             = generate_table(solo_perf,'ecc','perf');
+% stats_ecc           = LME_coherence_model(tbl_ecc);
 
 % Lag solo vs dyadic different
 

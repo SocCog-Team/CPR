@@ -106,18 +106,27 @@ icons               = findobj(icons,'Type','line');
 icons               = findobj(icons,'Marker','none','-xor');
 set(icons,'MarkerSize',30);
 
+axis equal
+axis tight
+
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1x', '-r500', '-dpng');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1x', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%  Subject-wise score over time %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% [trg_score, exp, dte]   = getFinalScore(local_pth, id);
-% dest_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/';
-% save([dest_dir 'subject_scores.mat'], 'trg_score', 'exp', 'dte', '-v7.3');
+local_pth = '/Volumes/T7_Shield/CPR_psychophysics/';
+x = readtable([pth 'Subjects_summary.xlsx']); % Spreadsheet
+sbj_lst = x.Abbreviation; % Subject ID list
+sbj_lst(cellfun(@isempty,sbj_lst)) = [];
+[trg_score, exp, dte]   = getFinalScore(local_pth, sbj_lst);
+dest_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/';
+save([dest_dir 'subject_scores.mat'], 'trg_score', 'exp', 'dte', '-v7.3');
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/subject_scores.mat')
 
 f                      	= figure('units','centimeters','position',[0 0 7 7]); hold on
+alph                    = .3;
+
 for iSub = 1:size(trg_score,1)
     % sort to date
     for i = 1:size(dte,2)
@@ -134,25 +143,33 @@ for iSub = 1:size(trg_score,1)
 
     [v,idx]             = sort(t);
     dat              	= cell2mat(trg_score(iSub,idx));
+    plt              	= plot(1:length(dat),dat,'Color',[.5 .5 .5 alph/2], 'LineWidth', 1); uistack(plt,'bottom')
+    sc                  = scatter(1:length(dat),dat,'Marker','x','MarkerFaceColor',[.5 .5 .5],'MarkerFaceAlpha',alph,'MarkerEdgeColor',[.5 .5 .5],'MarkerEdgeAlpha',alph); uistack(plt,'bottom');
 
+    hold on
     P               	= polyfit(1:length(dat),dat,1);
     slpe(iSubj)       	= P(1);
     yfit            	= P(1)*(1:length(dat))+P(2);  % P(1) is the slope and P(2) is the intercept
     pf              	= plot(1:length(dat),yfit,'k', 'LineWidth', 1);
+    uistack(pf,'top') 
+
 end
 
 ax3                     = gca;
 ax3.XLabel.String       = 'Exp. block';
 ax3.YLabel.String       = 'Final cum. score';
 ax3.FontSize            = lb_fs;
-ax3.XLim                = [1 19];
+ax3.XLim                = [1 18];
 ax3.YLim                = [50 275];
+
+axis square
+axis tight
 
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1c', '-r500', '-dpng');
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1c', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Response lag %%%
+%%% Response lag %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
@@ -202,7 +219,6 @@ for iSubj = 1:length(solo_cr)
    ax.YLabel.String = 'Coherence';
    ax.XLabel.String = 'Lag [ms]';
    ax.FontSize = lb_fs;
-   ax.FontSize = lb_fs;
    ax.XTickLabelRotation = 30;
    colormap(gray(256));
    axis tight
@@ -232,6 +248,90 @@ axis off
 colormap(gray(256))
 
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1_col_bar', '-r500', '-dsvg', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Extract subject-wise RT data %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+local_pth               = '/Volumes/T7_Shield/CPR_psychophysics/';
+fname                   = 'Subjects_summary.xlsx';
+x                       = readtable([local_pth fname]);
+id                      = cellfun(@lower, x.Abbreviation, 'UniformOutput', false);
+
+% Get Median
+for iSubj = 1:length(id)
+    cd([local_pth id{iSubj} '/summary/'])
+    load([id{iSubj} '_RT.mat'])
+    mRT(iSubj)          = median(rt.dat);
+end
+
+% Sort
+[~,idx]                 = sort(mRT);
+
+% Get full data
+c = 0;
+for iSubj = idx
+    cd([local_pth id{iSubj} '/summary/'])
+    load([id{iSubj} '_RT.mat'])
+    
+    c = c+1;
+    RT{c}           = rt.dat';
+    dir{c}          = rt.trg_dir';
+    num{c}          = repmat(c,[length(RT{c}) 1]);
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Avg Subject-wise RT %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f                      	= figure('units','centimeters','position',[0 0 17 7]);
+lb_fs                 	= 8;
+lg_fs                 	= 8;
+vl                      = violinplot(cell2mat(RT'),cell2mat(num'));
+
+for i = 1:length(vl)
+    vl(i).ViolinColor{1}        = [.5 .5 .5];
+    vl(i).ViolinAlpha{1}       	= .1;
+    vl(i).ViolinPlot.EdgeAlpha  = 0;
+    vl(i).BoxColor              = [0 0 0];
+    vl(i).BoxWidth              = .075;
+    vl(i).BoxPlot.FaceAlpha     = 1;
+    vl(i).BoxPlot.EdgeAlpha     = 1;
+end
+
+ax0                     = gca;
+ax0.YLim                = [150 800];
+ax0.XTick               = [];
+ax0.YLabel.String       = 'Reaction time [ms]';
+ax0.XLabel.String       = 'Subjects';
+ax0.FontSize            = lb_fs;
+
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1a', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1a', '-r500', '-dsvg', '-painters');
+
+f                      	= figure('units','centimeters','position',[0 0 5 5]);
+vec                     = 0:30:360;
+
+for iSubj = 1:length(RT)
+    for iDir = 1:size(vec,2)-1
+        didx            = dir{iSubj} > vec(iDir) & dir{iSubj} <= vec(iDir+1);
+        mrt(iDir)       = median(RT{iSubj}(didx));
+        tdir(iDir)      = mean([vec(iDir) vec(iDir+1)]);
+    end
+    
+    pl                  = polarplot(deg2rad([tdir tdir(1)]), [mrt mrt(1)]);
+    pl.LineWidth        = 2;
+    pl.Color            = [0 0 0 .3];
+    
+    hold on
+end
+
+ax1                     = gca;
+ax1.RLim                = [0 400];
+ax1.FontSize            = lb_fs;
+
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1b', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1b', '-r500', '-dsvg', '-painters');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -250,11 +350,14 @@ for iSubj = 1:length(sbj_lst)
         clear tmp_tbl
         
         if contains(mat_files(iFile).name,'CPR') && ~contains(mat_files(iFile).name,'agnt')
-            c                       = c+1;
-            tmp_tbl              	= load(mat_files(iFile).name);
-            trg_score{iSubj,c}    	= getTargetScore(tmp_tbl.t);
-            exp{iSubj,c}           	= tmp_tbl.t.exp(1);
-            dte{iSubj,c}         	= tmp_tbl.t.date(1);
+            tmp_tbl              	= load(mat_files(iFile).name);            
+            nT                      = sum(cellfun(@numel,tmp_tbl.t.trg_ts(logical(tmp_tbl.t.trg_shown))));
+            if nT >= 600
+                c                  	= c+1;
+                trg_score{iSubj,c} 	= getTargetScore(tmp_tbl.t);
+                exp{iSubj,c}       	= tmp_tbl.t.exp(1);
+                dte{iSubj,c}      	= tmp_tbl.t.date(1);
+            end
         end
     end
     
@@ -272,23 +375,29 @@ for iSubj = 1:length(sbj_lst)
         dnames                          = {dfiles.name};
         fsplit                          = cellfun(@(x) strsplit(x,'_'),dnames,'UniformOutput',false);
         subj                            = cellfun(@(x) x(2), fsplit);
-        idx                             = cellfun(@(x) strcmp(x,sbj_lst{iSubj}), subj);
+        idx                             = cellfun(@(x) strcmp(x,lower(sbj_lst{iSubj})), subj);
         
         if sum(idx) == 0
             continue
         else
             files                      	= dnames(idx);
             b1                          = load(files{1});
-            dcnt                       	= dcnt+1;
-            trg_score{iSubj,dcnt}    	= getTargetScore(b1.t);
-            exp{iSubj,dcnt}          	= b1.t.exp(1);
-            dte{iSubj,dcnt}          	= b1.t.date(1);
+            nT1                      	= sum(cellfun(@numel,b1.t.trg_ts(logical(b1.t.trg_shown))));
+            if nT1 >= 600
+                dcnt                  	= dcnt+1;
+                trg_score{iSubj,dcnt} 	= getTargetScore(b1.t);
+                exp{iSubj,dcnt}        	= b1.t.exp(1);
+                dte{iSubj,dcnt}        	= b1.t.date(1);
+            end
             
             b2                          = load(files{2});
-            dcnt                       	= dcnt+1;
-            trg_score{iSubj,dcnt}    	= getTargetScore(b2.t);
-            exp{iSubj,dcnt}         	= b2.t.exp(1);
-            dte{iSubj,dcnt}          	= b2.t.date(1);
+            nT2                      	= sum(cellfun(@numel,b2.t.trg_ts(logical(b2.t.trg_shown))));
+            if nT2 >= 600
+                dcnt                   	= dcnt+1;
+                trg_score{iSubj,dcnt}  	= getTargetScore(b2.t);
+                exp{iSubj,dcnt}        	= b2.t.exp(1);
+                dte{iSubj,dcnt}        	= b2.t.date(1);
+            end
         end
     end
 end

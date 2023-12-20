@@ -191,14 +191,14 @@ for iSubj = 1:size(dyad_perf,2)
         bl_hir(cnt,iCoh)     	= d.sp.hir(iCoh);
         bl_lag(cnt,iCoh)     	= mean(d.sc.lag(d.sc.coh == snr(iCoh)));
 
-        auc_acc(cnt,iCoh)     	= getAUROC(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
-        auc_ecc(cnt,iCoh)     	= getAUROC(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
-        auc_score(cnt,iCoh)    	= getAUROC(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
+        [~,~,auc_acc(cnt,iCoh)]     = getAUROC(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
+        [~,~,auc_ecc(cnt,iCoh)]     = getAUROC(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
+        [~,~,auc_score(cnt,iCoh)]	= getAUROC(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
         
-        auc_cc(cnt,iCoh)    	= getAUROC(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
-        auc_xcp(cnt,iCoh)    	= getAUROC(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
-        auc_xc(cnt,iCoh)    	= getAUROC(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
-        auc_lag(cnt,iCoh)    	= getAUROC(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
+        [~,~,auc_cc(cnt,iCoh)]    	= getAUROC(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
+        [~,~,auc_xcp(cnt,iCoh)]    	= getAUROC(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
+        [~,~,auc_xc(cnt,iCoh)]    	= getAUROC(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
+        [~,~,auc_lag(cnt,iCoh)]    	= getAUROC(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
       
         p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
 %         p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
@@ -211,10 +211,10 @@ for iSubj = 1:size(dyad_perf,2)
     end
     
     p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
-    auc_ecc_pooled(cnt)         = getAUROC(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
+    [~,~,auc_ecc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
     
     p_acc_pooled(cnt)           = ranksum(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
-    auc_acc_pooled(cnt)         = getAUROC(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
+    [~,~,auc_acc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -307,27 +307,42 @@ sbjs                        = cellfun(@lower, sbj_lst, 'UniformOutput', false);
 row                         = .79;
 cmap_coh                    = cool(size(snr,2));
 
-% ax20                    	= axes('Position', [colmn(1) row pl_dim]); hold on
 ax20                        = subplot(1,3,1); hold on
 
 for iSubj = 1:length(dyad_perf)
     if isempty(dyad_perf{iSubj})
+        x_mat(iSubj,:) = nan([1 7]);
+        y_mat(iSubj,:) = nan([1 7]);
         continue
     end
     sidx = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);
+  
+    x_mat(iSubj,:) = solo_perf{sidx}.trg_mscore;
+    y_mat(iSubj,:) = dyad_perf{sidx}.trg_mscore;
+    
     for iCoh = 1:length(snr)
         sc(iCoh)                    = scatter(solo_perf{sidx}.trg_mscore(iCoh),dyad_perf{iSubj}.trg_mscore(iCoh));
-        sc(iCoh) .MarkerFaceColor   = cmap_coh(iCoh,:);
-        sc(iCoh) .MarkerFaceAlpha   = alp;
+        sc(iCoh) .MarkerFaceColor   = cmap_coh(iCoh,:)/2;
+        sc(iCoh) .MarkerFaceAlpha   = .3;
         sc(iCoh) .MarkerEdgeColor   = 'none';
         lg_str{iCoh}               	= num2str(round(snr(iCoh),2)*100);
     end
 end
 
-lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
-lg0.Box                     = 'off';
-lg0.Position(1)             = .25;
-lg0.Position(2)             = .1;
+for iCoh = 1:size(x_mat,2)
+    xx                      = x_mat(:,iCoh);
+    yy                      = y_mat(:,iCoh);
+    x_ci                    = (bootci(500, {@nanmedian,  xx},'alpha', .001));
+    y_ci                    = (bootci(500, {@nanmedian,  yy},'alpha', .001));
+    lny                     = line([nanmedian(xx) nanmedian(xx)],[y_ci(1) y_ci(2)], 'Color', cmap_coh(iCoh,:),'LineWidth',1);
+    lnx                     = line([x_ci(1) x_ci(2)],[nanmedian(yy) nanmedian(yy)], 'Color', cmap_coh(iCoh,:),'LineWidth',1);
+    sc                      = scatter(nanmedian(xx),nanmedian(yy), 'MarkerFaceColor', cmap_coh(iCoh,:),'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', 1,'SizeData', 20);
+end
+    
+% lg0                         = legend(sc,lg_str,'Location','northwest','NumColumns', 1);
+% lg0.Box                     = 'off';
+% lg0.Position(1)             = .25;
+% lg0.Position(2)             = .1;
 
 ln                          = line([0 1],[0 1]);
 ln.LineStyle                = ':';
@@ -438,6 +453,76 @@ print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG2_a'], '-r500', '-depsc2', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Example eccentricity distribution %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+iSubj                       = 3;
+d                           = solo_perf{iSubj};
+outc                        = d.trg_all_outc;
+ecc                         = d.trg_all_ecc;
+acc                         = d.trg_all_acc;
+acc_indx                    = acc > median(acc);
+edges                       = 0:.05:1;
+col1                        = [.3 .3 .3];
+col2                        = [1 .3 .3];
+alp                         = .5;
+
+f                           = figure('units','centimeters','position',[0 0 5.2 5.2]);
+h1                          = histogram(ecc(outc & acc_indx),edges); hold on
+h1.FaceColor                = col1;
+h1.EdgeColor                = 'none';
+h1.FaceAlpha                = alp;
+h2                          = histogram(ecc(outc & ~acc_indx),edges);
+h2.FaceColor                = col2;
+h2.EdgeColor                = 'none';
+h2.FaceAlpha                = alp;
+ax                          = gca;
+ax.XLim                     = [0 1];
+ax.YLim                     = [0 100];
+ax.YLabel.String            = '# Targets';
+ax.XLabel.String            = 'Eccentricity [%]';
+ax.XTick                    = 0:.25:1;
+ax.FontSize                 = lb_fs;
+lg                          = legend('High Accuracy', 'Low Accuracy', 'Location', 'northwest');
+box off
+axis square
+
+print(f, [dest_dir '/FIG2c_hist'], '-r500', '-dsvg', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% AUC: Accuracry-filtered eccentricity %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f                           = figure('units','centimeters','position',[0 0 5.2 5.2]);
+hold on
+
+for iSubj = 1:length(solo_perf)
+    clear outc ecc acc
+    outc                                = solo_perf{iSubj}.trg_all_outc;
+    ecc                                 = solo_perf{iSubj}.trg_all_ecc;
+    acc                                 = solo_perf{iSubj}.trg_all_acc;
+    acc_indx                            = acc > median(acc);
+    med_acc(iSubj)                      = median(acc);
+    [xval{iSubj},yval{iSubj},auc(iSubj)]	= getAUROC(ecc(outc & ~acc_indx), ecc(outc & acc_indx));
+    pl                                   	= plot(xval{iSubj},yval{iSubj}, 'Color', [.3 .3 .3 .5], 'LineWidth',2);
+end
+
+tx                          = text(.5,.5,['Avg AUC = ' num2str(round(mean(auc),2))]);
+tx.FontSize                 = lb_fs;
+ax                          = gca;
+ax.XLim                     = [0 1];
+ax.YLim                     = [0 1];
+ax.YLabel.String            = 'Eccentricity (Hit | Low Accuracy)';
+ax.XLabel.String            = 'Eccentricity (Hit | High Accuracy)';
+ax.XTick                    = 0:.25:1;
+ax.YTick                    = 0:.25:1;
+ax.FontSize                 = lb_fs;
+box off
+axis square
+
+print(f, [dest_dir '/FIG2c_auc'], '-r500', '-dsvg', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -467,7 +552,9 @@ for iSubj = 1:length(dyad_perf)
 end
 n                   = sum(d_better);
 rate                = n / length(d_better);
-[pv,h]            	= signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+[pv,h,stats]     	= signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+[mean(mscore_solo) iqr(mscore_solo)]
+[mean(mscore_dyadic) iqr(mscore_dyadic)]
 
 % Accuracy [coherence pooled, within subject]
 sign_bool           = p_acc_pooled < ( .05 / length(p_acc_pooled));
@@ -486,6 +573,27 @@ percent_pos = (sum(pos)./size(auc_ecc,1)) .*100;
 [round(min(percent_pos)) round(max(percent_pos))]
 percent_neg = (sum(neg)./size(auc_ecc,1)) .*100;
 [round(min(percent_neg)) round(max(percent_neg))]
+
+%%% Lag difference
+snr = unique(dyad_cr{1}.coh);
+cnt = 0;
+for iSubj = 1:length(dyad_cr)
+    if ~isempty(dyad_perf{iSubj})
+        cnt                         = cnt+1;
+        for iCoh = 1:length(snr)
+            avg_dyad_lag(cnt,iCoh)	= mean(dyad_cr{iSubj}.lag(dyad_cr{iSubj}.coh == snr(iCoh)));
+%             iqr_dyad_lag(cnt,iCoh)	= iqr(dyad_cr{iSubj}.lag(dyad_cr{iSubj}.coh == snr(iCoh)));
+            idx                   	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
+            avg_solo_lag(cnt,iCoh)	= mean(solo_cr{idx}.lag(solo_cr{idx}.coh == snr(iCoh)));
+%             iqr_solo_lag(cnt,iCoh)	= iqr(solo_cr{idx}.lag(solo_cr{idx}.coh == snr(iCoh)));
+        end
+    end
+end
+
+[mean(mean(avg_solo_lag,2)) iqr(mean(avg_solo_lag,2))]
+[mean(mean(avg_dyad_lag,2)) iqr(mean(avg_dyad_lag,2))]
+
+[p_lag,h_lag,stats_lag] = signrank(mean(avg_dyad_lag,2), mean(avg_dyad_lag,2));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -530,11 +638,24 @@ hold on
 coh_col                     = cool(length(snr));
 
 for iCoh = 1:size(solo_dat,2)
-    sc                      = scatter(solo_dat(:,iCoh),dyad_dat(:,iCoh));
-    sc.MarkerFaceColor      = coh_col(iCoh,:);
+    xx                      = solo_dat(:,iCoh);
+    yy                      = dyad_dat(:,iCoh);
+    
+    sc                      = scatter(xx,yy);
+    sc.MarkerFaceColor      = coh_col(iCoh,:)/2;
     sc.MarkerEdgeColor      = 'none';
-    sc.MarkerFaceAlpha      = .4;
+    sc.MarkerFaceAlpha      = .3;
     sc.SizeData             = 20;
+end
+
+for iCoh = 1:size(solo_dat,2)
+    xx                      = solo_dat(:,iCoh);
+    yy                      = dyad_dat(:,iCoh);
+    x_ci                    = (bootci(500, {@nanmedian,  xx},'alpha', .001));
+    y_ci                    = (bootci(500, {@nanmedian,  yy},'alpha', .001));
+    lny                     = line([nanmedian(xx) nanmedian(xx)],[y_ci(1) y_ci(2)], 'Color', coh_col(iCoh,:),'LineWidth',1);
+    lnx                     = line([x_ci(1) x_ci(2)],[nanmedian(yy) nanmedian(yy)], 'Color', coh_col(iCoh,:),'LineWidth',1);
+    sc                      = scatter(nanmedian(xx),nanmedian(yy), 'MarkerFaceColor', coh_col(iCoh,:),'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', 1,'SizeData', 20);
 end
 
 ax.FontSize                 = lb_fs;
@@ -548,8 +669,8 @@ end
 
 if auc_flag
     ln                    	= line([0 1],[.5 .5]);
-    ax.YLim                 = [0 1];
-    ax.YTick                = [.1 .5 .9];
+    ax.YLim                 = [.1 .9];
+    ax.YTick               	= [.25 .5 .75];
     ax.YLabel.String     	= 'AUC';
 else
     ln                   	= line([0 1],[0 0]);
@@ -564,7 +685,7 @@ ln.Color                    = [0 0 0];
 
 end
 
-function [out] = getAUROC(in1, in2)
+function [x,y,auc] = getAUROC(in1, in2)
 
 if size(in1,1) == 1
     in1         = in1';
@@ -572,7 +693,7 @@ if size(in1,1) == 1
 end
 
 lab          	= [zeros(length(in1),1); ones(length(in2),1)];
-[~,~,~,out]     = perfcurve(lab,[in1; in2],1);
+[x,y,~,auc]     = perfcurve(lab,[in1; in2],1);
 
 end
 
