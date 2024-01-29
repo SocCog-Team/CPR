@@ -49,7 +49,7 @@ for iSub = 1:length(solo_perf)
         
         for iCoh = 1:length(snr)          
             auc_acc(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
-            auc_ecc(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc{iCoh},hc_dyad_perf{idx_pc}.ecc{iCoh});
+            auc_ecc(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
             auc_score(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},hc_dyad_perf{idx_pc}.trg_score{iCoh});
         end
     end
@@ -61,19 +61,19 @@ sxc_agnt                    = [];
 coh_agnt                    = [];
 c                        	= 0;
 
-for iComp = 1:length(agnt_perf)
+for iComp = 1:length(comp_perf)
     
-    if isempty(agnt_perf{iComp})
+    if isempty(comp_perf{iComp})
         continue
     end
     
     c                       = c+1;
-    macc_agnt(c,:)          = agnt_perf{iComp}.macc_trg;
-    mecc_agnt(c,:)          = agnt_perf{iComp}.mecc;
-    hir_agnt(c,:)           = agnt_perf{iComp}.hir;
-    trg_score_agnt(c,:)     = agnt_perf{iComp}.trg_mscore;
-    sxc_agnt                = [sxc_agnt; agnt_cr{iComp}.sxc];
-    coh_agnt                = [coh_agnt; agnt_cr{iComp}.coh'];
+    macc_agnt(c,:)          = comp_perf{iComp}.macc_trg;
+    mecc_agnt(c,:)          = comp_perf{iComp}.mecc_state;
+    hir_agnt(c,:)           = comp_perf{iComp}.hir;
+    trg_score_agnt(c,:)     = comp_perf{iComp}.trg_mscore;
+    sxc_agnt                = [sxc_agnt; comp_cr{iComp}.sxc];
+    coh_agnt                = [coh_agnt; comp_cr{iComp}.coh'];
 end
 
 %% PLOT
@@ -289,57 +289,6 @@ lg.FontSize                 = lg_fs;
 lg.Position(1)              = .15;
 lg.Position(2)              = .66;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Hit rate difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-height(3)                   = .28;
-clmns                      	= linspace(.15,.75,3);
-dim                         = [.2 .2];
-
-ax10                      	= axes('Position', [clmns(1) height(3) dim]); hold on
-ln                          = line([0 8],[0 0], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax10                        = plotData(ax10, hir_df, 'Hit rate diff', snr, alp, lw, lb_fs, avg_mult,true);
-ax10.YLim                 	= [-.1 .4];
-ax10.YLim                 	= [-.2 .4];
-ax10.YTick                  = [-.2 0 .2 .4];
-ax10.Position             	= [clmns(1) height(3) dim];
-ax10.XAxis.Visible          = 'off';
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Score difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax11                    	= axes('Position', [clmns(2) height(3) dim]); hold on
-
-ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax11                        = plotData(ax11, auc_score, {'Score diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax11.Position           	= [clmns(2) height(3) dim];
-ax11.XAxis.Visible          = 'off';
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Eccentricity difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax12                        = axes('Position', [clmns(1) height(4) dim]); hold on
-
-ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax12                        = plotData(ax12, auc_ecc, {'Eccentricity diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax12.Position           	= [clmns(1) height(4) dim];
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Accuracy difference AGNT - SOLO %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-ax13                     	= axes('Position', [clmns(2) height(4) dim]); hold on
-
-ln                          = line([0 8],[.5 .5], 'Color', 'k','LineStyle', '--', 'LineWidth', lw/2);
-
-ax13                        = plotData(ax13, auc_acc, {'Accuracy diff','[AUROC]'}, snr, alp, lw, lb_fs, avg_mult);
-ax13.Position             	= [clmns(2) height(4) dim];
-
-text(3.5,0.825, 'Comp > Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
-text(3.5,0.175, 'Comp < Solo', 'Parent', ax13, 'FontSize', lb_fs, 'Color', [0 0 0])
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Annotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -349,9 +298,8 @@ lofs                        = .225;
 
 % text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/SFIG3/SFIG3', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/SFIG3/SFIG3', '-r500', '-dsvg', '-painters');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/SFIG3/SFIG3', '-r500', '-depsc2', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/SFIG3/SFIG3_part1', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG3/SFIG3/SFIG3_part1', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions

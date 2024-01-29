@@ -406,6 +406,13 @@ out.trg_all_score          	= cell2mat(in.trg_score(logical(in.trg_shown))');
 out.trg_all_ecc          	= cell2mat(in.trg_ecc(logical(in.trg_shown))');
 out.trg_all_acc           	= cell2mat(in.trg_acc(logical(in.trg_shown))');
 
+trg_n                       = cellfun(@length,in.trg_ecc(logical(in.trg_shown)));
+trg_coh                     = in.rdp_coh(logical(in.trg_shown));
+for j = 1:length(trg_n)
+    tmp_trg_all_coh{j}   	= repmat(trg_coh(j),1,trg_n(j));
+end
+out.trg_all_coh            	= cell2mat(tmp_trg_all_coh);
+
 % % Quick fix: Raw js_dir at target + within-state time
 % tmp_trg_ts                  = in.trg_ts(logical(in.trg_shown));
 % tmp_frame1_ts               = cellfun(@(x) x(1), in.frme_ts(logical(in.trg_shown)));

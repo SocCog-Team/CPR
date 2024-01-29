@@ -14,7 +14,7 @@ dt_y        = [];
 f                           = figure('units','centimeters','position',[0 0 15 15]);
 for iState = 1:length(dots)
     for iFrame = 1:length(dots{iState})
-        
+         
 %         if mod(iFrame,3) == 0
 %             continue
 %         end
@@ -52,13 +52,13 @@ for iState = 1:length(dots)
         % Calculate and show frame-wise score
         accuracy    = abs(1 - abs(rdp_dir(iState) - js_dir{iState}(iFrame)) / 180);
         score       = accuracy * js_ecc{iState}(iFrame); 
-        tx          = text(-7.8,-7.6, ['Score: ' num2str(round(score,2))]);
+        tx          = text(-7.8,-7.5, ['Score: ' num2str(round(score,2))]);
         tx.Color    = [1 1 1];
-        tx          = text(6,-7.6, ['Coh: ' num2str(round(rdp_coh(iState),2))]);
+        tx          = text(5.5,-7.5, ['Coh: ' num2str(round(rdp_coh(iState),2))]);
         tx.Color    = [1 1 1];
-        tx          = text(-7.8,-7.2, ['Acc: ' num2str(round(accuracy,2))]);
+        tx          = text(-7.8,-7, ['Acc: ' num2str(round(accuracy,2))]);
         tx.Color    = [1 1 1];
-        tx          = text(-7.8,-6.8, ['Ecc: ' num2str(round(js_ecc{iState}(iFrame),2))]);
+        tx          = text(-7.8,-6.5, ['Ecc: ' num2str(round(js_ecc{iState}(iFrame),2))]);
         tx.Color    = [1 1 1];
         
         % Adjust axes

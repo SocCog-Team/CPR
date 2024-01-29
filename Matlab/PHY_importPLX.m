@@ -36,8 +36,8 @@ count                          = 0;
     [~,adnames]                 = plx_adchan_names(OpenedFileName);
     ch_id                      	= cellstr(adnames);
     
-    for iCh = 0:nchannels-1
-        chIdx = channel(iCh+1);
+    for iCh = 27:29%0:nchannels-1
+        chIdx = channel(iCh);
         
         %%% Wideband
         [adfreq, nad, tsad, fnad, allad] = plx_ad(OpenedFileName, chIdx);

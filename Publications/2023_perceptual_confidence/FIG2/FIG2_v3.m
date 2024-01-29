@@ -453,76 +453,6 @@ print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG2_a'], '-r500', '-depsc2', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Example eccentricity distribution %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-iSubj                       = 3;
-d                           = solo_perf{iSubj};
-outc                        = d.trg_all_outc;
-ecc                         = d.trg_all_ecc;
-acc                         = d.trg_all_acc;
-acc_indx                    = acc > median(acc);
-edges                       = 0:.05:1;
-col1                        = [.3 .3 .3];
-col2                        = [1 .3 .3];
-alp                         = .5;
-
-f                           = figure('units','centimeters','position',[0 0 5.2 5.2]);
-h1                          = histogram(ecc(outc & acc_indx),edges); hold on
-h1.FaceColor                = col1;
-h1.EdgeColor                = 'none';
-h1.FaceAlpha                = alp;
-h2                          = histogram(ecc(outc & ~acc_indx),edges);
-h2.FaceColor                = col2;
-h2.EdgeColor                = 'none';
-h2.FaceAlpha                = alp;
-ax                          = gca;
-ax.XLim                     = [0 1];
-ax.YLim                     = [0 100];
-ax.YLabel.String            = '# Targets';
-ax.XLabel.String            = 'Eccentricity [%]';
-ax.XTick                    = 0:.25:1;
-ax.FontSize                 = lb_fs;
-lg                          = legend('High Accuracy', 'Low Accuracy', 'Location', 'northwest');
-box off
-axis square
-
-print(f, [dest_dir '/FIG2c_hist'], '-r500', '-dsvg', '-painters');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% AUC: Accuracry-filtered eccentricity %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-f                           = figure('units','centimeters','position',[0 0 5.2 5.2]);
-hold on
-
-for iSubj = 1:length(solo_perf)
-    clear outc ecc acc
-    outc                                = solo_perf{iSubj}.trg_all_outc;
-    ecc                                 = solo_perf{iSubj}.trg_all_ecc;
-    acc                                 = solo_perf{iSubj}.trg_all_acc;
-    acc_indx                            = acc > median(acc);
-    med_acc(iSubj)                      = median(acc);
-    [xval{iSubj},yval{iSubj},auc(iSubj)]	= getAUROC(ecc(outc & ~acc_indx), ecc(outc & acc_indx));
-    pl                                   	= plot(xval{iSubj},yval{iSubj}, 'Color', [.3 .3 .3 .5], 'LineWidth',2);
-end
-
-tx                          = text(.5,.5,['Avg AUC = ' num2str(round(mean(auc),2))]);
-tx.FontSize                 = lb_fs;
-ax                          = gca;
-ax.XLim                     = [0 1];
-ax.YLim                     = [0 1];
-ax.YLabel.String            = 'Eccentricity (Hit | Low Accuracy)';
-ax.XLabel.String            = 'Eccentricity (Hit | High Accuracy)';
-ax.XTick                    = 0:.25:1;
-ax.YTick                    = 0:.25:1;
-ax.FontSize                 = lb_fs;
-box off
-axis square
-
-print(f, [dest_dir '/FIG2c_auc'], '-r500', '-dsvg', '-painters');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -593,7 +523,7 @@ end
 [mean(mean(avg_solo_lag,2)) iqr(mean(avg_solo_lag,2))]
 [mean(mean(avg_dyad_lag,2)) iqr(mean(avg_dyad_lag,2))]
 
-[p_lag,h_lag,stats_lag] = signrank(mean(avg_dyad_lag,2), mean(avg_dyad_lag,2));
+[p_lag,h_lag,stats_lag] = signrank(mean(avg_solo_lag,2), mean(avg_dyad_lag,2));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions

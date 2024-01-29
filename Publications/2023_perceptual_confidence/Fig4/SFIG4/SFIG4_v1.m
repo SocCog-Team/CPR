@@ -6,6 +6,7 @@ clear all
 
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_correlation.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_performance.mat')
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_pairwise_correlation.mat')
@@ -20,11 +21,11 @@ load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confid
     dyad_effect_size(solo_perf, dyad_pw_perf, dyad_perf);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% PLOT: Scatter dyadic modulation %%%
+%% PLOT: Scatter dyadic modulation %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG4/';
-f                           = figure('units','centimeters','position',[0 0 15 15]); hold on
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG4/SFIG4/';
+f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 lw                          = 1;
 lb_fs                       = 8;
 ofs                         = .025;
@@ -43,28 +44,28 @@ for iPlot = 1:4
     ln.LineStyle           	= ':';
     
     if iPlot == 1
-        plot_scatter(acc_df',auc.ecc1',auc.ecc2',label_neg, ply1_flag,ply2_flag)
+        plot_scatter(acc_df.solo',auc.ecc1',auc.ecc2',label_neg, ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Eccentricity [AUC: Solo vs Dyadic]';
         str                     = 'Accuracy';
         ax.XLim                 = [-.1 .1];
         ax.YLim                 = [.1 .9];
         
     elseif iPlot == 2
-        plot_scatter(ecc_df,auc.ecc1,auc.ecc2,label_neg,ply1_flag,ply2_flag)
+        plot_scatter(ecc_df.solo,auc.ecc1,auc.ecc2,label_neg,ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Eccentricity [AUC: Solo vs Dyadic]';
         str                     = 'Eccentricity';
         ax.XLim                 = [-.35 .35];
         ax.YLim                 = [.1 .9];
         
     elseif iPlot == 3
-        plot_scatter(acc_df,auc.acc1,auc.acc2,label_neg,ply1_flag,ply2_flag)
+        plot_scatter(acc_df.solo,auc.acc1,auc.acc2,label_neg,ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Accuracy [AUC: Solo vs Dyadic]';
         str                     = 'Accuracy';
         ax.XLim                 = [-.1 .1];
         ax.YLim                 = [.3 .7];
         
     elseif iPlot == 4
-        plot_scatter(ecc_df,auc.acc1,auc.acc2,label_neg,ply1_flag,ply2_flag)
+        plot_scatter(ecc_df.solo,auc.acc1,auc.acc2,label_neg,ply1_flag,ply2_flag)
         ax.YLabel.String        = 'Accuracy [AUC: Solo vs Dyadic]';
         str                     = 'Eccentricity';
         ax.XLim                 = [-.35 .35];
@@ -77,11 +78,186 @@ for iPlot = 1:4
 end
 
 if label_neg
-    print(f, [dest_dir '/FIG4_auc_labelled'], '-r500', '-dpng');
-    print(f, [dest_dir '/FIG4_auc_labelled'], '-r500', '-dsvg', '-painters');
+    print(f, [dest_dir '/SFIG4_auc_labelled'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG4_auc_labelled'], '-r500', '-dsvg', '-painters');
 else
-    print(f, [dest_dir '/FIG4_auc'], '-r500', '-dpng');
-    print(f, [dest_dir '/FIG4_auc'], '-r500', '-dsvg', '-painters');
+    print(f, [dest_dir '/SFIG4_auc'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG4_auc'], '-r500', '-dsvg', '-painters');
+end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PLOT: Scatter dyadic modulation corrected for Player1 %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG4/SFIG4/';
+f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+lw                          = 1;
+lb_fs                       = 8;
+ofs                         = .025;
+label_neg                   = false;
+scol                        = [.1 .1 .1];   
+rcol                        = [.6 .1 .1];
+
+for iPlot = 1:4
+    ax = subplot(2,2,iPlot); hold on
+    ln                     	= line([0 0],[-.5 .5]);
+    ln.Color              	= [0 0 0];
+    ln.LineWidth           	= lw;
+    ln.LineStyle           	= ':';
+
+    if iPlot == 1
+        x                       = acc_df.solo';
+        y                       = abs(auc.ecc1-auc.ecc2)';
+        sc                      = scatter(x,y,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
+        sc.SizeData             = 10;
+        [ft,gof]                = fit(x,y,'poly2');
+        x_vec                   = -.35:.01:.35;
+        p_fit                   = plot(x_vec,ft(x_vec), 'Color', rcol, 'LineWidth',lw);
+        tx                      = text(.001, .4,['rsme' num2str(round(gof.rmse,3))]);
+        tx.FontSize             = lb_fs;
+        ax.YLabel.String        = 'AUC difference';
+        str                     = 'Accuracy';
+        ax.XLim                 = [-.1 .1];
+        ax.YLim                 = [0 .5];
+     
+    elseif iPlot == 2
+        x                       = ecc_df.solo';
+        y                       = abs(auc.ecc1-auc.ecc2)';
+        sc                      = scatter(x,y,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
+        sc.SizeData             = 10;
+        [ft,gof]                = fit(x,y,'poly2');
+        x_vec                   = -.35:.01:.35;
+        p_fit                   = plot(x_vec,ft(x_vec), 'Color', rcol, 'LineWidth',lw);
+        tx                      = text(.001, .4,['rsme' num2str(round(gof.rmse,3))]);
+        tx.FontSize             = lb_fs;
+        ax.YLabel.String        = 'AUC difference';
+        str                     = 'Eccentricity';
+        ax.XLim                 = [-.35 .35];
+        ax.YLim                 = [0 .5];
+    elseif iPlot == 3
+        x                       = acc_df.solo';
+        y                       = abs(auc.acc1-auc.acc2)';
+        sc                      = scatter(x,y,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
+        sc.SizeData             = 10;
+        [ft,gof]                = fit(x,y,'poly2');
+        x_vec                   = -.1:.01:.1;
+        p_fit                   = plot(x_vec,ft(x_vec), 'Color', rcol, 'LineWidth',lw);
+        tx                      = text(.001, .175,['rsme' num2str(round(gof.rmse,3))]);
+        tx.FontSize             = lb_fs;
+        ax.YLabel.String        = 'AUC difference';
+        str                     = 'Accuracy';
+        ax.XLim                 = [-.1 .1];
+        ax.YLim                 = [0 .2];  
+    elseif iPlot == 4
+        x                       = ecc_df.solo';
+        y                       = abs(auc.acc1-auc.acc2)';
+        sc                      = scatter(x,y,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
+        sc.SizeData             = 10;
+        [ft,gof]                = fit(x,y,'poly2');
+        x_vec                   = -.35:.01:.35;
+        p_fit                   = plot(x_vec,ft(x_vec), 'Color', rcol, 'LineWidth',lw);
+        tx                      = text(.001, .175,['rsme' num2str(round(gof.rmse,3))]);
+        tx.FontSize             = lb_fs;
+        ax.YLabel.String        = 'AUC difference';
+        str                     = 'Eccentricity';
+        ax.XLim                 = [-.35 .35];
+        ax.YLim                 = [0 .2];  
+    end
+   
+    ax.Position(1)              = ax.Position(1) - ofs;
+    ax.FontSize                 = lb_fs;
+    ax.XLabel.String            = {'Within-dyad difference [P1 - P2]',str};
+end
+
+
+if label_neg
+    print(f, [dest_dir '/SFIG4_auc_labelled_corrP1'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG4_auc_labelled_corrP1'], '-r500', '-dsvg', '-painters');
+else
+    print(f, [dest_dir '/SFIG4_auc_corrP1'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG4_auc_corrP1'], '-r500', '-dsvg', '-painters');
+end
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PLOT: Dyadic modulation - histogram %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG4/SFIG4/';
+f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+lb_fs                       = 8;
+ofs                         = .025;
+nbin                        = 10;
+
+for iPlot = 1:4
+    ax                      = subplot(2,2,iPlot); hold on
+    
+    if iPlot == 1
+        auc1                    = auc.ecc1 - .5;
+        auc2                    = auc.ecc2 - .5;
+        h                       = histogram([auc1 auc2],nbin,'FaceColor',[.1 .1 .1], 'EdgeColor','none');
+        h.BinLimits             = [-.5 .5];
+        ax.XLabel.String        = 'Eccentricity change';
+        ax.YLabel.String        = '# Players';
+        ax.XLim                 = h.BinLimits;
+        ax.YLim                 = [0 max(h.BinCounts)];
+    elseif iPlot == 2
+        auc1                    = auc.acc1 - .5;
+        auc2                    = auc.acc2 - .5;
+        h                       = histogram([auc1 auc2],nbin,'FaceColor',[.1 .1 .1], 'EdgeColor','none');
+        h.BinLimits             = [-.2 .2];
+        ax.XLabel.String        = 'Accuracy change';
+        ax.YLabel.String        = '# Players';
+        ax.XLim                 = h.BinLimits;
+        ax.YLim                 = [0 max(h.BinCounts)];
+    elseif iPlot == 3
+        
+        ln                     	= line([0 1],[.5 .5]);
+        ln.Color              	= [0 0 0];
+        ln.LineWidth           	= lw;
+        ln.LineStyle           	= ':';
+        
+        ln                     	= line([.5 .5],[0 1]);
+        ln.Color              	= [0 0 0];
+        ln.LineWidth           	= lw;
+        ln.LineStyle           	= ':';
+        
+        sc                      = scatter([auc.ecc1 auc.ecc2], [auc.acc1 auc.acc2]);
+        sc.MarkerFaceColor      = [0 0 0];
+        sc.MarkerEdgeColor      = 'none';
+        sc.MarkerFaceAlpha      = .5;
+        ax.XLabel.String        = 'Eccentricity change [AUC]';
+        ax.YLabel.String        = 'Accuracy change [AUC]';
+        ax.XLim                 = [0 1];
+        ax.YLim                 = [0 1];
+        
+        [r,pv]               	= corrcoef([auc.ecc1 auc.ecc2],[auc.acc1 auc.acc2]);
+        r                       = r(2);
+        pv                      = pv(2);
+        
+        linearCoefficients      = polyfit([auc.ecc1 auc.ecc2], [auc.acc1 auc.acc2], 1);
+        x_fit                   = linspace(-1, 1, 50);
+        y_fit                   = polyval(linearCoefficients, x_fit);
+        pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
+
+        if pv < .05
+            pl.Color         	= [.3 .3 .3];
+            tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+            tx.Color          	= [0 0 0];
+            tx.FontSize      	= 8;
+        end
+    end
+        
+    ax.Position(1)              = ax.Position(1) - ofs;
+    ax.FontSize                 = lb_fs;
+end
+
+if label_neg
+    print(f, [dest_dir '/SFIG4_auc_labelled_hist'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG4_auc_labelled_hist'], '-r500', '-dsvg', '-painters');
+else
+    print(f, [dest_dir '/SFIG4_auc_hist'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG4_auc_hist'], '-r500', '-dsvg', '-painters');
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -89,17 +265,42 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 subset_str = 'all';
-[f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc,acc_df,ecc_df);
+[f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc,acc_df.solo,ecc_df.solo);
 
-print(f, [dest_dir '/FIG4_dff_scatter_' subset_str], '-r500', '-dpng');
-print(f, [dest_dir '/FIG4_dff_scatter_' subset_str], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/SFIG4_dff_scatter_' subset_str], '-r500', '-dpng');
+print(f, [dest_dir '/SFIG4_dff_scatter_' subset_str], '-r500', '-dsvg', '-painters');
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PLOT: Solo vs dyadic difference
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+ax                      = subplot(2,2,1); hold on
+col                   	= {[230,97,1]./255;[94,60,153]./255};
+marker                  = {'x','+'};
+
+sc1                     = scatter(abs(ecc_df.solo),abs(ecc_df.dyad),'LineWidth',lw,'MarkerEdgeColor',col{1},'Marker',marker{1});
+sc1.MarkerFaceAlpha     = .5;
+sc2                     = scatter(abs(acc_df.solo),abs(acc_df.dyad),'LineWidth',lw,'MarkerEdgeColor',col{2},'Marker',marker{2});
+sc2.MarkerFaceAlpha     = .5;
+
+ax.XLim                 = [0 .4];
+ax.YLim                 = [0 .4];
+
+lsl                     = lsline;
+lsl(1).Color            = col{2};
+lsl(2).Color            = col{1};
+
+ax.FontSize             = lb_fs;
+ax.XLabel.String        = 'Difference [Solo]';
+ax.YLabel.String        = 'Difference [Dyad]';
+    
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Regression to mean problem
 nRep                        = 5000;
-auc_str                     = 'acc';
+auc_str                     = 'ecc';
 solo_str                    = 'ecc';
 n                           = 1;
 [shuffl_coeff, true_coeff]  = regr_ci(nRep,auc,raw,auc_str,solo_str);
@@ -139,6 +340,10 @@ for iDyad = 1:size(in_dyad,1)
     idx_ply1                = cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),solo_id);
     idx_ply2                = cellfun(@(x) strcmp(x,in_dyad{iDyad,2}.id),solo_id);
     
+    if strcmp(in_dyad{iDyad,1}.id,'agnt')
+        idx_ply1 = idx_ply2;
+    end
+    
     % Label subjects of interest
     soi                     = ID_subj_negAUC(in_solo, dyad_pooled);
     ply1_flag(iDyad)      	= logical(sum(cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),soi)));
@@ -151,9 +356,11 @@ for iDyad = 1:size(in_dyad,1)
     raw.ecc2(iDyad)         = mean(in_solo{idx_ply2}.mecc_state);
     
     % Performance difference
-    acc_df(iDyad)      	= mean(in_solo{idx_ply1}.macc_trg) - mean(in_solo{idx_ply2}.macc_trg);
-    ecc_df(iDyad)     	= mean(in_solo{idx_ply1}.mecc_state) - mean(in_solo{idx_ply2}.mecc_state);
-    
+    acc_df.solo(iDyad)      = mean(in_solo{idx_ply1}.macc_trg) - mean(in_solo{idx_ply2}.macc_trg);
+    ecc_df.solo(iDyad)     	= mean(in_solo{idx_ply1}.mecc_state) - mean(in_solo{idx_ply2}.mecc_state);
+    acc_df.dyad(iDyad)      = mean(in_dyad{idx_ply1}.macc_trg) - mean(in_dyad{idx_ply2}.macc_trg);
+    ecc_df.dyad(iDyad)     	= mean(in_dyad{idx_ply1}.mecc_state) - mean(in_dyad{idx_ply2}.mecc_state);
+       
     % Effect size: Solo vs Dyadic
     [auc.ecc1(iDyad), auc.ecc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'ecc_state');
     [auc.acc1(iDyad), auc.acc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'acc_trg');
@@ -248,6 +455,9 @@ for i = 1:length(df)
     else
         sc2 = scatter(df(i),auc2(i),'MarkerFaceColor','none','MarkerEdgeColor',col,'MarkerEdgeAlpha',1,'Marker','o');
     end
+    
+    sc1.SizeData                = 10;
+    sc2.SizeData                = 10;
 end
 end
 
@@ -279,7 +489,7 @@ end
 
 function [f, pv, r] = scatter_perf_dff(subset_str,ply1_flag,ply2_flag,auc,acc_df,ecc_df)
 
-f                               = figure('units','centimeters','position',[0 0 15 15]); hold on
+f                               = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 marker                          = {'x','+'};
 col                             = {[230,97,1]./255;[94,60,153]./255};
 lw                              = 1;
