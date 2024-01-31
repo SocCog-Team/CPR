@@ -34,13 +34,13 @@ for iSubj = 1:size(dyad_perf,2)
     cnt = cnt+1;
 
     for iCoh = 1:length(snr)
-        bl_ecc(cnt,iCoh)     	= d.sp.mecc(iCoh);
+        bl_ecc(cnt,iCoh)     	= d.sp.mecc_state(iCoh);
         bl_acc(cnt,iCoh)     	= d.sp.macc_trg(iCoh);
         bl_scr(cnt,iCoh)     	= d.sp.trg_mscore(iCoh);
         bl_hir(cnt,iCoh)     	= d.sp.hir(iCoh);
 
         auc_acc(cnt,iCoh)     	= getAUROC(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
-        auc_ecc(cnt,iCoh)     	= getAUROC(d.sp.ecc{iCoh},d.dp.ecc{iCoh});
+        auc_ecc(cnt,iCoh)     	= getAUROC(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
         auc_score(cnt,iCoh)    	= getAUROC(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
     end
 end

@@ -1,7 +1,6 @@
 % Add relevant directories
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
-addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes
 
 close all
 clear all
@@ -26,15 +25,14 @@ nLag                        = 150;                                          % Cr
 
 cnt                         = 0;
 for iSubj = 1:length(sbj_lst)
-    if isempty(solo_perf{iSubj}.hir)
+    if isempty(dyad_perf{iSubj})
         continue
     end
     
     cnt                   	= cnt + 1;
-    solo_hir(cnt,:)        	= solo_perf{iSubj}.hir;          % Hit rate
-    solo_trg_score(cnt,:)  	= solo_perf{iSubj}.trg_mscore;   % Avg target scores
-    solo_macc(cnt,:)       	= solo_perf{iSubj}.macc_trg;     % Avg accuracy
-    solo_mecc(cnt,:)       	= solo_perf{iSubj}.mecc_state;         % Avg eccentricity
+    dyad_hir(cnt,:)        	= dyad_perf{iSubj}.hir;             % Hit rate
+    dyad_macc(cnt,:)       	= dyad_perf{iSubj}.macc_trg;        % Avg accuracy
+    dyad_mecc(cnt,:)       	= dyad_perf{iSubj}.mecc_state;      % Avg eccentricity
 end
 
 %% PLOT
@@ -56,9 +54,9 @@ snr                         = solo_perf{end}.carr;
 %%% SUBPLOT: SOLO - Hit rate raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax1                         = axes('Position', [colmn(1) height(1) dim]); hold on
-[ax1,pl]                    = plotData(ax1,solo_hir,true,lw,alp,col_dat,col_ci);
+[ax1,pl]                    = plotData(ax1,dyad_hir,true,lw,alp,col_dat,col_ci);
 ax1.YLim                    = [10 70];
-ax1.XLim                    = [1 size(solo_hir,2)];
+ax1.XLim                    = [1 size(dyad_hir,2)];
 ax1.XLabel.String           = 'Coherence [%]';
 ax1.YLabel.String           = 'Hit rate [%]';
 ax1.YLabel.Position(1)      = -.4;
@@ -98,8 +96,8 @@ ax2.XTickLabelRotation      = 0;
 %%% SUBPLOT: SOLO - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = axes('Position', [colmn(1) height(2) dim]); hold on
-[ax3,pl]                    = plotData(ax3,solo_macc,true,lw,alp,col_dat,col_ci);
-ax3.XLim                    = [1 size(solo_macc,2)];
+[ax3,pl]                    = plotData(ax3,dyad_macc,true,lw,alp,col_dat,col_ci);
+ax3.XLim                    = [1 size(dyad_macc,2)];
 ax3.YLim                    = [30 100];
 ax3.XLabel.String           = 'Coherence [%]';
 ax3.YLabel.String           = 'Accuracy [%]';
@@ -114,8 +112,8 @@ ax3.XAxis.Visible           = 'off';
 %%% SUBPLOT: SOLO - Avg eccentricity raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax4                         = axes('Position', [colmn(1) height(3) dim]); hold on
-[ax4,pl]                    = plotData(ax4,solo_mecc,true,lw,alp,col_dat,col_ci);
-ax4.XLim                    = [1 size(solo_mecc,2)];
+[ax4,pl]                    = plotData(ax4,dyad_mecc,true,lw,alp,col_dat,col_ci);
+ax4.XLim                    = [1 size(dyad_mecc,2)];
 ax4.YLim                    = [20 100];
 ax4.XLabel.String           = 'Coherence [%]';
 ax4.YLabel.String           = 'Eccentricity [%]';
@@ -288,7 +286,7 @@ ax00                         = axes('Position',[0 0 1 1],'Visible','off');
 
 titl_fs = 10;
 ofs = 0;
-text(colmn(1)+ofs,.71, 'Solo condition', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
+text(colmn(1)+ofs,.71, 'Dyadic data', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 text(colmn(3)+ofs,.71, 'Effect size vs Solo', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')

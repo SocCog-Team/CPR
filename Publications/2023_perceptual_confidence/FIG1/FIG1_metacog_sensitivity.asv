@@ -10,27 +10,25 @@ lb_fs               = 8;
 % Data processing
 for iSubj = 1:length(solo_perf)
     clear ecc acc coh outc
-    ecc             = solo_perf{iSubj}.trg_all_ecc; % Target eccentricity
-    acc             = solo_perf{iSubj}.trg_all_acc; % Target accuracy
-    coh             = solo_perf{iSubj}.trg_all_coh; % Target coherence
-    outc            = solo_perf{iSubj}.trg_all_outc; % Target outcome
+    ecc             = solo_perf{iSubj}.trg_all_ecc;
+    acc             = solo_perf{iSubj}.trg_all_acc;
+    coh             = solo_perf{iSubj}.trg_all_coh;
+    outc            = solo_perf{iSubj}.trg_all_outc;
     
     for iCoh = 1:length(snr)
-        cIdx        = coh == snr(iCoh); % Coherence index
-        acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
-        ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
+        cIdx        = coh == snr(iCoh);
+        acc_idx     = acc > median(acc(cIdx)); % Above median accuracy
+        ecc_idx     = ecc > median(ecc(cIdx)); % Above median eccentricity
         
-        % Option 1: filtered for hits and accuracy   
-        dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
-        dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
-                
-        % Option 2: filtered for high eccentricity and outcome   
-%         dat1 = ecc(cIdx & ~ecc_idx & outc); % p(high conf & correct)
-%         dat2 = ecc(cIdx & ~ecc_idx & ~outc); % p(high conf & incorrect)
-                
-%         % Option 3: filtered for high eccentricity and accuracy   
-%         dat1 = ecc(cIdx & ecc_idx & acc_idx); % p(high conf & high accuracy)
-%         dat2 = ecc(cIdx & ecc_idx & ~acc_idx); % p(high conf & low accuracy)
+        % Option 1: Hits       
+        dat1        = ecc(cIdx & outc & acc_idx);
+        dat2        = ecc(cIdx & outc & ~acc_idx);
+        
+        dat1 = ecc(cIdx & ecc_idx & outc); % p(high conf & correct)
+        dat2 = ecc(cIdx & ecc_idx & ~outc); % p(high conf & incorrect)
+        
+        dat1 = ecc(cIdx & ecc_idx & acc_idx); % p(high conf & high accuracy)
+        dat2 = ecc(cIdx & ecc_idx & ~acc_idx); % p(high conf & low accuracy)
         
         [x{iSubj,iCoh},y{iSubj,iCoh},auc(iSubj,iCoh)] = getAUROC(dat2, dat1);
     end
@@ -58,9 +56,8 @@ for iCoh = 1:length(snr)
     cIdx        = coh == snr(iCoh);
     acc_idx     = acc > median(acc(cIdx));
     ecc_idx     = ecc > median(ecc(cIdx)); % Above median eccentricity
-        dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
-        dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
-             
+        dat1 = ecc(cIdx & ecc_idx & acc_idx); % p(high conf & high accuracy)
+        dat2 = ecc(cIdx & ecc_idx & ~acc_idx); % p(high conf & low accuracy)
     h1                          = histogram(dat1,edges); hold on
     h1.FaceColor                = col1;
     h1.EdgeColor                = 'none';
@@ -137,7 +134,7 @@ ax.XTick            = 1:length(snr);
 ax.XTickLabel       = round(snr.*100);
 ax.XLabel.String  	= 'Coherence';
 ax.YLabel.String  	= 'AUC';
-ax.YLim           	= [.45 1];
+ax.YLim           	= [.2 .8];
 ax.FontSize         = lb_fs;
 ax.Box              = 'off';
 
