@@ -20,9 +20,14 @@ for iSubj = 1:length(solo_perf)
         acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
         ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
         
-        % Option 1: filtered for hits and accuracy   
-        dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
-        dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
+%         % Option 1: filtered for hits and accuracy   
+%         dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
+%         dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
+                
+        % Option 1: filtered for hits and eccentricity
+        dat1        = acc(cIdx & outc & ecc_idx); % p(correct & high ecc)
+        dat2        = acc(cIdx & ~outc & ecc_idx); % p(incorrect & high ecc)
+
                 
         % Option 2: filtered for high eccentricity and outcome   
 %         dat1 = ecc(cIdx & ~ecc_idx & outc); % p(high conf & correct)
@@ -58,9 +63,13 @@ for iCoh = 1:length(snr)
     cIdx        = coh == snr(iCoh);
     acc_idx     = acc > median(acc(cIdx));
     ecc_idx     = ecc > median(ecc(cIdx)); % Above median eccentricity
-        dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
-        dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
-             
+    
+%     dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
+%     dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
+
+dat1        = acc(cIdx & outc & ecc_idx); % p(correct & high ecc)
+dat2        = acc(cIdx & ~outc & ecc_idx); % p(incorrect & high ecc)
+
     h1                          = histogram(dat1,edges); hold on
     h1.FaceColor                = col1;
     h1.EdgeColor                = 'none';
@@ -74,7 +83,7 @@ for iCoh = 1:length(snr)
     ax                          = gca;
     ax.XLim                     = [0 1];
     ax.YLabel.String            = '# Targets';
-    ax.XLabel.String            = 'Eccentricity [%]';
+    ax.XLabel.String            = 'Accuracy [%]';
     ax.XTick                    = 0:.25:1;
     ax.FontSize                 = lb_fs;
     ax.Box                      = 'off';
@@ -113,8 +122,8 @@ for iCoh = 1:length(snr)
 end
 
 ax                 	= gca;
-ax.YLabel.String  	= 'p(high eccentricity & high accuracy)';
-ax.XLabel.String  	= 'p(high eccentricity & low accuracy)';
+ax.YLabel.String  	= 'p(high eccentricity & incorrect)';
+ax.XLabel.String  	= 'p(high eccentricity & correct)';
 ax.XLim           	= [0 1];
 ax.YLim           	= [0 1];
 ax.FontSize         = lb_fs;
@@ -163,11 +172,11 @@ end
 
 function vl = improveViolin(vl,col_map)
 for iV=1:length(vl)
-    vl(iV).BoxWidth                     = .025;
+    vl(iV).BoxWidth                     = .03;
     vl(iV).ViolinColor{1}               = col_map(iV,:);
     vl(iV).ViolinAlpha{1}               = .8;
     vl(iV).ScatterPlot.MarkerFaceColor  = [.25 .25 .25];
     vl(iV).ScatterPlot.MarkerEdgeColor  = 'none';
-    vl(iV).ScatterPlot.SizeData         = 10;
+    vl(iV).ScatterPlot.SizeData         = 20;
 end
 end

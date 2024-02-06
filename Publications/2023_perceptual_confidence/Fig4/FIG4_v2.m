@@ -359,7 +359,6 @@ print(f, [dest_dir '/FIG4_dff_solo_dyad'], '-r500', '-dpng', '-painters');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PLOT: Solo vs dyadic correctaion between players
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% figure('Units','normalized','Position',[0 0 1 1])
 f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 
 for i = 1:4
@@ -410,12 +409,70 @@ for i = 1:4
     lsl.Color          	= rcol;
     lsl.LineWidth     	= lw;
     
-    [r,pv]              = corrcoef(dat1,dat2);
+    [r,pv]              = corrcoef(dat1,dat2)
     title({str, [' r = ' num2str(round(r(2),2)) ' pv = ' num2str(round(pv(2),2))]})
 end
 
 print(f, [dest_dir '/FIG4_corr_solo_dyad'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG4_corr_solo_dyad'], '-r500', '-dpng', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PLOT: Solo difference vs average social modulation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+
+for i = 1:4
+    
+    if i == 1
+        dat1            = abs(ecc_df.solo);
+        dat2            = mean([auc.ecc1; auc.ecc2]);
+%         dat2            = mean(abs([auc.ecc1; auc.ecc2] - .5));
+        str             = 'Eccentricity difference';
+    elseif i == 2
+        dat1            = abs(acc_df.solo);
+        dat2            = mean([auc.ecc1; auc.ecc2]);
+%         dat2            = mean(abs([auc.ecc1; auc.ecc2] - .5));
+        str             = 'Accuracy difference';
+    elseif i == 3
+        dat1            = abs(ecc_df.solo);
+        dat2            = mean([auc.acc1; auc.acc2]);
+%         dat2            = mean(abs([auc.acc1; auc.acc2] - .5));
+        str             = 'Eccentricity difference';
+    elseif i == 4
+        dat1            = abs(acc_df.solo);
+        dat2            = mean([auc.acc1; auc.acc2]);
+%         dat2            = mean(abs([auc.acc1; auc.acc2] - .5));
+        str             = 'Accuracy difference';
+    end
+    
+    ax                  = subplot(2,2,i);
+    
+    sc                  = scatter(dat1,dat2);
+    sc.MarkerFaceColor  = scol;
+    sc.MarkerFaceAlpha  = .5;
+    sc.MarkerEdgeColor  = 'none';
+    sc.SizeData         = 20; 
+    
+    ax.FontSize         = lb_fs;
+    ax.XLabel.String    = str;
+    ax.YLabel.String    = 'Avg. AUC';
+    
+    lsl                 = lsline;
+    lsl.Color          	= rcol;
+    lsl.LineWidth     	= lw;
+    
+    ln                     	= line([0 ax.XLim(2)],[.5 .5]);
+    ln.Color              	= [0 0 0];
+    ln.LineWidth           	= lw;
+    ln.LineStyle           	= ':';
+    
+    [r,pv]              = corrcoef(dat1,dat2);
+    title({[' r = ' num2str(round(r(2),2)) ' pv = ' num2str(round(pv(2),2))]})
+end
+
+
+print(f, [dest_dir '/FIG4_corr_solo_auc'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG4_corr_solo_auc'], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
@@ -456,9 +513,8 @@ acc_mixed       = sum(acc_class == 1) / length(acc_class);
 sum(abs(ecc_df.solo) > abs(ecc_df.dyad)) / length(ecc_df.dyad)
 sum(abs(acc_df.solo) > abs(acc_df.dyad)) / length(acc_df.dyad)
 
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Covert to table
+%% Covert to table
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 str = 'ecc';

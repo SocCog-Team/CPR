@@ -502,6 +502,12 @@ percent_pos = (sum(pos)./size(auc_ecc,1)) .*100;
 percent_neg = (sum(neg)./size(auc_ecc,1)) .*100;
 [round(min(percent_neg)) round(max(percent_neg))]
 
+% Test across subjects
+median(auc_ecc_pooled)
+[p,h,stats] = signrank(auc_ecc_pooled,.5)
+median(auc_acc_pooled)
+[p,h,stats] = signrank(auc_acc_pooled,.5)
+
 %%% Lag difference
 snr = unique(dyad_cr{1}.coh);
 cnt = 0;

@@ -388,6 +388,8 @@ end
 trg_states                 	= in.trg_hit(logical(in.trg_shown));
 out.hir_pool                = sum(cellfun(@sum,trg_states)) / sum(cellfun(@numel,trg_states));
 
+
+%%% For all dates %%%
 dte                         = unique(score_dte);
 dte(ismissing(dte))         = [];
 
@@ -400,6 +402,7 @@ for iDate = 1:length(dte)
     out.score_norm(iDate)   = out.score_final(iDate) ./ length(dte_score(~isnan(dte_score)));
 end
 
+%%% Target-wise %%%
 in.trg_score             	= cellfun(@double,in.trg_score,'UniformOutput', false);
 out.trg_all_outc          	= logical(cell2mat(in.trg_hit(logical(in.trg_shown))'));
 out.trg_all_score          	= cell2mat(in.trg_score(logical(in.trg_shown))');
@@ -408,46 +411,17 @@ out.trg_all_acc           	= cell2mat(in.trg_acc(logical(in.trg_shown))');
 
 trg_n                       = cellfun(@length,in.trg_ecc(logical(in.trg_shown)));
 trg_coh                     = in.rdp_coh(logical(in.trg_shown));
+tmp_trg_ts                  = in.trg_ts(logical(in.trg_shown));
+tmp_frame1_ts             	= cellfun(@(x) x(1), in.frme_ts(logical(in.trg_shown)));
+
 for j = 1:length(trg_n)
     tmp_trg_all_coh{j}   	= repmat(trg_coh(j),1,trg_n(j));
+    tmp_trg_ts_state{j} 	= (tmp_trg_ts{j} - tmp_frame1_ts(j)) ./ 1e3;  
 end
 out.trg_all_coh            	= cell2mat(tmp_trg_all_coh);
+out.trg_ts_state            = cell2mat(tmp_trg_ts_state);
 
-% % Quick fix: Raw js_dir at target + within-state time
-% tmp_trg_ts                  = in.trg_ts(logical(in.trg_shown));
-% tmp_frame1_ts               = cellfun(@(x) x(1), in.frme_ts(logical(in.trg_shown)));
-% tmp_frme_ts                 = in.frme_ts(logical(in.trg_shown));
-% tmp_js_dir                  = in.js_dir(logical(in.trg_shown));
-% tmp_js_ecc                  = in.js_ecc(logical(in.trg_shown));
-% 
-% for i = 1:length(tmp_trg_ts)
-%     tmp_trg_state_ts{i}     = (tmp_trg_ts{i} - tmp_frame1_ts(i)) ./ 1e3;
-%     
-%     for iTrg = 1:length(tmp_trg_ts{i})
-%         trg_pos             = find(tmp_frme_ts{i} > tmp_trg_ts{i}(iTrg),1,'first');
-% 
-%         if isempty(trg_pos)
-%             tmp_trg_js_dir{i}(iTrg) = nan;
-%             tmp_trg_js_dir100{i}(iTrg) = nan;
-%             tmp_trg_js_ecc100{i}(iTrg) = nan;
-%         else
-%             tmp_trg_js_dir{i}(iTrg) = tmp_js_dir{i}(trg_pos);
-%             try
-%                 tmp_trg_js_dir100{i}(iTrg) = tmp_js_dir{i}(trg_pos+100);
-%                 tmp_trg_js_ecc100{i}(iTrg) = tmp_js_ecc{i}(trg_pos+100);
-%             catch
-%                 tmp_trg_js_dir100{i}(iTrg) = nan;
-%                 tmp_trg_js_ecc100{i}(iTrg) = nan;
-%             end
-%         end
-%     end
-% end
-% 
-% out.trg_all_state_ts        = cell2mat(tmp_trg_state_ts);
-% out.trg_all_js_dir          = cell2mat(tmp_trg_js_dir);
-% out.trg_all_js_dir100       = cell2mat(tmp_trg_js_dir100);
-% out.trg_all_js_ecc100       = cell2mat(tmp_trg_js_ecc100);
-
+%%% For all coherence levels %%%
 for iCoh = 1:length(snr)
     clear cIdx tIdx nhi ntrg
     
