@@ -139,7 +139,7 @@ for iSubj = 1:length(solo_perf)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% SUBPLOT: DYADIC - Hit rate raw %%%
+%%% SUBPLOT: DYADIC - Hit rate raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f                           = figure('units','centimeters','position',[0 0 22.5 5]); hold on
 ax1                         = subplot(1,4,1); hold on

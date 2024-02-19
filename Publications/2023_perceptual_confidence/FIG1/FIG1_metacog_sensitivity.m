@@ -1,11 +1,17 @@
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
+
+close all
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 snr                 = solo_perf{end}.carr;
 col                 = cool(length(snr));
 lw                  = 1;
 lb_fs               = 8;
+n_min_samples       = 5;
+option_flag         = 2;
+
 
 % Data processing
 for iSubj = 1:length(solo_perf)
@@ -14,42 +20,60 @@ for iSubj = 1:length(solo_perf)
     acc             = solo_perf{iSubj}.trg_all_acc; % Target accuracy
     coh             = solo_perf{iSubj}.trg_all_coh; % Target coherence
     outc            = solo_perf{iSubj}.trg_all_outc; % Target outcome
+    ts              = solo_perf{iSubj}.trg_ts_state; % Target timestamp
     
     for iCoh = 1:length(snr)
         cIdx        = coh == snr(iCoh); % Coherence index
         acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
         ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
+        ts_idx      = ts > mean(solo_cr{iSubj}.lag); % Index: Target presentations after average response lag
         
-%         % Option 1: filtered for hits and accuracy   
-%         dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
-%         dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
-                
-        % Option 1: filtered for hits and eccentricity
-        dat1        = acc(cIdx & outc & ecc_idx); % p(correct & high ecc)
-        dat2        = acc(cIdx & ~outc & ecc_idx); % p(incorrect & high ecc)
-
-                
-        % Option 2: filtered for high eccentricity and outcome   
-%         dat1 = ecc(cIdx & ~ecc_idx & outc); % p(high conf & correct)
-%         dat2 = ecc(cIdx & ~ecc_idx & ~outc); % p(high conf & incorrect)
-                
-%         % Option 3: filtered for high eccentricity and accuracy   
-%         dat1 = ecc(cIdx & ecc_idx & acc_idx); % p(high conf & high accuracy)
-%         dat2 = ecc(cIdx & ecc_idx & ~acc_idx); % p(high conf & low accuracy)
-        
-        [x{iSubj,iCoh},y{iSubj,iCoh},auc(iSubj,iCoh)] = getAUROC(dat2, dat1);
+        try
+            if option_flag == 1
+                % Option 1: eccentricity filtered for hits and accuracy
+                dat1        = ecc(cIdx & ts_idx & outc & acc_idx); % p(correct & high accuracy)
+                dat2        = ecc(cIdx & ts_idx & outc & ~acc_idx); % p(correct & low accuracy)
+            elseif option_flag == 2
+                % Option 2: accuracy filtered for outcome and high eccentricity
+                dat1        = acc(cIdx & ts_idx & outc & ecc_idx); % p(correct & high ecc)
+                dat2        = acc(cIdx & ts_idx & ~outc & ecc_idx); % p(incorrect & high ecc)
+            end
+            
+            if  length(dat1) >= n_min_samples && length(dat2) >= n_min_samples
+                [x{iSubj,iCoh},y{iSubj,iCoh},auc(iSubj,iCoh)] = getAUROC(dat2, dat1);
+            else
+                x{iSubj,iCoh}   = nan;
+                y{iSubj,iCoh}   = nan;
+                auc(iSubj,iCoh) = nan;
+            end
+            
+        catch
+            x{iSubj,iCoh}   = nan;
+            y{iSubj,iCoh}   = nan;
+            auc(iSubj,iCoh) = nan;
+        end
     end
 end
+
+
+data = []; sub = []; c = [];
+for i = 1:size(auc,1)
+data                = [data auc(i,:)];
+sub                 = [sub zeros(1,size(auc,2))+i];
+c                   = [c 1:size(auc,2)];
+end
+[P,T,STATS,TERMS]   = anovan(data,{sub,c},'varnames',{'Subject','Coherence'});
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Example eccentricity distribution %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 clear ecc acc coh outc
 iSubj         	= 10;
-ecc             = solo_perf{iSubj}.trg_all_ecc;
-acc             = solo_perf{iSubj}.trg_all_acc;
-coh             = solo_perf{iSubj}.trg_all_coh;
-outc            = solo_perf{iSubj}.trg_all_outc;
+ecc             = solo_perf{iSubj}.trg_all_ecc; % Target eccentricity
+acc             = solo_perf{iSubj}.trg_all_acc; % Target accuracy
+coh             = solo_perf{iSubj}.trg_all_coh; % Target coherence
+outc            = solo_perf{iSubj}.trg_all_outc; % Target outcome
+ts              = solo_perf{iSubj}.trg_ts_state; % Target timestamp
 
 f               = figure('units','centimeters','position',[0 0 5 15]); hold on
 edges           = 0:.05:1;
@@ -60,16 +84,21 @@ for iCoh = 1:length(snr)
     clear dat1 dat2 cIdx acc_idx
     
     ax          = subplot(7,1,iCoh);
-    cIdx        = coh == snr(iCoh);
-    acc_idx     = acc > median(acc(cIdx));
-    ecc_idx     = ecc > median(ecc(cIdx)); % Above median eccentricity
+    cIdx        = coh == snr(iCoh); % Coherence index
+    acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
+    ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
+    ts_idx      = ts > 500; % Index: Target presentation >1000ms after direction change
     
-%     dat1        = ecc(cIdx & outc & acc_idx); % p(correct & high accuracy)
-%     dat2        = ecc(cIdx & outc & ~acc_idx); % p(correct & low accuracy)
-
-dat1        = acc(cIdx & outc & ecc_idx); % p(correct & high ecc)
-dat2        = acc(cIdx & ~outc & ecc_idx); % p(incorrect & high ecc)
-
+    if option_flag == 1
+        % Option 1: eccentricity filtered for hits and accuracy
+        dat1        = ecc(cIdx & ts_idx & outc & acc_idx); % p(correct & high accuracy)
+        dat2        = ecc(cIdx & ts_idx & outc & ~acc_idx); % p(correct & low accuracy)
+    elseif option_flag == 2
+        % Option 2: accuracy filtered for outcome and high eccentricity
+        dat1        = acc(cIdx & ts_idx & outc & ecc_idx); % p(correct & high ecc)
+        dat2        = acc(cIdx & ts_idx & ~outc & ecc_idx); % p(incorrect & high ecc)
+    end
+    
     h1                          = histogram(dat1,edges); hold on
     h1.FaceColor                = col1;
     h1.EdgeColor                = 'none';
@@ -83,7 +112,13 @@ dat2        = acc(cIdx & ~outc & ecc_idx); % p(incorrect & high ecc)
     ax                          = gca;
     ax.XLim                     = [0 1];
     ax.YLabel.String            = '# Targets';
-    ax.XLabel.String            = 'Accuracy [%]';
+    
+    if option_flag == 1
+        ax.XLabel.String      	= 'Eccentricity [%]';
+    elseif option_flag == 2
+        ax.XLabel.String      	= 'Accuracy [%]';
+    end
+    
     ax.XTick                    = 0:.25:1;
     ax.FontSize                 = lb_fs;
     ax.Box                      = 'off';
@@ -93,24 +128,23 @@ dat2        = acc(cIdx & ~outc & ecc_idx); % p(incorrect & high ecc)
     end
     
     if iCoh == 1
-        title('Filtered by accuracy')
+        if option_flag == 1
+            title('Filtered by eccentricity')
+        elseif option_flag == 2
+            title('Filtered by accuracy')
+        end
         legend('HI','MI','Location','northeast')
     end
 end
 
-% lg                          = legend('High Accuracy', 'Low Accuracy', 'Location', 'eastoutside');
-% box off
-% axis square
-
-print(f, [dest_dir '/metacog_example_hist'], '-r500', '-dsvg', '-painters');
-print(f, [dest_dir '/metacog_example_hist'], '-r500', '-dpng', '-painters');
+print(f, [dest_dir '/metacog_example_hist_' num2str(option_flag)], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/metacog_example_hist_' num2str(option_flag)], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Example AUROC %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f               	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
-ex_subj             = 10;
 
 ln                	= line([0 1],[0 1]);
 ln.Color           	= [0 0 0];
@@ -118,19 +152,25 @@ ln.LineWidth       	= lw;
 ln.LineStyle       	= ':';
 
 for iCoh = 1:length(snr)
-    plot(x{ex_subj,iCoh},y{ex_subj,iCoh},'Color',col(iCoh,:),'LineWidth',lw);
+    plot(x{iSubj,iCoh},y{iSubj,iCoh},'Color',col(iCoh,:),'LineWidth',lw);
 end
 
 ax                 	= gca;
-ax.YLabel.String  	= 'p(high eccentricity & incorrect)';
-ax.XLabel.String  	= 'p(high eccentricity & correct)';
+if option_flag == 1
+    ax.YLabel.String  	= 'p(high accuracy & correct)';
+    ax.XLabel.String  	= 'p(low accuracy & correct)';
+elseif option_flag == 2
+    ax.YLabel.String  	= 'p(high eccentricity & incorrect)';
+    ax.XLabel.String  	= 'p(high eccentricity & correct)';
+end
+
 ax.XLim           	= [0 1];
 ax.YLim           	= [0 1];
 ax.FontSize         = lb_fs;
 ax.Box              = 'off';
 
-print(f, [dest_dir '/metacog_example_roc'], '-r500', '-dpng');
-print(f, [dest_dir '/metacog_example_roc'], '-r500', '-dsvg');
+print(f, [dest_dir '/metacog_example_roc_' num2str(option_flag)], '-r500', '-dpng');
+print(f, [dest_dir '/metacog_example_roc_' num2str(option_flag)], '-r500', '-dsvg');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Population AUC values %%%
@@ -146,13 +186,13 @@ ax.XTick            = 1:length(snr);
 ax.XTickLabel       = round(snr.*100);
 ax.XLabel.String  	= 'Coherence';
 ax.YLabel.String  	= 'AUC';
-ax.YLim           	= [.45 1];
+ax.YLim           	= [.35 1];
 ax.FontSize         = lb_fs;
 ax.Box              = 'off';
 
 line([0 8],[.5 .5], 'color',[0 0 0], 'LineStyle', ':')
-print(f, [dest_dir '/metacog_population'], '-r500', '-dpng');
-print(f, [dest_dir '/metacog_population'], '-r500', '-dsvg');
+print(f, [dest_dir '/metacog_population_'  num2str(option_flag)], '-r500', '-dpng');
+print(f, [dest_dir '/metacog_population_'  num2str(option_flag)], '-r500', '-dsvg');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%

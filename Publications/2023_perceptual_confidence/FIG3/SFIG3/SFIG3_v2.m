@@ -127,6 +127,8 @@ tx                       	= text(2.25,.1, 'Solo > HC dyad', 'FontSize', lb_fs, '
 ax4                         = axes('Position', [clmns(2) height(4) dim]); hold on
 ax4                         = plotAUROC(ax4,auc_ecc_SC,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
 ax4.XAxis.Visible           = 'on';
+tx                        	= text(2.25,.9, 'HC dyad > Solo', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(2.25,.1, 'Solo > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter accuracy average Human-Computer %%%
@@ -250,9 +252,9 @@ for iSubj = 1:size(in_solo,2)
     if sum(idx_pc>0)
         for iCoh = 1:length(snr)
             
-            x_mat(iSubj,iCoh)   = in_pc{idx_pc}.(cond_str)(iCoh);
-            y_mat(iSubj,iCoh)   = in_solo{iSubj}.(cond_str)(iCoh);
-            sc(iCoh)            = scatter(in_pc{idx_pc}.(cond_str)(iCoh), in_solo{iSubj}.(cond_str)(iCoh), 'MarkerFaceColor', coh_col(iCoh,:)./2,'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .3);
+            y_mat(iSubj,iCoh)   = in_pc{idx_pc}.(cond_str)(iCoh);
+            x_mat(iSubj,iCoh)   = in_solo{iSubj}.(cond_str)(iCoh);
+            sc(iCoh)            = scatter(in_solo{iSubj}.(cond_str)(iCoh), in_pc{idx_pc}.(cond_str)(iCoh),'MarkerFaceColor', coh_col(iCoh,:)./2,'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', .3);
             lab{iCoh}           = num2str(round(snr(iCoh),2));
         end
     else
@@ -272,8 +274,8 @@ for iCoh = 1:length(snr)
 end
 
 ax.FontSize                 = lb_fs;
-ax.XLabel.String            = 'HC dyad';
-ax.YLabel.String            = 'Solo';
+ax.YLabel.String            = 'HC dyad';
+ax.XLabel.String            = 'Solo';
 ax.XLim                 	= [0 1];
 ax.YLim                     = [0 1];
 ax.XTick                    = [.1 .5 .9];

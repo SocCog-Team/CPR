@@ -16,7 +16,7 @@ load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confid
 %%% Within-dyad effect size %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-[acc_df, ecc_df, auc, score, ply1_flag, ply2_flag, raw] = ...
+[acc_df, ecc_df, auc, score, hir, ply1_flag, ply2_flag, raw] = ...
     dyad_effect_size(solo_perf, dyad_pw_perf, dyad_perf);
 
 
@@ -156,7 +156,6 @@ dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publicatio
 f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 ofs                         = .025;
 nbin                        = 12;
-
 
 for iPlot = 1:4
     ax                      = subplot(2,2,iPlot); hold on
@@ -357,7 +356,7 @@ print(f, [dest_dir '/FIG4_dff_solo_dyad'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG4_dff_solo_dyad'], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Solo vs dyadic correctaion between players
+%% PLOT: Solo vs dyadic correlation between players
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 
@@ -475,6 +474,67 @@ print(f, [dest_dir '/FIG4_corr_solo_auc'], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG4_corr_solo_auc'], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PLOT: Solo difference vs dyadic performance
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+
+for i = 1:4
+    
+    if i == 1
+        dat1            = abs(ecc_df.solo);
+%         dat1            = abs(ecc_df.dyad);
+        dat2            = mean(score.dyad,2);
+        xstr            = 'Eccentricity difference';
+        ystr            = 'Dyadic score';
+    elseif i == 2
+        dat1            = abs(acc_df.solo);
+%         dat1            = abs(acc_df.dyad);
+        dat2            = mean(score.dyad,2);
+        xstr             = 'Accuracy difference';
+        ystr            = 'Dyadic score';
+    elseif i == 3
+        dat1            = abs(ecc_df.solo);
+%         dat1            = abs(ecc_df.dyad);
+        dat2            = mean(hir.dyad,2);
+        xstr            = 'Eccentricity difference';
+        ystr            = 'Dyadic hit rate';
+        
+    elseif i == 4
+        dat1            = abs(acc_df.solo);
+%         dat1            = abs(acc_df.dyad);
+        dat2            = mean(hir.dyad,2);
+        xstr            = 'Accuracy difference';
+        ystr            = 'Dyadic hit rate';
+    end
+    
+    ax                  = subplot(2,2,i);
+    
+    sc                  = scatter(dat1,dat2);
+    sc.MarkerFaceColor  = scol;
+    sc.MarkerFaceAlpha  = .5;
+    sc.MarkerEdgeColor  = 'none';
+    sc.SizeData         = 20; 
+    
+    ax.FontSize         = lb_fs;
+    ax.XLabel.String    = xstr;
+    ax.YLabel.String    = ystr;
+    
+    lsl                 = lsline;
+    lsl.Color          	= rcol;
+    lsl.LineWidth     	= lw;
+   
+    ln.Color              	= [0 0 0];
+    ln.LineWidth           	= lw;
+    ln.LineStyle           	= ':';
+    
+    [r,pv]              = corrcoef(dat1,dat2);
+    title({[' r = ' num2str(round(r(2),2)) ' pv = ' num2str(round(pv(2),2))]})
+end
+
+print(f, [dest_dir '/FIG4_corr_solo_score'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG4_corr_solo_score'], '-r500', '-dpng', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Different from 0.5
@@ -555,19 +615,23 @@ writetable(summary_table, 'summary_table.xlsx')
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [acc_df, ecc_df, auc, score, ply1_flag, ply2_flag,raw] = dyad_effect_size(in_solo, in_dyad, dyad_pooled)
+function [acc_df, ecc_df, auc, score, hir, ply1_flag, ply2_flag,raw] = dyad_effect_size(in_solo, in_dyad, dyad_pooled)
 
 for iSubj = 1:size(in_solo,2)
     solo_id{iSubj}          = in_solo{iSubj}.id;
 end
 
 for iDyad = 1:size(in_dyad,1)
-    score(iDyad,:)          = [mean(in_dyad{iDyad,1}.trg_mscore) mean(in_dyad{iDyad,2}.trg_mscore)];
-    
     % Find solo data of subjects
     idx_ply1                = cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),solo_id);
     idx_ply2                = cellfun(@(x) strcmp(x,in_dyad{iDyad,2}.id),solo_id);
     
+    score.solo(iDyad,:)   	= [mean(in_solo{idx_ply1}.trg_all_score) mean(in_solo{idx_ply2}.trg_all_score)];
+    score.dyad(iDyad,:)  	= [mean(in_dyad{iDyad,1}.trg_all_score) mean(in_dyad{iDyad,2}.trg_all_score)];
+    
+    hir.solo(iDyad,:)    	= [sum(in_solo{idx_ply1}.trg_all_outc)/length(in_solo{idx_ply1}.trg_all_outc) sum(in_solo{idx_ply2}.trg_all_outc)/length(in_solo{idx_ply2}.trg_all_outc)];
+    hir.dyad(iDyad,:)     	= [sum(in_dyad{iDyad,1}.trg_all_outc)/length(in_dyad{iDyad,1}.trg_all_outc) sum(in_dyad{iDyad,2}.trg_all_outc)/length(in_dyad{iDyad,2}.trg_all_outc)];
+
     % Label subjects of interest
     % soi                     = ID_subj_negAUC(in_solo, dyad_pooled);
     % ply1_flag(iDyad)      	= logical(sum(cellfun(@(x) strcmp(x,in_dyad{iDyad,1}.id),soi)));
