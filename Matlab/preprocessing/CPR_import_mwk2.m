@@ -79,8 +79,8 @@ if iscell(fname)                                                            % If
         end
     end
 else
-    if isfile([fname '.h5']) && write_file == false                         % If file available...
-        d       = MW_readH5([fname '.h5']);                                 % ...load .h5 file
+    if isfile([fname(1:end-5) '.h5']) && write_file == false                 % If file available...
+        d       = MW_readH5([fname(1:end-5) '.h5']);                        % ...load .h5 file
     else
         d     	= MW_readFile(fname, 'include', var_lst, '~typeOutcomeCheck','dotPositions'); % Import .mwk2 file
         
