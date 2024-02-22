@@ -129,7 +129,7 @@ for iSubj = 1:size(dyad_perf,2)
         p_cc(cnt,iCoh)      	= ranksum(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
         p_xcp(cnt,iCoh)      	= ranksum(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
         p_xc(cnt,iCoh)       	= ranksum(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
-        p_lag(cnt,iCoh)      	= ranksum(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
+        p_lag(cnt,iCoh)      	= ranksum(double(d.sc.lag(snr(iCoh) == d.sc.coh)),double(d.dc.lag(snr(iCoh) == d.dc.coh)));
     end
     
     p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
@@ -547,8 +547,7 @@ if size(in1,1) == 1
 end
 
 lab          	= [zeros(length(in1),1); ones(length(in2),1)];
-[x,y,~,auc]     = perfcurve(lab,[in1; in2],1);
-
+[x,y,~,auc]     = perfcurve(lab,double([in1; in2]),1);
 end
 
 function ax = plotAUROC(ax,dat,str,lb_fs,snr,alp,lw,col_dat,col_ci)
