@@ -371,6 +371,120 @@ print(f, [dest_dir '/FIG2_a'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Solo quartile - social modulation
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
+
+%%% Coherence-wise %%%
+coh_col                     = cool(length(snr));
+
+for iDat = 1:2
+    if iDat == 1
+        dat                 = auc_acc;
+        bl                  = bl_acc;
+        str                 = 'Avg. accuracy modulation [AUC]';
+    elseif iDat == 2
+        dat                 = auc_ecc;
+        bl                  = bl_ecc;
+        str                 = 'Avg. eccentricity modulation [AUC]';
+    end
+    
+    quartile_boundaries   	= prctile(bl, [25 50 75]);
+    out                     = nan([7,4]);
+    f                       = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+%     ax                      = subplot(1,2,iDat); hold on
+    ln                      = line([0 5],[.5 .5], 'Color', [0 0 0],'LineWidth',1,'LineStyle',':');
+
+    for iCoh = 1:size(dat,2)
+        
+        mdl{iCoh}           = fitlm(bl(:,iCoh),dat(:,iCoh));
+        [R{iCoh},PV{iCoh}]  = corrcoef(bl(:,iCoh),dat(:,iCoh));
+        
+        for iQuart = 1:4
+            if iQuart == 1
+                idx         = bl(:,iCoh) < quartile_boundaries(1,iCoh);
+            elseif iQuart == 2 || iQuart == 3
+                idx         = bl(:,iCoh)  >= quartile_boundaries(iQuart-1,iCoh) & bl(:,iCoh)  < quartile_boundaries(iQuart,iCoh);
+            elseif iQuart == 4
+                idx         = bl(:,iCoh)  > quartile_boundaries(3,iCoh);
+            end
+            
+            out(iCoh,iQuart) = mean(dat(idx,iCoh));
+        end
+
+        plot(out(iCoh,:),'Color',coh_col(iCoh,:),'LineWidth', 2)
+    end
+    
+    ax                      = gca;
+    ax.XLim                 = [0.75 4.25];
+    ax.XTick                = [1:4];
+    ax.XTickLabel           = {'Bottom','2nd','3rd','Top'};
+    ax.XLabel.String      	= 'Solo performance [Quartiles]';
+    ax.YLabel.String      	= str;
+    ax.FontSize             = lb_fs;
+    ax.XTickLabelRotation   = 0;
+    
+    print(f, [dest_dir '/FIG2_quartiles_coh' num2str(iDat)], '-r500', '-dpng');
+    print(f, [dest_dir '/FIG2_quartiles_coh' num2str(iDat)], '-r500', '-dsvg', '-painters');
+
+end
+
+%%% Population %%%
+clear bl dat quartile_boundaries out
+    f                       = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+ccol                        = [.5 .5 .5; 0 0 0; .8 .5 .5; .5 .1 .1];
+
+for iDat = 1:4
+    if iDat == 1
+        dat                 = mean(auc_acc,2);
+        bl                  = mean(bl_acc,2);
+    elseif iDat == 2
+        dat                 = mean(auc_ecc,2);
+        bl                  = mean(bl_ecc,2);
+    elseif iDat == 3
+        dat                 = mean(auc_acc,2);
+        bl                  = mean(bl_ecc,2);
+    elseif iDat == 4
+        dat                 = mean(auc_ecc,2);
+        bl                  = mean(bl_acc,2);
+    end
+    
+    mdl_comb{iDat}                  = fitlm(bl,dat);
+    [R_comb{iDat},PV_comb{iDat}]    = corrcoef(bl,dat); 
+    
+    quartile_boundaries   	= prctile(bl, [25 50 75]);
+    
+    for iQuart = 1:4
+        if iQuart == 1
+            idx             = bl < quartile_boundaries(1);
+        elseif iQuart == 2 || iQuart == 3
+            idx             = bl  >= quartile_boundaries(iQuart-1) & bl  < quartile_boundaries(iQuart);
+        elseif iQuart == 4
+            idx             = bl  > quartile_boundaries(3);
+        end
+        out(iQuart)         = mean(dat(idx));
+    end
+    
+    ln                      = line([0 5],[.5 .5], 'Color', [0 0 0],'LineWidth',1,'LineStyle',':');
+
+    plt(iDat)               = plot(out,'Color',[ccol(iDat,:)],'LineWidth', 2);
+    ax                      = gca;
+    ax.XLim                 = [0 5];
+    ax.XTick                = [1:4];
+    ax.XTickLabel           = {'Bottom','2nd','3rd','Top'};
+    ax.XLabel.String      	= 'Solo performance [Quartiles]';
+    ax.YLabel.String      	= 'Avg. social modulation [AUC]';
+    ax.FontSize             = lb_fs;
+    ax.XTickLabelRotation   = 0;
+end
+
+legend(plt,'x:Acc y:Acc', 'x:Ecc y:Ecc', 'x:Ecc y:Acc','x:Acc y:Ecc')
+
+% PRINT
+print(f, [dest_dir '/FIG2_quartiles'], '-r500', '-dpng');
+print(f, [dest_dir '/FIG2_quartiles'], '-r500', '-dsvg', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
