@@ -51,6 +51,7 @@ var     = {'ID', 'string'; ...              % Subject identity
     'frme_ts', 'cell'; ...                  % Frame timestamp
     'js_dir', 'cell'; ...                   % Joystick direction
     'js_ecc', 'cell'; ...                   % Joystick direction
+    'fix_flag', 'double'; ...               % Fixation break flag
     'rdp_dot', 'cell'};                     % RDP dot position
 
 % Initialise table
@@ -78,6 +79,14 @@ else
         else
             setup 	= 'psycho3';
         end
+    end
+end
+
+%%% Initial fixation check %%%
+if ~strcmp(subj, 'agnt')
+    fix_session = sum_duration_fix_breaks(d.value(idx.fixation), d.time(idx.fixation), d.time(end)-d.time(1)/1e3, d.time(end));
+    if fix_session == true
+        error('check_fixation')
     end
 end
 
@@ -150,6 +159,9 @@ for iCyc = 1:length(cyc.cEnd)
         
         % Add dot positions
         t.rdp_dot{cc}               = d.value(ssIdx & idx.RDP_dot);
+        
+        % Sum duration of fixation breaks
+        t.fix_flag(iSS)             = sum_duration_fix_breaks(d.value(ssIdx&idx.fixation), d.time(ssIdx&idx.fixation), t.ss_dur(cc), t.frme_ts{cc}(end));
     end
 end
 
@@ -202,9 +214,6 @@ for iTarget = 1:length(trg_ts)
     t.trg_acc{iState}               = [t.trg_acc{iState} js_acc];                               % Add accuracy to vector
     t.trg_ecc{iState}               = [t.trg_ecc{iState} js_ecc_val{smple}];                    % Add eccentricity to vector
     
-     %%% THIS SEEMS PROBLEMATIC> >>> BUG!
-     %%% Miss label but reward score ?!
-     %%% ignore and take last score reading as fix?
     if strcmp(tmp_outcome, 'hit')
         rew_idx                     = find(rew_ts > trg_ts(iTarget),1,'first');                 % Get reward score
         last_score                  = rew_score{rew_idx-1};
@@ -245,5 +254,29 @@ if write_file
     
     cd(pth_raw)
     fprintf('Done!\n')
+end
+end
+
+function out = sum_duration_fix_breaks(in_val, in_ts, duration, last_sample)
+break_dur                   = [];
+
+if ~isempty(in_val)    
+    % Add duration of all fixation breaks
+    for iBreak = find(cell2mat(in_val) == 0)
+        if iBreak == length(in_val)
+            break_stop = last_sample;
+        else
+            break_stop = in_ts(iBreak+1);
+        end
+        
+        break_dur = [break_dur (break_stop - in_ts(iBreak))/1e3];               % Duration of fixation breaks
+    end   
+end
+
+% Add fixation flag [boolean]
+if ~isempty(in_val) && (sum(break_dur)/duration) > .1                           % If all breaks > 10% of state duration...
+    out         = true;
+else
+    out         = false;
 end
 end

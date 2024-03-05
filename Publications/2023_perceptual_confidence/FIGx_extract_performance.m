@@ -1,12 +1,10 @@
 % Add relevant directories
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/WIP/
-addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/preprocessing/
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
-addpath /Users/fschneider/Documents/MATLAB/palamedes1_10_9/Palamedes
 
 close all
 clear all
@@ -33,6 +31,10 @@ for iSubj = 1:length(sbj_lst)
     solo_tbl                     	= [];                                   % Initialise
     comp_tbl                     	= [];                                   
     dyad_tbl                     	= [];
+    solo_tbl_filt                   = [];                                   % Initialise
+    comp_tbl_filt                	= [];
+    dyad_tbl_filt                	= [];
+    hc_dyad_tbl_filt              	= [];
     hc_dyad_tbl                     = [];
     tmp_solo                        = [];
     tmp_comp                        = [];
@@ -61,7 +63,8 @@ for iSubj = 1:length(sbj_lst)
                 end
                 
                 % Concatenate session summary tables
-                solo_tbl           	= [solo_tbl; tmp_solo.t];                % Organise solo data
+                solo_tbl_filt       = [solo_tbl; tmp_solo.t(~logical(tmp_solo.t.fix_flag),:)]; % filtered for fixation breaks
+                solo_tbl           	= [solo_tbl; tmp_solo.t];
             end
             
             % Computer - human dyads
@@ -70,7 +73,8 @@ for iSubj = 1:length(sbj_lst)
                 tmp_hc_dyad      	= load(mat_files(iFile).name);
                 
                 % Concatenate session summary tables
-                hc_dyad_tbl       	= [hc_dyad_tbl; tmp_hc_dyad.t];       	% Organise dyad[human-computer] data
+                hc_dyad_tbl_filt   	= [hc_dyad_tbl_filt; tmp_hc_dyad.t(~logical(tmp_hc_dyad.t.fix_flag),:)]; % Organise dyad [human-computer] data
+                hc_dyad_tbl       	= [hc_dyad_tbl; tmp_hc_dyad.t];
             end
             
             % Computer player performance
@@ -109,7 +113,8 @@ for iSubj = 1:length(sbj_lst)
                 
                 if is_player(iFile)
                     tmp_tbl      	= load(mat_files(iFile).name);
-                    dyad_tbl      	= [dyad_tbl; tmp_tbl.t];                % Organise dyad[human-human] data
+                    dyad_tbl_filt   = [dyad_tbl_filt; tmp_tbl.t(~logical(tmp_tbl.t.fix_flag),:)]; % Organise dyad[human-human] data
+                    dyad_tbl      	= [dyad_tbl; tmp_tbl.t];               
                 end
             end
         end
@@ -125,60 +130,64 @@ for iSubj = 1:length(sbj_lst)
         
         if ~isempty(solo_tbl)
             %%% Performance [time window analysis]
-            solo_perf{iSubj}      	= response_readout(solo_tbl, nSample);
+            solo_perf{iSubj}      	= response_readout(solo_tbl_filt, nSample);
 
             % Extract stimulus cycles for correlation analysis
             cyc_boundary        	= [0; find(diff(solo_tbl.cyc_no) ~= 0)];
             [tmp_solo, sc_cnt]   	= extractCycles(cyc_boundary, solo_tbl, tmp_solo, sc_cnt);
             
-            % Correlation analysis
-            [solo_cr{iSubj},ps]     = CPR_correlation_analysis_WIP(tmp_solo, nLag, false);
+            %%% Correlation analysis
+            [solo_cr{iSubj},ps]     = CPR_correlation_analysis(tmp_solo, nLag, false);
             
+            % Add ID
             solo_perf{iSubj}.id     = lower(sbj_lst{iSubj});
             solo_cr{iSubj}.id       = lower(sbj_lst{iSubj});
         end
         
         if ~isempty(comp_tbl)
-            % Performance [time window analysis]
+            %%% Performance [time window analysis]
             comp_perf{iSubj}      	= response_readout(comp_tbl, nSample);
 
             % Extract stimulus cycles for correlation analysis
             cyc_boundary        	= [0; find(diff(comp_tbl.cyc_no) ~= 0)];
             [tmp_comp, ac_cnt]   	= extractCycles(cyc_boundary, comp_tbl, tmp_comp, ac_cnt);
             
-            % Correlation analysis
-            [comp_cr{iSubj},ps]     = CPR_correlation_analysis_WIP(tmp_comp, nLag, false);
+            %%% Correlation analysis
+            [comp_cr{iSubj},ps]     = CPR_correlation_analysis(tmp_comp, nLag, false);
             
+            % Add ID
             comp_perf{iSubj}.id     = lower(sbj_lst{iSubj});
             comp_cr{iSubj}.id       = lower(sbj_lst{iSubj});
         end
         
         if ~isempty(hc_dyad_tbl)
-            % Performance [time window analysis]
-            hc_dyad_perf{iSubj}   	= response_readout(hc_dyad_tbl, nSample);
+            %%% Performance [time window analysis]
+            hc_dyad_perf{iSubj}   	= response_readout(hc_dyad_tbl_filt, nSample);
             
             % Extract stimulus cycles for correlation analysis
             cyc_boundary          	= [0; find(diff(hc_dyad_tbl.cyc_no) ~= 0)];
             [tmp_hc_dyad, dhc_cnt]	= extractCycles(cyc_boundary, hc_dyad_tbl, tmp_hc_dyad, dhc_cnt);
             
-            % Correlation analysis
-            [hc_dyad_cr{iSubj},ps]	= CPR_correlation_analysis_WIP(tmp_hc_dyad, nLag, false);
-            
+            %%% Correlation analysis
+            [hc_dyad_cr{iSubj},ps]	= CPR_correlation_analysis(tmp_hc_dyad, nLag, false);
+                       
+            % Add ID
             hc_dyad_perf{iSubj}.id 	= lower(sbj_lst{iSubj});
             hc_dyad_cr{iSubj}.id  	= lower(sbj_lst{iSubj}); 
         end
         
         if ~isempty(dyad_tbl)
-            % Performance [time window analysis]
-            dyad_perf{iSubj}      	= response_readout(dyad_tbl, nSample);
+            %%% Performance [time window analysis]
+            dyad_perf{iSubj}      	= response_readout(dyad_tbl_filt, nSample);
             
             % Extract stimulus cycles for correlation analysis
             cyc_boundary        	= [0; find(diff(dyad_tbl.cyc_no) ~= 0)];
             [tmp_dyad, dc_cnt]   	= extractCycles(cyc_boundary, dyad_tbl, tmp_dyad, dc_cnt);
             
-            % Correlation analysis
-            [dyad_cr{iSubj},ps]     = CPR_correlation_analysis_WIP(tmp_dyad, nLag, false);
+            %%% Correlation analysis
+            [dyad_cr{iSubj},ps]     = CPR_correlation_analysis(tmp_dyad, nLag, false);
             
+            % Add ID
             dyad_perf{iSubj}.id     = lower(sbj_lst{iSubj});
             dyad_cr{iSubj}.id       = lower(sbj_lst{iSubj});
         end
@@ -222,31 +231,74 @@ for iDyad = 19:71
         continue
     end
     
+    % Extract player identity
+    fname_split             = split(mat_files(1).name,'_');
+    p1_str                 	= fname_split{2};
+    fname_split             = split(mat_files(end).name,'_');
+    p2_str                 	= fname_split{2};
     dyad_cnt                = dyad_cnt+1;
-    tmp1                    = load(mat_files(1).name);
-    tmp2                    = load(mat_files(2).name);
-    tmp3                    = load(mat_files(3).name);
-    tmp4                    = load(mat_files(4).name);
-    id_dyad(dyad_cnt,:)    	= [{tmp1.t.ID(1)}, {tmp3.t.ID(1)}];
+    id_dyad(dyad_cnt,:)    	= [{p1_str}, {p2_str}];
     n_dyad(dyad_cnt,:)      = iDyad;
-    cnt                     = 0;
     
+    % Initialise variables
+    fcnt                    = 0;
+    cnt                     = 0;
+    p1_flag                 = [];
+    dyad_file               = [];
+    hum1_tbl                = [];
+    hum1_tbl_filt           = [];
+    hum2_tbl                = [];
+    hum2_tbl_filt           = [];
+        
+    % Get all dyadic files
+    for iFile = 1:length(mat_files)
+        if contains(mat_files(iFile).name,'CPRdyadic')
+            fcnt                = fcnt+1;
+            dyad_file{fcnt}     = mat_files(iFile).name;
+            if contains(mat_files(iFile).name,p1_str)
+                p1_flag(fcnt)   = true;
+            else
+                p1_flag(fcnt)   = false;
+            end
+        end
+    end
+    
+    if isempty(dyad_file)
+        continue
+    end
+
+    % Concatenate data tables for each player
+    for iHuman = find(p1_flag)
+        tmp                 = load(dyad_file{iHuman});
+        hum1_tbl_filt        = [hum1_tbl_filt; tmp.t(~logical(tmp.t.fix_flag),:)];
+        hum1_tbl             = [hum1_tbl; tmp.t];
+    end
+    
+    for iHuman = find(~p1_flag)
+        tmp                 = load(dyad_file{iHuman});
+        hum2_tbl_filt        = [hum2_tbl_filt; tmp.t(~logical(tmp.t.fix_flag),:)];
+        hum2_tbl             = [hum2_tbl; tmp.t];
+    end
+    
+    % Analyse behavior of each player
     for iPly = 1:2
         if iPly == 1
-            tbl             = [tmp1.t;tmp2.t];
+            tbl             = hum1_tbl;
+            tbl_filt        = hum1_tbl_filt;
         else
-            tbl             = [tmp3.t;tmp4.t];
+            tbl             = hum2_tbl;
+            tbl_filt        = hum2_tbl_filt;
         end
                        
         % Performance [time window analysis]
-        dyad_pw_perf{dyad_cnt,iPly}     = response_readout(tbl, nSample);
+        dyad_pw_perf{dyad_cnt,iPly}     = response_readout(tbl_filt, nSample);
         
         % Extract stimulus cycles for correlation analysis
         cyc_boundary                    = [0; find(diff(tbl.cyc_no) ~= 0)];
         [tmp_dyad, cnt]                 = extractCycles(cyc_boundary, tbl, [], cnt);
 
         % Correlation analysis
-        [dyad_pw_cr{dyad_cnt,iPly},ps] 	= CPR_correlation_analysis_WIP(tmp_dyad, nLag, false);
+        [dyad_pw_cr{dyad_cnt,iPly},ps] 	= CPR_correlation_analysis(tmp_dyad, nLag, false);
         
         dyad_pw_perf{dyad_cnt,iPly}.id  = lower(tbl.ID(1));
         dyad_pw_cr{dyad_cnt,iPly}.id    = lower(tbl.ID(1));   
@@ -272,11 +324,12 @@ for iSubj = 1:length(sbj_lst)
     cd([pth [sbj_lst{iSubj}] '/summary/'])
     mat_files              	= dir('*.mat');
     
-    cnt = 0;
-    hc_dyad_file = [];
-    comp_tbl = [];
-    hum_tbl = [];
-    comp_flag = [];
+    cnt                     = 0;
+    hc_dyad_file            = [];
+    comp_tbl                = [];
+    hum_tbl                 = [];
+    hum_tbl_filt         	= [];
+    comp_flag               = [];
     
     for iFile = 1:length(mat_files)
         if contains(mat_files(iFile).name,'CPRagent') 
@@ -301,7 +354,8 @@ for iSubj = 1:length(sbj_lst)
     
     for iHuman = find(~comp_flag)
         tmp                 = load(hc_dyad_file{iHuman});
-        hum_tbl            = [hum_tbl; tmp.t];
+        hum_tbl_filt        = [hum_tbl_filt; tmp.t(~logical(tmp.t.fix_flag),:)];
+        hum_tbl             = [hum_tbl; tmp.t];
     end
     
     dyad_cnt                = dyad_cnt+1;
@@ -311,19 +365,21 @@ for iSubj = 1:length(sbj_lst)
     for iPly = 1:2
         if iPly == 1
             tbl             = comp_tbl;
+            tbl_filt        = comp_tbl;
         else
             tbl             = hum_tbl;
+            tbl_filt        = hum_tbl_filt;
         end
                        
         % Performance [time window analysis]
-        hc_dyad_pw_perf{dyad_cnt,iPly}     = response_readout(tbl, nSample);
+        hc_dyad_pw_perf{dyad_cnt,iPly}     = response_readout(tbl_filt, nSample);
         
         % Extract stimulus cycles for correlation analysis
         cyc_boundary                        = [0; find(diff(tbl.cyc_no) ~= 0)];
         [tmp_dyad, cnt]                     = extractCycles(cyc_boundary, tbl, [], cnt);
 
         % Correlation analysis
-        [hc_dyad_pw_cr{dyad_cnt,iPly},ps] 	= CPR_correlation_analysis_WIP(tmp_dyad, nLag, false);
+        [hc_dyad_pw_cr{dyad_cnt,iPly},ps] 	= CPR_correlation_analysis(tmp_dyad, nLag, false);
         
         hc_dyad_pw_perf{dyad_cnt,iPly}.id   = lower(tbl.ID(1));
         hc_dyad_pw_cr{dyad_cnt,iPly}.id     = lower(tbl.ID(1));   
@@ -458,8 +514,8 @@ for iCoh = 1:length(snr)
     
     % Joystick accuracy [before first target]
     t1_outc                 = cellfun(@(x) x(1), in.trg_hit,'UniformOutput', false);
-    t1_ts                   = cellfun(@(x) x(1), in.trg_ts);
-    f1_ts                   = cellfun(@(x) x(1), in.frme_ts);
+    t1_ts                   = cellfun(@(x) x(1), cellfun(@double,in.trg_ts,'UniformOutput', false));
+    f1_ts                   = cellfun(@(x) x(1), cellfun(@double,in.frme_ts,'UniformOutput', false));
     trgIdx                  = (t1_ts-f1_ts) >= 1e6;
     rdp_dir                 = in.rdp_dir(cIdx & in.trg_shown & trgIdx);
     js_dir                  = in.js_dir(cIdx & in.trg_shown & trgIdx);

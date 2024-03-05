@@ -79,9 +79,8 @@ else
         '#stimDisplay'};
 end
 
-% 'STIM_AGNTindicator_rotation'
-% 'STIM_AGNTarc_shape'
-% 'STIM_AGNTarc_rotation'
+% Import H5 instead on MWK2
+write = false; 
 
 % Get file identifier/recording date
 if iscell(fname)
@@ -98,12 +97,15 @@ else
     
     if contains(fname,'agent')
         sbj{2} = 'agnt';
+        write = true;
     end
 end
 
 % Import .mwk2 data file
 if nargin < 3
-    d                	= CPR_import_mwk2(fname, var_import, true);
+    d                	= CPR_import_mwk2(fname, var_import, write);
+    
+%     d                	= CPR_import_mwk2(fname, var_import, true);
 %     d                   = CPR_data_correction(d, 'IO_joystickDirection', 'IO_joystickStrength');    % Correct for sample differences
 %     d                   = CPR_data_correction(d, 'IO_joystickDirection2', 'IO_joystickStrength2');   
 end

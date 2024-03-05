@@ -1,60 +1,20 @@
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
-
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
 close all
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
-snr                 = solo_perf{end}.carr;
-col                 = cool(length(snr));
+col                 = cool(7);
 lw                  = 1;
 lb_fs               = 8;
-n_min_samples       = 5;
 option_flag         = 2;
 
+[x,y,auc]           = metacog(solo_perf,solo_cr,option_flag);
+[x_dy,y_dy,auc_dy]  = metacog(dyad_perf,solo_cr,option_flag);
 
-% Data processing
-for iSubj = 1:length(solo_perf)
-    clear ecc acc coh outc
-    ecc             = solo_perf{iSubj}.trg_all_ecc; % Target eccentricity
-    acc             = solo_perf{iSubj}.trg_all_acc; % Target accuracy
-    coh             = solo_perf{iSubj}.trg_all_coh; % Target coherence
-    outc            = solo_perf{iSubj}.trg_all_outc; % Target outcome
-    ts              = solo_perf{iSubj}.trg_ts_state; % Target timestamp
-    
-    for iCoh = 1:length(snr)
-        cIdx        = coh == snr(iCoh); % Coherence index
-        acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
-        ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
-        ts_idx      = ts > mean(solo_cr{iSubj}.lag); % Index: Target presentations after average response lag
-        
-        try
-            if option_flag == 1
-                % Option 1: eccentricity filtered for hits and accuracy
-                dat1        = ecc(cIdx & ts_idx & outc & acc_idx); % p(correct & high accuracy)
-                dat2        = ecc(cIdx & ts_idx & outc & ~acc_idx); % p(correct & low accuracy)
-            elseif option_flag == 2
-                % Option 2: accuracy filtered for outcome and high eccentricity
-                dat1        = acc(cIdx & ts_idx & outc & ecc_idx); % p(correct & high ecc)
-                dat2        = acc(cIdx & ts_idx & ~outc & ecc_idx); % p(incorrect & high ecc)
-            end
-            
-            if  length(dat1) >= n_min_samples && length(dat2) >= n_min_samples
-                [x{iSubj,iCoh},y{iSubj,iCoh},auc(iSubj,iCoh)] = getAUROC(dat2, dat1);
-            else
-                x{iSubj,iCoh}   = nan;
-                y{iSubj,iCoh}   = nan;
-                auc(iSubj,iCoh) = nan;
-            end
-            
-        catch
-            x{iSubj,iCoh}   = nan;
-            y{iSubj,iCoh}   = nan;
-            auc(iSubj,iCoh) = nan;
-        end
-    end
-end
-
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Check coherence effects %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 data = []; sub = []; c = [];
 for i = 1:size(auc,1)
@@ -63,6 +23,49 @@ sub                 = [sub zeros(1,size(auc,2))+i];
 c                   = [c 1:size(auc,2)];
 end
 [P,T,STATS,TERMS]   = anovan(data,{sub,c},'varnames',{'Subject','Coherence'});
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Population AUC values %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f               	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+
+vl                  = violinplot(auc);
+vl                  = improveViolin(vl,col);
+
+ax                 	= gca;
+ax.XTick            = 1:length(snr);
+ax.XTickLabel       = round(snr.*100);
+ax.XLabel.String  	= 'Coherence';
+ax.YLabel.String  	= 'AUC';
+ax.YLim           	= [.35 1];
+ax.FontSize         = lb_fs;
+ax.Box              = 'off';
+
+line([0 8],[.5 .5], 'color',[0 0 0], 'LineStyle', ':')
+print(f, [dest_dir '/metacog_population_'  num2str(option_flag)], '-r500', '-dpng');
+print(f, [dest_dir '/metacog_population_'  num2str(option_flag)], '-r500', '-dsvg');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Comparison solo-dyadic %%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f               	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+auc_dy(auc_dy == 0) = nan;
+vl                  = violinplot(auc - auc_dy);
+vl                  = improveViolin(vl,col);
+
+ax                 	= gca;
+ax.XTick            = 1:length(snr);
+ax.XTickLabel       = round(snr.*100);
+ax.XLabel.String  	= 'Coherence';
+ax.YLabel.String  	= 'AUC difference [Solo - Dyadic]';
+ax.FontSize         = lb_fs;
+ax.Box              = 'off';
+
+line([0 8],[0 0], 'color',[0 0 0], 'LineStyle', ':')
+print(f, [dest_dir '/metacog_difference_'  num2str(option_flag)], '-r500', '-dpng');
+print(f, [dest_dir '/metacog_difference_'  num2str(option_flag)], '-r500', '-dsvg');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Example eccentricity distribution %%%
@@ -173,30 +176,54 @@ print(f, [dest_dir '/metacog_example_roc_' num2str(option_flag)], '-r500', '-dpn
 print(f, [dest_dir '/metacog_example_roc_' num2str(option_flag)], '-r500', '-dsvg');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Population AUC values %%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-f               	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
-
-vl                  = violinplot(auc);
-vl                  = improveViolin(vl,col);
-
-ax                 	= gca;
-ax.XTick            = 1:length(snr);
-ax.XTickLabel       = round(snr.*100);
-ax.XLabel.String  	= 'Coherence';
-ax.YLabel.String  	= 'AUC';
-ax.YLim           	= [.35 1];
-ax.FontSize         = lb_fs;
-ax.Box              = 'off';
-
-line([0 8],[.5 .5], 'color',[0 0 0], 'LineStyle', ':')
-print(f, [dest_dir '/metacog_population_'  num2str(option_flag)], '-r500', '-dpng');
-print(f, [dest_dir '/metacog_population_'  num2str(option_flag)], '-r500', '-dsvg');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function [x,y,auc] = metacog(in_perf,in_cr,option_flag)
+
+n_min_samples       = 10;
+snr                 = in_perf{end}.carr;
+
+for iSubj = 1:length(in_perf)
+    
+    if isempty(in_perf{iSubj})
+        continue
+    end
+    
+    clear ecc acc coh outc ts
+    ecc             = in_perf{iSubj}.trg_all_ecc; % Target eccentricity
+    acc             = in_perf{iSubj}.trg_all_acc; % Target accuracy
+    coh             = in_perf{iSubj}.trg_all_coh; % Target coherence
+    outc            = in_perf{iSubj}.trg_all_outc; % Target outcome
+    ts              = in_perf{iSubj}.trg_ts_state; % Target timestamp
+    
+    for iCoh = 1:length(snr)
+        cIdx        = coh == snr(iCoh); % Coherence index
+        acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
+        ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
+        ts_idx      = ts > mean(in_cr{iSubj}.lag); % Index: Target presentations after average response lag
+        
+        if option_flag == 1
+            % Option 1: eccentricity filtered for hits and accuracy
+            dat1        = ecc(cIdx & ts_idx & outc & acc_idx); % p(correct & high accuracy)
+            dat2        = ecc(cIdx & ts_idx & outc & ~acc_idx); % p(correct & low accuracy)
+        elseif option_flag == 2
+            % Option 2: accuracy filtered for outcome and high eccentricity
+            dat1        = acc(cIdx & ts_idx & outc & ecc_idx); % p(correct & high ecc)
+            dat2        = acc(cIdx & ts_idx & ~outc & ecc_idx); % p(incorrect & high ecc)
+        end
+        
+        % Filter for number of samples
+        if  length(dat1) >= n_min_samples && length(dat2) >= n_min_samples
+            [x{iSubj,iCoh},y{iSubj,iCoh},auc(iSubj,iCoh)] = getAUROC(dat2, dat1);
+        else
+            x{iSubj,iCoh}   = nan;
+            y{iSubj,iCoh}   = nan;
+            auc(iSubj,iCoh) = nan;
+        end
+    end
+end
+end
 
 function [x,y,auc] = getAUROC(in1, in2)
 
