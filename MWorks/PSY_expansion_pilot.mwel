@@ -1,0 +1,271 @@
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0, 0, 0)
+
+iodevice/mouse_input mouse (
+    mouse_position_x                        = IO_cursor_x
+    mouse_position_y                        = IO_cursor_y
+    autostart                               = YES
+    hide_cursor                             = NO
+    )
+
+
+//
+// Variables
+// 
+
+group INFO {
+    var INFO_task                           = 0
+}
+
+group CTRL {
+    var CTRL_state_min_ms                   = 0 
+    var CTRL_state_max_ms                   = 0
+    var CTRL_state_duration_ms              = 0
+    var CTRL_trial_duration_ms              = 0
+    var CTRL_ITI_ms                         = 0
+    var CTRL_cursor_radius                  = 1
+    var CTR_rdp_x_target                    = 0
+    var CTR_rdp_y_target                    = 0
+    var CTR_rdp_x_previous                  = 0
+    var CTR_rdp_y_previous                  = 0
+    var CTRL_step_dva_per_frame             = 0
+    var CTRL_euclidian_distance             = 0
+ 
+}
+
+group TRIAL {
+    var TRIAL_start                         = 0
+    var TRIAL_end                           = 0
+    var TRIAL_reactionEvent                 = 0
+    var TRIAL_reactionTrigger               = 0
+    var TRIAL_align                         = 0
+    var TRIAL_type                          = 0
+    var TRIAL_outcome                       = 0
+}
+
+group RDP {
+    var RDP_type                            = "spiral"
+    var RDP_direction                       = 90
+    var RDP_radius                          = 5
+    var RDP_x                               = 0
+    var RDP_y                               = 0
+    var RDP_z                               = 0
+    var RDP_num_dots                        = 100
+    var RDP_dotsize                         = .1
+    var RDP_speed                           = 8
+    //var RDP_lifetime                        = (1/120) * 25 * 1000 // 25 frames
+    var RDP_lifetime                        = 1000
+    var RDP_alpha                           = 1
+    var RDP_seed                            = 1
+    var EXP_version                         = "hurz"    
+
+}
+
+group COL {
+    var COL_bg_r                            = 0
+    var COL_bg_g                            = 0
+    var COL_bg_b                            = 0
+    var COL_rdp_r                           = 1
+    var COL_rdp_g                           = 1
+    var COL_rdp_b                           = 1
+    var COL_cursor_r                        = 1
+    var COL_cursor_g                        = 0
+    var COL_cursor_b                        = 0
+}
+
+
+group IO {
+    var IO_cursor_x                         = 0
+    var IO_cursor_y                         = 0
+}
+
+group ML {
+    var ML_sync                             = 0                        
+}
+
+//
+// Sounds
+//
+
+wav_file Acquire_sound ('./sounds/acquire.wav')
+wav_file Failure_sound ('./sounds/failure2.wav')
+wav_file Reward_sound ('./sounds/reward.wav')
+
+//
+// Stimuli
+//
+
+blank_screen Background (
+    color                                   = COL_bg_r,COL_bg_g,COL_bg_b
+    )
+
+stimulus/advstimulus cursor (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_cursor_radius
+    y_size                                  = CTRL_cursor_radius
+    x_position                              = IO_cursor_x
+    y_position                              = IO_cursor_y
+    shape                                   = format("circle")
+    color                                   = COL_cursor_r,COL_cursor_g,COL_cursor_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+
+stimulus/dynamic_random_dots RDP (
+    RDP_type                                = RDP_type
+    field_radius                            = RDP_radius
+    field_center_x                          = RDP_x
+    field_center_y                          = RDP_y
+    field_center_z                          = RDP_z
+    num_dots                                = RDP_num_dots
+    dot_size                                = RDP_dotsize
+    alpha_multiplier                        = RDP_alpha
+    direction                               = RDP_direction
+    speed                                   = RDP_speed
+    alpha_multiplier                        = RDP_alpha
+    dot_lifetime                            = -1
+    direction_lifetime                      = -1
+    speed_lifetime                          = -1
+    reinitialize                            = 0
+    version                                 = EXP_version    
+    )
+
+
+//
+// Protocols
+//
+
+protocol 'Expansion_solo' {
+    live_queue_stimulus (Background)
+    live_queue_stimulus (cursor)
+    update_stimulus_display ()
+    
+    TRIAL_start                         = 0
+    TRIAL_end                           = 0
+    CTRL_ITI_ms                         = 1000
+    CTRL_state_min_ms                   = 1500
+    CTRL_state_max_ms                   = 3000
+    CTRL_trial_duration_ms              = 10000
+
+    trial 'Main Task System' {
+        task LOOP {
+
+            state 'New Trial' {        
+                ML_sync                 = 1
+                TRIAL_align             = 1
+                TRIAL_start             = TRIAL_start + 1
+                INFO_task               = "Expansion_solo"
+
+                RDP_direction           = 90
+                CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms)
+
+                start_timer (
+                    timer               = Trial_Timer
+                    duration            = CTRL_trial_duration_ms
+                    duration_units      = ms
+                    )
+
+                report ('===== TRIAL $TRIAL_start START =====')
+
+                goto("New State")
+            }
+
+            state 'New State' {        
+                CTR_rdp_x_previous      = RDP_x
+                CTR_rdp_y_previous      = RDP_y
+                CTR_rdp_x_target        = disc_rand(-10,10)
+                CTR_rdp_y_target        = disc_rand(-10,10)
+
+                CTRL_euclidian_distance = sqrt(pow(CTR_rdp_x_target - CTR_rdp_x_previous,2) + pow(CTR_rdp_y_target - CTR_rdp_y_previous,2))
+                CTRL_step_dva_per_frame = .00025
+
+                live_queue_stimulus (RDP)
+                live_queue_stimulus (cursor)
+                update_stimulus_display ()
+
+                start_timer (
+                    timer               = State_Timer
+                    duration            = CTRL_state_duration_ms
+                    duration_units      = ms
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Update Stimulus' {
+                schedule (
+                    delay = next_frame_time() - now()
+                    duration = 0ms
+                    repeats = 0
+                )
+                
+                if (CTR_rdp_x_target > RDP_x) {
+                    RDP_x  += CTRL_step_dva_per_frame
+                }
+                if (CTR_rdp_y_target > RDP_y) {
+                    RDP_y  += CTRL_step_dva_per_frame
+                }
+
+                if (CTR_rdp_x_target < RDP_x) {
+                    RDP_x  -= CTRL_step_dva_per_frame
+                }
+                if (CTR_rdp_y_target < RDP_y) {
+                    RDP_y  -= CTRL_step_dva_per_frame
+                }
+                
+
+                goto (
+                    target              = 'New State'
+                    when                = timer_expired(State_Timer)
+                    )
+
+                goto (
+                    target              = 'End Trial'
+                    when                = timer_expired(Trial_Timer)
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'End Trial' {
+                start_timer (
+                    timer               = ITI_Timer
+                    duration            = CTRL_ITI_ms
+                    duration_units      = ms
+                    )
+
+                dequeue_stimulus (RDP)
+                dequeue_stimulus (cursor)
+                update_stimulus_display ()
+
+                TRIAL_reactionTrigger   = 0
+                TRIAL_reactionEvent     = 0
+                ML_sync                 = 0
+                TRIAL_align             = 0
+                TRIAL_end               = TRIAL_start
+
+                report ('==== END OF TRIAL $TRIAL_end ====')
+
+                goto ('ITI')
+            }
+
+            state 'ITI' {
+                timer_expired (
+                    target              = 'New Trial'
+                    timer               = ITI_Timer
+                    )
+            }
+        }
+    }
+}
+
+
