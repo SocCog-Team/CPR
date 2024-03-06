@@ -132,7 +132,7 @@
       /><path d="M132.5 171.2041 L144.4167 187.8703 L156.3333 168.6714 L168.25 162.7977 L180.1667 151.1054 L192.0833 168.3958 L204 161.9763" style="fill:none; fill-rule:evenodd;"
     /></g
     ><g style="fill-opacity:0.4; fill:rgb(77,0,0); text-rendering:optimizeSpeed; image-rendering:optimizeSpeed; color-rendering:optimizeSpeed; shape-rendering:crispEdges; stroke:rgb(77,0,0); color-interpolation:sRGB; stroke-opacity:0.4;"
-    ><path style="stroke:none;" d="M132.5 172.6187 L144.4167 174.0876 L156.3333 171.4678 L168.25 169.2954 L180.1667 169.2506 L192.0833 169.6543 L204 170.3316 L204 163.3925 L192.0833 164.2381 L180.1667 163.4749 L168.25 163.758 L156.3333 166.821 L144.4167 170.2678 L132.5 167.9845 Z"
+    ><path style="stroke:none;" d="M132.5 173.0261 L144.4167 174.2603 L156.3333 171.6622 L168.25 169.6319 L180.1667 169.3781 L192.0833 169.8085 L204 170.1701 L204 163.2866 L192.0833 164.0591 L180.1667 163.6285 L168.25 164.0185 L156.3333 166.8461 L144.4167 170.3895 L132.5 168.101 Z"
     /></g
     ><g style="stroke-linecap:butt; text-rendering:geometricPrecision; color-rendering:optimizeQuality; image-rendering:optimizeQuality; stroke-linejoin:round; color-interpolation:linearRGB; stroke-width:2;"
     ><path d="M132.5 170.4124 L144.4167 171.8793 L156.3333 169.3159 L168.25 166.8194 L180.1667 166.5109 L192.0833 166.5321 L204 166.6343" style="fill:none; fill-rule:evenodd;"
@@ -202,7 +202,7 @@
       /><path d="M132.5 248.1552 L144.4167 248.5837 L156.3333 246.1204 L168.25 253.1591 L180.1667 250.2662 L192.0833 237.7932 L204 251.448" style="fill:none; fill-rule:evenodd;"
     /></g
     ><g style="fill-opacity:0.4; fill:rgb(77,0,0); text-rendering:optimizeSpeed; image-rendering:optimizeSpeed; color-rendering:optimizeSpeed; shape-rendering:crispEdges; stroke:rgb(77,0,0); color-interpolation:sRGB; stroke-opacity:0.4;"
-    ><path style="stroke:none;" d="M132.5 242.6657 L132.5 244.9628 L144.4167 245.2726 L156.3333 246.0437 L168.25 246.779 L180.1667 246.7764 L192.0833 246.8637 L204 247.1361 L204 243.4459 L192.0833 243.4519 L180.1667 243.7396 L168.25 242.9187 L156.3333 242.5445 L144.4167 242.2641 Z"
+    ><path style="stroke:none;" d="M132.5 242.6957 L132.5 244.9646 L144.4167 245.2465 L156.3333 245.8871 L168.25 246.8301 L180.1667 246.6948 L192.0833 247.0356 L204 246.9554 L204 243.2787 L192.0833 243.3826 L180.1667 243.8324 L168.25 242.7513 L156.3333 242.3296 L144.4167 242.2291 Z"
     /></g
     ><g style="stroke-linecap:butt; text-rendering:geometricPrecision; color-rendering:optimizeQuality; image-rendering:optimizeQuality; stroke-linejoin:round; color-interpolation:linearRGB; stroke-width:2;"
     ><path d="M132.5 243.821 L144.4167 243.9158 L156.3333 244.2228 L168.25 244.8159 L180.1667 245.1854 L192.0833 245.048 L204 245.1755" style="fill:none; fill-rule:evenodd;"
@@ -322,7 +322,7 @@
       /><path d="M132.5 322.8476 L144.4167 322.9506 L156.3333 321.2159 L168.25 324.6545 L180.1667 326.2908 L192.0833 321.4581 L204 321.3994" style="fill:none; fill-rule:evenodd;"
     /></g
     ><g style="fill-opacity:0.4; fill:rgb(77,0,0); text-rendering:optimizeSpeed; image-rendering:optimizeSpeed; color-rendering:optimizeSpeed; shape-rendering:crispEdges; stroke:rgb(77,0,0); color-interpolation:sRGB; stroke-opacity:0.4;"
-    ><path style="stroke:none;" d="M132.5 316.9559 L144.4167 317.3837 L156.3333 317.9854 L168.25 318.0002 L180.1667 319.1967 L192.0833 319.8389 L204 321.0091 L204 312.6297 L192.0833 311.3689 L180.1667 311.0592 L168.25 311.1099 L156.3333 311.9125 L144.4167 310.9868 L132.5 310.3276 Z"
+    ><path style="stroke:none;" d="M132.5 317.3238 L144.4167 317.5789 L156.3333 318.4046 L168.25 318.0362 L180.1667 319.6642 L192.0833 320.082 L204 321.2817 L204 311.8499 L192.0833 310.6421 L180.1667 310.208 L168.25 310.5769 L156.3333 311.8014 L144.4167 310.7708 L132.5 310.1793 Z"
     /></g
     ><g style="stroke-linecap:butt; text-rendering:geometricPrecision; color-rendering:optimizeQuality; image-rendering:optimizeQuality; stroke-linejoin:round; color-interpolation:linearRGB; stroke-width:2;"
     ><path d="M132.5 313.4208 L144.4167 313.854 L156.3333 314.6207 L168.25 314.2209 L180.1667 315.1067 L192.0833 315.1911 L204 316.427" style="fill:none; fill-rule:evenodd;"
@@ -343,8 +343,23 @@
     /></g
     ><g style="fill:rgb(38,38,38); text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; stroke-linejoin:round; stroke:rgb(38,38,38); color-interpolation:linearRGB; stroke-width:0.5;"
     ><line y2="134" style="fill:none;" x1="235" x2="235" y1="202"
+      /><line y2="202" style="fill:none;" x1="235" x2="235.715" y1="202"
+      /><line y2="168" style="fill:none;" x1="235" x2="235.715" y1="168"
+      /><line y2="134" style="fill:none;" x1="235" x2="235.715" y1="134"
     /></g
-    ><g transform="translate(233.4,168) rotate(-90)" style="font-size:8.8px; fill:rgb(38,38,38); text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; font-family:'Helvetica Neue'; stroke:rgb(38,38,38); color-interpolation:linearRGB;"
+    ><g transform="translate(233.4,202)" style="font-size:8px; fill:rgb(38,38,38); text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; font-family:'Helvetica Neue'; stroke:rgb(38,38,38); color-interpolation:linearRGB;"
+    ><text x="-15" xml:space="preserve" y="3" style="stroke:none;"
+      >-0.1</text
+    ></g
+    ><g transform="translate(233.4,168)" style="font-size:8px; fill:rgb(38,38,38); text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; font-family:'Helvetica Neue'; stroke:rgb(38,38,38); color-interpolation:linearRGB;"
+    ><text x="-5" xml:space="preserve" y="3" style="stroke:none;"
+      >0</text
+    ></g
+    ><g transform="translate(233.4,134)" style="font-size:8px; fill:rgb(38,38,38); text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; font-family:'Helvetica Neue'; stroke:rgb(38,38,38); color-interpolation:linearRGB;"
+    ><text x="-12" xml:space="preserve" y="3" style="stroke:none;"
+      >0.1</text
+    ></g
+    ><g transform="translate(217.9,168) rotate(-90)" style="font-size:8.8px; fill:rgb(38,38,38); text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; font-family:'Helvetica Neue'; stroke:rgb(38,38,38); color-interpolation:linearRGB;"
     ><text x="-20.5" xml:space="preserve" y="-2" style="stroke:none;"
       >Difference</text
     ></g

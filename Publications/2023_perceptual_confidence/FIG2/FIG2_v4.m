@@ -163,6 +163,7 @@ tx                       	= text(1.25,.2, 'Solo > Dyadic', 'FontSize', lb_fs, 'C
 ax5                         = axes('Position', [colmn(3) height(1) dim]); hold on
 [ax5,mdl,R,PV]              = plotQuartiles(ax5,bl_hir,df_hir,'Hit rate dff',lw,lb_fs,false);
 ax5.YLim                    = [-.1 .1];
+ax5.YTick                   = [-.1 0 .1];
 ax5.XAxis.Visible         	= 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -171,7 +172,7 @@ ax5.XAxis.Visible         	= 'off';
 ax7                         = axes('Position', [colmn(3) height(2) dim]); hold on
 [ax7,mdl,R,PV]              = plotQuartiles(ax7,bl_acc,auc_acc,'Accuracy [AUC]',lw,lb_fs, true);
 ax7.YLim                    = [.4 .6];
-ax5.YTick                   = [.4 .5 .6];
+ax7.YTick                   = [.4 .5 .6];
 ax7.XAxis.Visible         	= 'off';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
