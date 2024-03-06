@@ -377,6 +377,7 @@ addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 
 %%% Coherence-wise %%%
 coh_col                     = cool(length(snr));
+f                           = figure('units','centimeters','position',[0 0 17.2 5.2]);
 
 for iDat = 1:2
     if iDat == 1
@@ -391,8 +392,8 @@ for iDat = 1:2
     
     quartile_boundaries   	= prctile(bl, [25 50 75]);
     out                     = nan([7,4]);
-    f                       = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
-%     ax                      = subplot(1,2,iDat); hold on
+    % f                       = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+    ax                      = subplot(1,3,iDat); hold on
     ln                      = line([0 5],[.5 .5], 'Color', [0 0 0],'LineWidth',1,'LineStyle',':');
 
     for iCoh = 1:size(dat,2)
@@ -424,14 +425,14 @@ for iDat = 1:2
     ax.FontSize             = lb_fs;
     ax.XTickLabelRotation   = 0;
     
-    print(f, [dest_dir '/FIG2_quartiles_coh' num2str(iDat)], '-r500', '-dpng');
-    print(f, [dest_dir '/FIG2_quartiles_coh' num2str(iDat)], '-r500', '-dsvg', '-painters');
+    %print(f, [dest_dir '/FIG2_quartiles_coh' num2str(iDat)], '-r500', '-dpng');
+    %print(f, [dest_dir '/FIG2_quartiles_coh' num2str(iDat)], '-r500', '-dsvg', '-painters');
 
 end
 
 %%% Population %%%
 clear bl dat quartile_boundaries out
-    f                       = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
+ax                          = subplot(1,3,3); hold on
 ccol                        = [.5 .5 .5; 0 0 0; .8 .5 .5; .5 .1 .1];
 
 for iDat = 1:4
@@ -481,8 +482,37 @@ end
 legend(plt,'x:Acc y:Acc', 'x:Ecc y:Ecc', 'x:Ecc y:Acc','x:Acc y:Ecc')
 
 % PRINT
-print(f, [dest_dir '/FIG2_quartiles'], '-r500', '-dpng');
-print(f, [dest_dir '/FIG2_quartiles'], '-r500', '-dsvg', '-painters');
+%print(f, [dest_dir '/FIG2_quartiles'], '-r500', '-dpng');
+%print(f, [dest_dir '/FIG2_quartiles'], '-r500', '-dsvg', '-painters');
+
+%%
+bl                      = mean(bl_acc,2);
+mconf                   = mean(bl_ecc,2);
+quartile_boundaries   	= prctile(bl, [25 50 75]);
+
+for iQuart = 1:4
+    if iQuart == 1
+        idx             = bl < quartile_boundaries(1);
+    elseif iQuart == 2 || iQuart == 3
+        idx             = bl  >= quartile_boundaries(iQuart-1) & bl  < quartile_boundaries(iQuart);
+    elseif iQuart == 4
+        idx             = bl  > quartile_boundaries(3);
+    end
+    conf(iQuart)     	= mean(mconf(idx));
+    cpmt(iQuart)      	= mean(bl(idx));
+end
+
+figure; hold on
+pl(1)               	= plot(conf,'Color',[.6 .1 .1],'LineWidth', 2);
+pl(2)                 	= plot(cpmt,'Color',[.1 .1 .1],'LineWidth', 2);
+ax                      = gca;
+ax.XLim                 = [.75 4.25];
+ax.XTick                = [1:4];
+ax.XTickLabel           = {'Bottom','2nd','3rd','Top'};
+ax.FontSize             = 24;
+ax.YLabel.String      	= 'Solo [norm]';
+ax.XLabel.String      	= 'Accuracy';
+legend(pl,{'Confidence','Accuracy'},'Location', 'southeast')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper

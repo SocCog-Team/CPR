@@ -134,13 +134,13 @@
     ><line y2="139.9286" style="fill:none;" x1="29.4805" x2="193.0195" y1="139.9286"
     /></g
     ><g style="stroke-linecap:butt; fill:aqua; text-rendering:geometricPrecision; image-rendering:optimizeQuality; color-rendering:optimizeQuality; stroke-linejoin:round; stroke:aqua; color-interpolation:linearRGB; stroke-width:2;"
-    ><path d="M41.1786 51.8413 L87.8929 86.365 L134.6071 137.551 L181.3214 139.9764" style="fill:none; fill-rule:evenodd;"
-      /><path d="M41.1786 64.8711 L87.8929 92.413 L134.6071 129.8974 L181.3214 140.28" style="fill:none; fill-rule:evenodd; stroke:rgb(43,213,255);"
-      /><path d="M41.1786 58.4971 L87.8929 106.9569 L134.6071 107.4267 L181.3214 171.0378" style="fill:none; fill-rule:evenodd; stroke:rgb(85,170,255);"
-      /><path d="M41.1786 58.2875 L87.8929 91.9328 L134.6071 133.7028 L181.3214 169.1432" style="fill:none; fill-rule:evenodd; stroke:rgb(128,128,255);"
-      /><path d="M41.1786 46.9535 L87.8929 118.1018 L134.6071 139.3536 L181.3214 165.9749" style="fill:none; fill-rule:evenodd; stroke:rgb(170,85,255);"
-      /><path d="M41.1786 44.1909 L87.8929 119.1267 L134.6071 134.279 L181.3214 181.3092" style="fill:none; fill-rule:evenodd; stroke:rgb(213,42,255);"
-      /><path d="M41.1786 40.4273 L87.8929 136.6334 L134.6071 165.1631 L181.3214 167.2351" style="fill:none; fill-rule:evenodd; stroke:fuchsia;"
+    ><path d="M41.1786 50.7506 L87.8929 86.5742 L134.6071 137.7745 L181.3214 139.9427" style="fill:none; fill-rule:evenodd;"
+      /><path d="M41.1786 64.8401 L87.8929 92.5403 L134.6071 129.8951 L181.3214 140.5483" style="fill:none; fill-rule:evenodd; stroke:rgb(43,213,255);"
+      /><path d="M41.1786 58.3919 L87.8929 107.1167 L134.6071 107.0563 L181.3214 171.1073" style="fill:none; fill-rule:evenodd; stroke:rgb(85,170,255);"
+      /><path d="M41.1786 58.398 L87.8929 92.0178 L134.6071 134.0175 L181.3214 169.3207" style="fill:none; fill-rule:evenodd; stroke:rgb(128,128,255);"
+      /><path d="M41.1786 46.9068 L87.8929 118.742 L134.6071 139.1986 L181.3214 166.0145" style="fill:none; fill-rule:evenodd; stroke:rgb(170,85,255);"
+      /><path d="M41.1786 44.2497 L87.8929 119.0794 L134.6071 134.2986 L181.3214 181.3092" style="fill:none; fill-rule:evenodd; stroke:rgb(213,42,255);"
+      /><path d="M41.1786 40.7407 L87.8929 137.1296 L134.6071 165.2924 L181.3214 167.5954" style="fill:none; fill-rule:evenodd; stroke:fuchsia;"
     /></g
   ></g
 ></svg
