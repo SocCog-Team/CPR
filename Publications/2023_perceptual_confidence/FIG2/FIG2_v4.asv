@@ -5,13 +5,12 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-source_dir = '/Users/fschneider/ownCloud/var_plot/';
-load([ source_dir '/solo_correlation.mat'])
-load([ source_dir '/solo_performance.mat'])
-load([ source_dir '/hh_dyad_correlation.mat'])
-load([ source_dir '/hh_dyad_performance.mat'])
-load([ source_dir '/hh_dyad_pairwise_correlation.mat'])
-load([ source_dir '/hh_dyad_pairwise_performance.mat'])
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_performance.mat')
 
 for iSubj = 1:size(solo_perf,2)
     sbj_lst{iSubj}          = solo_perf{iSubj}.id;                          % Extract subject ID
@@ -161,26 +160,19 @@ tx                       	= text(1.25,.2, 'Solo > Dyadic', 'FontSize', lb_fs, 'C
 %%% SUBPLOT: DYADIC AUC - Solo hit rate  %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax5                         = axes('Position', [colmn(3) height(1) dim]); hold on
-[ax5,mdl,R,PV]              = plotQuartiles(ax5,bl_hir,df_hir,'Hit rate dff',lw,lb_fs,false);
-ax5.YLim                    = [-.1 .1];
-ax5.XAxis.Visible         	= 'off';
+[ax5]                       = plotScatter(ax5, bl_hir, df_hir, snr, lb_fs, true, false);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC AUC - Solo accuracy %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax7                         = axes('Position', [colmn(3) height(2) dim]); hold on
-[ax7,mdl,R,PV]              = plotQuartiles(ax7,bl_acc,auc_acc,'Accuracy [AUC]',lw,lb_fs, true);
-ax7.YLim                    = [.4 .6];
-ax5.YTick                   = [.4 .5 .6];
-ax7.XAxis.Visible         	= 'off';
+[ax7]                       = plotScatter(ax7, bl_acc, auc_acc, snr, lb_fs, true, true);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: DYADIC AUC - Solo eccentricity %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax8                         = axes('Position', [colmn(3) height(3) dim]); hold on
-[ax8,mdl,R,PV]              = plotQuartiles(ax8,bl_ecc,auc_ecc,'Eccentricity [AUC]',lw,lb_fs, true);
-ax8.YLim                    = [.25 .75];
-ax8.YTick                   = [.3 .5 .7];
+[ax8]                       = plotScatter(ax8, bl_ecc, auc_ecc, snr, lb_fs, true, true);
 ax8.XAxis.Visible         	= 'on';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -211,21 +203,7 @@ text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k
 
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2'], '-r500', '-dsvg', '-painters');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Scatter plot for supplementary
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-f                           = figure('units','centimeters','position',[0 0 22.5 5]); hold on
-ax5                         = subplot(1,4,1); hold on
-[ax5]                       = plotScatter(ax5, bl_hir, df_hir, snr, lb_fs, false, false);
-ax7                         = subplot(1,4,2); hold on
-[ax7]                       = plotScatter(ax7, bl_acc, auc_acc, snr, lb_fs, false, true);
-ax8                         = subplot(1,4,3); hold on
-[ax8]                       = plotScatter(ax8, bl_ecc, auc_ecc, snr, lb_fs, false, true);
-
-print(f, [dest_dir '/SFIG2_scatter'], '-r500', '-dpng');
-print(f, [dest_dir '/SFIG2_scatter'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG2'], '-r500', '-depsc2', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% UPPER PANEL: Score comparison %%%
@@ -729,12 +707,14 @@ ax.YLabel.String           	= '[%]';
 ax.XLabel.String           	= 'Coherence [%]';
 end
 
-function [ax,mdl,R,PV] = plotQuartiles(ax,x,y,str,lw,lb_fs,auc_flag)
+
+function [ax,mdl,R,PV] = plotQuartiles(ax,x,y,str,lw,lb_fs)
 
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 coh_col                 = cool(size(y,2));
-quartile_boundaries   	= prctile(x, [25 50 75]);
+quartile_boundaries   	= prctile(bl, [25 50 75]);
 out                     = nan([size(y,2),4]);
+ln                      = line([0 5],[.5 .5], 'Color', [0 0 0],'LineWidth',1,'LineStyle',':');
 
 for iCoh = 1:size(y,2)
     
@@ -753,7 +733,7 @@ for iCoh = 1:size(y,2)
         dat(iCoh,iQuart) = mean(y(idx,iCoh));
     end
     
-    plot(dat(iCoh,:),'Color',coh_col(iCoh,:),'LineWidth', lw/2)
+    plot(dat(iCoh,:),'Color',coh_col(iCoh,:),'LineWidth', lw)
 end
 
 ax.XLim                 = [0.75 4.25];
@@ -764,15 +744,4 @@ ax.YLabel.String      	= str;
 ax.FontSize             = lb_fs;
 ax.XTickLabelRotation   = 0;
 
-if auc_flag
-    ln                      = line([0 5],[.5 .5]);
-    ax.YLabel.String     	= 'AUC';
-else
-    ln                   	= line([0 5],[0 0]);
-    ax.YLabel.String      	= 'Difference';
-end
-
-ln.LineWidth            = 1.5;
-ln.LineStyle            = ':';
-ln.Color                = [0 0 0];
 end

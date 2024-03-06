@@ -195,7 +195,8 @@ for iSubj = 1:length(sbj_lst)
 end
 
 %%% Save variables for plotting %%%
-dest_dir = ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/'];
+% dest_dir = ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/'];
+dest_dir = ['/Users/fschneider/ownCloud/var_plot/'];
 mkdir(dest_dir);
 
 save([dest_dir 'solo_performance.mat'], 'solo_perf', '-v7.3');

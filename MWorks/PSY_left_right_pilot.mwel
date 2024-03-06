@@ -2,7 +2,7 @@
 // I/O Devices
 //
 
-//stimulus_display 'Stimulus Display' (0, 0, 0)
+stimulus_display 'Stimulus Display' (0, 0, 0)
 
 iodevice/mouse_input mouse1 (
     mouse_position_x                        = IO_cursor1_x
@@ -26,6 +26,13 @@ group CTRL {
     var CTRL_trial_duration_ms              = 0
     var CTRL_ITI_ms                         = 0
     var CTRL_cursor_radius                  = 0 
+    var CTRL_cursor_alpha                   = 0
+    var CTRL_state_counter                  = 0
+    var CTRL_dice                           = 0
+    var CTRL_stimulus_flag                  = 0
+    var CTRL_reward_percent                 = 0
+    var CTRL_reward_cum                     = 0
+    var CTRL_reward_flag                    = 0
 }
 
 group TRIAL {
@@ -43,11 +50,11 @@ group RDP {
     var RDP_radius                          = 10
     var RDP_y                               = 0
     var RDP_x                               = 0
-    var RDP_density                         = 2.5
-    var RDP_dotsize                         = .1
+    var RDP_density                         = 2
+    var RDP_dotsize                         = .2
     var RDP_speed                           = 8
     var RDP_coherence                       = .3
-    var RDP_lifetime                        = (1/120) * 25 * 1000 // 25 frames - 208ms
+    var RDP_lifetime                        = (1/120) * 10 * 1000 // 25 frames - 208ms
     var RDP_alpha                           = 1
     var RDP_seed                            = 1
 }
@@ -59,9 +66,15 @@ group COL {
     var COL_rdp_r                           = 1
     var COL_rdp_g                           = 1
     var COL_rdp_b                           = 1
-    var COL_cursor1_r                       = 1
-    var COL_cursor1_g                       = 0
-    var COL_cursor1_b                       = 1
+    var COL_slider_r                        = .5
+    var COL_slider_g                        = .5
+    var COL_slider_b                        = .5
+    var COL_feedback_r                      = .5
+    var COL_feedback_g                      = .5
+    var COL_feedback_b                      = .5
+    var COL_cursor1_r                       = 0
+    var COL_cursor1_g                       = 1
+    var COL_cursor1_b                       = 0
     var COL_cursor2_r                       = 1
     var COL_cursor2_g                       = 0
     var COL_cursor2_b                       = 1
@@ -69,9 +82,31 @@ group COL {
 
 
 group IO {
-    var IO_cursor1_x                        = 0
+    var IO_cursor1_capped                   = 0
+    var IO_cursor2_capped                   = 0
+    var IO_cursor1_x                        = 0 {
+        
+        IO_cursor1_capped                   = IO_cursor1_x
+        if (IO_cursor1_x > 10) {
+            IO_cursor1_capped               = 10
+        }
+
+        if (IO_cursor1_x < -10) {
+            IO_cursor1_capped               = -10
+        }
+    }
     var IO_cursor1_y                        = 0
-    var IO_cursor2_x                        = 0
+    var IO_cursor2_x                        = 0 {
+        
+        IO_cursor2_capped                   = IO_cursor2_x
+        if (IO_cursor2_x > 10) {
+            IO_cursor2_capped               = 10
+        }
+
+        if (IO_cursor2_x < -10) {
+            IO_cursor2_capped               = -10
+        }
+    }
     var IO_cursor2_y                        = 0
 }
 
@@ -83,15 +118,13 @@ group ML {
 // Sounds
 //
 
-wav_file Acquire_sound ('./sounds/acquire.wav')
-wav_file Failure_sound ('./sounds/failure2.wav')
 wav_file Reward_sound ('./sounds/reward.wav')
 
 //
 // Stimuli
 //
 
-blank_screen Background (
+blank_screen background (
     color                                   = COL_bg_r,COL_bg_g,COL_bg_b
     )
 
@@ -102,12 +135,12 @@ stimulus/advstimulus cursor1 (
     trigger_flag                            = 0
     x_size                                  = CTRL_cursor_radius
     y_size                                  = CTRL_cursor_radius
-    x_position                              = IO_cursor1_x
-    y_position                              = IO_cursor1_y
+    x_position                              = IO_cursor1_capped
+    y_position                              = 0
     shape                                   = format("circle")
     color                                   = COL_cursor1_r,COL_cursor1_g,COL_cursor1_b
     rotation                                = 0
-    alpha_multiplier                        = 1
+    alpha_multiplier                        = CTRL_cursor_alpha
     version                                 = 1
     autoplay                                = YES
     )
@@ -120,8 +153,8 @@ stimulus/advstimulus cursor2 (
     trigger_flag                            = 0
     x_size                                  = CTRL_cursor_radius
     y_size                                  = CTRL_cursor_radius
-    x_position                              = IO_cursor2_x
-    y_position                              = IO_cursor2_y
+    x_position                              = IO_cursor2_capped
+    y_position                              = 0
     shape                                   = format("circle")
     color                                   = COL_cursor2_r,COL_cursor2_g,COL_cursor2_b
     rotation                                = 0
@@ -147,6 +180,39 @@ stimulus/r_d_p RDP (
     autoplay                                = YES
     )
 
+stimulus/rectangle slider (
+    x_size                                  = RDP_radius * 2
+    y_size                                  = CTRL_cursor_radius / 5
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = COL_slider_r,COL_slider_g,COL_slider_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/rectangle divider (
+    x_size                                  = CTRL_cursor_radius / 5 
+    y_size                                  = CTRL_cursor_radius 
+    x_position                              = 0
+    y_position                              = 0
+    color                                   = COL_slider_r,COL_slider_g,COL_slider_b
+    rotation                                = 0
+    alpha_multiplier                        = 1
+    )
+
+stimulus/text feedback (
+    text                                    = "Reward: $CTRL_reward_cum"
+    font_name                               = Helvetica
+    font_size                               = 24
+    text_alignment                          = center
+    x_size                                  = 20 
+    y_size                                  = 10
+    x_position                              = 0  
+    y_position                              = -14
+    color                                   = 1,1,1
+    )                               
+
+
 
 //
 // Protocols
@@ -156,12 +222,13 @@ protocol 'Expansion_solo' {
     live_queue_stimulus (background)
     update_stimulus_display ()
 
-    CTRL_cursor_radius                  = .5
+    CTRL_cursor_radius                  = 1
+    CTRL_cursor_alpha                   = .75       
     TRIAL_start                         = 0
     TRIAL_end                           = 0
     CTRL_ITI_ms                         = 1000
-    CTRL_state_min_ms                   = 1500
-    CTRL_state_max_ms                   = 3000
+    CTRL_state_min_ms                   = 300
+    CTRL_state_max_ms                   = 1500
     CTRL_trial_duration_ms              = 10000
 
     trial 'Main Task System' {
@@ -172,8 +239,7 @@ protocol 'Expansion_solo' {
                 TRIAL_align             = 1
                 TRIAL_start             = TRIAL_start + 1
                 INFO_task               = "Left_right_solo"
-
-                CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms)
+                CTRL_state_counter      = 0 // Reset state counter
 
                 start_timer (
                     timer               = Trial_Timer
@@ -186,19 +252,44 @@ protocol 'Expansion_solo' {
                 goto("New State")
             }
 
-            state 'New State' {        
-                if (RDP_direction == 90) {
-                    RDP_direction = 270
+            state 'New State' {  
+
+                CTRL_stimulus_flag      = false // Stimulus change flag
+
+                // Draw initial stimulus direction
+                if (CTRL_state_counter == 0) {
+                    CTRL_dice           = disc_rand(0,1) // Determine state direction randomly
+                    CTRL_stimulus_flag  = true
+
+                    if (CTRL_dice == 0) {
+                        RDP_direction   = 90
+                    }
+
+                    if (CTRL_dice == 1) {
+                        RDP_direction   = 270
+                    }
                 }
 
-                if (RDP_direction == 270) {
-                    RDP_direction = 90
+                // Flip stimulus direction
+                if (CTRL_stimulus_flag == false && RDP_direction == 90) {
+                    RDP_direction           = 270
+                    CTRL_stimulus_flag      = true
                 }
+
+                if (CTRL_stimulus_flag == false && RDP_direction == 270) {
+                    RDP_direction           = 90
+                    CTRL_stimulus_flag      = true
+                }
+
+                CTRL_state_counter      += 1 // Count number of stimulus states
+                CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms) // Determine state duration
 
                 live_queue_stimulus (background)
                 live_queue_stimulus (RDP)
+                live_queue_stimulus (slider)
+                live_queue_stimulus (divider)
                 live_queue_stimulus (cursor1)
-                //live_queue_stimulus (cursor2)
+                live_queue_stimulus (feedback)
                 update_stimulus_display ()
 
                 start_timer (
@@ -211,14 +302,9 @@ protocol 'Expansion_solo' {
             }
 
             state 'Update Stimulus' {
-                schedule (
-                    delay = next_frame_time() - now()
-                    duration = 0ms
-                    repeats = 0
-                )
                 
                 goto (
-                    target              = 'New State'
+                    target              = 'Feedback'
                     when                = timer_expired(State_Timer)
                     )
 
@@ -230,6 +316,30 @@ protocol 'Expansion_solo' {
                 goto ('Update Stimulus')
             }
 
+            state 'Feedback' {
+
+                CTRL_reward_flag = false
+
+                if (CTRL_reward_flag == false && RDP_direction == 90 && IO_cursor1_capped > 0) {
+                    CTRL_reward_percent = abs(IO_cursor1_capped/10)
+                    CTRL_reward_cum   += CTRL_reward_percent
+                    CTRL_reward_flag = true
+                }
+
+                if (CTRL_reward_flag == false && RDP_direction == 270 && IO_cursor1_capped < 0) {
+                    CTRL_reward_percent = abs(IO_cursor1_capped/10)
+                    CTRL_reward_cum   += CTRL_reward_percent
+                    CTRL_reward_flag = true
+                }
+
+                report ('Reward: $CTRL_reward_cum')
+
+                live_queue_stimulus (feedback)
+                update_stimulus_display ()
+
+                goto ('New State')
+            }
+
             state 'End Trial' {
                 start_timer (
                     timer               = ITI_Timer
@@ -239,7 +349,10 @@ protocol 'Expansion_solo' {
 
                 dequeue_stimulus (background)
                 dequeue_stimulus (RDP)
+                dequeue_stimulus (slider)
+                dequeue_stimulus (divider)
                 dequeue_stimulus (cursor1)
+                dequeue_stimulus (feedback)
                 //dequeue_stimulus (cursor2)
                 update_stimulus_display ()
 

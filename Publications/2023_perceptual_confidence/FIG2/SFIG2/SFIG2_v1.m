@@ -129,7 +129,7 @@ for iSubj = 1:length(solo_perf)
         dyad_hir(cnt,:)       	= dyad_perf{iSubj}.hir;          % Hit rate
         dyad_trg_score(cnt,:)	= dyad_perf{iSubj}.trg_mscore;   % Avg target scores
         dyad_macc(cnt,:)     	= dyad_perf{iSubj}.macc_trg;     % Avg accuracy
-        dyad_mecc(cnt,:)    	= dyad_perf{iSubj}.mecc_state;         % Avg eccentricity
+        dyad_mecc(cnt,:)    	= dyad_perf{iSubj}.mecc_state;   % Avg eccentricity
     catch
         dyad_hir(cnt,:)       	= nan;
         dyad_trg_score(cnt,:)	= nan;
