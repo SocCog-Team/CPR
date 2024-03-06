@@ -1,9 +1,10 @@
 close all 
 clear all
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+source_dir = '/Users/fschneider/ownCloud/var_plot/';
+load([ source_dir '/solo_performance.mat'])
+load([ source_dir '/hh_dyad_correlation.mat'])
+load([ source_dir '/hh_dyad_performance.mat'])
 
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 
@@ -34,7 +35,7 @@ for iExample = [13 20 37]
         continue
     end
     
-    f                      	= figure('units','centimeters','position',[0 0 7 5]);
+    f                      	= figure('units','centimeters','position',[0 0 5 5]);
     c = c+1;
     for iCoh = 1:length(snr)
         lab{iCoh} = num2str(round(snr(iCoh),2)*100);
@@ -66,13 +67,13 @@ for iExample = [13 20 37]
     end
     
     ax2                     = gca;
-    ax2.XTick = 1:length(snr);
-    ax2.XTickLabel = lab;
-    ax2.XLabel.String = 'Coherence';
-    ax2.YLabel.String = 'Eccentricity';
-    ax2.FontSize = lb_fs;
-    ax2.YLim = [0 1];
-    ax2.Title.String = ['Subject: ' num2str(iExample)];   
+    ax2.XTick               = 1:length(snr);
+    ax2.XTickLabel          = lab;
+    ax2.XLabel.String       = 'Coherence';
+    ax2.YLabel.String       = 'Eccentricity';
+    ax2.FontSize            = lb_fs;
+    ax2.YLim                = [0 1];
+    ax2.Title.String        = ['Subject: ' num2str(iExample)];   
     
     print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG2/SFIG2/subject_distribution/SFIG2a' num2str(iExample)], '-r500', '-dpng');
     print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG2/SFIG2/subject_distribution/SFIG2a' num2str(iExample)], '-r500', '-dsvg', '-painters');
@@ -82,7 +83,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Example AUROC %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-f                      	= figure('units','centimeters','position',[0 0 7 5]); 
+f                      	= figure('units','centimeters','position',[0 0 5 5]); 
 ax = gca; hold on
 for iL = 1:size(auc,1)
     pl(iL)               	= plot(auc(iL,:),'Marker', 'x');
