@@ -43,7 +43,6 @@ iodevice/usbhid_generic joystick2 (
 }
 
 
-
 filter/joystick_calibrator joystick_norm (
     maxX                                    = IO_joystickX_raw_max
     minX                                    = IO_joystickX_raw_min
@@ -103,7 +102,7 @@ group CTRL {
     var CTRL_state_counter                  = 0
     var CTRL_dice                           = 0
     var CTRL_stimulus_flag                  = 0
-    var CTRL_rdp_direction_list             = [350,351,352,353,354,355,356,357,358,359,0,1,2,3,4,5,6,7,8,9,10]                 
+    var CTRL_rdp_direction_list             = [345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]                 
     var CTRL_js_calibration_flag            = false
 
 }
@@ -327,7 +326,7 @@ stimulus/r_d_p RDP (
     speed                                   = RDP_speed // dva/s
     coherence                               = RDP_coherence
     lifetime                                = RDP_lifetime
-    //smooth_direction_transition             =  1000    
+    smooth_direction_transition             = 100   
     announce_dots                           = NO // YES for dot position
     autoplay                                = YES
     )                             
@@ -360,7 +359,7 @@ protocol 'Left_right_solo' {
     CTRL_ITI_ms                         = 1000
     CTRL_state_min_ms                   = 1000
     CTRL_state_max_ms                   = 1500
-    CTRL_trial_duration_ms              = 10000
+    CTRL_trial_duration_ms              = 20000
 
     TRIAL_start                         = 0
     TRIAL_end                           = 0
@@ -486,10 +485,10 @@ protocol 'Left_right_dyadic' {
     CTRL_cursor_alpha                   = 1       
     CTRL_cursor_min                     = .1 
     CTRL_cursor_threshold               = .05
-    CTRL_ITI_ms                         = 1000
+    CTRL_ITI_ms                         = 2000
     CTRL_state_min_ms                   = 1000
     CTRL_state_max_ms                   = 1500
-    CTRL_trial_duration_ms              = 10000
+    CTRL_trial_duration_ms              = 20000
 
     TRIAL_start                         = 0
     TRIAL_end                           = 0
