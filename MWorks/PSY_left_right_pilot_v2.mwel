@@ -1,0 +1,704 @@
+//
+// I/O Devices
+//
+
+stimulus_display 'Stimulus Display' (0, 0, 0)
+
+iodevice/usbhid_generic joystick (
+       preferred_location_id                = 336592896
+       usage_page                           = 1
+       usage                                = 4
+       log_all_input_values                 = NO
+       autostart                            = YES
+   ){
+   iochannel/usbhid_generic_input_channel (
+       usage_page                           = 1
+       usage                                = 49
+       value                                = IO_joystickY_raw
+   )
+   iochannel/usbhid_generic_input_channel (
+       usage_page                           = 1
+       usage                                = 48
+       value                                = IO_joystickX_raw
+   )
+}
+
+iodevice/usbhid_generic joystick2 (
+       preferred_location_id                = 339738624
+       usage_page                           = 1
+       usage                                = 4
+       log_all_input_values                 = NO
+       autostart                            = YES
+   ){
+   iochannel/usbhid_generic_input_channel (
+       usage_page                           = 1
+       usage                                = 49
+       value                                = IO_joystickY2_raw
+   )
+   iochannel/usbhid_generic_input_channel (
+       usage_page                           = 1
+       usage                                = 48
+       value                                = IO_joystickX2_raw
+   )
+}
+
+
+
+filter/joystick_calibrator joystick_norm (
+    maxX                                    = IO_joystickX_raw_max
+    minX                                    = IO_joystickX_raw_min
+    maxY                                    = IO_joystickY_raw_min // Switched intentionally: 0deg up instead of down
+    minY                                    = IO_joystickY_raw_max // Switched intentionally: 0deg up instead of down
+    rawX                                    = IO_joystickX_raw
+    rawY                                    = IO_joystickY_raw
+    strength                                = IO_joystickStrength
+    direction                               = IO_joystickDirection
+    normX                                   = IO_joystickX_norm
+    normY                                   = IO_joystickY_norm
+    trigger                                 = IO_joystickTrigger
+    capStrength                             = YES
+    )
+
+
+filter/joystick_calibrator joystick2_norm (
+    maxX                                    = IO_joystickX2_raw_max
+    minX                                    = IO_joystickX2_raw_min
+    maxY                                    = IO_joystickY2_raw_min // Switched intentionally: 0deg up instead of down
+    minY                                    = IO_joystickY2_raw_max // Switched intentionally: 0deg up instead of down
+    rawX                                    = IO_joystickX2_raw
+    rawY                                    = IO_joystickY2_raw
+    strength                                = IO_joystickStrength2
+    direction                               = IO_joystickDirection2
+    normX                                   = IO_joystickX2_norm
+    normY                                   = IO_joystickY2_norm
+    trigger                                 = IO_joystickTrigger2
+    capStrength                             = YES
+    )
+
+//
+// Variables
+// 
+
+group INFO {
+    var INFO_task                           = 0
+}
+
+group CTRL {
+    var CTRL_state_min_ms                   = 0 
+    var CTRL_state_max_ms                   = 0
+    var CTRL_state_duration_ms              = 0
+    var CTRL_trial_duration_ms              = 0
+    var CTRL_ITI_ms                         = 0
+    var CTRL_cursor1_radius                 = 0 
+    var CTRL_cursor2_radius                 = 0 
+    var CTRL_cursor_alpha                   = 0
+    var CTRL_cursor1_rotation               = 0
+    var CTRL_cursor2_rotation               = 0
+    var CTRL_cursor1_position_y             = 0
+    var CTRL_cursor2_position_y             = 0
+    var CTRL_state_counter                  = 0
+    var CTRL_dice                           = 0
+    var CTRL_stimulus_flag                  = 0
+    var CTRL_reward_percent                 = 0
+    var CTRL_reward_cum                     = 0
+    var CTRL_reward_flag                    = 0
+    var CTRL_reward2_percent                = 0
+    var CTRL_reward2_cum                    = 0
+    var CTRL_reward2_flag                   = 0
+    var CTRL_feedback_position_x            = 0
+    var CTRL_feedback_position_y            = 0
+    var CTRL_feedback2_position_x           = 0
+    var CTRL_feedback2_position_y           = 0
+    var CTRL_js_calibration_flag            = false
+
+}
+
+group TRIAL {
+    var TRIAL_start                         = 0
+    var TRIAL_end                           = 0
+    var TRIAL_reactionEvent                 = 0
+    var TRIAL_reactionTrigger               = 0
+    var TRIAL_align                         = 0
+    var TRIAL_type                          = 0
+    var TRIAL_outcome                       = 0
+}
+
+group RDP {
+    var RDP_direction                       = 0
+    var RDP_radius                          = 10
+    var RDP_y                               = 0
+    var RDP_x                               = 0
+    var RDP_density                         = 2
+    var RDP_dotsize                         = .2
+    var RDP_speed                           = 8
+    var RDP_coherence                       = 1 
+    var RDP_lifetime                        = (1/120) * 25 * 1000 // 25 frames - 208ms
+    var RDP_alpha                           = 1
+    var RDP_seed                            = 1
+}
+
+group COL {
+    var COL_bg_r                            = 0
+    var COL_bg_g                            = 0
+    var COL_bg_b                            = 0
+    var COL_rdp_r                           = 1
+    var COL_rdp_g                           = 1
+    var COL_rdp_b                           = 1
+    var COL_slider_r                        = .5
+    var COL_slider_g                        = .5
+    var COL_slider_b                        = .5
+    var COL_feedback_r                      = .5
+    var COL_feedback_g                      = .5
+    var COL_feedback_b                      = .5
+    var COL_cursor1_r                       = 0
+    var COL_cursor1_g                       = 1
+    var COL_cursor1_b                       = 0
+    var COL_cursor2_r                       = 1
+    var COL_cursor2_g                       = 0
+    var COL_cursor2_b                       = 1
+}
+
+
+group IO {
+    // JOYSTICK1 -- Measure manually [server]
+    var IO_joystickX_raw_max                = 16383
+    var IO_joystickX_raw_min                = 0
+    var IO_joystickY_raw_max                = 16383
+    var IO_joystickY_raw_min                = 0
+    var IO_joystickX_norm                   = 0 {
+        if (IO_joystickX_norm > 0) {
+            CTRL_cursor1_rotation = -90
+        }
+        if (IO_joystickX_norm <= 0) {
+            CTRL_cursor1_rotation = 90
+        }
+    }
+    var IO_joystickY_norm                   = 0
+    var IO_joystickX_raw                    = 0 {
+        if (CTRL_js_calibration_flag == true) {
+            IO_joystickX_raw_max            = max(IO_joystickX_raw_max, IO_joystickX_raw)
+            IO_joystickX_raw_min            = min(IO_joystickX_raw_min, IO_joystickX_raw)
+        }
+    }
+    var IO_joystickY_raw                    = 0 {
+        if (CTRL_js_calibration_flag == true) {
+            IO_joystickY_raw_max            = max(IO_joystickY_raw_max, IO_joystickY_raw)
+            IO_joystickY_raw_min            = min(IO_joystickY_raw_min, IO_joystickY_raw)
+        }
+    }
+    var IO_joystickStrength                 = 0 {
+            CTRL_cursor1_radius = IO_joystickStrength *2
+            if (CTRL_cursor1_radius < .5) {
+            CTRL_cursor1_radius = .5
+        }
+    }
+    var IO_joystickDirection                = 0
+    var IO_joystickTrigger                  = false
+
+    // JOYSTICK2
+    var IO_joystickX2_raw_max                = 16383
+    var IO_joystickX2_raw_min                = 0
+    var IO_joystickY2_raw_max                = 16383
+    var IO_joystickY2_raw_min                = 0
+    var IO_joystickX2_norm                   = 0  {
+        if (IO_joystickX2_norm > 0) {
+            CTRL_cursor2_rotation = -90
+        }
+        if (IO_joystickX2_norm <= 0) {
+            CTRL_cursor2_rotation = 90
+        }
+    }
+    var IO_joystickY2_norm                   = 0
+    var IO_joystickX2_raw                    = 0 {
+        if (CTRL_js_calibration_flag == true) {
+            IO_joystickX2_raw_max           = max(IO_joystickX2_raw_max, IO_joystickX2_raw)
+            IO_joystickX2_raw_min           = min(IO_joystickX2_raw_min, IO_joystickX2_raw)
+        }
+    }
+    var IO_joystickY2_raw                    = 0 {
+        if (CTRL_js_calibration_flag == true) {
+            IO_joystickY2_raw_max           = max(IO_joystickY2_raw_max, IO_joystickY2_raw)
+            IO_joystickY2_raw_min           = min(IO_joystickY2_raw_min, IO_joystickY2_raw)
+        }
+    }
+    var IO_joystickStrength2                 = 0  {
+            CTRL_cursor2_radius = IO_joystickStrength2 *2
+            if (CTRL_cursor2_radius < .5) {
+            CTRL_cursor2_radius = .5
+        }
+    }
+    var IO_joystickDirection2                = 0
+    var IO_joystickTrigger2                  = false
+    var TMP_cancelTrigger                   = false
+    
+    var IO_cursor1_binary                   = 0
+    var IO_cursor2_binary                   = 0
+}
+
+//
+// Stimuli
+//
+
+blank_screen background (
+    color                                   = COL_bg_r,COL_bg_g,COL_bg_b
+    )
+
+stimulus/advstimulus center (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = .5
+    y_size                                  = .5
+    x_position                              = 0
+    y_position                              = 0
+    shape                                   = format("cross")
+    color                                   = 1,1,1
+    rotation                                = 0
+    alpha_multiplier                        = 1
+
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus cursor1 (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_cursor1_radius
+    y_size                                  = CTRL_cursor1_radius
+    x_position                              = 0
+    y_position                              = CTRL_cursor1_position_y
+    shape                                   = format("symmetric 3")
+    color                                   = COL_cursor1_r,COL_cursor1_g,COL_cursor1_b
+    rotation                                = CTRL_cursor1_rotation
+    alpha_multiplier                        = CTRL_cursor_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+
+stimulus/advstimulus cursor2 (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_cursor2_radius
+    y_size                                  = CTRL_cursor2_radius
+    x_position                              = 0
+    y_position                              = CTRL_cursor2_position_y
+    shape                                   = format("symmetric 3")
+    color                                   = COL_cursor2_r,COL_cursor2_g,COL_cursor2_b
+    rotation                                = CTRL_cursor2_rotation
+    alpha_multiplier                        = 1
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/r_d_p RDP (
+    radius                                  = RDP_radius
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    dot_density                             = RDP_density // dots/dva
+    dot_size                                = RDP_dotsize // dva
+    color                                   = COL_rdp_r,COL_rdp_g,COL_rdp_b
+    alpha_multiplier                        = RDP_alpha
+    direction                               = RDP_direction
+    speed                                   = RDP_speed // dva/s
+    coherence                               = RDP_coherence
+    lifetime                                = RDP_lifetime
+    smooth_direction_transition             =  1000    
+    announce_dots                           = NO // YES for dot position
+    autoplay                                = YES
+    )
+
+stimulus/text feedback (
+    text                                    = "Reward: $CTRL_reward_cum"
+    font_name                               = Helvetica
+    font_size                               = 24
+    text_alignment                          = center
+    x_size                                  = 20 
+    y_size                                  = 10
+    x_position                              = CTRL_feedback_position_x 
+    y_position                              = CTRL_feedback_position_y
+    color                                   = COL_cursor1_r,COL_cursor1_g,COL_cursor1_b
+    ) 
+
+stimulus/text feedback2 (
+    text                                    = "Reward: $CTRL_reward2_cum"
+    font_name                               = Helvetica
+    font_size                               = 24
+    text_alignment                          = center
+    x_size                                  = 20 
+    y_size                                  = 10
+    x_position                              = CTRL_feedback2_position_x  
+    y_position                              = CTRL_feedback2_position_y
+    color                                   = COL_cursor2_r,COL_cursor2_g,COL_cursor2_b
+    )                                 
+
+
+//
+// Protocols
+//
+
+protocol 'Left_right_solo' {
+    TMP_cancelTrigger                           = false
+    schedule (
+        delay                                   = 0 
+        duration                                = 10000
+        repeats                                 = -999
+        cancel                                  = TMP_cancelTrigger
+        ) {
+            IO_joystickTrigger                  = true
+    }
+
+    live_queue_stimulus (background)
+    update_stimulus_display ()
+
+    CTRL_cursor1_position_y             = 0
+    CTRL_cursor_alpha                   = 1       
+    TRIAL_start                         = 0
+    TRIAL_end                           = 0
+    CTRL_ITI_ms                         = 1000
+    CTRL_state_min_ms                   = 750
+    CTRL_state_max_ms                   = 1500
+    CTRL_trial_duration_ms              = 10000
+    CTRL_feedback_position_x            = 0
+    CTRL_feedback_position_y            = -14
+
+    trial 'Main Task System' {
+        task LOOP {
+
+            state 'New Trial' {        
+                TRIAL_align             = 1
+                TRIAL_start             = TRIAL_start + 1
+                INFO_task               = "Left_right_solo"
+                CTRL_state_counter      = 0 // Reset state counter
+
+                start_timer (
+                    timer               = Trial_Timer
+                    duration            = CTRL_trial_duration_ms
+                    duration_units      = ms
+                    )
+
+                report ('===== TRIAL $TRIAL_start START =====')
+
+                goto("New State")
+            }
+
+            state 'New State' {  
+
+                CTRL_stimulus_flag      = false // Stimulus change flag
+
+                // Draw initial stimulus direction
+                if (CTRL_state_counter == 0) {
+                    CTRL_dice           = disc_rand(0,1) // Determine state direction randomly
+                    CTRL_stimulus_flag  = true
+
+                    if (CTRL_dice == 0) {
+                        RDP_direction   = 90
+                    }
+
+                    if (CTRL_dice == 1) {
+                        RDP_direction   = 270
+                    }
+                }
+
+                // Flip stimulus direction
+                if (CTRL_stimulus_flag == false && RDP_direction == 90) {
+                    RDP_direction           = 270
+                    CTRL_stimulus_flag      = true
+                }
+
+                if (CTRL_stimulus_flag == false && RDP_direction == 270) {
+                    RDP_direction           = 90
+                    CTRL_stimulus_flag      = true
+                }
+
+                CTRL_state_counter      += 1 // Count number of stimulus states
+                CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms) // Determine state duration
+
+                live_queue_stimulus (background)
+                live_queue_stimulus (RDP)
+                live_queue_stimulus (cursor1)
+                live_queue_stimulus (feedback)
+                update_stimulus_display ()
+
+                start_timer (
+                    timer               = State_Timer
+                    duration            = CTRL_state_duration_ms
+                    duration_units      = ms
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Update Stimulus' {
+                
+                goto (
+                    target              = 'Feedback'
+                    when                = timer_expired(State_Timer)
+                    )
+
+                goto (
+                    target              = 'End Trial'
+                    when                = timer_expired(Trial_Timer)
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Feedback' {
+
+                CTRL_reward_flag = false
+
+                if (CTRL_reward_flag == false && RDP_direction == 90 && IO_joystickX_norm > 0) {
+                    CTRL_reward_percent = abs(IO_joystickX_norm)
+                    CTRL_reward_cum   += CTRL_reward_percent
+                    CTRL_reward_flag = true
+                }
+
+                if (CTRL_reward_flag == false && RDP_direction == 270 && IO_joystickX_norm < 0) {
+                    CTRL_reward_percent = abs(IO_joystickX_norm)
+                    CTRL_reward_cum   += CTRL_reward_percent
+                    CTRL_reward_flag = true
+                }
+
+                report ('Reward: $CTRL_reward_cum')
+
+                live_queue_stimulus (feedback)
+                update_stimulus_display ()
+
+                goto ('New State')
+            }
+
+            state 'End Trial' {
+                start_timer (
+                    timer               = ITI_Timer
+                    duration            = CTRL_ITI_ms
+                    duration_units      = ms
+                    )
+
+                dequeue_stimulus (background)
+                dequeue_stimulus (RDP)
+                dequeue_stimulus (center)
+                dequeue_stimulus (cursor1)
+                dequeue_stimulus (feedback)
+                //dequeue_stimulus (cursor2)
+                update_stimulus_display ()
+
+                TRIAL_reactionTrigger   = 0
+                TRIAL_reactionEvent     = 0
+                TRIAL_align             = 0
+                TRIAL_end               = TRIAL_start
+
+                report ('==== END OF TRIAL $TRIAL_end ====')
+
+                goto ('ITI')
+            }
+
+            state 'ITI' {
+                timer_expired (
+                    target              = 'New Trial'
+                    timer               = ITI_Timer
+                    )
+            }
+        }
+    }
+}
+
+protocol 'Left_right_dyadic' {
+    TMP_cancelTrigger                           = false
+    schedule (
+        delay                                   = 0 
+        duration                                = 10000
+        repeats                                 = -999
+        cancel                                  = TMP_cancelTrigger
+        ) {
+            IO_joystickTrigger                  = true
+    }
+
+    TMP_cancelTrigger                           = false
+    schedule (
+        delay                                   = 0 
+        duration                                = 10000
+        repeats                                 = -999
+        cancel                                  = TMP_cancelTrigger
+        ) {
+            IO_joystickTrigger2                  = true
+    }
+
+    live_queue_stimulus (background)
+    update_stimulus_display ()
+
+    CTRL_cursor1_position_y             = 1
+    CTRL_cursor2_position_y             = -1
+    CTRL_cursor_alpha                   = 1       
+    TRIAL_start                         = 0
+    TRIAL_end                           = 0
+    CTRL_ITI_ms                         = 1000
+    CTRL_state_min_ms                   = 750
+    CTRL_state_max_ms                   = 1500
+    CTRL_trial_duration_ms              = 10000
+    CTRL_feedback_position_x            = 10
+    CTRL_feedback_position_y            = -14
+    CTRL_feedback2_position_x           = -10
+    CTRL_feedback2_position_y           = -14
+
+    trial 'Main Task System' {
+        task LOOP {
+
+            state 'New Trial' {        
+                TRIAL_align             = 1
+                TRIAL_start             = TRIAL_start + 1
+                INFO_task               = "Left_right_solo"
+                CTRL_state_counter      = 0 // Reset state counter
+
+                start_timer (
+                    timer               = Trial_Timer
+                    duration            = CTRL_trial_duration_ms
+                    duration_units      = ms
+                    )
+
+                report ('===== TRIAL $TRIAL_start START =====')
+
+                goto("New State")
+            }
+
+            state 'New State' {  
+
+                CTRL_stimulus_flag      = false // Stimulus change flag
+
+                // Draw initial stimulus direction
+                if (CTRL_state_counter == 0) {
+                    CTRL_dice           = disc_rand(0,1) // Determine state direction randomly
+                    CTRL_stimulus_flag  = true
+
+                    if (CTRL_dice == 0) {
+                        RDP_direction   = 90
+                    }
+
+                    if (CTRL_dice == 1) {
+                        RDP_direction   = 270
+                    }
+                }
+
+                // Flip stimulus direction
+                if (CTRL_stimulus_flag == false && RDP_direction == 90) {
+                    RDP_direction           = 270
+                    CTRL_stimulus_flag      = true
+                }
+
+                if (CTRL_stimulus_flag == false && RDP_direction == 270) {
+                    RDP_direction           = 90
+                    CTRL_stimulus_flag      = true
+                }
+
+                CTRL_state_counter      += 1 // Count number of stimulus states
+                CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms) // Determine state duration
+
+                live_queue_stimulus (background)
+                live_queue_stimulus (RDP)
+                live_queue_stimulus (center)
+                live_queue_stimulus (cursor1)
+                live_queue_stimulus (cursor2)
+                live_queue_stimulus (feedback)
+                live_queue_stimulus (feedback2)
+                update_stimulus_display ()
+
+                start_timer (
+                    timer               = State_Timer
+                    duration            = CTRL_state_duration_ms
+                    duration_units      = ms
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Update Stimulus' {
+                
+                goto (
+                    target              = 'Feedback'
+                    when                = timer_expired(State_Timer)
+                    )
+
+                goto (
+                    target              = 'End Trial'
+                    when                = timer_expired(Trial_Timer)
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Feedback' {
+                CTRL_reward_flag = false
+                if (CTRL_reward_flag == false && RDP_direction == 90 && IO_joystickX_norm > 0) {
+                    CTRL_reward_percent = abs(IO_joystickX_norm)
+                    CTRL_reward_cum   += CTRL_reward_percent
+                    CTRL_reward_flag = true
+                }
+
+                if (CTRL_reward_flag == false && RDP_direction == 270 && IO_joystickX_norm < 0) {
+                    CTRL_reward_percent = abs(IO_joystickX_norm)
+                    CTRL_reward_cum   += CTRL_reward_percent
+                    CTRL_reward_flag = true
+                }
+
+                CTRL_reward2_flag = false
+                if (CTRL_reward2_flag == false && RDP_direction == 90 && IO_joystickX_norm > 0) {
+                    CTRL_reward2_percent = abs(IO_joystickX_norm)
+                    CTRL_reward2_cum   += CTRL_reward_percent
+                    CTRL_reward2_flag = true
+                }
+
+                if (CTRL_reward2_flag == false && RDP_direction == 270 && IO_joystickX2_norm < 0) {
+                    CTRL_reward2_percent = abs(IO_joystickX2_norm)
+                    CTRL_reward2_cum   += CTRL_reward2_percent
+                    CTRL_reward2_flag = true
+                }
+
+                report ('Reward: $CTRL_reward_cum')
+
+                live_queue_stimulus (feedback)
+                live_queue_stimulus (feedback2)
+                update_stimulus_display ()
+
+                goto ('New State')
+            }
+
+            state 'End Trial' {
+                start_timer (
+                    timer               = ITI_Timer
+                    duration            = CTRL_ITI_ms
+                    duration_units      = ms
+                    )
+
+                dequeue_stimulus (background)
+                dequeue_stimulus (RDP)
+                dequeue_stimulus (center)
+                dequeue_stimulus (cursor1)
+                dequeue_stimulus (cursor2)
+                dequeue_stimulus (feedback)
+                dequeue_stimulus (feedback2)
+                update_stimulus_display ()
+
+                TRIAL_reactionTrigger   = 0
+                TRIAL_reactionEvent     = 0
+                TRIAL_align             = 0
+                TRIAL_end               = TRIAL_start
+
+                report ('==== END OF TRIAL $TRIAL_end ====')
+
+                goto ('ITI')
+            }
+
+            state 'ITI' {
+                timer_expired (
+                    target              = 'New Trial'
+                    timer               = ITI_Timer
+                    )
+            }
+        }
+    }
+}

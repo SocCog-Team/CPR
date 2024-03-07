@@ -53,7 +53,7 @@ group RDP {
     var RDP_density                         = 2
     var RDP_dotsize                         = .2
     var RDP_speed                           = 8
-    var RDP_coherence                       = .3
+    var RDP_coherence                       = 1
     var RDP_lifetime                        = (1/120) * 10 * 1000 // 25 frames - 208ms
     var RDP_alpha                           = 1
     var RDP_seed                            = 1
@@ -176,6 +176,7 @@ stimulus/r_d_p RDP (
     speed                                   = RDP_speed // dva/s
     coherence                               = RDP_coherence
     lifetime                                = RDP_lifetime
+    smooth_direction_transition             =  1000    
     announce_dots                           = NO // YES for dot position
     autoplay                                = YES
     )
