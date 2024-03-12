@@ -595,35 +595,39 @@ for iSubj = 1:length(dyad_perf)
     if ~isempty(dyad_perf{iSubj})
         cnt      	= cnt+1;
         idx        	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
-        d_score(cnt)= mean(dyad_perf{iSubj}.score_norm);
-        s_score(cnt)= mean(solo_perf{idx}.score_norm);
+        d_score(cn)     = mean(dyad_perf{iSubj}.score_norm);
+        s_score     = mean(solo_perf{idx}.score_norm);
         
-        d_better(cnt) 	= (d_score(cnt) - s_score(cnt)) > 0;
+        d_better(cnt) 	= (d_score - s_score) > 0;
     end
 end
 n                   = sum(d_better);
 rate                = n / length(d_better);
 [pv,h,stats]     	= signrank(d_score,s_score); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
-[mean(s_score) iqr(s_score)]
-[mean(d_score) iqr(d_score)]
+[mean(mscore_solo) iqr(mscore_solo)]
+[mean(mscore_dyadic) iqr(mscore_dyadic)]
 
 % Dyad vs solo hit rate comparison
+for iSubj = 1:size(solo_perf,2)
+    solo_id{iSubj}  = solo_perf{iSubj}.id;
+end
+
 cnt = 0;
 for iSubj = 1:length(dyad_perf)
     if ~isempty(dyad_perf{iSubj})
         cnt      	= cnt+1;
         idx        	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
-        d_hir(cnt)     = mean(dyad_perf{iSubj}.hir);
-        s_hir(cnt)     = mean(solo_perf{idx}.hir);
+        d_hir     = mean(dyad_perf{iSubj}.hir);
+        s_hir     = mean(solo_perf{idx}.hir);
         
-        d_better(cnt) 	= (d_hir(cnt) - s_hir(cnt)) > 0;
+        d_better(cnt) 	= (d_hir - s_hir) > 0;
     end
 end
 n                   = sum(d_better);
 rate                = n / length(d_better);
-[pv,h,stats]     	= signrank(d_hir,s_hir); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
-[mean(s_hir) iqr(s_hir)]
-[mean(d_hir) iqr(d_hir)]
+[pv,h,stats]     	= signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+[mean(mscore_solo) iqr(mscore_solo)]
+[mean(mscore_dyadic) iqr(mscore_dyadic)]
 
 
 % Accuracy [coherence pooled, within subject]

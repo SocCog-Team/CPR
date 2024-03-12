@@ -83,6 +83,7 @@ group INFO {
 }
 
 group CTRL {
+    var CTRL_nTrials                        = 0
     var CTRL_state_min_ms                   = 0 
     var CTRL_state_max_ms                   = 0
     var CTRL_state_duration_ms              = 0
@@ -99,10 +100,13 @@ group CTRL {
     var CTRL_cursor1_position_y             = 0
     var CTRL_cursor2_position_x             = 0
     var CTRL_cursor2_position_y             = 0
+    var CTRL_cursor1_mask_offset            = 0
+    var CTRL_cursor2_mask_offset            = 0
     var CTRL_state_counter                  = 0
     var CTRL_dice                           = 0
     var CTRL_stimulus_flag                  = 0
-    var CTRL_rdp_direction_list             = [345,346,347,348,349,350,351,352,353,354,355,356,357,358,359,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]                 
+    var CTRL_rdp_direction_list             = [350,351,352,353,354,355,356,357,358,359,0,1,2,3,4,5,6,7,8,9,10]                 
+    //var CTRL_rdp_direction_list             = [330, 0, 30]                 
     var CTRL_js_calibration_flag            = false
 
 }
@@ -115,6 +119,7 @@ group TRIAL {
     var TRIAL_align                         = 0
     var TRIAL_type                          = 0
     var TRIAL_outcome                       = 0
+    var TRIAL_outcome2                      = 0
 }
 
 group RDP {
@@ -160,14 +165,19 @@ group IO {
     var IO_joystickY_raw_max                = 16383
     var IO_joystickY_raw_min                = 0
     var IO_joystickX_norm                   = 0 {
-        if (IO_joystickX_norm >= CTRL_cursor_threshold) {
-            CTRL_cursor1_rotation = -90
-        }
-        if (IO_joystickX_norm <= CTRL_cursor_threshold) {
-            CTRL_cursor1_rotation = 90
-        }
-        if (abs(IO_joystickX_norm) < CTRL_cursor_threshold) {
-            CTRL_cursor1_rotation = 0
+        if (TRIAL_start > TRIAL_end) {
+            if (IO_joystickX_norm >= CTRL_cursor_threshold) {
+                CTRL_cursor1_rotation = -90
+                CTRL_cursor1_mask_offset = -.3
+            }
+            if (IO_joystickX_norm <= -CTRL_cursor_threshold) {
+                CTRL_cursor1_rotation = 90
+                CTRL_cursor1_mask_offset = .3
+            }
+            if (abs(IO_joystickX_norm) <= CTRL_cursor_threshold) {
+                CTRL_cursor1_rotation = 0
+                CTRL_cursor1_mask_offset = 999
+            }
         }
     }
     var IO_joystickY_norm                   = 0
@@ -184,9 +194,11 @@ group IO {
         }
     }
     var IO_joystickStrength                 = 0 {
-            CTRL_cursor1_radius = IO_joystickStrength *2
-            if (CTRL_cursor1_radius < CTRL_cursor_min) {
-            CTRL_cursor1_radius = CTRL_cursor_min
+            if (TRIAL_start > TRIAL_end) {
+                CTRL_cursor1_radius = IO_joystickStrength *2
+                if (CTRL_cursor1_radius < CTRL_cursor_min) {
+                CTRL_cursor1_radius = CTRL_cursor_min
+            }
         }
     }
     var IO_joystickDirection                = 0
@@ -198,14 +210,19 @@ group IO {
     var IO_joystickY2_raw_max                = 16383
     var IO_joystickY2_raw_min                = 0
     var IO_joystickX2_norm                   = 0  {
-        if (IO_joystickX2_norm >= CTRL_cursor_threshold) {
-            CTRL_cursor2_rotation = -90
-        }
-        if (IO_joystickX2_norm <= CTRL_cursor_threshold) {
-            CTRL_cursor2_rotation = 90
-        }
-        if (abs(IO_joystickX2_norm) < CTRL_cursor_threshold) {
-            CTRL_cursor2_rotation = 0
+        if (TRIAL_start > TRIAL_end) {
+            if (IO_joystickX2_norm >= CTRL_cursor_threshold) {
+                CTRL_cursor2_rotation = 90
+                CTRL_cursor2_mask_offset = .3
+            }
+            if (IO_joystickX2_norm <= -CTRL_cursor_threshold) {
+                CTRL_cursor2_rotation = -90
+                CTRL_cursor2_mask_offset = -.3
+            }
+            if (abs(IO_joystickX2_norm) <= CTRL_cursor_threshold) {
+                CTRL_cursor2_rotation = 0
+                CTRL_cursor2_mask_offset = 999
+            }
         }
     }
     var IO_joystickY2_norm                   = 0
@@ -222,9 +239,11 @@ group IO {
         }
     }
     var IO_joystickStrength2                 = 0  {
-            CTRL_cursor2_radius = IO_joystickStrength2 *2
-            if (CTRL_cursor2_radius < CTRL_cursor_min) {
-            CTRL_cursor2_radius = CTRL_cursor_min
+            if (TRIAL_start > TRIAL_end) {
+                CTRL_cursor2_radius = IO_joystickStrength2 *2
+                if (CTRL_cursor2_radius < CTRL_cursor_min) {
+                CTRL_cursor2_radius = CTRL_cursor_min
+            }
         }
     }
     var IO_joystickDirection2                = 0
@@ -234,6 +253,12 @@ group IO {
     var IO_cursor1_binary                   = 0
     var IO_cursor2_binary                   = 0
 }
+
+//
+// Sounds
+//
+
+wav_file End_sound ('./sounds/Defeat Bowser.wav')
 
 //
 // Stimuli
@@ -272,7 +297,7 @@ stimulus/advstimulus mask (
     x_position                              = 0
     y_position                              = 0
     shape                                   = format("circle")
-    color                                   = 0,0,0
+    color                                   = COL_bg_r,COL_bg_g,COL_bg_b
     rotation                                = 0
     alpha_multiplier                        = 1
     version                                 = 1
@@ -290,6 +315,23 @@ stimulus/advstimulus cursor1 (
     y_position                              = CTRL_cursor1_position_y
     shape                                   = format("symmetric 3")
     color                                   = COL_cursor1_r,COL_cursor1_g,COL_cursor1_b
+    rotation                                = CTRL_cursor1_rotation
+    alpha_multiplier                        = CTRL_cursor_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus cursor1_mask (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_cursor1_radius
+    y_size                                  = CTRL_cursor1_radius
+    x_position                              = CTRL_cursor1_position_x + CTRL_cursor1_mask_offset
+    y_position                              = CTRL_cursor1_position_y
+    shape                                   = format("symmetric 3")
+    color                                   = COL_bg_r,COL_bg_g,COL_bg_b
     rotation                                = CTRL_cursor1_rotation
     alpha_multiplier                        = CTRL_cursor_alpha
     version                                 = 1
@@ -314,6 +356,24 @@ stimulus/advstimulus cursor2 (
     autoplay                                = YES
     )
 
+stimulus/advstimulus cursor2_mask (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = CTRL_cursor2_radius
+    y_size                                  = CTRL_cursor2_radius
+    x_position                              = CTRL_cursor2_position_x + CTRL_cursor2_mask_offset
+    y_position                              = CTRL_cursor2_position_y
+    shape                                   = format("symmetric 3")
+    color                                   = COL_bg_r,COL_bg_g,COL_bg_b
+    rotation                                = CTRL_cursor2_rotation
+    alpha_multiplier                        = CTRL_cursor_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+
 stimulus/r_d_p RDP (
     radius                                  = RDP_radius
     x_position                              = RDP_x
@@ -326,7 +386,7 @@ stimulus/r_d_p RDP (
     speed                                   = RDP_speed // dva/s
     coherence                               = RDP_coherence
     lifetime                                = RDP_lifetime
-    smooth_direction_transition             = 100   
+    //smooth_direction_transition             = 100   
     announce_dots                           = NO // YES for dot position
     autoplay                                = YES
     )                             
@@ -337,7 +397,7 @@ stimulus/r_d_p RDP (
 //
 
 
-protocol 'Left_right_solo' {
+protocol 'Solo_J1' {
     TMP_cancelTrigger                           = false
     schedule (
         delay                                   = 0 
@@ -350,16 +410,17 @@ protocol 'Left_right_solo' {
 
     live_queue_stimulus (background)
     update_stimulus_display ()
-
+    
     CTRL_cursor1_position_x             = 0
     CTRL_cursor1_position_y             = 0
     CTRL_cursor_alpha                   = 1       
-    CTRL_cursor_min                     = .1 
+    CTRL_cursor_min                     = .3 
     CTRL_cursor_threshold               = .05
-    CTRL_ITI_ms                         = 1000
+    CTRL_ITI_ms                         = 2000
     CTRL_state_min_ms                   = 1000
     CTRL_state_max_ms                   = 1500
     CTRL_trial_duration_ms              = 20000
+    CTRL_nTrials                        = 20
 
     TRIAL_start                         = 0
     TRIAL_end                           = 0
@@ -385,16 +446,21 @@ protocol 'Left_right_solo' {
             }
 
             state 'New State' {  
-
                 CTRL_dice               = disc_rand(0,size(CTRL_rdp_direction_list)-1) // Determine state direction randomly
                 RDP_direction           = CTRL_rdp_direction_list[CTRL_dice]
+
+                TRIAL_align             = 1
+                TRIAL_type              = format("Dir%d Dur%d", (float)RDP_direction, (float)CTRL_state_duration_ms)
+
                 CTRL_state_counter      += 1 // Count number of stimulus states
                 CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms) // Determine state duration
+                
 
                 live_queue_stimulus (background)
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (mask)
                 live_queue_stimulus (cursor1)
+                live_queue_stimulus (cursor1_mask)
                 update_stimulus_display ()
 
                 start_timer (
@@ -409,16 +475,29 @@ protocol 'Left_right_solo' {
             state 'Update Stimulus' {
                 
                 goto (
-                    target              = 'New State'
+                    target              = 'Outcome'
                     when                = timer_expired(State_Timer)
                     )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Outcome' {
+
+                if ( (RDP_direction < 180 && IO_joystickX_norm > 0) || (RDP_direction > 180 && IO_joystickX_norm < 0))  {
+                    TRIAL_outcome = 'hit'
+                }
+
+                if ( (RDP_direction < 180 && IO_joystickX_norm < 0) || (RDP_direction > 180 && IO_joystickX_norm > 0)) {
+                    TRIAL_outcome = 'miss'
+                }
 
                 goto (
                     target              = 'End Trial'
                     when                = timer_expired(Trial_Timer)
                     )
 
-                goto ('Update Stimulus')
+                goto('New State')
             }
 
             state 'End Trial' {
@@ -432,6 +511,7 @@ protocol 'Left_right_solo' {
                 dequeue_stimulus (RDP)
                 dequeue_stimulus (mask)
                 dequeue_stimulus (cursor1)
+                dequeue_stimulus (cursor1_mask)
                 update_stimulus_display ()
 
                 TRIAL_reactionTrigger   = 0
@@ -445,16 +525,179 @@ protocol 'Left_right_solo' {
             }
 
             state 'ITI' {
+
+                goto (
+                    target              = 'End paradigm'
+                    when                = TRIAL_end == CTRL_nTrials
+                    )
+
                 timer_expired (
                     target              = 'New Trial'
                     timer               = ITI_Timer
                     )
             }
+
+            state 'End paradigm' {
+                report ('==== ENDING PARADIGM ====')
+                play_sound (End_sound)
+                yield ()
+            }
         }
     }
 }
 
-protocol 'Left_right_dyadic' {
+protocol 'Solo_J2' {
+    TMP_cancelTrigger                           = false
+    schedule (
+        delay                                   = 0 
+        duration                                = 10000
+        repeats                                 = -999
+        cancel                                  = TMP_cancelTrigger
+        ) {
+            IO_joystickTrigger2                  = true
+    }
+
+    live_queue_stimulus (background)
+    update_stimulus_display ()
+    
+    CTRL_cursor2_position_x             = 0
+    CTRL_cursor2_position_y             = 0
+    CTRL_cursor_alpha                   = 1       
+    CTRL_cursor_min                     = .3 
+    CTRL_cursor_threshold               = .05
+    CTRL_ITI_ms                         = 2000
+    CTRL_state_min_ms                   = 1000
+    CTRL_state_max_ms                   = 1500
+    CTRL_trial_duration_ms              = 20000
+    CTRL_nTrials                        = 20
+
+    TRIAL_start                         = 0
+    TRIAL_end                           = 0
+
+    trial 'Main Task System' {
+        task LOOP {
+
+            state 'New Trial' {        
+                TRIAL_align             = 1
+                TRIAL_start             = TRIAL_start + 1
+                INFO_task               = "Left_right_solo"
+                CTRL_state_counter      = 0 // Reset state counter
+
+                start_timer (
+                    timer               = Trial_Timer
+                    duration            = CTRL_trial_duration_ms
+                    duration_units      = ms
+                    )
+
+                report ('===== TRIAL $TRIAL_start START =====')
+
+                goto("New State")
+            }
+
+            state 'New State' {  
+                CTRL_dice               = disc_rand(0,size(CTRL_rdp_direction_list)-1) // Determine state direction randomly
+                RDP_direction           = CTRL_rdp_direction_list[CTRL_dice]
+
+                TRIAL_align             = 1
+                TRIAL_type              = format("Dir%d Dur%d", (float)RDP_direction, (float)CTRL_state_duration_ms)
+
+                CTRL_state_counter      += 1 // Count number of stimulus states
+                CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms) // Determine state duration
+                
+
+                live_queue_stimulus (background)
+                live_queue_stimulus (RDP)
+                live_queue_stimulus (mask)
+                live_queue_stimulus (cursor2)
+                live_queue_stimulus (cursor2_mask)
+                update_stimulus_display ()
+
+                start_timer (
+                    timer               = State_Timer
+                    duration            = CTRL_state_duration_ms
+                    duration_units      = ms
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Update Stimulus' {
+                
+                goto (
+                    target              = 'Outcome'
+                    when                = timer_expired(State_Timer)
+                    )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Outcome' {
+
+                // Joystick 2
+                if ( (RDP_direction < 180 && IO_joystickX2_norm < 0) || (RDP_direction > 180 && IO_joystickX2_norm > 0)) {
+                    TRIAL_outcome2 = 'hit'
+                }
+
+                if ( (RDP_direction < 180 && IO_joystickX2_norm > 0) || (RDP_direction > 180 && IO_joystickX2_norm < 0)) {
+                    TRIAL_outcome2 = 'miss'
+                }
+
+                goto (
+                    target              = 'End Trial'
+                    when                = timer_expired(Trial_Timer)
+                    )
+
+                goto('New State')
+            }
+
+            state 'End Trial' {
+                start_timer (
+                    timer               = ITI_Timer
+                    duration            = CTRL_ITI_ms
+                    duration_units      = ms
+                    )
+
+                dequeue_stimulus (background)
+                dequeue_stimulus (RDP)
+                dequeue_stimulus (mask)
+                dequeue_stimulus (cursor2)
+                dequeue_stimulus (cursor2_mask)
+                update_stimulus_display ()
+
+                TRIAL_reactionTrigger   = 0
+                TRIAL_reactionEvent     = 0
+                TRIAL_align             = 0
+                TRIAL_end               = TRIAL_start
+
+                report ('==== END OF TRIAL $TRIAL_end ====')
+
+                goto ('ITI')
+            }
+
+            state 'ITI' {
+
+                goto (
+                    target              = 'End paradigm'
+                    when                = TRIAL_end == CTRL_nTrials
+                    )
+
+                timer_expired (
+                    target              = 'New Trial'
+                    timer               = ITI_Timer
+                    )
+            }
+
+            state 'End paradigm' {
+                report ('==== ENDING PARADIGM ====')
+                play_sound (End_sound)
+                yield ()
+            }
+        }
+    }
+}
+
+
+protocol 'Dyadic' {
     TMP_cancelTrigger                           = false
     schedule (
         delay                                   = 0 
@@ -483,12 +726,13 @@ protocol 'Left_right_dyadic' {
     CTRL_cursor2_position_x             = -1
     CTRL_cursor2_position_y             = 0
     CTRL_cursor_alpha                   = 1       
-    CTRL_cursor_min                     = .1 
+    CTRL_cursor_min                     = .3
     CTRL_cursor_threshold               = .05
     CTRL_ITI_ms                         = 2000
     CTRL_state_min_ms                   = 1000
     CTRL_state_max_ms                   = 1500
     CTRL_trial_duration_ms              = 20000
+    CTRL_nTrials                        = 20
 
     TRIAL_start                         = 0
     TRIAL_end                           = 0
@@ -517,6 +761,10 @@ protocol 'Left_right_dyadic' {
 
                 CTRL_dice               = disc_rand(0,size(CTRL_rdp_direction_list)-1) // Determine state direction randomly
                 RDP_direction           = CTRL_rdp_direction_list[CTRL_dice]
+                
+                TRIAL_align             = 1
+                TRIAL_type              = format("Dir%d Dur%d", (float)RDP_direction, (float)CTRL_state_duration_ms)
+
                 CTRL_state_counter      += 1 // Count number of stimulus states
                 CTRL_state_duration_ms  = disc_rand(CTRL_state_min_ms,CTRL_state_max_ms) // Determine state duration
 
@@ -526,6 +774,8 @@ protocol 'Left_right_dyadic' {
                 live_queue_stimulus (center)
                 live_queue_stimulus (cursor1)
                 live_queue_stimulus (cursor2)
+                live_queue_stimulus (cursor1_mask)
+                live_queue_stimulus (cursor2_mask)
                 update_stimulus_display ()
 
                 start_timer (
@@ -540,16 +790,39 @@ protocol 'Left_right_dyadic' {
             state 'Update Stimulus' {
                 
                 goto (
-                    target              = 'New State'
+                    target              = 'Outcome'
                     when                = timer_expired(State_Timer)
                     )
+
+                goto ('Update Stimulus')
+            }
+
+            state 'Outcome' {
+
+                // Joystick 1
+                if ( (RDP_direction < 180 && IO_joystickX_norm > 0) || (RDP_direction > 180 && IO_joystickX_norm < 0)) {
+                    TRIAL_outcome = 'hit'
+                }
+
+                if ( (RDP_direction < 180 && IO_joystickX_norm < 0) || (RDP_direction > 180 && IO_joystickX_norm > 0)) {
+                    TRIAL_outcome = 'miss'
+                }
+
+                // Joystick 2
+                if ( (RDP_direction < 180 && IO_joystickX2_norm < 0) || (RDP_direction > 180 && IO_joystickX2_norm > 0)) {
+                    TRIAL_outcome2 = 'hit'
+                }
+
+                if ( (RDP_direction < 180 && IO_joystickX2_norm > 0) || (RDP_direction > 180 && IO_joystickX2_norm < 0)) {
+                    TRIAL_outcome2 = 'miss'
+                }
 
                 goto (
                     target              = 'End Trial'
                     when                = timer_expired(Trial_Timer)
                     )
 
-                goto ('Update Stimulus')
+                goto('New State')
             }
 
             state 'End Trial' {
@@ -565,6 +838,8 @@ protocol 'Left_right_dyadic' {
                 dequeue_stimulus (center)
                 dequeue_stimulus (cursor1)
                 dequeue_stimulus (cursor2)
+                dequeue_stimulus (cursor1_mask)
+                dequeue_stimulus (cursor2_mask)
                 update_stimulus_display ()
 
                 TRIAL_reactionTrigger   = 0
@@ -578,10 +853,21 @@ protocol 'Left_right_dyadic' {
             }
 
             state 'ITI' {
+                goto (
+                    target              = 'End paradigm'
+                    when                = TRIAL_end == CTRL_nTrials
+                    )
+
                 timer_expired (
                     target              = 'New Trial'
                     timer               = ITI_Timer
                     )
+            }
+
+            state 'End paradigm' {
+                report ('==== ENDING PARADIGM ====')
+                play_sound (End_sound)
+                yield ()
             }
         }
     }
