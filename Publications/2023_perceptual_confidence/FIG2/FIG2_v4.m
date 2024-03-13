@@ -418,8 +418,10 @@ plotQuartiles(ax,bl_acc,df_hir,'Hit rate [Dff]',lw,lb_fs, false);
 ax.YLim                    = [-.1 .1];
 ax.Title.String             = 'X: Accuracy';
 ax = subplot(3,3,5); hold on
+
 plotQuartiles(ax,bl_acc,auc_acc,'Accuracy [AUC]',lw,lb_fs, true);
 ax.YLim                    = [.4 .6];
+%%
 ax = subplot(3,3,8); hold on
 plotQuartiles(ax,bl_acc,auc_ecc,'Eccentricity [AUC]',lw,lb_fs, true);
 ax.YLim                    = [.3 .7];
@@ -861,7 +863,7 @@ for iCoh = 1:size(y,2)
         if iQuart == 1
             idx         = x(:,iCoh) < quartile_boundaries(1,iCoh);
         elseif iQuart == 2 || iQuart == 3
-            idx         = x(:,iCoh)  >= quartile_boundaries(iQuart-1,iCoh) & x(:,iCoh)  < quartile_boundaries(iQuart,iCoh);
+            idx         = x(:,iCoh)  >= quartile_boundaries(iQuart-1,iCoh) & x(:,iCoh)  <= quartile_boundaries(iQuart,iCoh);
         elseif iQuart == 4
             idx         = x(:,iCoh)  > quartile_boundaries(3,iCoh);
         end
