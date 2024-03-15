@@ -5,12 +5,13 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+source_pth = '/Users/fschneider/ownCloud/var_plot/';
+load([source_pth '/solo_performance.mat'])
+load([source_pth '/hh_dyad_performance.mat'])
+load([source_pth '/hc_dyad_performance.mat'])
+load([source_pth '/hc_dyad_correlation.mat'])
+load([source_pth '/comp_performance.mat'])
+load([source_pth '/comp_correlation.mat'])
 
 %% Compare conditions
 
