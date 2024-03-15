@@ -57,8 +57,8 @@ for iSubj = 1:size(dyad_perf,2)
     if ~isempty(dyad_perf{iSubj})
         idx                         = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),lower(sbj_lst));        
         cnt                         = cnt+1;
-        df_hir(cnt,:)               = solo_perf{idx}.hir - dyad_perf{iSubj}.hir;
-        df_hir_pool(cnt,:)          = solo_perf{idx}.hir_pool - dyad_perf{iSubj}.hir_pool;
+        df_hir(cnt,:)               = dyad_perf{iSubj}.hir - solo_perf{idx}.hir;
+        df_hir_pool(cnt,:)          = dyad_perf{iSubj}.hir_pool - solo_perf{idx}.hir_pool;
     end
 end
 
@@ -213,21 +213,6 @@ text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k
 print(f, [dest_dir '/FIG2'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2'], '-r500', '-dsvg', '-painters');
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Scatter plot for supplementary
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-f                           = figure('units','centimeters','position',[0 0 22.5 5]); hold on
-ax5                         = subplot(1,4,1); hold on
-[ax5]                       = plotScatter(ax5, bl_hir, df_hir, snr, lb_fs, false, false);
-ax7                         = subplot(1,4,2); hold on
-[ax7]                       = plotScatter(ax7, bl_acc, auc_acc, snr, lb_fs, false, true);
-ax8                         = subplot(1,4,3); hold on
-[ax8]                       = plotScatter(ax8, bl_ecc, auc_ecc, snr, lb_fs, false, true);
-
-print(f, [dest_dir '/SFIG2_scatter'], '-r500', '-dpng');
-print(f, [dest_dir '/SFIG2_scatter'], '-r500', '-dsvg', '-painters');
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% UPPER PANEL: Score comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -330,13 +315,13 @@ ax21.YLabel.String          = 'Dyadic';
 ax21.XLabel.String          = 'Solo';
 ax21.XTickLabelRotation     = 0;
 
-[pv,h]                      = signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+[pv,h,z]                    = signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
 tx                          = text(.05,.35,{['p = ' num2str(round(pv,2))]});
 tx.Color                    = [0 0 0];
 tx.FontSize                 = 8;
-    
+   
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% AUROC Significant subjects histogram
+%% AUROC Significant subjects histogram
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 hist_sig                    = [.6 .1 .1];
@@ -394,7 +379,120 @@ print(f, [dest_dir '/FIG2_a'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Performance quartile - social modulation
+%% Scatter plot for supplementary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f                           = figure('units','centimeters','position',[0 0 22.5 5]); hold on
+ax5                         = subplot(1,4,1); hold on
+[ax5]                       = plotScatter(ax5, bl_hir, df_hir, snr, lb_fs, false, false);
+ax7                         = subplot(1,4,2); hold on
+[ax7]                       = plotScatter(ax7, bl_acc, auc_acc, snr, lb_fs, false, true);
+ax8                         = subplot(1,4,3); hold on
+[ax8]                       = plotScatter(ax8, bl_ecc, auc_ecc, snr, lb_fs, false, true);
+
+print(f, [dest_dir '/SFIG2_scatter'], '-r500', '-dpng');
+print(f, [dest_dir '/SFIG2_scatter'], '-r500', '-dsvg', '-painters');
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Different grouping for supplementary
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f = figure;
+
+% X: hit rate
+ax = subplot(3,3,1); hold on
+plotQuartiles(ax,bl_hir,df_hir,'Hit rate [Dff]',lw,lb_fs, false);
+ax.YLim                     = [-.1 .1];
+ax.Title.String             = 'X: Hit rate';
+ax = subplot(3,3,4); hold on
+plotQuartiles(ax,bl_hir,auc_acc,'Accuracy [AUC]',lw,lb_fs, true);
+ax.YLim                    = [.4 .6];
+ax = subplot(3,3,7); hold on
+plotQuartiles(ax,bl_hir,auc_ecc,'Eccentricity [AUC]',lw,lb_fs, true);
+ax.YLim                    = [.3 .7];
+
+% X: accuracy
+ax = subplot(3,3,2); hold on
+plotQuartiles(ax,bl_acc,df_hir,'Hit rate [Dff]',lw,lb_fs, false);
+ax.YLim                    = [-.1 .1];
+ax.Title.String             = 'X: Accuracy';
+ax = subplot(3,3,5); hold on
+
+plotQuartiles(ax,bl_acc,auc_acc,'Accuracy [AUC]',lw,lb_fs, true);
+ax.YLim                    = [.4 .6];
+%%
+ax = subplot(3,3,8); hold on
+plotQuartiles(ax,bl_acc,auc_ecc,'Eccentricity [AUC]',lw,lb_fs, true);
+ax.YLim                    = [.3 .7];
+
+% X: eccentricity
+ax = subplot(3,3,3); hold on
+plotQuartiles(ax,bl_ecc,df_hir,'Hit rate [Dff]',lw,lb_fs, false);
+ax.YLim                    = [-.1 .1];
+ax.Title.String             = 'X: Eccentricity';
+ax = subplot(3,3,6); hold on
+plotQuartiles(ax,bl_ecc,auc_acc,'Accuracy [AUC]',lw,lb_fs, true);
+ax.YLim                    = [.4 .6];
+ax = subplot(3,3,9); hold on
+plotQuartiles(ax,bl_ecc,auc_ecc,'Eccentricity [AUC]',lw,lb_fs, true);
+ax.YLim                    = [.3 .7];
+
+print(f, [dest_dir '/SFIG2_matrix'], '-r500', '-dpng');
+print(f, [dest_dir '/SFIG2_matrix'], '-r500', '-dsvg', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Hit rates
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% figure;hold on
+% cnt = 0;
+% for iSubj = 1:length(dyad_perf)
+%     if isempty(dyad_perf{iSubj})
+%         continue
+%     end
+%     
+%     cnt                     = cnt+1;
+%     sidx                    = cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),sbjs);  
+%     
+%     hir_solo(cnt)    	= mean(solo_perf{sidx}.hir);
+%     hir_dyadic(cnt)   	= mean(dyad_perf{iSubj}.hir);    
+% end
+% 
+% axis tight
+% 
+% ln                          = line([0 1],[0 1]);
+% ln.LineStyle                = ':';
+% ln.Color                    = [0 0 0];
+% 
+% sc                          = scatter(hir_solo,hir_dyadic);
+% sc.MarkerFaceColor          = [.3 .3 .3];
+% sc.MarkerFaceAlpha          = .75;
+% sc.MarkerEdgeColor          = 'none';
+% 
+% 
+% linearCoefficients          = polyfit(hir_solo, hir_dyadic, 1);
+% x_fit                       = linspace(0, 1, 50);
+% y_fit                       = polyval(linearCoefficients, x_fit);
+% pl                          = plot(x_fit, y_fit, '-', 'LineWidth', 1,'Color',[.6 .1 .1 alp]);
+% 
+% ax21 = gca
+% ax21.FontSize               = 16;
+% ax21.YLim                   = [.2 .6];
+% ax21.XLim                   = [.2 .6];
+% ax21.YTick                  = [.2:.1:.6];
+% ax21.XTick                  = [.2:.1:.6];
+% ax21.YLabel.String          = 'Dyadic';
+% ax21.XLabel.String          = 'Solo';
+% ax21.XTickLabelRotation     = 0;
+% 
+% [pv,h,z]                    = signrank(hir_solo,hir_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+% tx                          = text(.25,.55,{['p = ' num2str(round(pv,2))]});
+% tx.Color                    = [0 0 0];
+% tx.FontSize                 = 16;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Performance quartile - social modulation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Population %%%
 % clear bl dat quartile_boundaries out
@@ -499,17 +597,36 @@ for iSubj = 1:length(dyad_perf)
     if ~isempty(dyad_perf{iSubj})
         cnt      	= cnt+1;
         idx        	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
-        d_score     = mean(dyad_perf{iSubj}.score_norm);
-        s_score     = mean(solo_perf{idx}.score_norm);
+        d_score(cnt)= mean(dyad_perf{iSubj}.score_norm);
+        s_score(cnt)= mean(solo_perf{idx}.score_norm);
         
-        d_better(cnt) 	= (d_score - s_score) > 0;
+        d_better(cnt) 	= (d_score(cnt) - s_score(cnt)) > 0;
     end
 end
 n                   = sum(d_better);
 rate                = n / length(d_better);
-[pv,h,stats]     	= signrank(mscore_solo,mscore_dyadic); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
-[mean(mscore_solo) iqr(mscore_solo)]
-[mean(mscore_dyadic) iqr(mscore_dyadic)]
+[pv,h,stats]     	= signrank(d_score,s_score); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+[mean(s_score) iqr(s_score)]
+[mean(d_score) iqr(d_score)]
+
+% Dyad vs solo hit rate comparison
+cnt = 0;
+for iSubj = 1:length(dyad_perf)
+    if ~isempty(dyad_perf{iSubj})
+        cnt      	= cnt+1;
+        idx        	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
+        d_hir(cnt)     = mean(dyad_perf{iSubj}.hir);
+        s_hir(cnt)     = mean(solo_perf{idx}.hir);
+        
+        d_better(cnt) 	= (d_hir(cnt) - s_hir(cnt)) > 0;
+    end
+end
+n                   = sum(d_better);
+rate                = n / length(d_better);
+[pv,h,stats]     	= signrank(d_hir,s_hir); % paired, two-sided test for the null hypothesis that x – y comes from a distribution with zero median
+[mean(s_hir) iqr(s_hir)]
+[mean(d_hir) iqr(d_hir)]
+
 
 % Accuracy [coherence pooled, within subject]
 sign_bool           = p_acc_pooled < ( .05 / length(p_acc_pooled));
@@ -746,7 +863,7 @@ for iCoh = 1:size(y,2)
         if iQuart == 1
             idx         = x(:,iCoh) < quartile_boundaries(1,iCoh);
         elseif iQuart == 2 || iQuart == 3
-            idx         = x(:,iCoh)  >= quartile_boundaries(iQuart-1,iCoh) & x(:,iCoh)  < quartile_boundaries(iQuart,iCoh);
+            idx         = x(:,iCoh)  >= quartile_boundaries(iQuart-1,iCoh) & x(:,iCoh)  <= quartile_boundaries(iQuart,iCoh);
         elseif iQuart == 4
             idx         = x(:,iCoh)  > quartile_boundaries(3,iCoh);
         end
@@ -761,16 +878,15 @@ ax.XLim                 = [0.75 4.25];
 ax.XTick                = [1:4];
 ax.XTickLabel           = {'Bottom','2nd','3rd','Top'};
 ax.XLabel.String      	= 'Solo performance [Quartiles]';
-ax.YLabel.String      	= str;
 ax.FontSize             = lb_fs;
 ax.XTickLabelRotation   = 0;
 
 if auc_flag
     ln                      = line([0 5],[.5 .5]);
-    ax.YLabel.String     	= 'AUC';
+    ax.YLabel.String     	= str;
 else
     ln                   	= line([0 5],[0 0]);
-    ax.YLabel.String      	= 'Difference';
+    ax.YLabel.String      	= str;
 end
 
 ln.LineWidth            = 1.5;
