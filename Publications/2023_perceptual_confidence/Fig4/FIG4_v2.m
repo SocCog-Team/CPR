@@ -192,7 +192,7 @@ for iPlot = 1:4
         ln.LineStyle           	= ':';
 
     elseif iPlot == 3
-        
+        %%% Subject-wise modulation %%%
         ln                     	= line([0 1],[.5 .5]);
         ln.Color              	= [0 0 0];
         ln.LineWidth           	= lw;
@@ -203,30 +203,64 @@ for iPlot = 1:4
         ln.LineWidth           	= lw;
         ln.LineStyle           	= ':';
         
-        sc                      = scatter([auc.ecc1 auc.ecc2], [auc.acc1 auc.acc2]);
+        sc                      = scatter([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2]);
         sc.MarkerFaceColor      = [hcol];
         sc.MarkerEdgeColor      = 'none';
         sc.MarkerFaceAlpha      = .5;
-        ax.XLabel.String        = 'Eccentricity change [AUC]';
-        ax.YLabel.String        = 'Accuracy change [AUC]';
-        ax.XLim                 = [0 1];
+        ax.XLabel.String        = 'Accuracy change [AUC]';
+        ax.YLabel.String        = 'Eccentricity change [AUC]';
+        ax.XLim                 = [.4 .6];
         ax.YLim                 = [0 1];
         
-        [r,pv]               	= corrcoef([auc.ecc1 auc.ecc2],[auc.acc1 auc.acc2]);
+        [r,pv]               	= corrcoef([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2]);
         r                       = r(2);
         pv                      = pv(2);
         
-        linearCoefficients      = polyfit([auc.ecc1 auc.ecc2], [auc.acc1 auc.acc2], 1);
+        linearCoefficients      = polyfit([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2], 1);
         x_fit                   = linspace(-1, 1, 50);
         y_fit                   = polyval(linearCoefficients, x_fit);
         pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
 
-        if pv < .05
-            pl.Color         	= rcol;
-            tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
-            tx.Color          	= hcol;
-            tx.FontSize      	= 8;
-        end
+        pl.Color         	= rcol;
+        tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+        tx.Color          	= hcol;
+        tx.FontSize      	= 8;
+        
+    elseif iPlot == 4
+        %%% Dyad-wise modulation %%%
+        ln                     	= line([0 1],[0 0]);
+        ln.Color              	= [0 0 0];
+        ln.LineWidth           	= lw;
+        ln.LineStyle           	= ':';
+        
+        ln                     	= line([.5 .5],[-1 1]);
+        ln.Color              	= [0 0 0];
+        ln.LineWidth           	= lw;
+        ln.LineStyle           	= ':';
+        
+        sc                      = scatter(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2));
+        sc.MarkerFaceColor      = [hcol];
+        sc.MarkerEdgeColor      = 'none';
+        sc.MarkerFaceAlpha      = .5;
+        ax.YLabel.String        = 'Abs ecc dff [Solo]';
+        ax.XLabel.String        = 'Avg. accuracy change [AUC]';
+        ax.XLim                 = [.4 .6];
+        ax.YLim                 = [0 .4];
+        
+        [r,pv]               	= corrcoef(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2));
+        r                       = r(2);
+        pv                      = pv(2);
+        
+        linearCoefficients      = polyfit(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2), 1);
+        x_fit                   = linspace(-1, 1, 50);
+        y_fit                   = polyval(linearCoefficients, x_fit);
+        pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
+
+        pl.Color         	= rcol;
+        tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+        tx.Color          	= hcol;
+        tx.FontSize      	= 8;
+        
     end
         
     ax.Position(1)              = ax.Position(1) - ofs;
