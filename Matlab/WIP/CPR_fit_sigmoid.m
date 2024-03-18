@@ -21,13 +21,15 @@ end
 PF = @PAL_Logistic;
 
 %Threshold and Slope are free parameters, guess and lapse rate are fixed
-paramsFree = [0 1 0 0];  %1: free parameter, 0: fixed parameter
+paramsFree = [1 1 0 0];  %1: free parameter, 0: fixed parameter
 
 %Parameter grid defining parameter space through which to perform a
 %brute-force search for values to be used as initial guesses in iterative
 %parameter search.
-searchGrid.alpha = snr(1):.001:snr(end); % threshold
-searchGrid.beta = logspace(0,2,101); % slope
+searchGrid.alpha = snr(1):.1:snr(end); % threshold
+% searchGrid.alpha = snr(1):.001:snr(end); % threshold
+searchGrid.beta = -10:.1:10; % slope
+% searchGrid.beta = logspace(0,2,101); % slope
 searchGrid.gamma = 0;  % guess-rate
 searchGrid.lambda = 0.02;  % lapse-rate
 
