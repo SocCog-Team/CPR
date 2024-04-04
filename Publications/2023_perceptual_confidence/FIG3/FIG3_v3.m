@@ -298,9 +298,9 @@ function ax = plotBar(ax,in,lab_str,lb_fs,lw)
 axes(ax); hold on
 
 nRep                        = 500;
-e.solo                      = bootci(nRep, {@mean, in.solo},'alpha', .001);
-e.dyad_pc               	= bootci(nRep, {@nanmean, in.dyad_pc},'alpha', .001);
-e.dyad                      = bootci(nRep, {@nanmean, in.dyad},'alpha', .001);
+e.solo                      = bootci(nRep, {@mean, in.solo},'alpha', .01);
+e.dyad_pc               	= bootci(nRep, {@nanmean, in.dyad_pc},'alpha', .01);
+e.dyad                      = bootci(nRep, {@nanmean, in.dyad},'alpha', .01);
 
 bp                          = bar([1:3],[mean(in.solo) nanmean(in.dyad_pc) nanmean(in.dyad)]);
 bp.FaceColor                = [.5 .5 .5];
@@ -331,7 +331,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);
@@ -367,7 +367,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);

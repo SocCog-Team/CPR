@@ -5,12 +5,13 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_pairwise_performance.mat')
+source_dir = '/Users/fschneider/ownCloud/var_plot/';
+load([ source_dir '/solo_correlation.mat'])
+load([ source_dir '/solo_performance.mat'])
+load([ source_dir '/hh_dyad_correlation.mat'])
+load([ source_dir '/hh_dyad_performance.mat'])
+load([ source_dir '/hh_dyad_pairwise_correlation.mat'])
+load([ source_dir '/hh_dyad_pairwise_performance.mat'])
 
 % Import subject summary spreadsheet
 pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
@@ -141,7 +142,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);

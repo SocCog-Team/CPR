@@ -5,12 +5,13 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/comp_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hc_dyad_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+source_pth = '/Users/fschneider/ownCloud/var_plot/';
+load([source_pth '/solo_performance.mat'])
+load([source_pth '/hh_dyad_performance.mat'])
+load([source_pth '/hc_dyad_performance.mat'])
+load([source_pth '/hc_dyad_correlation.mat'])
+load([source_pth '/comp_performance.mat'])
+load([source_pth '/comp_correlation.mat'])
 
 %% Compare conditions
 
@@ -174,7 +175,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);
@@ -210,7 +211,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);
@@ -266,8 +267,8 @@ end
 for iCoh = 1:length(snr)
     xx              = x_mat(:,iCoh);
     yy              = y_mat(:,iCoh);
-    x_ci            = (bootci(500, {@nanmedian,  xx},'alpha', .001));
-    y_ci            = (bootci(500, {@nanmedian,  yy},'alpha', .001));
+    x_ci            = (bootci(500, {@nanmedian,  xx},'alpha', .01));
+    y_ci            = (bootci(500, {@nanmedian,  yy},'alpha', .01));
     lny             = line([nanmedian(xx) nanmedian(xx)],[y_ci(1) y_ci(2)], 'Color', coh_col(iCoh,:),'LineWidth',1);
     lnx             = line([x_ci(1) x_ci(2)],[nanmedian(yy) nanmedian(yy)], 'Color', coh_col(iCoh,:),'LineWidth',1);
     sc              = scatter(nanmedian(xx),nanmedian(yy), 'MarkerFaceColor', coh_col(iCoh,:),'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', 1,'SizeData', 20);

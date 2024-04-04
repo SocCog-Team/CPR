@@ -689,7 +689,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);
@@ -729,8 +729,8 @@ end
 for iCoh = 1:size(solo_dat,2)
     xx                      = solo_dat(:,iCoh);
     yy                      = dyad_dat(:,iCoh);
-    x_ci                    = (bootci(500, {@nanmedian,  xx},'alpha', .001));
-    y_ci                    = (bootci(500, {@nanmedian,  yy},'alpha', .001));
+    x_ci                    = (bootci(500, {@nanmedian,  xx},'alpha', .01));
+    y_ci                    = (bootci(500, {@nanmedian,  yy},'alpha', .01));
     lny                     = line([nanmedian(xx) nanmedian(xx)],[y_ci(1) y_ci(2)], 'Color', coh_col(iCoh,:),'LineWidth',1);
     lnx                     = line([x_ci(1) x_ci(2)],[nanmedian(yy) nanmedian(yy)], 'Color', coh_col(iCoh,:),'LineWidth',1);
     sc                      = scatter(nanmedian(xx),nanmedian(yy), 'MarkerFaceColor', coh_col(iCoh,:),'MarkerEdgeColor', 'none', 'MarkerFaceAlpha', 1,'SizeData', 20);
@@ -790,7 +790,7 @@ end
 
 % Boostrap confidence intervals
 nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
 % Prepare filled area
 vec                         = 1:length(CI);
