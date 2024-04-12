@@ -1,0 +1,12 @@
+estimate - slope in linear predictor space (vorzeichen ändern sich nicht zum response space)
+SE - standard errors of estimates
+CL lower confidence limits 95%
+CL upper
+x2 chi square log likelihood ratio test zwischen zwei models - je hoeher desto staerker der unterschied fit zw beiden modellen
+df degree freedom
+P p - werte
+min model stabiliy
+max
+
+effect computer - estimate_coherence + estimate_interaction
+steigt grundsaetzlich an aber schwaecher in computer
