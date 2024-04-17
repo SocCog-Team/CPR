@@ -1,4 +1,4 @@
-function out = simulate_social_payoff(social_context, random_subj, plot_flag)
+function out = breate_random_walk(params)
 
 % Parameters
 num_steps           = 1e4;                  % Number of steps in the random walk
