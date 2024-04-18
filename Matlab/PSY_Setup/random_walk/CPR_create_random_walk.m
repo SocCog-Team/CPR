@@ -1,4 +1,4 @@
-function out = create_random_walk(params)
+function out = CPR_create_random_walk(param)
 
 if nargin < 1
     % Set parameters
@@ -10,12 +10,12 @@ if nargin < 1
     param.polar_step_size           = 0.1;                  % Step size in polar space
     param.reward_probability        = 0.01;                 % Probability of reward target appearance
     param.feedback_interval_ms      = param.Fs * 30;        % Interval between feedback presentation
-
 end
 
 % Initialize variables
+out.trial                           = param.trial;          % Trial number
 out.RDP_direction                   = rand * 2 * pi;      	% Random stimulus direction
-out.feedback                        = 1;                    % Initialise variable
+out.feedback_ts                     = 1;                    % Initialise variable
 out.RDP_coherence                   = [];                   % Initialise variable    
 cnt                                 = 0;
 
@@ -23,7 +23,7 @@ cnt                                 = 0;
 nSamples                            = param.walk_duration_ms / param.Fs;                % Number of samples for random walk
 nCohSamples                         = param.coh_duration_ms / param.Fs;                 % Number of samples for coherence block
 nCohBlocks                          = param.walk_duration_ms/param.coh_duration_ms;     % Number of coheren block in stimulus cycle
-out.RDP_coherence_ts                = [1 nCohSamples.*(1:nCohBlocks-1)];                % Timstamps of coherence change
+out.RDP_coherence_ts                = [0 nCohSamples.*(1:nCohBlocks-1)] .* param.Fs;    % Timstamps of coherence change
 out.RDP_coherence                   = param.snr_list(randi([1 length(param.snr_list)],1,3)); % Coherence values
 
 % Avoid repeating coherence values
@@ -38,9 +38,9 @@ for iSample = 2:nSamples
     out.RDP_direction(iSample)    	= mod(out.RDP_direction(iSample), 2 * pi); % Wrap around if exceeding 2*pi
       
     % Check for reward target appearance
-    if rand < param.reward_probability && (iSample-out.feedback(end)) > param.feedback_interval_ms
+    if rand < param.reward_probability && (iSample-out.feedback_ts(end)) > param.feedback_interval_ms
         cnt                         = cnt+1;
-        out.feedback(cnt)           = iSample;
+        out.feedback_ts(cnt)        = iSample; % Frame of feedback presentation
     end
 end
 end
