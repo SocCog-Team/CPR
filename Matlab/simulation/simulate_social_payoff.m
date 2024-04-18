@@ -1,4 +1,4 @@
-function out = simulate_social_payoff(social_context, random_subj, plot_flag)
+function out = breate_random_walk(params)
 
 % Parameters
 num_steps           = 1e4;                  % Number of steps in the random walk
@@ -86,10 +86,21 @@ if plot_flag
     plot(subject1_direction, 'r', 'LineWidth', 1);
     plot(subject2_direction, 'g', 'LineWidth', 1);
     scatter(rewards(:, 1), ones(length(rewards(:, 1)),1), 100, 'k', 'Marker', '*');
-    xlabel('Time Steps');
+    xlabel('Samples');
     ylabel('Direction (radians)');
     title('Stimulus and Subject Tracking with Reward Targets');
     legend('Stimulus Direction', 'Subject1 Direction', 'Subject2 Direction', 'Reward Target');
+    set(gca,'fontsize',16)
+    hold off;
+    
+    figure
+    pol_diff = circ_dist(stimulus_direction(1:end-1),stimulus_direction(2:end));
+    h = histogram(rad2deg(pol_diff));
+    h.FaceColor = [.5 .5 .5];
+    h.EdgeColor = [.5 .5 .5];
+    h.FaceAlpha = 1;
+    xlabel('Sample difference [deg]');
+    ylabel('#');
     set(gca,'fontsize',16)
     hold off;
 end
