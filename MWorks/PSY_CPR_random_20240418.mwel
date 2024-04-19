@@ -7,7 +7,7 @@ iodevice/mio mIO (
     data_interval                           = 1ms
     joystick_x_raw                          = IO_joystickX_raw
     joystick_y_raw                          = IO_joystickY_raw
-
+    )
 
 filter/joystick_calibrator joystick_server (
     maxX                                    = IO_joystickX_raw_max
@@ -202,6 +202,7 @@ group CTRL {
     var CTRL_feedback_ITI_ms                = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
+    var CTRL_schedule_action_flag           = (bool) 0
 
     var CTRL_arc_alpha                      = 0
     var CTRL_arc_flag                       = (bool) 0
@@ -228,6 +229,7 @@ group CTRL {
     var CTRL_target2_flag                   = (bool) 0
     var CTRL_target3_flag                   = (bool) 0
     var CTRL_target4_flag                   = (bool) 0
+    var CTRL_show_target_flag               = (bool) 0
     var CTRL_target_x                       = 0
     var CTRL_target2_x                      = 0
     var CTRL_target3_x                      = 0
@@ -324,12 +326,12 @@ group TMP {
     var TMP_accuracy2                       = 0
     var TMP_score2                          = 0
     
-    var TMP_cycle_duration_ms               = CTRL_cycle_duration_ms
-    var TMP_coh_block_duration_ms           = CTRL_coh_block_duration_ms
-    var TMP_polar_step_size                 = CTRL_polar_step_size
-    var TMP_feedback_probability            = CTRL_feedback_probability
-    var TMP_feedback_ITI_ms                 = CTRL_feedback_ITI_ms
-    var TMP_snr_list                        = CTRL_snr_list
+    var TMP_cycle_duration_ms               = 0
+    var TMP_coh_block_duration_ms           = 0
+    var TMP_polar_step_size                 = 0
+    var TMP_feedback_probability            = 0
+    var TMP_feedback_ITI_ms                 = 0
+    var TMP_snr_list                        = 0
 
     var fixationPoint_posY                  = 0
     var fixationPoint_posX                  = 0 
@@ -389,7 +391,7 @@ group EYE { // CHANGE VARIABLE NAMES
 }
 
 group RDP {
-    var RDP_direction                       = 0 {
+    var RDP_direction                       = (integer) 0 {
         if (TRIAL_start > TRIAL_end) {
     		// Restrict to circular space [0:359]
     		TMP_RDPdir 					    = (RDP_direction + 360) % 360
@@ -460,10 +462,10 @@ group COL {
 
 group IO {
     // Measure manually [server]
-    var IO_joystickX_raw_max                = (float) 511
-    var IO_joystickX_raw_min                = (float) 511
-    var IO_joystickY_raw_max                = (float) 511
-    var IO_joystickY_raw_min                = (float) 511
+    var IO_joystickX_raw_max                = (float) 1023
+    var IO_joystickX_raw_min                = (float) 0
+    var IO_joystickY_raw_max                = (float) 1023
+    var IO_joystickY_raw_min                = (float) 0
 
     // Measure manually [stream]
     var IO_joystickX2_raw_max               = (float) 511
@@ -474,7 +476,7 @@ group IO {
     var IO_joystickTrigger                  = (bool) false
     var IO_joystickTrigger2                 = (bool) false
     var cancelTrigger                       = (bool) false
-    var IO_fixation_flag                    = (bool) false
+    var IO_fixation_flag                    = (bool) true
     var IO_fixation2_flag                   = (bool) false
     var IO_calib_fixation_flag              = (bool) false
     var IO_calib_fixation2_flag             = (bool) false
@@ -614,7 +616,6 @@ group Selection {
 group Import {
     var RDP_direction_lst                   = []
     var RDP_coherence_lst                   = []
-    var RDP_coherence_ts_lst                = []
     var CTRL_feedback_ts_lst                = []
     var CTRL_counter                        = [999]
 }
@@ -622,7 +623,6 @@ group Import {
 group Paths {
     var fname_rdp_dir                       = '/Users/cnl/Desktop/Felix/CPR/RDP_direction.txt'
     var fname_rdp_coh                       = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence.txt'
-    var fname_rdp_coh_ts                    = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_ts.txt'
     var fname_feedback_ts                   = '/Users/cnl/Desktop/Felix/CPR/feedback_ts.txt'
     var fname_counter                       = '/Users/cnl/Desktop/Felix/CPR/counter.txt'
 }
@@ -643,14 +643,8 @@ filter/file2array RDP_coherence_txt (
     version                                 = 1
     )
 
-filter/file2array RDP_coherence_ts_txt (
-    output                                  = RDP_coherence_ts_lst
-    file_name                               = fname_rdp_coh_ts
-    version                                 = 1
-    )
-
 filter/file2array CTRL_feedback_ts_txt (
-    output                                  = CTRL_feeedback_ts_lst
+    output                                  = CTRL_feedback_ts_lst
     file_name                               = fname_feedback_ts
     version                                 = 1
     )
@@ -1982,9 +1976,9 @@ protocol 'CPR_solo' {
     // Set desired parameters
     ML_sync                                     = 1
     CTRL_NumTargets                             = 600
-    CTRL_cycle_duration_ms                      = 60000       
-    CTRL_coh_block_duration_ms                  = 20000
-    CTRL_polar_step_size                        = 0.1
+    CTRL_cycle_duration_ms                      = 20000       
+    CTRL_coh_block_duration_ms                  = 5000
+    CTRL_polar_step_size                        = 0.07
     CTRL_feedback_probability                   = 0.01
     CTRL_feedback_ITI_ms                        = (1000/120) * 30 // 30 frames - 250ms
     CTRL_cpr_treshold                           = .2
@@ -2005,7 +1999,6 @@ protocol 'CPR_solo' {
     CTRL_feedback_ms                            = 150
     CTRL_ITI_ms                                 = 2000
     CTRL_scoreBar_width                         = 0
-    CTRL_show_agent                             = false
     CTRL_feedback_bar_width                     = 2
     CTRL_feedback_offset_x                      = 1
     CTRL_feedback_frame_width                   = .2
@@ -2060,8 +2053,8 @@ protocol 'CPR_solo' {
         // Update trial parameters
         fname_rdp_dir                           = fname_rdp_dir 
         fname_rdp_coh                           = fname_rdp_coh
-        fname_rdp_coh_ts                        = fname_rdp_coh_ts
-        fname_ctrl_feedback                     = fname_ctrl_feedback
+        fname_feedback_ts                       = fname_feedback_ts
+        fname_counter                           = fname_counter
         }
 
     // Initialise timer
@@ -2093,6 +2086,7 @@ protocol 'CPR_solo' {
         ) {
             IO_joystickTrigger                  = true
     }
+
 
     trial 'Trial Structure' (interruptible = YES) {
         task LOOP {
@@ -2129,6 +2123,7 @@ protocol 'CPR_solo' {
                 TRIAL_align                     = 1 // Trial align event
                 TRIAL_type                      = "Random walk"
                 INFO_task                       = "CPR_solo_random"
+                INFO_FrameCounter               = 0
                 INFO_CoherenceStateCounter      = 0  
                 INFO_TrialTargetCounter         = 0
                 INFO_TrialScore                 = 0
@@ -2138,6 +2133,13 @@ protocol 'CPR_solo' {
                 COL_start_area_g                = 0
                 COL_start_area_b                = 0
                 RDP_direction                   = RDP_direction_lst[0] // Stimulus direction
+                
+                TMP_cycle_duration_ms           = CTRL_cycle_duration_ms
+                TMP_coh_block_duration_ms       = CTRL_coh_block_duration_ms
+                TMP_polar_step_size             = CTRL_polar_step_size
+                TMP_feedback_probability        = CTRL_feedback_probability
+                TMP_feedback_ITI_ms             = CTRL_feedback_ITI_ms
+                TMP_snr_list                    = CTRL_snr_list
                 ML_sync                         = 0 // Stop sync
 
                 report ('===== TRIAL $TRIAL_start STARTS =====')
@@ -2145,6 +2147,45 @@ protocol 'CPR_solo' {
             }
 
             state 'Show Stimuli' (interruptible = NO) {
+                report ('Show Stimuli')
+                
+                start_timer (
+                    timer                       = CycleDurationTimer
+                    duration                    = CTRL_cycle_duration_ms
+                    duration_units              = ms
+                    )
+
+                report ('--- Stimulus cycle $TRIAL_start ---')
+
+
+                CTRL_schedule_action_flag       = false
+
+                // Update stimulus parameters
+                schedule (
+                    delay                       = next_frame_time() - now()
+                    duration                    = 8333
+                    repeats                     = -999
+                    cancel                      = CTRL_schedule_action_flag
+                    ) {
+                    INFO_FrameCounter           += 1 // use this variable to determine the onset of the actual signal
+                    RDP_direction               = RDP_direction_lst[INFO_FrameCounter] // Stimulus direction of state
+                    
+                    if (INFO_FrameCounter == CTRL_feedback_ts_lst[INFO_TargetCounter]) {
+                        CTRL_show_target_flag = true
+                    }
+                }
+
+                schedule (
+                    delay                       = next_frame_time() - now()
+                    duration                    = CTRL_coh_block_duration_ms * 1000
+                    repeats                     = -999
+                    cancel                      = CTRL_schedule_action_flag
+                    ) {
+                    INFO_CoherenceStateCounter  += 1
+                    RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
+                    TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
+                    }
+
                 live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
@@ -2160,6 +2201,8 @@ protocol 'CPR_solo' {
             }
 
             state 'Dequeue Target' (interruptible = NO) {
+                report ('Dequeue Target')
+
                 //Remove target from screen
                 dequeue_stimulus (target)
                 update_stimulus_display ()
@@ -2173,6 +2216,8 @@ protocol 'CPR_solo' {
             }
 
             state 'Dequeue Feedback' (interruptible = NO) {
+                report ('Dequeue Feedback')
+
                 //Remove feedback from screen
                 dequeue_stimulus (feedback)
                 update_stimulus_display ()
@@ -2184,6 +2229,8 @@ protocol 'CPR_solo' {
             }
 
             state 'Check Counters' (interruptible = NO) {
+                report ('Check Counters')
+
                 goto (
                     target                      = 'End Trial'
                     when                        = (timer_expired(CycleDurationTimer)) || (INFO_TargetCounter >= CTRL_NumTargets)
@@ -2192,65 +2239,10 @@ protocol 'CPR_solo' {
                     target                      = 'Update Stimuli'
                     when                        =  timer_expired(CycleDurationTimer) == 0
                     )
-                goto (
-                    target                      = 'Set up state'
-                    when                        =  timer_expired(CycleDurationTimer) 
-                    )
-            }
-
-            state 'Set up cycle' (interruptible = NO) {                
-                start_timer (
-                    timer                       = CycleDurationTimer
-                    duration                    = CTRL_cycle_duration_ms
-                    duration_units              = ms
-                    )
-
-                start_timer (
-                    timer                       = CoherenceTimer
-                    duration                    = CTRL_coh_block_duration_ms
-                    duration_units              = ms
-                    )
-
-                report ('--- State $TRIAL_start_ ---')
-                goto ('Update Stimuli')
             }
 
 
 			state 'Update Stimuli' (interruptible = YES) { 
-
-                // Update stimulus parameters
-                schedule (
-                    delay                       = next_frame_time() - now()
-                    duration                    = 0ms
-                    repeats                     = 0
-                    ) {
-                    INFO_FrameCounter           += 1 // use this variable to determine the onset of the actual signal
-                    RDP_direction               = RDP_direction_lst[INFO_FrameCounter] // Stimulus direction of state
-                    
-                    if (INFO_FrameCounter == CTRL_feeedback_ts_lst[INFO_TargetCounter]) {
-                        CTRL_show_target_flag = true
-                    }
-                }
-
-                if (timer_expired(CoherenceTimer)) {
-                schedule (
-                    delay                       = next_frame_time() - now()
-                    duration                    = 0ms
-                    repeats                     = 0
-                    ) {
-                    INFO_CoherenceStateCounter  += 1
-                    RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
-                    TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
-
-                    start_timer (
-                        timer                       = CoherenceTimer
-                        duration                    = CTRL_coh_block_duration_ms
-                        duration_units              = ms
-                        )
-                    }
-                }
-
-                // Check if state change required
                 goto (                    
                     target                      = 'Fixation break detected'
                     when                        = (IO_fixation_flag == 0 && CTRL_fixation_break_flag == 0) 
@@ -2352,24 +2344,18 @@ protocol 'CPR_solo' {
                 CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_x
                 CTRL_show_target_flag           = false //reset
 
-                schedule (
-                    delay                       = next_frame_time() - now()
-                    duration                    = 0ms
-                    repeats                     = 0
-                    ) {
-                    live_queue_stimulus (target)
-                    update_stimulus_display ()
+                live_queue_stimulus (target)
+                update_stimulus_display ()
 
-                    TRIAL_reactionTrigger           = 1
-                    INFO_TargetCounter              += 1
-                    INFO_TrialTargetCounter         += 1
+                TRIAL_reactionTrigger           = 1
+                INFO_TargetCounter              += 1
+                INFO_TrialTargetCounter         += 1
 
-                    start_timer (
-                        timer                       = TargetDurationTimer
-                        duration                    = CTRL_target_duration_ms
-                        duration_units              = ms
-                        )
-                }
+                start_timer (
+                    timer                       = TargetDurationTimer
+                    duration                    = CTRL_target_duration_ms
+                    duration_units              = ms
+                    )
 
                 report ('--- SHOW TARGET $INFO_TargetCounter ---')
                 goto ('Update Stimuli')
@@ -2462,7 +2448,7 @@ protocol 'CPR_solo' {
 
                 goto (
                     target                      = 'End Trial'
-                    when                        = ((INFO_StateCounter >= CTRL_NoStates) && timer_expired(StateDurationTimer)) || (INFO_TargetCounter >= CTRL_NumTargets)
+                    when                        = (timer_expired(CycleDurationTimer)) || (INFO_TargetCounter >= CTRL_NumTargets)
                     )
                 goto ('Dequeue Target')
             }  
@@ -2482,7 +2468,8 @@ protocol 'CPR_solo' {
 
                 TRIAL_align                     = 0
                 TRIAL_end                     	= TRIAL_start
-
+                CTRL_schedule_action_flag       = true 
+                
                 start_timer (
                     timer                       = ITI_Timer
                     duration                    = CTRL_ITI_ms
@@ -2512,11 +2499,10 @@ protocol 'CPR_solo' {
                         )
                     
                     // Update trial parameters
-                    fname_rdp_dir               = fname_rdp_dir 
-                    fname_rdp_coh               = fname_rdp_coh
-                    fname_ctrl_dur              = fname_ctrl_dur
-                    fname_ctrl_trg              = fname_ctrl_trg
-                    fname_counter               = fname_counter
+                    fname_rdp_dir                           = fname_rdp_dir 
+                    fname_rdp_coh                           = fname_rdp_coh
+                    fname_feedback_ts                       = fname_feedback_ts
+                    fname_counter                           = fname_counter
                     }
 
                 goto (

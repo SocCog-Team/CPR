@@ -1,5 +1,10 @@
 function out = CPR_create_random_walk(param)
 
+%%% Generate meore samples than needed
+%%% Just concatenate schuffled coherence vector multiple times
+%%% Keep RDP direction stable after target for target presentation time
+
+
 if nargin < 1
     % Set parameters
     param.trial                     = 0;
@@ -24,11 +29,17 @@ nSamples                            = param.walk_duration_ms / param.Fs;        
 nCohSamples                         = param.coh_duration_ms / param.Fs;                 % Number of samples for coherence block
 nCohBlocks                          = param.walk_duration_ms/param.coh_duration_ms;     % Number of coheren block in stimulus cycle
 out.RDP_coherence_ts                = [0 nCohSamples.*(1:nCohBlocks-1)] .* param.Fs;    % Timstamps of coherence change
-out.RDP_coherence                   = param.snr_list(randi([1 length(param.snr_list)],1,3)); % Coherence values
 
-% Avoid repeating coherence values
-while sum(diff(out.RDP_coherence)==0) > 0
-    out.RDP_coherence            	= param.snr_list(randi([1 length(param.snr_list)],1,3));
+if param.trial == 0
+    out.RDP_coherence              	= fliplr(param.snr_list(end-(nCohBlocks-1):end));   % Coherence values
+
+else
+    out.RDP_coherence            	= param.snr_list(randi([1 length(param.snr_list)],1,3)); % Coherence values
+    
+    % Avoid repeating coherence values
+    while sum(diff(out.RDP_coherence)==0) > 0
+        out.RDP_coherence       	= param.snr_list(randi([1 length(param.snr_list)],1,3));
+    end
 end
 
 % Perform random walk in polar space
@@ -43,4 +54,7 @@ for iSample = 2:nSamples
         out.feedback_ts(cnt)        = iSample; % Frame of feedback presentation
     end
 end
+
+out.RDP_direction                   = round(rad2deg(out.RDP_direction));
+
 end
