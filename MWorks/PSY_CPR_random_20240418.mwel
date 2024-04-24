@@ -202,7 +202,7 @@ group CTRL {
     var CTRL_feedback_ITI_ms                = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
-    var CTRL_schedule_action_flag           = (bool) 0
+    var CTRL_cancel_scheduled_action        = (bool) 0
 
     var CTRL_arc_alpha                      = 0
     var CTRL_arc_flag                       = (bool) 0
@@ -2147,7 +2147,6 @@ protocol 'CPR_solo' {
             }
 
             state 'Show Stimuli' (interruptible = NO) {
-                report ('Show Stimuli')
                 
                 start_timer (
                     timer                       = CycleDurationTimer
@@ -2157,29 +2156,28 @@ protocol 'CPR_solo' {
 
                 report ('--- Stimulus cycle $TRIAL_start ---')
 
-
-                CTRL_schedule_action_flag       = false
+                CTRL_cancel_scheduled_action    = false
 
                 // Update stimulus parameters
                 schedule (
                     delay                       = next_frame_time() - now()
-                    duration                    = 8333
+                    duration                    = 0
                     repeats                     = -999
-                    cancel                      = CTRL_schedule_action_flag
+                    cancel                      = CTRL_cancel_scheduled_action
                     ) {
                     INFO_FrameCounter           += 1 // use this variable to determine the onset of the actual signal
                     RDP_direction               = RDP_direction_lst[INFO_FrameCounter] // Stimulus direction of state
                     
                     if (INFO_FrameCounter == CTRL_feedback_ts_lst[INFO_TargetCounter]) {
-                        CTRL_show_target_flag = true
+                        CTRL_show_target_flag   = true
                     }
                 }
 
                 schedule (
                     delay                       = next_frame_time() - now()
-                    duration                    = CTRL_coh_block_duration_ms * 1000
-                    repeats                     = -999
-                    cancel                      = CTRL_schedule_action_flag
+                    duration                    = CTRL_coh_block_duration_ms * 1000 // micro-secs
+                    repeats                     = -999 
+                    cancel                      = CTRL_cancel_scheduled_action
                     ) {
                     INFO_CoherenceStateCounter  += 1
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
@@ -2412,23 +2410,18 @@ protocol 'CPR_solo' {
                     play_sound (Reward1L_sound)
                 }
 
-                schedule (
-                    delay                       = next_frame_time() - now()
-                    duration                    = 0ms
-                    repeats                     = 0
-                    ) {
-                    // Visual feedback
-                    live_queue_stimulus (feedback)
-                    live_queue_stimulus (fixationCross)
-                    update_stimulus_display ()
 
-                    start_timer (
-                        timer                       = FeedbackTimer
-                        duration                    = CTRL_feedback_ms
-                        duration_units              = ms
-                        )
-                }
+                // Visual feedback
+                live_queue_stimulus (feedback)
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()
 
+                start_timer (
+                    timer                       = FeedbackTimer
+                    duration                    = CTRL_feedback_ms
+                    duration_units              = ms
+                    )
+                
                 report ('--- OUTCOME: Hit ---')
                 report ('Score: $TMP_score')
 
@@ -2468,7 +2461,7 @@ protocol 'CPR_solo' {
 
                 TRIAL_align                     = 0
                 TRIAL_end                     	= TRIAL_start
-                CTRL_schedule_action_flag       = true 
+                CTRL_cancel_scheduled_action    = true 
                 
                 start_timer (
                     timer                       = ITI_Timer
