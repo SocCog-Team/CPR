@@ -202,7 +202,7 @@ group CTRL {
     var CTRL_feedback_ITI_ms                = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
-    var CTRL_cancel_scheduled_action        = (bool) 0
+    var CTRL_schedule_action_flag           = (bool) 0
 
     var CTRL_arc_alpha                      = 0
     var CTRL_arc_flag                       = (bool) 0
@@ -2147,6 +2147,7 @@ protocol 'CPR_solo' {
             }
 
             state 'Show Stimuli' (interruptible = NO) {
+                report ('Show Stimuli')
                 
                 start_timer (
                     timer                       = CycleDurationTimer
@@ -2156,28 +2157,29 @@ protocol 'CPR_solo' {
 
                 report ('--- Stimulus cycle $TRIAL_start ---')
 
-                CTRL_cancel_scheduled_action    = false
+
+                CTRL_schedule_action_flag       = false
 
                 // Update stimulus parameters
                 schedule (
                     delay                       = next_frame_time() - now()
                     duration                    = 0
                     repeats                     = -999
-                    cancel                      = CTRL_cancel_scheduled_action
+                    cancel                      = CTRL_schedule_action_flag
                     ) {
                     INFO_FrameCounter           += 1 // use this variable to determine the onset of the actual signal
                     RDP_direction               = RDP_direction_lst[INFO_FrameCounter] // Stimulus direction of state
                     
                     if (INFO_FrameCounter == CTRL_feedback_ts_lst[INFO_TargetCounter]) {
-                        CTRL_show_target_flag   = true
+                        CTRL_target_flag        = true
                     }
                 }
 
                 schedule (
                     delay                       = next_frame_time() - now()
-                    duration                    = CTRL_coh_block_duration_ms * 1000 // micro-secs
-                    repeats                     = -999 
-                    cancel                      = CTRL_cancel_scheduled_action
+                    duration                    = CTRL_coh_block_duration_ms * 1000
+                    repeats                     = -999
+                    cancel                      = CTRL_schedule_action_flag
                     ) {
                     INFO_CoherenceStateCounter  += 1
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
@@ -2206,11 +2208,12 @@ protocol 'CPR_solo' {
                 update_stimulus_display ()
                 
                 // Reset flag
-                TRIAL_reactionTrigger           = 0
-                CTRL_hit_flag                   = 0
-                CTRL_miss_flag                  = 0
+                TRIAL_reactionTrigger           = false
+                CTRL_target_flag                = false //reset
+                CTRL_hit_flag                   = false
+                CTRL_miss_flag                  = false
 
-                goto ('Check Counters')
+                goto ('Check exit')
             }
 
             state 'Dequeue Feedback' (interruptible = NO) {
@@ -2221,13 +2224,13 @@ protocol 'CPR_solo' {
                 update_stimulus_display ()
 
                 // Reset flag
-                CTRL_feedback_flag              = 0
+                CTRL_feedback_flag              = false
 
-                goto ('Check Counters')
+                goto ('Check exit')
             }
 
-            state 'Check Counters' (interruptible = NO) {
-                report ('Check Counters')
+            state 'Check exit' (interruptible = NO) {
+                report ('Check exit')
 
                 goto (
                     target                      = 'End Trial'
@@ -2243,15 +2246,15 @@ protocol 'CPR_solo' {
 			state 'Update Stimuli' (interruptible = YES) { 
                 goto (                    
                     target                      = 'Fixation break detected'
-                    when                        = (IO_fixation_flag == 0 && CTRL_fixation_break_flag == 0) 
+                    when                        = (IO_fixation_flag == false && CTRL_fixation_break_flag == false) 
                     )
                 goto (                    
                     target                      = 'Reset CTRL_fixation_break_flag'
-                    when                        = (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer) == 0) 
+                    when                        = (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer) == false) 
                     )                
                 goto (                    
                     target                      = 'Fixation break penalty'
-                    when                        = (IO_fixation_flag == 0 && timer_expired(MinFixationBreakTimer) && CTRL_fixation_break_flag && CTRL_fixation_penalty_flag == 0)
+                    when                        = (IO_fixation_flag == false && timer_expired(MinFixationBreakTimer) && CTRL_fixation_break_flag && CTRL_fixation_penalty_flag == false)
                     )
                 goto (                    
                     target                      = 'Fixation restored'
@@ -2263,11 +2266,11 @@ protocol 'CPR_solo' {
                     )
                 goto (
                     target                      = 'Dequeue Feedback'
-                    when                        = CTRL_feedback_flag && timer_expired(TargetDurationTimer) && timer_expired(FeedbackTimer) 
+                    when                        = CTRL_feedback_flag && timer_expired(FeedbackTimer) 
                     )
                 goto (
                     target                      = 'Target presentation'
-                    when                        = CTRL_show_target_flag && TRIAL_reactionTrigger == 0
+                    when                        = CTRL_target_flag && TRIAL_reactionTrigger == 0
                     ) 
                 goto (
                     target                      = 'Hit'
@@ -2278,7 +2281,7 @@ protocol 'CPR_solo' {
                     when                        = timer_expired(TargetDurationTimer) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_miss_flag) == 0
                     )              
                 goto (
-                    target                      = 'Check Counters'
+                    target                      = 'Check exit'
                     when                        = timer_expired(CycleDurationTimer) && TRIAL_reactionTrigger == 0
                     )
             }
@@ -2328,8 +2331,8 @@ protocol 'CPR_solo' {
                 COL_fix_g                       = 1
                 CTRL_arc_alpha                  = 1
                 CTRL_indicator_alpha            = 1
-                CTRL_fixation_break_flag        = 0
-                CTRL_fixation_penalty_flag 		= 0
+                CTRL_fixation_break_flag        = false
+                CTRL_fixation_penalty_flag 		= false
 
                 report ('FIX RESTORED')
 
@@ -2340,12 +2343,11 @@ protocol 'CPR_solo' {
                 // Target coordinates according to RDP direction
                 CTRL_target_x                   = (sin((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_x
                 CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_x
-                CTRL_show_target_flag           = false //reset
 
                 live_queue_stimulus (target)
                 update_stimulus_display ()
 
-                TRIAL_reactionTrigger           = 1
+                TRIAL_reactionTrigger           = true
                 INFO_TargetCounter              += 1
                 INFO_TrialTargetCounter         += 1
 
@@ -2362,8 +2364,8 @@ protocol 'CPR_solo' {
             state 'Hit' (interruptible = NO) {
             	// Set flags and add to counters
                 TRIAL_outcome                   = "hit"
-                CTRL_hit_flag                   = 1
-                CTRL_feedback_flag              = 1
+                CTRL_hit_flag                   = true
+                CTRL_feedback_flag              = true
                 INFO_HitCounter                 += 1
                 INFO_Score                      += TMP_score
                 INFO_TrialScore                 += TMP_score
@@ -2421,7 +2423,7 @@ protocol 'CPR_solo' {
                     duration                    = CTRL_feedback_ms
                     duration_units              = ms
                     )
-                
+
                 report ('--- OUTCOME: Hit ---')
                 report ('Score: $TMP_score')
 
@@ -2433,7 +2435,7 @@ protocol 'CPR_solo' {
 
                 // Set flags
                 TRIAL_outcome                   = "miss"
-                CTRL_miss_flag                  = 1
+                CTRL_miss_flag                  = true
                 INFO_ErrorCounter               += 1
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
@@ -2461,7 +2463,7 @@ protocol 'CPR_solo' {
 
                 TRIAL_align                     = 0
                 TRIAL_end                     	= TRIAL_start
-                CTRL_cancel_scheduled_action    = true 
+                CTRL_schedule_action_flag       = true 
                 
                 start_timer (
                     timer                       = ITI_Timer
