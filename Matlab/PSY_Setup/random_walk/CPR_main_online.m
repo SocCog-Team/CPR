@@ -47,6 +47,7 @@ param.coh_duration_ms       	= cell2mat(d.value(d.event == 'TMP_coh_block_durati
 param.polar_step_size       	= cell2mat(d.value(d.event == 'TMP_polar_step_size'));          % Step size of random walk in polar space
 param.reward_probability       	= cell2mat(d.value(d.event == 'TMP_feedback_probability')); 	% Probability of reward target appearance
 param.feedback_interval_ms      = cell2mat(d.value(d.event == 'TMP_feedback_ITI_ms'));      	% Interval between feedback presentation
+param.feedback_duration_ms      = cell2mat(d.value(d.event == 'TMP_feedback_duration_ms'));     % Duration of feedback presentation
 param.Fs                        = 1000 / 120;                                                   % Screen sampling rate
 param.pth                       = pth;
 tmp_snr                         = d.value(d.event == 'TMP_snr_list');                           % Stimulus coherence list

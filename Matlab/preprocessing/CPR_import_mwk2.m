@@ -1,4 +1,4 @@
-function d = CPR_import_mwk2(fname, var_lst, write_file)
+function d = CPR_import_mwk2(fname, var_lst, write_file, cfg_path)
 
 % This function imports .mwk2 files into a data structure using the 
 % MW_readFile function developed by Ralf Brockhausen.
@@ -28,6 +28,10 @@ function d = CPR_import_mwk2(fname, var_lst, write_file)
 
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
+
+if nargin < 4
+    cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/felix.cfg';
+end
 
 if nargin < 3 || isempty(write_file)
     write_file  = false;
@@ -71,10 +75,7 @@ if iscell(fname)                                                            % If
         
         if write_file
             disp('Save struct...')
-
-            cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/MW_readFile_FS.cfg';
-            MW_writeH5(d, [fname{1}(1:end-5) 'CPR_merged.h5'], 'replace', 'privateCFG', cfg_pth)
-            
+            MW_writeH5(d, [fname{1}(1:end-5) 'CPR_merged.h5'], 'replace', 'privateCFG', cfg_pth)  
             disp('Done!')
         end
     end
@@ -86,10 +87,7 @@ else
         
         if write_file
             disp('Save struct...')
-            
-            cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/felix.cfg';
             MW_writeH5(d, [fname(1:end-5) '.h5'], 'replace', 'privateCFG', cfg_pth) % Save to .h5
-
             disp('Done!')
         end
     end

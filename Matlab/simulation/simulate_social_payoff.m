@@ -1,4 +1,4 @@
-function out = breate_random_walk(params)
+function out = simulate_social_payoff(social_context,random_subj, plot_flag)
 
 % Parameters
 num_steps           = 1e4;                  % Number of steps in the random walk
@@ -56,16 +56,16 @@ for i = 1:size(reward_targets, 1)
     if accuracy_subject1 > 0.75 && accuracy_subject2 > 0.75   % Dyadic hit
         if strcmp(social_context, 'coop')
             % Cooperative context: average accuracy between players if both hit the target
-            reward1         = mean([accuracy_subject1 accuracy_subject2]) / 2;
-            reward2         = mean([accuracy_subject1 accuracy_subject2]) / 2;
+            reward1         = sum([accuracy_subject1 accuracy_subject2]) / 2;
+            reward2         = sum([accuracy_subject1 accuracy_subject2]) / 2;
         elseif strcmp(social_context, 'comp')
             % Competitive context: winner takes all if both hit the target
             if accuracy_subject1 > accuracy_subject2
-                reward1     = accuracy_subject1;
+                reward1     = sum([accuracy_subject1 accuracy_subject2]);
                 reward2     = 0;
             else
                 reward1     = 0;
-                reward2     = accuracy_subject2;
+                reward2     = sum([accuracy_subject1 accuracy_subject2]);
             end
         end
     else
