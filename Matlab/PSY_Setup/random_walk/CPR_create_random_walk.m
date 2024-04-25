@@ -1,10 +1,5 @@
 function out = CPR_create_random_walk(param)
 
-%%% Generate meore samples than needed
-%%% Just concatenate schuffled coherence vector multiple times
-%%% Keep RDP direction stable after target for target presentation time
-
-
 if nargin < 1
     % Set parameters
     param.trial                     = 0;
@@ -24,6 +19,7 @@ out.feedback_ts                     = 1;                    % Initialise variabl
 out.RDP_coherence                   = [];                   % Initialise variable    
 cnt                                 = 0;
 
+%%% Just concatenate schuffled coherence vector multiple times
 % Calculate number of samples
 nSamples                            = param.walk_duration_ms / param.Fs;                % Number of samples for random walk
 nCohSamples                         = param.coh_duration_ms / param.Fs;                 % Number of samples for coherence block
@@ -43,7 +39,8 @@ else
 end
 
 % Perform random walk in polar space
-for iSample = 2:nSamples
+for iSample = 2:(nSamples*2) % double the number of samples needed - to be on the safe side 
+    
     % Update stimulus direction with random step
     out.RDP_direction(iSample)  	= out.RDP_direction(iSample-1) + randn * param.polar_step_size;
     out.RDP_direction(iSample)    	= mod(out.RDP_direction(iSample), 2 * pi); % Wrap around if exceeding 2*pi
@@ -56,5 +53,9 @@ for iSample = 2:nSamples
 end
 
 out.RDP_direction                   = round(rad2deg(out.RDP_direction));
+
+%%% Keep RDP direction stable after target for target presentation time
+% Detect target sample
+% Add staionary direction sample: Trg duration * sample size
 
 end
