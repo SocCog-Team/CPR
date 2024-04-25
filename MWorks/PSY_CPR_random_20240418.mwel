@@ -182,6 +182,7 @@ group INFO {
     var INFO_HitCounter2                    = (integer) 0
     var INFO_ErrorCounter                   = (integer) 0
     var INFO_ErrorCounter2                  = (integer) 0
+    var INFO_dyadic_score                   = (float) 0
     var INFO_Score                          = (float) 0
     var INFO_Score2                         = (float) 0 
     var INFO_TargetScore                    = (float) 0 
@@ -472,16 +473,16 @@ group IO {
     var IO_joystickY_raw_min                = (float) 0
 
     // Measure manually [stream]
-    var IO_joystickX2_raw_max               = (float) 511
-    var IO_joystickX2_raw_min               = (float) 511
-    var IO_joystickY2_raw_max               = (float) 511
-    var IO_joystickY2_raw_min               = (float) 511
+    var IO_joystickX2_raw_max               = (float) 1023
+    var IO_joystickX2_raw_min               = (float) 0
+    var IO_joystickY2_raw_max               = (float) 1023
+    var IO_joystickY2_raw_min               = (float) 0
 
     var IO_joystickTrigger                  = (bool) false
     var IO_joystickTrigger2                 = (bool) false
     var cancelTrigger                       = (bool) false
     var IO_fixation_flag                    = (bool) true
-    var IO_fixation2_flag                   = (bool) false
+    var IO_fixation2_flag                   = (bool) true
     var IO_calib_fixation_flag              = (bool) false
     var IO_calib_fixation2_flag             = (bool) false
     var IO_arc_width                    	= 0
@@ -1003,8 +1004,8 @@ stimulus/advstimulus feedback1 (
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = INFO_TargetScore*2
-    y_size                                  = INFO_TargetScore*2
+    x_size                                  = INFO_TargetScore
+    y_size                                  = INFO_TargetScore
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)180)
@@ -1020,8 +1021,8 @@ stimulus/advstimulus feedback2 (
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = INFO_TargetScore2*2
-    y_size                                  = INFO_TargetScore2*2
+    x_size                                  = INFO_TargetScore2
+    y_size                                  = INFO_TargetScore2
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)180)
@@ -2120,7 +2121,7 @@ protocol 'CPR_solo' {
             
             state 'Wait for Joystick Movement' (interruptible = YES) {
                 INFO_frame_rate                 = refresh_rate()
-                report('Screen rerhesh rate [Hz]: ' $INFO_frame_rate)
+                report('Screen rerhesh rate [Hz]:  $INFO_frame_rate')
 
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (fixationCross)
@@ -2562,17 +2563,20 @@ protocol 'CPR_dyadic_neutral' {
     ML_sync                                     = 1
     CTRL_NumTargets                             = 200
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
-    CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
+    CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
     CTRL_target_probability                     = 0.05
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
+    CTRL_arc2_alpha                             = 1
     CTRL_arc_size                               = 4
-    CTRL_arcMask_size                           = CTRL_arc_size - (CTRL_arc_size/10)
-    CTRL_indicator_offset                       = CTRL_arc_size/1.95    
+    CTRL_arc2_size                              = CTRL_arc_size + (CTRL_arc_size/10)
     CTRL_indicator_size                         = .4
+    CTRL_indicator_offset                       = CTRL_arc_size/1.95
     CTRL_indicator_alpha                        = 1
+    CTRL_indicator2_alpha                       = 1
+    CTRL_indicator2_offset                      = 4.4 / 1.95
     CTRL_start_area_size                        = 4 
     CTRL_start_area_alpha                       = 1
     CTRL_target_size                            = .5
@@ -2586,11 +2590,12 @@ protocol 'CPR_dyadic_neutral' {
     CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
     CTRL_scoreBar_width                         = 0
     CTRL_feedback_bar_width                     = 2
-    CTRL_feedback_offset_x                      = 1
+    CTRL_feedback_offset_x                      = 2
     CTRL_feedback_frame_width                   = .2
     CTRL_feedback_frame_height                  = 10
     CTRL_feedback_bar_height                    = 0
-    CTRL_feedback_nBar                          = 2
+    CTRL_feedback2_bar_height                   = 0
+    CTRL_feedback_nBar                          = 3
     
     // Check and double-check luminance!
     COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]
@@ -2690,6 +2695,7 @@ protocol 'CPR_dyadic_neutral' {
         cancel                                  = cancelTrigger
         ) {
             IO_joystickTrigger                  = true
+            IO_joystickTrigger2                 = true
     }
 
     trial 'Trial Structure' (interruptible = YES) {
@@ -2704,7 +2710,7 @@ protocol 'CPR_dyadic_neutral' {
             
             state 'Wait for Joystick Movement' (interruptible = YES) {
                 INFO_frame_rate                 = refresh_rate()
-                report('Screen rerhesh rate [Hz]: ' $INFO_frame_rate)
+                report('Screen rerhesh rate [Hz]: $INFO_frame_rate')
 
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (fixationCross)
@@ -2875,6 +2881,9 @@ protocol 'CPR_dyadic_neutral' {
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
                     }
 
+                live_queue_stimulus (scoreBarBackground2)
+                live_queue_stimulus (scoreBar2)
+                live_queue_stimulus (scoreBarMask2)
                 live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
                 live_queue_stimulus (scoreBarMask)
@@ -2983,15 +2992,15 @@ protocol 'CPR_dyadic_neutral' {
                 // Neutral - Independent reward
                 goto (
                     target                      = 'Neutral: Single Hit A'
-                    when                        = TMP_dice == 1 && (CTRL_arc_flag && CTRL_fixation_penalty_flag == false) && (CTRL_arc2_flag == false || CTRL_fixation2_penalty_flag) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false && timer_expired(TargetDurationTimer) == false
+                    when                        = TMP_dice == 0 && (CTRL_arc_flag && CTRL_fixation_penalty_flag == false) && (CTRL_arc2_flag == false || CTRL_fixation2_penalty_flag) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false && timer_expired(TargetDurationTimer) == false
                     ) 
                 goto (
                     target                      = 'Neutral: Single Hit B'
-                    when                        = TMP_dice == 1 && (CTRL_arc_flag == false || CTRL_fixation_penalty_flag) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == false) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false && timer_expired(TargetDurationTimer) == false
+                    when                        = TMP_dice == 0 && (CTRL_arc_flag == false || CTRL_fixation_penalty_flag) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == false) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false && timer_expired(TargetDurationTimer) == false
                     )
                 goto (
                     target                      = 'Neutral: Dyadic Hit'
-                    when                        = TMP_dice == 1 && (CTRL_arc_flag && CTRL_fixation_penalty_flag == false) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == false) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false && timer_expired(TargetDurationTimer) == false
+                    when                        = TMP_dice == 0 && (CTRL_arc_flag && CTRL_fixation_penalty_flag == false) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == false) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false && timer_expired(TargetDurationTimer) == false
                     )  
                 // Cooperation && Competition - Single hit but no reward
                 goto (
@@ -3394,7 +3403,7 @@ protocol 'CPR_dyadic_neutral' {
                 goto ('Update Stimuli')
             }
 
-            state 'Coop/Comp:: Single Hit B' {
+            state 'Coop/Comp: Single Hit B' {
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
@@ -3691,9 +3700,9 @@ protocol 'CPR_dyadic_neutral' {
             }
 
             state 'ITI' (interruptible = YES) {
-                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NoTargets)
-                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NoTargets)
-                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NoTargets)
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NumTargets)
+                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NumTargets)
+                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NumTargets)
 
                 live_queue_stimulus (cum_rew_bar_frame)
                 live_queue_stimulus (cum_rew_bar_surface)
