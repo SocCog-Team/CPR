@@ -36,7 +36,6 @@ end
 for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the safe side    
     % Update stimulus direction with random step
     out.RDP_direction(iSample)  	= out.RDP_direction(iSample-1) + randn * param.polar_step_size;
-    out.RDP_direction(iSample)    	= mod(out.RDP_direction(iSample), 2 * pi); % Wrap around if exceeding 2*pi
       
     % Check for reward target appearance
     if rand < param.reward_probability && (iSample-out.feedback_ts(end)) > param.feedback_interval_ms
@@ -60,6 +59,7 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
 end
 
 % Convert to degree
+out.RDP_direction                   = mod(out.RDP_direction, 2 * pi); % Wrap around if exceeding 2*pi
 out.RDP_direction                   = round(rad2deg(out.RDP_direction));
 
 end
