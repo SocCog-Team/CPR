@@ -1003,8 +1003,8 @@ stimulus/advstimulus feedback1 (
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = INFO_TargetScore
-    y_size                                  = INFO_TargetScore
+    x_size                                  = INFO_TargetScore*2
+    y_size                                  = INFO_TargetScore*2
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)180)
@@ -1020,8 +1020,8 @@ stimulus/advstimulus feedback2 (
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = INFO_TargetScore2
-    y_size                                  = INFO_TargetScore2
+    x_size                                  = INFO_TargetScore2*2
+    y_size                                  = INFO_TargetScore2*2
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)180)
@@ -4818,7 +4818,7 @@ protocol 'CPR_dyadic_competition' {
 
             state 'Comp: Dyadic Hit' {
                 report ('--- OUTCOME: Dyadic Hit ---')
-                INFO_dyadic_score               = (TMP_score + TMP_score2)    
+                INFO_dyadic_score                   = (TMP_score + TMP_score2)    
 
                 // Set flags and add to counters
                 if (TMP_score > TMP_score2) {
@@ -4872,6 +4872,9 @@ protocol 'CPR_dyadic_competition' {
                     if (INFO_TargetScore <= .125) {
                         play_sound (Reward1R_sound)
                     }
+
+                    //Visual feedback
+                    live_queue_stimulus (feedback1)
                 }
 
                 if (TMP_score < TMP_score2) {
@@ -4925,19 +4928,18 @@ protocol 'CPR_dyadic_competition' {
                     if (INFO_TargetScore2 <= .125) {
                         play_sound (Reward1L_sound)
                     }
+
+                    //Visual feedback
+                    live_queue_stimulus (feedback2)
                 }
 
-                report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
-
-                CTRL_feedback_flag              = true
-
-                //Visual feedback
-                live_queue_stimulus (feedback1)
-                live_queue_stimulus (feedback2)
                 live_queue_stimulus (fixationCross)
                 live_queue_stimulus (fixationCross2)
                 update_stimulus_display ()
                 
+                CTRL_feedback_flag              = true
+                report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
+
                 goto ('Start Feedback Timer')
             }  
 
