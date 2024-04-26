@@ -7,8 +7,8 @@ if nargin < 1
     param.walk_duration_ms      	= 60000;                % Duration of random walk (stimulus cycle)
     param.Fs                        = 1000 / 120;           % Screen sampling rate
     param.snr_list                  = [.2 .4 .6 .8];        % Stimulus coherence
-    param.polar_step_size           = 0.03;                  % Step size in polar space
-    param.reward_probability        = 0.05;                 % Probability of reward target appearance
+    param.polar_step_size           = 0.1;                  % Step size in polar space
+    param.reward_probability        = 0.01;                 % Probability of reward target appearance
     param.feedback_duration_ms      = param.Fs * 30;        % Duration of feedback presentation
     param.feedback_interval_ms      = param.Fs * 60;        % Interval between feedback presentation
 end
@@ -45,7 +45,7 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
     end
     
     %%% Keep RDP direction stable after target for target presentation time
-    if (iSample-out.feedback_ts(end)) < (param.feedback_duration_ms/param.Fs)
+    if (iSample-out.feedback_ts(end)) < param.feedback_duration_ms
         out.RDP_direction(iSample)	= out.RDP_direction(iSample-1); % Fix stimulus direction for duration of feedback
     end
 
@@ -55,6 +55,7 @@ out.RDP_direction                   = round(rad2deg(out.RDP_direction));
 
 end
 
-% figure; hold on
-% plot(out.RDP_direction)
-% scatter(out.feedback_ts, out.RDP_direction(out.feedback_ts), 'rx')
+
+figure
+plot(out.RDP_direction)
+line([])
