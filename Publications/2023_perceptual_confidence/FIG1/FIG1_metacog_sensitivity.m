@@ -1,13 +1,16 @@
-addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/hh_dyad_performance.mat')
 close all
+
+addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
+
+source_dir = '/Users/fschneider/ownCloud/var_plot/';
+load([ source_dir '/solo_performance.mat'])
+load([ source_dir '/hh_dyad_performance.mat'])
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 col                 = cool(7);
 lw                  = 1;
 lb_fs               = 8;
-option_flag         = 2;
+option_flag         = 1;
 
 [x,y,auc]           = metacog(solo_perf,solo_cr,option_flag);
 [x_dy,y_dy,auc_dy]  = metacog(dyad_perf,solo_cr,option_flag);
@@ -181,7 +184,7 @@ print(f, [dest_dir '/metacog_example_roc_' num2str(option_flag)], '-r500', '-dsv
 
 function [x,y,auc] = metacog(in_perf,in_cr,option_flag)
 
-n_min_samples       = 10;
+n_min_samples       = 5;
 snr                 = in_perf{end}.carr;
 
 for iSubj = 1:length(in_perf)

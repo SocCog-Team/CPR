@@ -1,8 +1,11 @@
 close all
 clear all
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_performance.mat')
+addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
+
+source_dir = '/Users/fschneider/ownCloud/var_plot/';
+load([ source_dir '/solo_correlation.mat'])
+load([ source_dir '/solo_performance.mat'])
 
 lw                  = 1.5;
 lb_fs               = 8;
@@ -127,7 +130,7 @@ for iSub = 1:size(solo_cr,2)
     end
 end
 
-f                           = figure('units','centimeters','position',[0 0 22.5 15]);
+f                           = figure('units','centimeters','position',[0 0 6 5]);
 vl                          = violinplot(par);
 vl                        	= improveViolin(vl,col);
 ax                          = gca;
@@ -140,46 +143,6 @@ ax.FontSize                 = lb_fs;
 
 print(f, [dest_dir '/pop_response_reliability'], '-r500', '-dpng');
 print(f, [dest_dir '/pop_response_reliability'], '-r500', '-dsvg');
-
-%% Response lag - RT comparison
-
-pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
-x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
-sbj_lst                     = x.Abbreviation;                               % Subject ID list
-sbj_lst(cellfun(@isempty,sbj_lst)) = [];
-
-for iSubj = 1:length(sbj_lst)
-    load([pth sbj_lst{iSubj} '/summary/' sbj_lst{iSubj} '_RT.mat'])
-    mrt(iSubj)              = median(rt.dat);
-    lag(iSubj)              = median(solo_cr{iSubj}.lag);
-end
-
-mrt                         = mrt./1e3;
-lag                         = lag./1e3;
-
-f                           = figure('units','centimeters','position',[0 0 22.5 15]); hold on
-for iS = 1:length(lag)
-    pl(iS)               	= plot([1 2],[mrt(iS) lag(iS)]);
-    pl(iS).Color          	= [.5 .5 .5 .3];
-    pl(iS).LineWidth      	= lw;
-end
-
-bx                      	= boxplot([mrt' lag'], 'Colors', 'k');
-
-set(bx,'MarkerEdgeColor','k')
-set(bx, {'linew'},{lw})
-
-ax                          = gca;
-ax.YLabel.String            = 'Time [s]';
-ax.XTick                    = [1 2];
-ax.XLim                     = [.5 2.5];
-ax.XTickLabel               = {'Reaction time','CPRsolo'};
-ax.FontSize                 = lb_fs;
-ax.XTickLabelRotation       = 0;
-ax.Box                      = 'off';
-
-print(f, [dest_dir '/rt_lag_comparison'], '-r500', '-dpng');
-print(f, [dest_dir '/rt_lag_comparison'], '-r500', '-dsvg');
 
 
 %% FUNCTIONS %%%

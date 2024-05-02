@@ -157,15 +157,20 @@ f                           = figure;
 cnt                         = 0;
 state_on                    = cellfun(@(x) x(1),t.frme_ts);
 
-for iState = 1:length(state_on)
+clear trg_ts
+for iState = 1:size(t.trg_ts,1)
     for iTrg = 1:length(t.trg_ts{iState})
         cnt                 = cnt+1;
-        trg_ts(cnt)      	= t.trg_ts{iState}(iTrg);
+        trg_ts(cnt)      	= double(t.trg_ts{iState}(iTrg));
+        
+        if trg_ts(cnt) == 0
+            disp([iState iTrg])
+        end
     end
 end
 
 trg_ts(isnan(trg_ts))       = [];
-iti                         = diff(trg_ts)./1e3;
+iti                         = diff(trg_ts)./1e6;
 
 [N,EDGES]                   = histcounts(iti,nBin,'Normalization','probability');
 h                           = histogram('BinEdges', EDGES,'BinCounts',N);

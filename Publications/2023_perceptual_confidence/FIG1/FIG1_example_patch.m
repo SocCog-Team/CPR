@@ -1,9 +1,9 @@
 
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 
-dyad = 51;
-block = 1;
-cycle = 15;
+dyad                = 51;
+block               = 1;
+cycle               = 15;
 
 %% IMPORT %%%
 
@@ -75,8 +75,8 @@ coh_id              = round(rdp_coh(change_idx(1:3)),2);
 ccol                = [.85 .85 .85;.95 .95 .95; .9 .9 .9];
 for iCoh = 1:3
 %     ccol            = [rdp_coh(change_idx(iCoh)) .8 .8]
-    pt(iCoh)           	= patch([ts(change_idx(iCoh)) ts(change_idx(iCoh)) ts(change_idx(iCoh+1)) ts(change_idx(iCoh+1))],[0 360 360 0],ccol(iCoh,:));
-    pt(iCoh).EdgeColor  	= 'none';
+    pt(iCoh)            = patch([ts(change_idx(iCoh)) ts(change_idx(iCoh)) ts(change_idx(iCoh+1)) ts(change_idx(iCoh+1))],[0 360 360 0],ccol(iCoh,:));
+    pt(iCoh).EdgeColor	= 'none';
 end
 
 p                   = plot(ts,rdp_dir,'LineWidth',lw*1.5,'Color', [0 0 0]);
@@ -132,8 +132,8 @@ ln              = line([ts(strt) ts(strt)+(len/fs)/100],[height height]);
 ln.Color        = [0 0 0];
 ln.LineWidth  	= 2;
 
-ax.YAxis.Visible =  'off';
-ax.XAxis.Visible =  'off';
+ax.YAxis.Visible = 'off';
+ax.XAxis.Visible = 'off';
 
 print(f, [dest_dir '/js_example_response'], '-r500', '-dpng');
 exportgraphics(f,[dest_dir '/js_example_response.pdf'],'ContentType','vector') 

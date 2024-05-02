@@ -375,8 +375,8 @@ ln.Color                    = [0 0 0];
 ax13.Position               = [ax20.Position(1)+.6 ax20.Position(2)+.5 .15 .3];
 
 % PRINT
-print(f, [dest_dir '/FIG2_a'], '-r500', '-dpng');
-print(f, [dest_dir '/FIG2_a'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG2_top'], '-r500', '-dpng');
+print(f, [dest_dir '/FIG2_top'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Scatter plot for supplementary

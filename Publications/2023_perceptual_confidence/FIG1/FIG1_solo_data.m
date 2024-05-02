@@ -75,8 +75,8 @@ for iSubj = 1:size(solo_cr,2)
 
     for iCoh = 1:length(snr)
         clear cIdx
-        cIdx             	= solo_cr{iSubj}.coh == snr(iCoh);
-        solo_mlag(iSubj,iCoh) = mean(solo_cr{iSubj}.lag(cIdx));
+        cIdx                    = solo_cr{iSubj}.coh == snr(iCoh);
+        solo_mlag(iSubj,iCoh)   = mean(solo_cr{iSubj}.lag(cIdx));
     end
 end
 
@@ -123,8 +123,8 @@ ax4.FontSize                = lb_fs;
 ax4.XTickLabelRotation      = 0;
 
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw/';
-print(f, [dest_dir '/FIG1_solo'], '-r500', '-dpng');
-print(f, [dest_dir '/FIG1_solo'], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG1_solo_data'], '-r500', '-dpng');
+print(f, [dest_dir '/FIG1_solo_data'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
