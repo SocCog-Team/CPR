@@ -1041,7 +1041,7 @@ stimulus/advstimulus scoreBar (
     y_size                                  = CTRL_scoreBar_size
     x_position                              = RDP_x
     y_position                              = RDP_y
-    shape                                   = format("circle %d", (integer)CTRL_scoreBar_width)    
+    shape                                   = format("circle %d", (integer)CTRL_scoreBar_width)   
     color                                   = COL_scoreBar_r,COL_scoreBar_g,COL_scoreBar_b
     rotation                                = CTRL_feedback_rotation
     alpha_multiplier                        = CTRL_scoreBar_alpha
@@ -2272,7 +2272,7 @@ protocol 'CPR_solo' {
                     )
                 goto (
                     target                      = 'Dequeue Target'
-                    when                        = TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
                     )
                 goto (
                     target                      = 'Dequeue Feedback'
@@ -2454,7 +2454,7 @@ protocol 'CPR_solo' {
 
                 report ('--- OUTCOME: Miss ---')
                 report ('--- NO REWARD ---')
-
+                
                 goto (
                     target                      = 'End Trial'
                     when                        = (timer_expired(CycleDurationTimer)) || (INFO_TargetCounter >= CTRL_NumTargets)
@@ -2575,6 +2575,7 @@ protocol 'CPR_dyadic_neutral' {
     CTRL_feedback_ms                            = (1000/120) * 18 // 18 frames - 150ms
     CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
     CTRL_scoreBar_width                         = 0
+    CTRL_scoreBar2_width                        = 0
     CTRL_feedback_bar_width                     = 2
     CTRL_feedback_offset_x                      = 2
     CTRL_feedback_frame_width                   = .2
@@ -2926,7 +2927,7 @@ protocol 'CPR_dyadic_neutral' {
                     )
                 goto (
                     target                      = 'Dequeue Target'
-                    when                        = TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag) && (CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
                     )
                 goto (
                     target                      = 'Dequeue Feedback'
@@ -3470,6 +3471,7 @@ protocol 'CPR_dyadic_cooperation' {
     CTRL_feedback_ms                            = (1000/120) * 18 // 18 frames - 150ms
     CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
     CTRL_scoreBar_width                         = 0
+    CTRL_scoreBar2_width                        = 0
     CTRL_feedback_bar_width                     = 2
     CTRL_feedback_offset_x                      = 2
     CTRL_feedback_frame_width                   = .2
@@ -3824,7 +3826,7 @@ protocol 'CPR_dyadic_cooperation' {
                     )
                 goto (
                     target                      = 'Dequeue Target'
-                    when                        = TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag) && (CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
                     )
                 goto (
                     target                      = 'Dequeue Feedback'
@@ -3993,6 +3995,8 @@ protocol 'CPR_dyadic_cooperation' {
                 INFO_TargetScore2               = INFO_dyadic_score / 2
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
+                CTRL_feedback_flag              = true
+
                 // PRESENT AT SPEAKER R ONLY
                 if (INFO_TargetScore > .875) {
                     play_sound (Reward8L_sound)
@@ -4044,7 +4048,7 @@ protocol 'CPR_dyadic_cooperation' {
                 report ('--- OUTCOME: Single Hit A ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
 
-                goto ('Update Stimuli')
+                goto ('Start Feedback Timer')
             }
 
             state 'Coop/Comp: Single Hit B' {
@@ -4121,7 +4125,7 @@ protocol 'CPR_dyadic_cooperation' {
                 report ('--- OUTCOME: Single Hit B ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
 
-                goto ('Update Stimuli')
+                goto ('Start Feedback Timer')
             }
 
             state 'Coop: Dyadic Hit' {
@@ -4366,6 +4370,7 @@ protocol 'CPR_dyadic_competition' {
     CTRL_feedback_ms                            = (1000/120) * 18 // 18 frames - 150ms
     CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
     CTRL_scoreBar_width                         = 0
+    CTRL_scoreBar2_width                        = 0
     CTRL_feedback_bar_width                     = 2
     CTRL_feedback_offset_x                      = 2
     CTRL_feedback_frame_width                   = .2
@@ -4716,7 +4721,7 @@ protocol 'CPR_dyadic_competition' {
                     )
                 goto (
                     target                      = 'Dequeue Target'
-                    when                        = TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag) && (CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
                     )
                 goto (
                     target                      = 'Dequeue Feedback'
@@ -4885,6 +4890,8 @@ protocol 'CPR_dyadic_competition' {
                 INFO_TargetScore2               = 0
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
+                CTRL_feedback_flag              = true
+
                 // PRESENT AT SPEAKER R ONLY
                 if (INFO_TargetScore > .875) {
                     play_sound (Reward8R_sound)
@@ -4924,7 +4931,7 @@ protocol 'CPR_dyadic_competition' {
                 report ('--- OUTCOME: Single Hit A ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
 
-                goto ('Update Stimuli')
+                goto ('Start Feedback Timer')
             }
 
             state 'Coop/Comp: Single Hit B' {
@@ -4949,7 +4956,6 @@ protocol 'CPR_dyadic_competition' {
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
-
 
                 // PRESENT AT SPEAKER L ONLY
                 if (INFO_TargetScore2 > .875) {
@@ -4990,7 +4996,7 @@ protocol 'CPR_dyadic_competition' {
                 report ('--- OUTCOME: Single Hit B ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
 
-                goto ('Update Stimuli')
+                goto ('Start Feedback Timer')
             }
 
             state 'Comp: Dyadic Hit' {
