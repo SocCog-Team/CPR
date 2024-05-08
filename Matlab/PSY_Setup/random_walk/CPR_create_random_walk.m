@@ -34,7 +34,8 @@ end
 
 % Perform random walk in polar space
 for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the safe side    
-    % Update stimulus direction with random step
+    % Update stimulus direction with random step from distribution with 
+    % noise distribution: mean=0; std=param.polar_step_size
     out.RDP_direction(iSample)  	= out.RDP_direction(iSample-1) + randn * param.polar_step_size;
       
     % Check for reward target appearance
