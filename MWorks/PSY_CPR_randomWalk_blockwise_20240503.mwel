@@ -1032,6 +1032,40 @@ stimulus/advstimulus feedback2 (
     autoplay                                = YES
     )
 
+stimulus/advstimulus feedback1_comp (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = INFO_TargetScore
+    y_size                                  = INFO_TargetScore
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)180)
+    color                                   = COL_feedback_r,COL_feedback_g,COL_feedback_b
+    rotation                                = 0
+    alpha_multiplier                        = CTRL_feedback_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus feedback2_comp (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = INFO_TargetScore2
+    y_size                                  = INFO_TargetScore2
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)180)
+    color                                   = COL_feedback2_r,COL_feedback2_g,COL_feedback2_b
+    rotation                                = 180
+    alpha_multiplier                        = CTRL_feedback_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
 stimulus/advstimulus scoreBar (
     trigger_width                           = 0
     trigger_watch_x                         = 0
@@ -4679,8 +4713,8 @@ protocol 'CPR_dyadic_competition' {
                 //report ('Dequeue Feedback')
 
                 //Remove feedback from screen
-                dequeue_stimulus (feedback1)
-                dequeue_stimulus (feedback2)
+                dequeue_stimulus (feedback1_comp)
+                dequeue_stimulus (feedback2_comp)
                 update_stimulus_display ()
 
                 // Reset flag
@@ -4880,7 +4914,7 @@ protocol 'CPR_dyadic_competition' {
                 INFO_Score                      += INFO_dyadic_score
                 INFO_TrialScore                 += INFO_dyadic_score
                 INFO_TargetScore                = INFO_dyadic_score
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
@@ -4888,7 +4922,7 @@ protocol 'CPR_dyadic_competition' {
                 INFO_Score2                     += 0
                 INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
 
                 CTRL_feedback_flag              = true
 
@@ -4926,7 +4960,7 @@ protocol 'CPR_dyadic_competition' {
                 }
 
                 //Visual feedback
-                live_queue_stimulus (feedback1)
+                live_queue_stimulus (feedback1_comp)
 
                 report ('--- OUTCOME: Single Hit A ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
@@ -4944,7 +4978,7 @@ protocol 'CPR_dyadic_competition' {
                 INFO_Score                      += 0
                 INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
@@ -4953,7 +4987,7 @@ protocol 'CPR_dyadic_competition' {
                 INFO_Score2                     += INFO_dyadic_score
                 INFO_TrialScore2                += INFO_dyadic_score
                 INFO_TargetScore2               = INFO_dyadic_score
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
 
                 CTRL_feedback_flag              = true
 
@@ -4991,7 +5025,7 @@ protocol 'CPR_dyadic_competition' {
                 }
 
                 //Visual feedback
-                live_queue_stimulus (feedback2)
+                live_queue_stimulus (feedback2_comp)
 
                 report ('--- OUTCOME: Single Hit B ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
@@ -5012,7 +5046,7 @@ protocol 'CPR_dyadic_competition' {
                     INFO_Score                      += INFO_dyadic_score
                     INFO_TrialScore                 += INFO_dyadic_score
                     INFO_TargetScore                = INFO_dyadic_score
-                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
 
                     TRIAL_outcome2                  = "hit"
                     CTRL_hit_flag2                  = true
@@ -5021,7 +5055,7 @@ protocol 'CPR_dyadic_competition' {
                     INFO_Score2                     += 0
                     INFO_TrialScore2                += 0
                     INFO_TargetScore2               = 0
-                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
 
                     // PRESENT AT SPEAKER R ONLY
                     if (INFO_TargetScore > .875) {
@@ -5057,7 +5091,7 @@ protocol 'CPR_dyadic_competition' {
                     }
 
                     //Visual feedback
-                    live_queue_stimulus (feedback1)
+                    live_queue_stimulus (feedback1_comp)
                 }
 
                 if (TMP_score < TMP_score2) {
@@ -5068,7 +5102,7 @@ protocol 'CPR_dyadic_competition' {
                     INFO_Score                      += 0
                     INFO_TrialScore                 += 0
                     INFO_TargetScore                = 0
-                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
 
                     TRIAL_outcome2                  = "hit"
                     CTRL_hit_flag2                  = true
@@ -5077,7 +5111,7 @@ protocol 'CPR_dyadic_competition' {
                     INFO_Score2                     += INFO_dyadic_score
                     INFO_TrialScore2                += INFO_dyadic_score
                     INFO_TargetScore2               = INFO_dyadic_score
-                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
 
                     // PRESENT AT SPEAKER L ONLY
                     if (INFO_TargetScore2 > .875) {
@@ -5113,7 +5147,7 @@ protocol 'CPR_dyadic_competition' {
                     }
 
                     //Visual feedback
-                    live_queue_stimulus (feedback2)
+                    live_queue_stimulus (feedback2_comp)
                 }
 
                 live_queue_stimulus (fixationCross)
@@ -5183,8 +5217,8 @@ protocol 'CPR_dyadic_competition' {
                 dequeue_stimulus (indicator)   
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
-                dequeue_stimulus (feedback1)
-                dequeue_stimulus (feedback2)
+                dequeue_stimulus (feedback1_comp)
+                dequeue_stimulus (feedback2_comp)
 
                 TRIAL_align                     = false
                 TRIAL_end                       = TRIAL_start
@@ -5202,9 +5236,9 @@ protocol 'CPR_dyadic_competition' {
             }
 
             state 'ITI' (interruptible = YES) {
-                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NumTargets)
-                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NumTargets)
-                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NumTargets)
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
+                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
+                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
 
                 live_queue_stimulus (cum_rew_bar_frame)
                 live_queue_stimulus (cum_rew_bar_surface)
