@@ -24,8 +24,7 @@ cnt                                 = 0;
 nSamples                            = param.walk_duration_ms / param.Fs;                % Number of samples for random walk
 nCohSamples                         = param.coh_duration_ms / param.Fs;                 % Number of samples for coherence block
 nCohBlocks                          = param.walk_duration_ms/param.coh_duration_ms;     % Number of coheren block in stimulus cycle
-out.RDP_coherence_ts                = [0 nCohSamples.*(1:nCohBlocks-1)] .* param.Fs;    % Timstamps of coherence change [s]
-out.RDP_coherence_smple             = [0 nCohSamples.*(1:nCohBlocks-1)] ;               % Samples of coherence change [#]
+out.RDP_coherence_ts                = [0 nCohSamples.*(1:nCohBlocks-1)] .* param.Fs;    % Timstamps of coherence change
 
 if param.trial == 0
     out.RDP_coherence              	= fliplr(param.snr_list);   % Ordered coherence values
@@ -51,8 +50,8 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
             sample_idx                      = (out.feedback_ts(cnt-1)+(param.feedback_duration_ms/param.Fs)):out.feedback_ts(cnt);
         end
         
-        % Smooth direction values between two targets: Gaussian window - 40 samples wide
-        out.RDP_direction(sample_idx)    	= smoothdata(out.RDP_direction(sample_idx),"gaussian",40);
+        % Smooth direction values between two targets
+        out.RDP_direction(sample_idx)    	= smoothdata(out.RDP_direction(sample_idx),"gaussian",35);
     end
     
     %%% Keep RDP direction stable after target for target presentation time
