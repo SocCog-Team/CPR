@@ -191,6 +191,8 @@ group INFO {
     var INFO_TrialScore2                    = (float) 0
     var INFO_performance_percent            = (float) 0
     var INFO_performance_percent2           = (float) 0
+    var INFO_bonus_ply1_cents               = (float) 0
+    var INFO_bonus_ply2_cents               = (float) 0
     var INFO_reward_type                    = (string) 'fill_me'
 }
 
@@ -205,6 +207,7 @@ group CTRL {
     var CTRL_polar_step_size                = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
+    var CTRL_cents_per_target               = 2 // cents
     var CTRL_cancel_action_flag             = (bool) false
 
     var CTRL_arc_alpha                      = 0
@@ -2411,9 +2414,10 @@ protocol 'CPR_solo' {
                 CTRL_hit_flag                   = true
                 CTRL_feedback_flag              = true
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
                 INFO_TargetScore                = TMP_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 // PRESENT BOTH SPEAKERS - SETUP INDEPENDENT
@@ -2481,9 +2485,10 @@ protocol 'CPR_solo' {
                 TRIAL_outcome                   = "miss"
                 CTRL_miss_flag                  = true
                 INFO_ErrorCounter               += 1
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Miss ---')
@@ -3114,19 +3119,21 @@ protocol 'CPR_dyadic_neutral' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
                 INFO_TargetScore                = TMP_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
-
+                
                 CTRL_feedback_flag              = true
 
                 // PRESENT AT SPEAKER R ONLY
@@ -3179,18 +3186,20 @@ protocol 'CPR_dyadic_neutral' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
                 INFO_TargetScore2               = TMP_score2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -3246,20 +3255,22 @@ protocol 'CPR_dyadic_neutral' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
                 INFO_TargetScore                = TMP_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
                 INFO_TargetScore2               = TMP_score2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
-
+                
                 CTRL_feedback_flag              = true
 
                 // PRESENT AT SPEAKER R ONLY
@@ -3357,18 +3368,19 @@ protocol 'CPR_dyadic_neutral' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Dyadic Miss ---')
@@ -4017,17 +4029,19 @@ protocol 'CPR_dyadic_cooperation' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += INFO_dyadic_score / 2
-                INFO_TrialScore                 += INFO_dyadic_score / 2
                 INFO_TargetScore                = INFO_dyadic_score / 2
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += INFO_dyadic_score / 2
-                INFO_TrialScore2                += INFO_dyadic_score / 2
                 INFO_TargetScore2               = INFO_dyadic_score / 2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4093,18 +4107,20 @@ protocol 'CPR_dyadic_cooperation' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += INFO_dyadic_score / 2
-                INFO_TrialScore                 += INFO_dyadic_score / 2
                 INFO_TargetScore                = INFO_dyadic_score / 2
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += INFO_dyadic_score / 2
-                INFO_TrialScore2                += INFO_dyadic_score / 2
                 INFO_TargetScore2               = INFO_dyadic_score / 2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4171,18 +4187,20 @@ protocol 'CPR_dyadic_cooperation' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += INFO_dyadic_score / 2
-                INFO_TrialScore                 += INFO_dyadic_score / 2
                 INFO_TargetScore                = INFO_dyadic_score / 2
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += INFO_dyadic_score / 2
-                INFO_TrialScore2                += INFO_dyadic_score / 2
                 INFO_TargetScore2               = INFO_dyadic_score / 2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4257,18 +4275,19 @@ protocol 'CPR_dyadic_cooperation' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Dyadic Miss ---')
@@ -4913,18 +4932,20 @@ protocol 'CPR_dyadic_competition' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += INFO_dyadic_score
-                INFO_TrialScore                 += INFO_dyadic_score
                 INFO_TargetScore                = INFO_dyadic_score
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
+                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
 
@@ -4977,19 +4998,21 @@ protocol 'CPR_dyadic_competition' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
-                INFO_TargetScore                = 0
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
+                INFO_TargetScore                = 0 
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += INFO_dyadic_score
-                INFO_TrialScore2                += INFO_dyadic_score
                 INFO_TargetScore2               = INFO_dyadic_score
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
+                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
 
@@ -5041,23 +5064,26 @@ protocol 'CPR_dyadic_competition' {
 
                 // Set flags and add to counters
                 if (TMP_score > TMP_score2) {
+
                     TRIAL_outcome                   = "hit"
                     CTRL_hit_flag                   = true
                     CTRL_miss_flag                  = false
                     INFO_HitCounter                 += 1
-                    INFO_Score                      += INFO_dyadic_score
-                    INFO_TrialScore                 += INFO_dyadic_score
-                    INFO_TargetScore                = INFO_dyadic_score
-                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
+                    INFO_TargetScore                = INFO_dyadic_score 
+                    INFO_Score                      += INFO_TargetScore
+                    INFO_TrialScore                 += INFO_TargetScore
+                    INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                     TRIAL_outcome2                  = "hit"
                     CTRL_hit_flag2                  = true
                     CTRL_miss_flag2                 = false
                     INFO_HitCounter2                += 1
-                    INFO_Score2                     += 0
-                    INFO_TrialScore2                += 0
                     INFO_TargetScore2               = 0
-                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
+                    INFO_Score2                     += INFO_TargetScore2
+                    INFO_TrialScore2                += INFO_TargetScore2
+                    INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
+                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                     // PRESENT AT SPEAKER R ONLY
                     if (INFO_TargetScore > .875) {
@@ -5097,23 +5123,27 @@ protocol 'CPR_dyadic_competition' {
                 }
 
                 if (TMP_score < TMP_score2) {
+
                     TRIAL_outcome                   = "hit"
                     CTRL_hit_flag                   = true
                     CTRL_miss_flag                  = false
                     INFO_HitCounter                 += 1
-                    INFO_Score                      += 0
-                    INFO_TrialScore                 += 0
-                    INFO_TargetScore                = 0
-                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/(INFO_TrialTargetCounter*2))
+                    INFO_TargetScore                = 0 
+                    INFO_Score                      += INFO_TargetScore
+                    INFO_TrialScore                 += INFO_TargetScore
+                    INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                    CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                     TRIAL_outcome2                  = "hit"
                     CTRL_hit_flag2                  = true
                     CTRL_miss_flag2                 = false
                     INFO_HitCounter2                += 1
-                    INFO_Score2                     += INFO_dyadic_score
-                    INFO_TrialScore2                += INFO_dyadic_score
                     INFO_TargetScore2               = INFO_dyadic_score
-                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/(INFO_TrialTargetCounter*2))
+                    INFO_Score2                     += INFO_TargetScore2
+                    INFO_TrialScore2                += INFO_TargetScore2
+                    INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
+                    CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+
 
                     // PRESENT AT SPEAKER L ONLY
                     if (INFO_TargetScore2 > .875) {
@@ -5178,18 +5208,19 @@ protocol 'CPR_dyadic_competition' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Dyadic Miss ---')
