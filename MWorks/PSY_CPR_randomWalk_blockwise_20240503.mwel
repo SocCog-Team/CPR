@@ -191,6 +191,8 @@ group INFO {
     var INFO_TrialScore2                    = (float) 0
     var INFO_performance_percent            = (float) 0
     var INFO_performance_percent2           = (float) 0
+    var INFO_bonus_ply1_cents               = (float) 0
+    var INFO_bonus_ply2_cents               = (float) 0
     var INFO_reward_type                    = (string) 'fill_me'
 }
 
@@ -205,6 +207,7 @@ group CTRL {
     var CTRL_polar_step_size                = 0
     var CTRL_Xmax                           = 15.2024
     var CTRL_Ymax                           = 11.4018
+    var CTRL_cents_per_target               = 2 // cents
     var CTRL_cancel_action_flag             = (bool) false
 
     var CTRL_arc_alpha                      = 0
@@ -395,11 +398,11 @@ group EYE { // CHANGE VARIABLE NAMES
 }
 
 group RDP {
-    var RDP_direction                       = (integer) 0 {
+    var RDP_direction                       = (float) 0 {
         if (TRIAL_start > TRIAL_end) {
     		// Restrict to circular space [0:359]
-    		TMP_RDPdir 					    = (RDP_direction + 360) % 360
-        }
+            TMP_RDPdir                      = (int)(RDP_direction + 360) % 360
+       }
     }
     var RDP_radius                          = 8
     var RDP_y                               = 0
@@ -1022,6 +1025,40 @@ stimulus/advstimulus feedback2 (
     trigger_flag                            = 0
     x_size                                  = INFO_TargetScore2*2
     y_size                                  = INFO_TargetScore2*2
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)180)
+    color                                   = COL_feedback2_r,COL_feedback2_g,COL_feedback2_b
+    rotation                                = 180
+    alpha_multiplier                        = CTRL_feedback_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus feedback1_comp (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = INFO_TargetScore
+    y_size                                  = INFO_TargetScore
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)180)
+    color                                   = COL_feedback_r,COL_feedback_g,COL_feedback_b
+    rotation                                = 0
+    alpha_multiplier                        = CTRL_feedback_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus feedback2_comp (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = INFO_TargetScore2
+    y_size                                  = INFO_TargetScore2
     x_position                              = RDP_x
     y_position                              = RDP_y
     shape                                   = format("circle %d", (integer)180)
@@ -1985,7 +2022,7 @@ protocol 'CPR_solo' {
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
     CTRL_polar_step_size                        = 0.05
-    CTRL_target_probability                     = 0.05
+    CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
@@ -2014,7 +2051,7 @@ protocol 'CPR_solo' {
     CTRL_feedback_nBar                          = 2
     
     // Check and double-check luminance!
-    COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]; Player2 - green: [0 .27 0]
+    COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]; Player2 - green: [0 .4 0]
     COL_player1_g                               = .1255
     COL_player1_b                               = .9412
     COL_arc_r                                   = COL_player1_r
@@ -2048,7 +2085,7 @@ protocol 'CPR_solo' {
     TMP_polar_step_size                         = CTRL_polar_step_size
     TMP_feedback_probability                    = CTRL_target_probability
     TMP_feedback_ITI_ms                         = CTRL_target_ITI_ms
-    TMP_feedback_duration_ms                    = CTRL_feedback_ms
+    TMP_feedback_duration_ms                    = CTRL_target_duration_ms
     TMP_snr_list                                = CTRL_snr_list
     ML_sync                                     = 0
 
@@ -2151,7 +2188,7 @@ protocol 'CPR_solo' {
                 TMP_polar_step_size             = CTRL_polar_step_size
                 TMP_feedback_probability        = CTRL_target_probability
                 TMP_feedback_ITI_ms             = CTRL_target_ITI_ms
-                TMP_feedback_duration_ms        = CTRL_feedback_ms
+                TMP_feedback_duration_ms        = CTRL_target_duration_ms
                 TMP_snr_list                    = CTRL_snr_list
                 ML_sync                         = 0 // Stop sync
 
@@ -2377,9 +2414,10 @@ protocol 'CPR_solo' {
                 CTRL_hit_flag                   = true
                 CTRL_feedback_flag              = true
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
                 INFO_TargetScore                = TMP_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 // PRESENT BOTH SPEAKERS - SETUP INDEPENDENT
@@ -2447,9 +2485,10 @@ protocol 'CPR_solo' {
                 TRIAL_outcome                   = "miss"
                 CTRL_miss_flag                  = true
                 INFO_ErrorCounter               += 1
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Miss ---')
@@ -2551,7 +2590,7 @@ protocol 'CPR_dyadic_neutral' {
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
-    CTRL_target_probability                     = 0.05
+    CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
@@ -2588,8 +2627,8 @@ protocol 'CPR_dyadic_neutral' {
     COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]
     COL_player1_g                               = .1255
     COL_player1_b                               = .9412
-    COL_player2_r                               = 0 //Player2 - green: [0 .27 0]
-    COL_player2_g                               = .27
+    COL_player2_r                               = 0 //Player2 - green: [0 .4 0]
+    COL_player2_g                               = .4
     COL_player2_b                               = 0
     COL_target_r                                = 1 // gold: RGB [1 .8745 0]
     COL_target_g                                = 0.8745 
@@ -2636,7 +2675,7 @@ protocol 'CPR_dyadic_neutral' {
     TMP_polar_step_size                         = CTRL_polar_step_size
     TMP_feedback_probability                    = CTRL_target_probability
     TMP_feedback_ITI_ms                         = CTRL_target_ITI_ms
-    TMP_feedback_duration_ms                    = CTRL_feedback_ms
+    TMP_feedback_duration_ms                    = CTRL_target_duration_ms
     TMP_snr_list                                = CTRL_snr_list
     ML_sync                                     = 0
 
@@ -2784,7 +2823,7 @@ protocol 'CPR_dyadic_neutral' {
                 TMP_polar_step_size             = CTRL_polar_step_size
                 TMP_feedback_probability        = CTRL_target_probability
                 TMP_feedback_ITI_ms             = CTRL_target_ITI_ms
-                TMP_feedback_duration_ms        = CTRL_feedback_ms
+                TMP_feedback_duration_ms        = CTRL_target_duration_ms
                 TMP_snr_list                    = CTRL_snr_list
                 ML_sync                         = 0 // Stop sync
 
@@ -3080,19 +3119,21 @@ protocol 'CPR_dyadic_neutral' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
                 INFO_TargetScore                = TMP_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
-
+                
                 CTRL_feedback_flag              = true
 
                 // PRESENT AT SPEAKER R ONLY
@@ -3145,18 +3186,20 @@ protocol 'CPR_dyadic_neutral' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
                 INFO_TargetScore2               = TMP_score2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -3212,20 +3255,22 @@ protocol 'CPR_dyadic_neutral' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += TMP_score
-                INFO_TrialScore                 += TMP_score
                 INFO_TargetScore                = TMP_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += TMP_score2
-                INFO_TrialScore2                += TMP_score2
                 INFO_TargetScore2               = TMP_score2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
-
+                
                 CTRL_feedback_flag              = true
 
                 // PRESENT AT SPEAKER R ONLY
@@ -3323,18 +3368,19 @@ protocol 'CPR_dyadic_neutral' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Dyadic Miss ---')
@@ -3364,6 +3410,7 @@ protocol 'CPR_dyadic_neutral' {
                 dequeue_stimulus (indicator)   
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
+                dequeue_stimulus (target)
                 dequeue_stimulus (feedback1)
                 dequeue_stimulus (feedback2)
 
@@ -3447,7 +3494,7 @@ protocol 'CPR_dyadic_cooperation' {
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
-    CTRL_target_probability                     = 0.05
+    CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
@@ -3484,8 +3531,8 @@ protocol 'CPR_dyadic_cooperation' {
     COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]
     COL_player1_g                               = .1255
     COL_player1_b                               = .9412
-    COL_player2_r                               = 0 //Player2 - green: [0 .27 0]
-    COL_player2_g                               = .27
+    COL_player2_r                               = 0 //Player2 - green: [0 .4 0]
+    COL_player2_g                               = .4
     COL_player2_b                               = 0
     COL_target_r                                = 1 // gold: RGB [1 .8745 0]
     COL_target_g                                = 0.8745 
@@ -3532,7 +3579,7 @@ protocol 'CPR_dyadic_cooperation' {
     TMP_polar_step_size                         = CTRL_polar_step_size
     TMP_feedback_probability                    = CTRL_target_probability
     TMP_feedback_ITI_ms                         = CTRL_target_ITI_ms
-    TMP_feedback_duration_ms                    = CTRL_feedback_ms
+    TMP_feedback_duration_ms                    = CTRL_target_duration_ms
     TMP_snr_list                                = CTRL_snr_list
     ML_sync                                     = 0
 
@@ -3680,7 +3727,7 @@ protocol 'CPR_dyadic_cooperation' {
                 TMP_polar_step_size             = CTRL_polar_step_size
                 TMP_feedback_probability        = CTRL_target_probability
                 TMP_feedback_ITI_ms             = CTRL_target_ITI_ms
-                TMP_feedback_duration_ms        = CTRL_feedback_ms
+                TMP_feedback_duration_ms        = CTRL_target_duration_ms
                 TMP_snr_list                    = CTRL_snr_list
                 ML_sync                         = 0 // Stop sync
 
@@ -3982,17 +4029,19 @@ protocol 'CPR_dyadic_cooperation' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += INFO_dyadic_score / 2
-                INFO_TrialScore                 += INFO_dyadic_score / 2
                 INFO_TargetScore                = INFO_dyadic_score / 2
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += INFO_dyadic_score / 2
-                INFO_TrialScore2                += INFO_dyadic_score / 2
                 INFO_TargetScore2               = INFO_dyadic_score / 2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4058,18 +4107,20 @@ protocol 'CPR_dyadic_cooperation' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += INFO_dyadic_score / 2
-                INFO_TrialScore                 += INFO_dyadic_score / 2
                 INFO_TargetScore                = INFO_dyadic_score / 2
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += INFO_dyadic_score / 2
-                INFO_TrialScore2                += INFO_dyadic_score / 2
                 INFO_TargetScore2               = INFO_dyadic_score / 2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4136,18 +4187,20 @@ protocol 'CPR_dyadic_cooperation' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += INFO_dyadic_score / 2
-                INFO_TrialScore                 += INFO_dyadic_score / 2
                 INFO_TargetScore                = INFO_dyadic_score / 2
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += INFO_dyadic_score / 2
-                INFO_TrialScore2                += INFO_dyadic_score / 2
                 INFO_TargetScore2               = INFO_dyadic_score / 2
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4222,18 +4275,19 @@ protocol 'CPR_dyadic_cooperation' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Dyadic Miss ---')
@@ -4263,6 +4317,7 @@ protocol 'CPR_dyadic_cooperation' {
                 dequeue_stimulus (indicator)   
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
+                dequeue_stimulus (target)
                 dequeue_stimulus (feedback1)
                 dequeue_stimulus (feedback2)
 
@@ -4346,7 +4401,7 @@ protocol 'CPR_dyadic_competition' {
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
-    CTRL_target_probability                     = 0.05
+    CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = 1
@@ -4383,8 +4438,8 @@ protocol 'CPR_dyadic_competition' {
     COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]
     COL_player1_g                               = .1255
     COL_player1_b                               = .9412
-    COL_player2_r                               = 0 //Player2 - green: [0 .27 0]
-    COL_player2_g                               = .27
+    COL_player2_r                               = 0 //Player2 - green: [0 .4 0]
+    COL_player2_g                               = .4
     COL_player2_b                               = 0
     COL_target_r                                = 1 // gold: RGB [1 .8745 0]
     COL_target_g                                = 0.8745 
@@ -4431,7 +4486,7 @@ protocol 'CPR_dyadic_competition' {
     TMP_polar_step_size                         = CTRL_polar_step_size
     TMP_feedback_probability                    = CTRL_target_probability
     TMP_feedback_ITI_ms                         = CTRL_target_ITI_ms
-    TMP_feedback_duration_ms                    = CTRL_feedback_ms
+    TMP_feedback_duration_ms                    = CTRL_target_duration_ms
     TMP_snr_list                                = CTRL_snr_list
     ML_sync                                     = 0
 
@@ -4578,7 +4633,7 @@ protocol 'CPR_dyadic_competition' {
                 TMP_polar_step_size             = CTRL_polar_step_size
                 TMP_feedback_probability        = CTRL_target_probability
                 TMP_feedback_ITI_ms             = CTRL_target_ITI_ms
-                TMP_feedback_duration_ms        = CTRL_feedback_ms
+                TMP_feedback_duration_ms        = CTRL_target_duration_ms
                 TMP_snr_list                    = CTRL_snr_list
                 ML_sync                         = 0 // Stop sync
 
@@ -4679,8 +4734,8 @@ protocol 'CPR_dyadic_competition' {
                 //report ('Dequeue Feedback')
 
                 //Remove feedback from screen
-                dequeue_stimulus (feedback1)
-                dequeue_stimulus (feedback2)
+                dequeue_stimulus (feedback1_comp)
+                dequeue_stimulus (feedback2_comp)
                 update_stimulus_display ()
 
                 // Reset flag
@@ -4877,17 +4932,19 @@ protocol 'CPR_dyadic_competition' {
                 CTRL_hit_flag                   = true
                 CTRL_miss_flag                  = false
                 INFO_HitCounter                 += 1
-                INFO_Score                      += INFO_dyadic_score
-                INFO_TrialScore                 += INFO_dyadic_score
                 INFO_TargetScore                = INFO_dyadic_score
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4926,7 +4983,7 @@ protocol 'CPR_dyadic_competition' {
                 }
 
                 //Visual feedback
-                live_queue_stimulus (feedback1)
+                live_queue_stimulus (feedback1_comp)
 
                 report ('--- OUTCOME: Single Hit A ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
@@ -4941,18 +4998,20 @@ protocol 'CPR_dyadic_competition' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
-                INFO_TargetScore                = 0
+                INFO_TargetScore                = 0 
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                 CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
                 CTRL_miss_flag2                 = false
                 INFO_HitCounter2                += 1
-                INFO_Score2                     += INFO_dyadic_score
-                INFO_TrialScore2                += INFO_dyadic_score
                 INFO_TargetScore2               = INFO_dyadic_score
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 CTRL_feedback_flag              = true
@@ -4991,7 +5050,7 @@ protocol 'CPR_dyadic_competition' {
                 }
 
                 //Visual feedback
-                live_queue_stimulus (feedback2)
+                live_queue_stimulus (feedback2_comp)
 
                 report ('--- OUTCOME: Single Hit B ---')
                 report ('Score_A: $INFO_TargetScore || Score_B: $INFO_TargetScore2')
@@ -5005,22 +5064,25 @@ protocol 'CPR_dyadic_competition' {
 
                 // Set flags and add to counters
                 if (TMP_score > TMP_score2) {
+
                     TRIAL_outcome                   = "hit"
                     CTRL_hit_flag                   = true
                     CTRL_miss_flag                  = false
                     INFO_HitCounter                 += 1
-                    INFO_Score                      += INFO_dyadic_score
-                    INFO_TrialScore                 += INFO_dyadic_score
-                    INFO_TargetScore                = INFO_dyadic_score
+                    INFO_TargetScore                = INFO_dyadic_score 
+                    INFO_Score                      += INFO_TargetScore
+                    INFO_TrialScore                 += INFO_TargetScore
+                    INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                     CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                     TRIAL_outcome2                  = "hit"
                     CTRL_hit_flag2                  = true
                     CTRL_miss_flag2                 = false
                     INFO_HitCounter2                += 1
-                    INFO_Score2                     += 0
-                    INFO_TrialScore2                += 0
                     INFO_TargetScore2               = 0
+                    INFO_Score2                     += INFO_TargetScore2
+                    INFO_TrialScore2                += INFO_TargetScore2
+                    INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                     CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                     // PRESENT AT SPEAKER R ONLY
@@ -5057,27 +5119,31 @@ protocol 'CPR_dyadic_competition' {
                     }
 
                     //Visual feedback
-                    live_queue_stimulus (feedback1)
+                    live_queue_stimulus (feedback1_comp)
                 }
 
                 if (TMP_score < TMP_score2) {
+
                     TRIAL_outcome                   = "hit"
                     CTRL_hit_flag                   = true
                     CTRL_miss_flag                  = false
                     INFO_HitCounter                 += 1
-                    INFO_Score                      += 0
-                    INFO_TrialScore                 += 0
-                    INFO_TargetScore                = 0
+                    INFO_TargetScore                = 0 
+                    INFO_Score                      += INFO_TargetScore
+                    INFO_TrialScore                 += INFO_TargetScore
+                    INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
                     CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                     TRIAL_outcome2                  = "hit"
                     CTRL_hit_flag2                  = true
                     CTRL_miss_flag2                 = false
                     INFO_HitCounter2                += 1
-                    INFO_Score2                     += INFO_dyadic_score
-                    INFO_TrialScore2                += INFO_dyadic_score
                     INFO_TargetScore2               = INFO_dyadic_score
+                    INFO_Score2                     += INFO_TargetScore2
+                    INFO_TrialScore2                += INFO_TargetScore2
+                    INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                     CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
+
 
                     // PRESENT AT SPEAKER L ONLY
                     if (INFO_TargetScore2 > .875) {
@@ -5113,7 +5179,7 @@ protocol 'CPR_dyadic_competition' {
                     }
 
                     //Visual feedback
-                    live_queue_stimulus (feedback2)
+                    live_queue_stimulus (feedback2_comp)
                 }
 
                 live_queue_stimulus (fixationCross)
@@ -5142,18 +5208,19 @@ protocol 'CPR_dyadic_competition' {
                 TRIAL_outcome                   = "miss"
                 CTRL_hit_flag                   = false
                 CTRL_miss_flag                  = true
-                INFO_Score                      += 0
-                INFO_TrialScore                 += 0
                 INFO_TargetScore                = 0
+                INFO_Score                      += INFO_TargetScore
+                INFO_TrialScore                 += INFO_TargetScore
+                INFO_bonus_ply1_cents           += INFO_TargetScore * CTRL_cents_per_target
+                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
 
                 TRIAL_outcome2                  = "miss"
                 CTRL_hit_flag2                  = false
                 CTRL_miss_flag2                 = true
-                INFO_Score2                     += 0
-                INFO_TrialScore2                += 0
                 INFO_TargetScore2               = 0
-
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialTargetCounter)
+                INFO_Score2                     += INFO_TargetScore2
+                INFO_TrialScore2                += INFO_TargetScore2
+                INFO_bonus_ply2_cents           += INFO_TargetScore2 * CTRL_cents_per_target
                 CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                 report ('--- OUTCOME: Dyadic Miss ---')
@@ -5183,8 +5250,9 @@ protocol 'CPR_dyadic_competition' {
                 dequeue_stimulus (indicator)   
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
-                dequeue_stimulus (feedback1)
-                dequeue_stimulus (feedback2)
+                dequeue_stimulus (target)
+                dequeue_stimulus (feedback1_comp)
+                dequeue_stimulus (feedback2_comp)
 
                 TRIAL_align                     = false
                 TRIAL_end                       = TRIAL_start
@@ -5202,9 +5270,9 @@ protocol 'CPR_dyadic_competition' {
             }
 
             state 'ITI' (interruptible = YES) {
-                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NumTargets)
-                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NumTargets)
-                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/CTRL_NumTargets)
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
+                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
+                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
 
                 live_queue_stimulus (cum_rew_bar_frame)
                 live_queue_stimulus (cum_rew_bar_surface)
