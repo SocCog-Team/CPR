@@ -3,7 +3,7 @@ function out = CPR_create_random_walk(param)
 if nargin < 1
     % Set parameters
     param.trial                     = 0;
-    param.coh_duration_ms       	= 20000;                % Duration of coherence block
+    param.coh_duration_ms       	= 10000;                % Duration of coherence block
     param.walk_duration_ms      	= 60000;                % Duration of random walk (stimulus cycle)
     param.Fs                        = 1000 / 120;           % Screen sampling rate
     param.snr_list                  = [.2 .4 .6 .8];        % Stimulus coherence
@@ -51,7 +51,7 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
         if cnt == 1
             sample_idx                      = 1:out.feedback_ts(cnt);
         else
-            sample_idx                      = (out.feedback_ts(cnt-1)+(param.feedback_duration_ms/param.Fs)):out.feedback_ts(cnt);
+            sample_idx                      = (out.feedback_ts(cnt-1)+((param.feedback_duration_ms*2)/param.Fs)) : out.feedback_ts(cnt);
         end
         
         % Smooth direction values between two targets: Gaussian window - 40 samples wide
@@ -59,7 +59,8 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
     end
     
     %%% Keep RDP direction stable after target for target presentation time
-    if ~feedback_flag && (iSample-out.feedback_ts(end)) < (param.feedback_duration_ms/param.Fs)
+    if ~feedback_flag && (iSample - out.feedback_ts(end)) <= ((param.feedback_duration_ms*2)/param.Fs)
+        disp(iSample)
         out.RDP_direction(iSample)      = out.RDP_direction(iSample-1); % Fix stimulus direction for duration of feedback
     end
 end

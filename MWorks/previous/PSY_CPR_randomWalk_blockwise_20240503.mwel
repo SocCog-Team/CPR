@@ -193,8 +193,6 @@ group INFO {
     var INFO_performance_percent2           = (float) 0
     var INFO_bonus_ply1_cents               = (float) 0
     var INFO_bonus_ply2_cents               = (float) 0
-    var INFO_score_ply1                     = (float) 0
-    var INFO_score_ply2                     = (float) 0
     var INFO_reward_type                    = (string) 'fill_me'
 }
 
@@ -2020,7 +2018,7 @@ protocol 'CPR_solo' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NumTargets                             = 125
+    CTRL_NumTargets                             = 200
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
     CTRL_polar_step_size                        = 0.05
@@ -2234,8 +2232,6 @@ protocol 'CPR_solo' {
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
                     }
-
-                TRIAL_reactionEvent = true
 
                 live_queue_stimulus (scoreBarBackground)
                 live_queue_stimulus (scoreBar)
@@ -2590,7 +2586,7 @@ protocol 'CPR_dyadic_neutral' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NumTargets                             = 125
+    CTRL_NumTargets                             = 200
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
@@ -2871,8 +2867,6 @@ protocol 'CPR_dyadic_neutral' {
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
                     }
-                
-                TRIAL_reactionEvent = true
 
                 live_queue_stimulus (scoreBarBackground2)
                 live_queue_stimulus (scoreBar2)
@@ -3496,7 +3490,7 @@ protocol 'CPR_dyadic_cooperation' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NumTargets                             = 125
+    CTRL_NumTargets                             = 200
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
@@ -3780,8 +3774,6 @@ protocol 'CPR_dyadic_cooperation' {
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
                     }
-
-                TRIAL_reactionEvent = true
 
                 live_queue_stimulus (scoreBarBackground2)
                 live_queue_stimulus (scoreBar2)
@@ -4405,7 +4397,7 @@ protocol 'CPR_dyadic_competition' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NumTargets                             = 125
+    CTRL_NumTargets                             = 200
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
     CTRL_polar_step_size                        = 0.05
@@ -4685,8 +4677,6 @@ protocol 'CPR_dyadic_competition' {
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
                     }
-                    
-                TRIAL_reactionEvent = true
 
                 live_queue_stimulus (scoreBarBackground2)
                 live_queue_stimulus (scoreBar2)
@@ -4935,9 +4925,7 @@ protocol 'CPR_dyadic_competition' {
                  
             // COOPERATION/ COOPERATION REWARD
             state 'Coop/Comp: Single Hit A' {
-                INFO_score_ply1                     = TMP_score
-                INFO_score_ply2                     = 0
-                INFO_dyadic_score                   = (INFO_score_ply1 + INFO_score_ply2)    
+                INFO_dyadic_score                   = (TMP_score + 0)    
 
                 // Set flags and add to counters
                 TRIAL_outcome                   = "hit"
@@ -4962,35 +4950,35 @@ protocol 'CPR_dyadic_competition' {
                 CTRL_feedback_flag              = true
 
                 // PRESENT AT SPEAKER R ONLY
-                if (INFO_score_ply1 > .875) {
+                if (INFO_TargetScore > .875) {
                     play_sound (Reward8R_sound)
                 }
 
-                if (INFO_score_ply1 > .75 && INFO_score_ply1 <= .875) {
+                if (INFO_TargetScore > .75 && INFO_TargetScore <= .875) {
                     play_sound (Reward7R_sound)
                 }
 
-                if (INFO_score_ply1 > .625 && INFO_score_ply1 <= .75) {
+                if (INFO_TargetScore > .625 && INFO_TargetScore <= .75) {
                     play_sound (Reward6R_sound)
                 }
 
-                if (INFO_score_ply1 > .5 && INFO_score_ply1 <= .625) {
+                if (INFO_TargetScore > .5 && INFO_TargetScore <= .625) {
                     play_sound (Reward5R_sound)
                 }
 
-                if (INFO_score_ply1 > .375 && INFO_score_ply1 <= .5) {
+                if (INFO_TargetScore > .375 && INFO_TargetScore <= .5) {
                     play_sound (Reward4R_sound)
                 }
 
-                if (INFO_score_ply1 > .25 && INFO_score_ply1 <= .375) {
+                if (INFO_TargetScore > .25 && INFO_TargetScore <= .375) {
                     play_sound (Reward3R_sound)
                 }
 
-                if (INFO_score_ply1 > .125 && INFO_score_ply1 <= .25) {
+                if (INFO_TargetScore > .125 && INFO_TargetScore <= .25) {
                     play_sound (Reward2R_sound)
                 }
 
-                if (INFO_score_ply1 <= .125) {
+                if (INFO_TargetScore <= .125) {
                     play_sound (Reward1R_sound)
                 }
 
@@ -5004,9 +4992,7 @@ protocol 'CPR_dyadic_competition' {
             }
 
             state 'Coop/Comp: Single Hit B' {
-                INFO_score_ply1                     = 0
-                INFO_score_ply2                     = TMP_score2
-                INFO_dyadic_score                   = (INFO_score_ply1 + INFO_score_ply2)    
+                INFO_dyadic_score                   = (0 + TMP_score2)    
 
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
@@ -5031,35 +5017,35 @@ protocol 'CPR_dyadic_competition' {
                 CTRL_feedback_flag              = true
 
                 // PRESENT AT SPEAKER L ONLY
-                if (INFO_score_ply2 > .875) {
+                if (INFO_TargetScore2 > .875) {
                     play_sound (Reward8L_sound)
                 }
 
-                if (INFO_score_ply2 > .75 && INFO_score_ply2 <= .875) {
+                if (INFO_TargetScore2 > .75 && INFO_TargetScore2 <= .875) {
                     play_sound (Reward7L_sound)
                 }
 
-                if (INFO_score_ply2 > .625 && INFO_score_ply2 <= .75) {
+                if (INFO_TargetScore2 > .625 && INFO_TargetScore2 <= .75) {
                     play_sound (Reward6L_sound)
                 }
 
-                if (INFO_score_ply2 > .5 && INFO_score_ply2 <= .625) {
+                if (INFO_TargetScore2 > .5 && INFO_TargetScore2 <= .625) {
                     play_sound (Reward5L_sound)
                 }
 
-                if (INFO_score_ply2 > .375 && INFO_score_ply2 <= .5) {
+                if (INFO_TargetScore2 > .375 && INFO_TargetScore2 <= .5) {
                     play_sound (Reward4L_sound)
                 }
 
-                if (INFO_score_ply2 > .25 && INFO_score_ply2 <= .375) {
+                if (INFO_TargetScore2 > .25 && INFO_TargetScore2 <= .375) {
                     play_sound (Reward3L_sound)
                 }
 
-                if (INFO_score_ply2 > .125 && INFO_score_ply2 <= .25) {
+                if (INFO_TargetScore2 > .125 && INFO_TargetScore2 <= .25) {
                     play_sound (Reward2L_sound)
                 }
 
-                if (INFO_score_ply2 <= .125) {
+                if (INFO_TargetScore2 <= .125) {
                     play_sound (Reward1L_sound)
                 }
 
@@ -5074,9 +5060,7 @@ protocol 'CPR_dyadic_competition' {
 
             state 'Comp: Dyadic Hit' {
                 report ('--- OUTCOME: Dyadic Hit ---')
-                INFO_score_ply1                     = TMP_score
-                INFO_score_ply2                     = TMP_score2
-                INFO_dyadic_score                   = (INFO_score_ply1 + INFO_score_ply2)    
+                INFO_dyadic_score                   = (TMP_score + TMP_score2)    
 
                 // Set flags and add to counters
                 if (TMP_score > TMP_score2) {
@@ -5102,35 +5086,35 @@ protocol 'CPR_dyadic_competition' {
                     CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialTargetCounter)
 
                     // PRESENT AT SPEAKER R ONLY
-                    if (INFO_score_ply1 > .875) {
+                    if (INFO_TargetScore > .875) {
                         play_sound (Reward8R_sound)
                     }
 
-                    if (INFO_score_ply1 > .75 && INFO_score_ply1 <= .875) {
+                    if (INFO_TargetScore > .75 && INFO_TargetScore <= .875) {
                         play_sound (Reward7R_sound)
                     }
 
-                    if (INFO_score_ply1 > .625 && INFO_score_ply1 <= .75) {
+                    if (INFO_TargetScore > .625 && INFO_TargetScore <= .75) {
                         play_sound (Reward6R_sound)
                     }
 
-                    if (INFO_score_ply1 > .5 && INFO_score_ply1 <= .625) {
+                    if (INFO_TargetScore > .5 && INFO_TargetScore <= .625) {
                         play_sound (Reward5R_sound)
                     }
 
-                    if (INFO_score_ply1 > .375 && INFO_score_ply1 <= .5) {
+                    if (INFO_TargetScore > .375 && INFO_TargetScore <= .5) {
                         play_sound (Reward4R_sound)
                     }
 
-                    if (INFO_score_ply1 > .25 && INFO_score_ply1 <= .375) {
+                    if (INFO_TargetScore > .25 && INFO_TargetScore <= .375) {
                         play_sound (Reward3R_sound)
                     }
 
-                    if (INFO_score_ply1 > .125 && INFO_score_ply1 <= .25) {
+                    if (INFO_TargetScore > .125 && INFO_TargetScore <= .25) {
                         play_sound (Reward2R_sound)
                     }
 
-                    if (INFO_score_ply1 <= .125) {
+                    if (INFO_TargetScore <= .125) {
                         play_sound (Reward1R_sound)
                     }
 
@@ -5162,35 +5146,35 @@ protocol 'CPR_dyadic_competition' {
 
 
                     // PRESENT AT SPEAKER L ONLY
-                    if (INFO_score_ply2 > .875) {
+                    if (INFO_TargetScore2 > .875) {
                         play_sound (Reward8L_sound)
                     }
 
-                    if (INFO_score_ply2 > .75 && INFO_score_ply2 <= .875) {
+                    if (INFO_TargetScore2 > .75 && INFO_TargetScore2 <= .875) {
                         play_sound (Reward7L_sound)
                     }
 
-                    if (INFO_score_ply2 > .625 && INFO_score_ply2 <= .75) {
+                    if (INFO_TargetScore2 > .625 && INFO_TargetScore2 <= .75) {
                         play_sound (Reward6L_sound)
                     }
 
-                    if (INFO_score_ply2 > .5 && INFO_score_ply2 <= .625) {
+                    if (INFO_TargetScore2 > .5 && INFO_TargetScore2 <= .625) {
                         play_sound (Reward5L_sound)
                     }
 
-                    if (INFO_score_ply2 > .375 && INFO_score_ply2 <= .5) {
+                    if (INFO_TargetScore2 > .375 && INFO_TargetScore2 <= .5) {
                         play_sound (Reward4L_sound)
                     }
 
-                    if (INFO_score_ply2 > .25 && INFO_score_ply2 <= .375) {
+                    if (INFO_TargetScore2 > .25 && INFO_TargetScore2 <= .375) {
                         play_sound (Reward3L_sound)
                     }
 
-                    if (INFO_score_ply2 > .125 && INFO_score_ply2 <= .25) {
+                    if (INFO_TargetScore2 > .125 && INFO_TargetScore2 <= .25) {
                         play_sound (Reward2L_sound)
                     }
 
-                    if (INFO_score_ply2 <= .125) {
+                    if (INFO_TargetScore2 <= .125) {
                         play_sound (Reward1L_sound)
                     }
 
@@ -5286,9 +5270,9 @@ protocol 'CPR_dyadic_competition' {
             }
 
             state 'ITI' (interruptible = YES) {
-                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/(CTRL_NumTargets))
-                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/(CTRL_NumTargets))
-                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/(CTRL_NumTargets))
+                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
+                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
+                CTRL_feedback_target_bar_height = INFO_TargetCounter*(CTRL_feedback_frame_height/(CTRL_NumTargets*2))
 
                 live_queue_stimulus (cum_rew_bar_frame)
                 live_queue_stimulus (cum_rew_bar_surface)
