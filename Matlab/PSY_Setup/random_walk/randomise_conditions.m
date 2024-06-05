@@ -14,9 +14,9 @@ exp_order = conditions(index);
 
 disp('---');
 disp(['Experimental Order: ']);
+
 for i = 1:3
     disp([num2str(i) ') ' exp_order{i}]);
 end
-
 end
 

@@ -3,8 +3,10 @@ close all
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 
 source_dir = '/Users/fschneider/ownCloud/var_plot/';
-load([ source_dir '/solo_performance.mat'])
-load([ source_dir '/hh_dyad_performance.mat'])
+load([source_dir '/solo_performance.mat'])
+load([source_dir '/hh_dyad_performance.mat'])
+load([source_dir '/solo_correlation.mat'])
+load([source_dir '/hh_dyad_correlation.mat'])
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/raw';
 col                 = cool(7);
@@ -181,6 +183,51 @@ print(f, [dest_dir '/metacog_example_roc_' num2str(option_flag)], '-r500', '-dsv
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function [x,y,auc] = metacog_state(in_perf,in_cr,option_flag)
+
+n_min_samples       = 5;
+snr                 = in_perf{end}.carr;
+
+for iSubj = 1:length(in_perf)
+    
+    if isempty(in_perf{iSubj})
+        continue
+    end
+    
+    clear ecc acc coh outc ts
+    ecc             = in_perf{iSubj}.trg_all_ecc; % Target eccentricity
+    acc             = in_perf{iSubj}.trg_all_acc; % Target accuracy
+    coh             = in_perf{iSubj}.trg_all_coh; % Target coherence
+    
+    for iCoh = 1:length(snr)
+        cIdx        = coh == snr(iCoh); % Coherence index
+        acc_idx     = acc > median(acc(cIdx)); % Index: Above median accuracy
+        ecc_idx     = ecc > median(ecc(cIdx)); % Index: Above median eccentricity
+        ts_idx      = ts > mean(in_cr{iSubj}.lag); % Index: Target presentations after average response lag
+        
+        if option_flag == 1
+            % Option 1: eccentricity filtered for hits and accuracy
+            dat1        = ecc(cIdx & ts_idx & outc & acc_idx); % p(correct & high accuracy)
+            dat2        = ecc(cIdx & ts_idx & outc & ~acc_idx); % p(correct & low accuracy)
+        elseif option_flag == 2
+            % Option 2: accuracy filtered for outcome and high eccentricity
+            dat1        = acc(cIdx & ts_idx & outc & ecc_idx); % p(correct & high ecc)
+            dat2        = acc(cIdx & ts_idx & ~outc & ecc_idx); % p(incorrect & high ecc)
+        end
+        
+        % Filter for number of samples
+        if  length(dat1) >= n_min_samples && length(dat2) >= n_min_samples
+            [x{iSubj,iCoh},y{iSubj,iCoh},auc(iSubj,iCoh)] = getAUROC(dat2, dat1);
+        else
+            x{iSubj,iCoh}   = nan;
+            y{iSubj,iCoh}   = nan;
+            auc(iSubj,iCoh) = nan;
+        end
+    end
+end
+end
+
 
 function [x,y,auc] = metacog(in_perf,in_cr,option_flag)
 

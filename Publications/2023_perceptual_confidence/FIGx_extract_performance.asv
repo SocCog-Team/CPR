@@ -513,10 +513,6 @@ for iCoh = 1:length(snr)
     out.macc_state(iCoh)  	= nanmedian(js_acc_state);
     out.acc_state{iCoh}    	= js_acc_state';
     
-    if length(out.acc_state{iCoh}) ~= length(out.ecc_state{iCoh})
-        error('stop');
-    end
-    
     % Joystick accuracy [before first target]
     t1_outc                 = cellfun(@(x) x(1), in.trg_hit,'UniformOutput', false);
     t1_ts                   = cellfun(@(x) x(1), cellfun(@double,in.trg_ts,'UniformOutput', false));
