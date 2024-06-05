@@ -11,14 +11,19 @@ js_ecc      = t.js_ecc(data_idx);
 dt_x        = [];
 dt_y        = [];
 
+% Create a VideoWriter object
+writerObj                   = VideoWriter('CPR_animation_paper.mp4', 'MPEG-4');
+writerObj.Quality        	= 20; % Adjust quality (default is 75)
+writerObj.FrameRate         = 100; % Set the frame rate [Hz]
+open(writerObj);
+
+% Create a figure
 f                           = figure('units','centimeters','position',[0 0 15 15]);
+ax                          = gca;
+
 for iState = 1:length(dots)
     for iFrame = 1:length(dots{iState})
          
-%         if mod(iFrame,3) == 0
-%             continue
-%         end
-        
         % Clear axes
         cla
         
@@ -69,9 +74,16 @@ for iState = 1:length(dots)
         ax.XTick = [];
         ax.YTick = [];
         axis square
-        pause(.00001)
+        
+        % Use drawnow to update the figure
+        drawnow;
+        
+        % Write the current frame to the video file
+        writeVideo(writerObj, getframe(gcf));
+%         pause(1/120)
     end
 end
 
 
-
+% Close the video file
+close(writerObj);
