@@ -169,8 +169,8 @@ group INFO {
     var INFO_task                           = (string) 'fill_me' // String [CPR_solo_random]
     var INFO_date                           = (string) 'fill_me' // Integer, [yyymmdd]
     var INFO_block                          = (string) 'fill_me' // Integer, [2]
-    var INFO_setup                          = (string) 'fill_me' // String, solo: [fxs]; dyadic: [fxsanc]
-    var INFO_subject                        = (string) 'fill_me' // String, : [psycho3]; dyadic: [psycho4psycho3]
+    var INFO_setup                          = (string) 'psy4psy3' // String, : [psycho3]; dyadic: [psycho4psycho3]
+    var INFO_subject                        = (string) 'fill_me' // String, solo: [fxs]; dyadic: [fxsanc]
     var INFO_FrameCounter                   = (integer) 0
     var INFO_CoherenceStateCounter          = (integer) 0
     var INFO_TargetCounter                  = (integer) 0
@@ -292,7 +292,7 @@ group CTRL {
     var CTRL_fixation2_break_flag           = (bool) false
     var CTRL_fixation2_penalty_flag         = (bool) false
     var CTRL_minFixBreak_duration_ms        = 300
-    var CTRL_fixBreak_penalty_duration_ms   = 0
+    var CTRL_fixBreak_penalty_duration_ms   = 1
 
     var CTRL_scoreBar_width                 = 0
     var CTRL_scoreBar_size                  = 18.2
@@ -471,16 +471,16 @@ group COL {
 
 group IO {
     // Measure manually [server]
-    var IO_joystickX_raw_max                = (float) 1023
-    var IO_joystickX_raw_min                = (float) 0
-    var IO_joystickY_raw_max                = (float) 1023
-    var IO_joystickY_raw_min                = (float) 0
+    var IO_joystickX_raw_max                = (float) 511
+    var IO_joystickX_raw_min                = (float) 511
+    var IO_joystickY_raw_max                = (float) 511
+    var IO_joystickY_raw_min                = (float) 511
 
     // Measure manually [stream]
-    var IO_joystickX2_raw_max               = (float) 1023
-    var IO_joystickX2_raw_min               = (float) 0
-    var IO_joystickY2_raw_max               = (float) 1023
-    var IO_joystickY2_raw_min               = (float) 0
+    var IO_joystickX2_raw_max               = (float) 511
+    var IO_joystickX2_raw_min               = (float) 511
+    var IO_joystickY2_raw_max               = (float) 511
+    var IO_joystickY2_raw_min               = (float) 511
 
     var IO_joystickTrigger                  = (bool) false
     var IO_joystickTrigger2                 = (bool) false
@@ -2785,7 +2785,7 @@ protocol 'CPR_dyadic_neutral' {
                 ML_sync                         = 1 // Matlab sync event
                 TRIAL_start                     += 1 // Count trial number
                 TRIAL_align                     = 1 // Trial align event
-                INFO_task                       = "CPR_dyadic_random_walk"
+                INFO_task                       = "CPR_dyadic_random_walk_neutral"
                 TRIAL_type                      = "CPR_dyadic_neutral"
                 INFO_FrameCounter               = 0
                 INFO_CoherenceStateCounter      = 0  
@@ -3691,7 +3691,7 @@ protocol 'CPR_dyadic_cooperation' {
                 ML_sync                         = 1 // Matlab sync event
                 TRIAL_start                     += 1 // Count trial number
                 TRIAL_align                     = 1 // Trial align event
-                INFO_task                       = "CPR_dyadic_random_walk"
+                INFO_task                       = "CPR_dyadic_random_walk_cooperation"
                 TRIAL_type                      = "CPR_dyadic_cooperation"
                 INFO_FrameCounter               = 0
                 INFO_CoherenceStateCounter      = 0  
@@ -4599,7 +4599,7 @@ protocol 'CPR_dyadic_competition' {
                 ML_sync                         = 1 // Matlab sync event
                 TRIAL_start                     += 1 // Count trial number
                 TRIAL_align                     = 1 // Trial align event
-                INFO_task                       = "CPR_dyadic_random_walk"
+                INFO_task                       = "CPR_dyadic_random_walk_competition"
                 TRIAL_type                      = "CPR_dyadic_competition"
                 INFO_FrameCounter               = 0
                 INFO_CoherenceStateCounter      = 0  
