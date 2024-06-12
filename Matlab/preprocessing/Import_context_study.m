@@ -5,10 +5,10 @@ addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 cd /Users/fschneider/Desktop/social_context_study/
 
 % Number of tested dyads
-num_dyads = 2;
+num_dyads = 3;
 
 % Configuration file
-cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/felix_context_study.cfg';
+cfg_pth = '/Users/fschneider/Documents/GitHub/CPR/Matlab/CFG/felix_context_study.cfg';
 
 % Variables to import
 var_import = {

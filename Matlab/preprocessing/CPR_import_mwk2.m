@@ -1,4 +1,4 @@
-function d = CPR_import_mwk2(fname, var_lst, write_file, cfg_path)
+function d = CPR_import_mwk2(fname, var_lst, write_file, cfg_pth)
 
 % This function imports .mwk2 files into a data structure using the 
 % MW_readFile function developed by Ralf Brockhausen.
@@ -86,7 +86,7 @@ else
         d     	= MW_readFile(fname, 'include', var_lst, '~typeOutcomeCheck','dotPositions'); % Import .mwk2 file
         
         if write_file
-            disp('Save struct...')
+            disp('Save data structure...')
             MW_writeH5(d, [fname(1:end-5) '.h5'], 'replace', 'privateCFG', cfg_pth) % Save to .h5
             disp('Done!')
         end
