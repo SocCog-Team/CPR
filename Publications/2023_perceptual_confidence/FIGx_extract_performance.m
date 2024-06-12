@@ -199,6 +199,7 @@ end
 dest_dir = ['/Users/fschneider/ownCloud/var_plot/'];
 mkdir(dest_dir);
 
+
 save([dest_dir 'solo_performance.mat'], 'solo_perf', '-v7.3');
 save([dest_dir 'comp_performance.mat'], 'comp_perf', '-v7.3');
 save([dest_dir 'hc_dyad_performance.mat'], 'hc_dyad_perf', '-v7.3');
