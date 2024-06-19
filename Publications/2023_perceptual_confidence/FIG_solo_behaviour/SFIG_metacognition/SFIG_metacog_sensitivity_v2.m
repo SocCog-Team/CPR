@@ -50,6 +50,11 @@ line([0 8],[.5 .5], 'color',[0 0 0], 'LineStyle', ':')
 print(f, [dest_dir '/metacog_population'], '-r500', '-dpng');
 print(f, [dest_dir '/metacog_population'], '-r500', '-dsvg');
 
+% Test difference from 0.5
+for iCoh = 1:size(auc,2)
+    [Pval(iCoh),Hval(iCoh),STATS(iCoh)] = signrank(auc(:,iCoh),.5);
+end
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Comparison solo-dyadic %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
