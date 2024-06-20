@@ -160,60 +160,6 @@ print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_co
 print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/SFIG_computer_dyad/raw/SFIGraw_part2', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% Igor - control plot
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-load([source_pth 'hh_dyad_pairwise_performance.mat'])
-tmp_dyad = [dyad_pw_perf(:,1); dyad_pw_perf(:,2)];
-for iSubj = 1:length(solo_perf)
-        id_solo{iSubj}           	= solo_perf{iSubj}.id;
-end
-
-for iSubj = 1:size(tmp_dyad,1)
-    for iCoh = 1:length(snr)
-        idx_solo = cellfun(@(x) strcmp(x,tmp_dyad{iSubj}.id), id_solo);
-
-        % Solo - Computer dyad
-        auc_acc_SH_pw(iSubj,iCoh) = getAUROC(solo_perf{idx_solo}.acc_trg{iCoh},tmp_dyad{iSubj}.acc_trg{iCoh});
-        auc_ecc_SH_pw(iSubj,iCoh) = getAUROC(solo_perf{idx_solo}.ecc_trg{iCoh},tmp_dyad{iSubj}.ecc_trg{iCoh});
-      
-    end
-end
-
-figure; hold on
-cl = [0 0 1;.8 0 0];
-for ii = 1:2
-    clear xdat ydat
-    
-    if ii == 1
-        xdat = mean(auc_ecc_SC,2);
-        ydat = mean(auc_acc_SC,2);
-        str = 'Solo vs HC Dyad';
-        ofs = .1;
-    else
-        xdat = mean(auc_acc_SH_pw,2);
-        ydat = mean(auc_ecc_SH_pw,2);
-        str = 'Solo vs HH Dyad [pairwise]';
-        ofs = .6;
-    end
-    
-    size(xdat)
-    sc = scatter(xdat, ydat, 'MarkerFaceColor', cl(ii,:),'MarkerFaceAlpha',.3, 'MarkerEdgeColor','none'); lsline
-    [r,p] = corrcoef(xdat, ydat);
-    text(ofs,.35, str, 'FontSize', 12, 'Color', cl(ii,:));
-    text(ofs,.25, ['r = ' num2str(r(2))], 'FontSize', 12, 'Color', cl(ii,:));
-    text(ofs,.3, ['p = ' num2str(p(2))], 'FontSize', 12, 'Color', cl(ii,:));
-end
-
-line([.5 .5], [0 1],'Color', 'k', 'LineStyle', ':', 'LineWidth',1.5)
-line([0 1], [.5 .5],'Color', 'k', 'LineStyle', ':', 'LineWidth',1.5);
-xlabel('AUC: Eccentricity')
-ylabel('AUC: Accuracy')
-ylim([0 1])
-xlim([0 1])
-set(gca,'fontsize', 20);
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

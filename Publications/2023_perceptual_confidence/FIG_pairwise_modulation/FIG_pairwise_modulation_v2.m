@@ -318,29 +318,31 @@ end
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Dyadic modulation - histogram %%% SUPPLEMENTARY
+%% PLOT: Dyad-wise modulation %%% SUPPLEMENTARY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_pairwise_modulation/raw/';
 f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 ofs                         = .025;
 nbin                        = 12;
+dyad_pw_modulation          = computer_player_modulation(solo_perf,hc_dyad_pw_perf,dyad_pw_perf);
 
 for iPlot = 1:4
     ax                      = subplot(2,2,iPlot); hold on
-
+    
+    ln                     	= line([0 1],[.5 .5]);
+    ln.Color              	= [0 0 0];
+    ln.LineWidth           	= lw;
+    ln.LineStyle           	= ':';
+    
+    ln                     	= line([.5 .5],[-1 1]);
+    ln.Color              	= [0 0 0];
+    ln.LineWidth           	= lw;
+    ln.LineStyle           	= ':';
+        
+        
     if iPlot == 1
         %%% Subject-wise social modulation of accuracy and eccentricity %%%
-        ln                     	= line([0 1],[.5 .5]);
-        ln.Color              	= [0 0 0];
-        ln.LineWidth           	= lw;
-        ln.LineStyle           	= ':';
-        
-        ln                     	= line([.5 .5],[0 1]);
-        ln.Color              	= [0 0 0];
-        ln.LineWidth           	= lw;
-        ln.LineStyle           	= ':';
-        
         sc                      = scatter([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2]);
         sc.MarkerFaceColor      = [hcol];
         sc.MarkerEdgeColor      = 'none';
@@ -351,31 +353,21 @@ for iPlot = 1:4
         ax.YLim                 = [0 1];
         
         [r,pv]               	= corrcoef([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2]);
-        r                       = r(2);
-        pv                      = pv(2);
+        r                       = r(2)
+        pv                      = pv(2)
         
         linearCoefficients      = polyfit([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2], 1);
         x_fit                   = linspace(-1, 1, 50);
         y_fit                   = polyval(linearCoefficients, x_fit);
         pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
 
-        pl.Color         	= rcol;
-        tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
-        tx.Color          	= hcol;
-        tx.FontSize      	= 8;
+        pl.Color                = rcol;
+        tx                      = text(.5,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+        tx.Color                = hcol;
+        tx.FontSize             = 8;
         
-    elseif iPlot == 2
-        %%% Average dyad-wise accuracy modulation as function of solo eccentricity difference %%%
-        ln                     	= line([0 1],[0 0]);
-        ln.Color              	= [0 0 0];
-        ln.LineWidth           	= lw;
-        ln.LineStyle           	= ':';
-        
-        ln                     	= line([.5 .5],[-1 1]);
-        ln.Color              	= [0 0 0];
-        ln.LineWidth           	= lw;
-        ln.LineStyle           	= ':';
-        
+    elseif iPlot == 3
+        %%% Average dyad-wise accuracy modulation as function of solo eccentricity difference %%%       
         sc                      = scatter(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2));
         sc.MarkerFaceColor      = [hcol];
         sc.MarkerEdgeColor      = 'none';
@@ -386,29 +378,81 @@ for iPlot = 1:4
         ax.YLim                 = [0 .4];
         
         [r,pv]               	= corrcoef(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2));
-        r                       = r(2);
-        pv                      = pv(2);
+        r                       = r(2)
+        pv                      = pv(2)
         
         linearCoefficients      = polyfit(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2), 1);
         x_fit                   = linspace(-1, 1, 50);
         y_fit                   = polyval(linearCoefficients, x_fit);
         pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
 
-        pl.Color         	= rcol;
-        tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
-        tx.Color          	= hcol;
-        tx.FontSize      	= 8;
+        pl.Color                = rcol;
+        tx                      = text(.5,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+        tx.Color                = hcol;
+        tx.FontSize             = 8;
             
-    elseif iPlot == 3
-        %%% Solo vs HC and HH vs HC modulation comparison
+    elseif iPlot == 2
+        %%% Solo vs HC comparison
+        ydat = mean(dyad_pw_modulation.auc_ecc_SC,2);
+        xdat = mean(dyad_pw_modulation.auc_acc_SC,2);
         
+        sc                      = scatter(xdat, ydat);
+        sc.MarkerFaceColor      = [hcol];
+        sc.MarkerEdgeColor      = 'none';
+        sc.MarkerFaceAlpha      = .5;
+        sc.SizeData = 20;
+        
+        [r,pv] = corrcoef(xdat, ydat);
+        r                       = r(2)
+        pv                      = pv(2)
+        
+        linearCoefficients      = polyfit(xdat,ydat, 1);
+        x_fit                   = linspace(-1, 1, 50);
+        y_fit                   = polyval(linearCoefficients, x_fit);
+        pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
+        pl.Color                = rcol;
+        tx                      = text(.6,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+        tx.Color                = hcol;
+        tx.FontSize             = 8;
+        
+        ax.YLabel.String        = 'Eccentricity change [AUC]';
+        ax.XLabel.String        = 'Accuracy change [AUC]';
+        ax.YLim                 = [0 1];
+        ax.XLim                 = [.4 .8];
+        
+    elseif iPlot == 4
+        %%% HH vs HC modulation comparison
+        ydat = mean(dyad_pw_modulation.auc_ecc_HC,2);
+        xdat = mean(dyad_pw_modulation.auc_acc_HC,2);
+        
+        sc                      = scatter(xdat, ydat);
+        sc.MarkerFaceColor      = [hcol];
+        sc.MarkerEdgeColor      = 'none';
+        sc.MarkerFaceAlpha      = .5;
+        sc.SizeData = 20;
+        
+        [r,pv] = corrcoef(xdat, ydat);
+        r                       = r(2)
+        pv                      = pv(2)
+        
+        linearCoefficients      = polyfit(xdat,ydat, 1);
+        x_fit                   = linspace(-1, 1, 50);
+        y_fit                   = polyval(linearCoefficients, x_fit);
+        pl                      = plot(x_fit, y_fit, '-', 'LineWidth', 1);
+        pl.Color                = rcol;
+        tx                      = text(.6,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
+        tx.Color                = hcol;
+        tx.FontSize             = 8;
+        
+        ax.YLabel.String      	= 'AUC: Eccentricity';
+        ax.XLabel.String       	= 'AUC: Accuracy';
+        ax.YLim                 = [0 1];
+        ax.XLim                 = [.4 .8];    
     end
     
-    sc.SizeData         = 20;
     ax.Position(1)              = ax.Position(1) - ofs;
     ax.FontSize                 = lb_fs;
 end
-
 
 print(f, [dest_dir '/FIG_auc_dyadwise'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG_auc_dyadwise'], '-r500', '-dsvg', '-painters');
@@ -741,6 +785,66 @@ for iDyad = 1:size(in_dyad,1)
     % Effect size: Solo vs Dyadic
     [auc.ecc1(iDyad), auc.ecc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'ecc_state');
     [auc.acc1(iDyad), auc.acc2(iDyad)] = calcAUROC(in_solo, in_dyad, idx_ply1, idx_ply2, iDyad, 'acc_trg');
+
+end
+end
+
+function out = computer_player_modulation(solo_perf,hc_dyad_pw_perf,dyad_pw_perf)
+
+tmp_dyad                        = [dyad_pw_perf(:,1); dyad_pw_perf(:,2)];
+tmp_agent                       = hc_dyad_pw_perf(:,2);
+snr                             = solo_perf{1}.carr;
+
+% Extract subject sequence
+for iSubj = 1:size(tmp_agent,1)
+    if ~isempty(tmp_agent{iSubj})
+        id_hc_dyad{iSubj}           	= tmp_agent{iSubj}.id;
+    else
+        id_hc_dyad{iSubj}           	= 'empty';
+    end
+end
+
+for iSubj = 1:size(tmp_dyad,1)
+    if ~isempty(tmp_dyad{iSubj})
+        id_dyad{iSubj}           	= tmp_dyad{iSubj}.id;
+    else
+        id_dyad{iSubj}           	= 'empty';
+    end
+end
+
+% Contrast data
+scnt = 0;
+dcnt = 0;
+
+for iSub = 1:length(solo_perf)
+        
+    idx_pc                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_hc_dyad);
+    idx_dy                          = cellfun(@(x) strcmp(x,solo_perf{iSub}.id),id_dyad);
+    
+    if sum(idx_pc) == 0 || sum(idx_dy) == 0
+        continue
+    end
+    
+    scnt = scnt+1;
+    
+    for iCoh = 1:length(snr)
+        out.auc_acc_SC(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},tmp_agent{idx_pc}.acc_trg{iCoh});
+        out.auc_ecc_SC(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},tmp_agent{idx_pc}.ecc_state{iCoh});
+    end
+    
+    sessions = find(idx_dy);
+    for iSession = sessions
+        dcnt = dcnt+1;
+
+        for iCoh = 1:length(snr)
+            
+            out.auc_acc_SH(dcnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},tmp_dyad{iSession}.acc_trg{iCoh});
+            out.auc_ecc_SH(dcnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},tmp_dyad{iSession}.ecc_state{iCoh});
+            
+            out.auc_acc_HC(dcnt,iCoh)       = getAUROC(tmp_dyad{iSession}.acc_trg{iCoh},tmp_agent{idx_pc}.acc_trg{iCoh});
+            out.auc_ecc_HC(dcnt,iCoh)     	= getAUROC(tmp_dyad{iSession}.ecc_state{iCoh},tmp_agent{idx_pc}.ecc_state{iCoh});
+        end
+    end
 end
 end
 
