@@ -328,9 +328,13 @@ nbin                        = 12;
 
 for iPlot = 1:4
     ax                      = subplot(2,2,iPlot); hold on
-
+    
     if iPlot == 1
-        %%% Subject-wise social modulation of accuracy and eccentricity %%%
+    
+    elseif iPlot == 2
+
+    elseif iPlot == 3
+        %%% Subject-wise modulation %%%
         ln                     	= line([0 1],[.5 .5]);
         ln.Color              	= [0 0 0];
         ln.LineWidth           	= lw;
@@ -364,8 +368,8 @@ for iPlot = 1:4
         tx.Color          	= hcol;
         tx.FontSize      	= 8;
         
-    elseif iPlot == 2
-        %%% Average dyad-wise accuracy modulation as function of solo eccentricity difference %%%
+    elseif iPlot == 4
+        %%% Average dyad-wise modulation of accuracy and eccentricity %%%
         ln                     	= line([0 1],[0 0]);
         ln.Color              	= [0 0 0];
         ln.LineWidth           	= lw;
@@ -398,9 +402,6 @@ for iPlot = 1:4
         tx                 	= text(.4,.15,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
         tx.Color          	= hcol;
         tx.FontSize      	= 8;
-            
-    elseif iPlot == 3
-        %%% Solo vs HC and HH vs HC modulation comparison
         
     end
     
