@@ -1,11 +1,11 @@
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/preprocessing
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 
-% cd /Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_social_context/pilot/
-cd /Users/fschneider/Desktop/social_context_study/
+cd /Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_social_context/
+% cd /Users/fschneider/Desktop/social_context_study/
 
 % Number of tested dyads
-num_dyads = 3;
+num_dyads = 5;
 
 % Configuration file
 cfg_pth = '/Users/fschneider/Documents/GitHub/CPR/Matlab/CFG/felix_context_study.cfg';
@@ -22,9 +22,9 @@ var_import = {
     '#stimDisplay'};
 
 % Loop through each dyad folder...
-for iDyad = 1:num_dyads
+for iDyad = 4:num_dyads
     % Extract all files
-    file_list = dir(['Dyad' num2str(iDyad)]);
+    file_list = dir(['Dyad' num2str(iDyad) '/mwk2/']);
     
     % Convert each CPR .mwk2 file to .h5 
     for iFile = 1:length(file_list)
