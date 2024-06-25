@@ -28,7 +28,7 @@ scol                        = [.1 .1 .1];
 hcol                        = [.1 .1 .1];
 lw                         	= 1;
 lb_fs                    	= 8;
-
+sc_size                     = 10;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PLOT: Scatter dyadic modulation %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -104,7 +104,7 @@ for iPlot = 1:4
         x                       = ecc_df.solo';
         y                       = abs(auc.ecc1-auc.ecc2)';
         sc                      = scatter(x,y,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc.SizeData             = 10;
+        sc.SizeData             = sc_size;
         [ft1,gof1]              = fit(x,y,'poly1');
         [ft2,gof2]              = fit(x,y,'poly2');
         ecc_rsquared            = [gof1.adjrsquare gof2.adjrsquare];
@@ -121,7 +121,7 @@ for iPlot = 1:4
         x                       = acc_df.solo';
         y                       = abs(auc.acc1-auc.acc2)';
         sc                      = scatter(x,y,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc.SizeData             = 10;
+        sc.SizeData             = sc_size;
         [ft1,gof1]              = fit(x,y,'poly1');
         [ft2,gof2]              = fit(x,y,'poly2');
         acc_rsquared            = [gof1.adjrsquare gof2.adjrsquare];
@@ -171,7 +171,7 @@ for i = 1:2
     if i == 1
         df_subset               = auc.ecc1 - auc.ecc2;
         sc1                     = scatter(ecc_df.solo,df_subset,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc1.SizeData            = 10;
+        sc1.SizeData            = sc_size;
         
         [x_fit, y_fit, r(i,1), pv(i,1)]	= regr_line(ax,ecc_df.solo,df_subset,rcol, .3);
         ax.XLim                 = [-.35 .35];
@@ -181,7 +181,7 @@ for i = 1:2
     elseif i == 2
         df_subset               = auc.acc1 - auc.acc2;
         sc2                     = scatter(acc_df.solo,df_subset,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc2.SizeData            = 10;
+        sc2.SizeData            = sc_size;
         
         [x_fit, y_fit, r(i,2), pv(i,2)]	= regr_line(ax,acc_df.solo,df_subset,rcol,.13);
         ax.XLim                 = [-.1 .1];
@@ -211,7 +211,7 @@ for iPlot = 1:2
     if iPlot == 1
         sc1                     = scatter(abs(ecc_df.solo),abs(ecc_df.dyad),'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
         sc1.MarkerFaceAlpha     = .5;
-        sc1.SizeData            = 10;
+        sc1.SizeData            = sc_size;
         ax.XLim                 = [0 .4];
         ax.YLim                 = [0 .4];
         subset_str              = 'Eccentricity';
@@ -228,7 +228,7 @@ for iPlot = 1:2
     elseif iPlot == 2
         sc2                     = scatter(abs(acc_df.solo),abs(acc_df.dyad),'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
         sc2.MarkerFaceAlpha     = .5;
-        sc2.SizeData            = 10;
+        sc2.SizeData            = sc_size;
         ax.XLim                 = [0 .12];
         ax.YLim                 = [0 .12];
         subset_str              = 'Accuracy';
@@ -400,7 +400,6 @@ for iPlot = 1:4
         sc.MarkerFaceColor      = [hcol];
         sc.MarkerEdgeColor      = 'none';
         sc.MarkerFaceAlpha      = .5;
-        sc.SizeData = 20;
         
         [r,pv] = corrcoef(xdat, ydat);
         r                       = r(2)
@@ -429,7 +428,6 @@ for iPlot = 1:4
         sc.MarkerFaceColor      = [hcol];
         sc.MarkerEdgeColor      = 'none';
         sc.MarkerFaceAlpha      = .5;
-        sc.SizeData = 20;
         
         [r,pv] = corrcoef(xdat, ydat);
         r                       = r(2)
@@ -450,6 +448,7 @@ for iPlot = 1:4
         ax.XLim                 = [.4 .8];    
     end
     
+    sc.SizeData             = sc_size;
     ax.Position(1)              = ax.Position(1) - ofs;
     ax.FontSize                 = lb_fs;
 end
@@ -488,7 +487,7 @@ for i = 1:4
     sc.MarkerFaceColor  = scol;
     sc.MarkerFaceAlpha  = .5;
     sc.MarkerEdgeColor  = 'none';
-    sc.SizeData         = 20; 
+    sc.SizeData         = sc_size; 
     
     if i == 2 || i == 4
         ax.XLim     	= [.4 1];
@@ -552,7 +551,7 @@ for i = 1:4
     sc.MarkerFaceColor  = scol;
     sc.MarkerFaceAlpha  = .5;
     sc.MarkerEdgeColor  = 'none';
-    sc.SizeData         = 20; 
+    sc.SizeData         = sc_size; 
     
     ax.FontSize         = lb_fs;
     ax.XLabel.String    = str;
@@ -615,7 +614,7 @@ for i = 1:4
     sc.MarkerFaceColor  = scol;
     sc.MarkerFaceAlpha  = .5;
     sc.MarkerEdgeColor  = 'none';
-    sc.SizeData         = 20; 
+    sc.SizeData         = sc_size; 
     
     ax.FontSize         = lb_fs;
     ax.XLabel.String    = xstr;
@@ -672,8 +671,10 @@ median([auc.acc1,auc.acc2])
 
 % Regression to mean problem
 nRep                        = 5000;
-auc_str                     = 'acc';
+auc_str                     = 'ecc';
 solo_str                    = 'ecc';
+% auc_str                     = 'acc';
+% solo_str                    = 'acc';
 n                           = 1;
 [shuffl_coeff, true_coeff]  = regr_ci(nRep,auc,raw,auc_str,solo_str);
 p_actual                    = mean(shuffl_coeff(:,1) <= true_coeff(1));
@@ -918,6 +919,7 @@ out                         = id_auc(mean(auc_ecc,2)<.5);
 end
 
 function plot_scatter(df,auc1,auc2,label_neg,ply1_flag,ply2_flag)
+sc_size                     = 10;
 
 if ~label_neg
     ply1_flag = false([1 length(df)]); % Overwrite flags
@@ -943,8 +945,8 @@ for i = 1:length(df)
         sc2 = scatter(df(i),auc2(i),'MarkerFaceColor','none','MarkerEdgeColor',col,'MarkerEdgeAlpha',1,'Marker','o');
     end
     
-    sc1.SizeData                = 10;
-    sc2.SizeData                = 10;
+    sc1.SizeData                = sc_size;
+    sc2.SizeData                = sc_size;
 end
 end
 
