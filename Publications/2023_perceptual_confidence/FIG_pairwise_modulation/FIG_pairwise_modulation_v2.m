@@ -672,11 +672,11 @@ median([auc.acc1,auc.acc2])
 
 % Regression to mean problem
 nRep                        = 5000;
-auc_str                     = 'acc';
+auc_str                     = 'ecc';
 solo_str                    = 'ecc';
 n                           = 1;
 [shuffl_coeff, true_coeff]  = regr_ci(nRep,auc,raw,auc_str,solo_str);
-p_actual                    = mean(shuffl_coeff(:,1) <= true_coeff(1));
+p_actual                    = mean(shuffl_coeff(:,1) <= true_coeff(1))
 
 %%% See coefficients here
 % figure
