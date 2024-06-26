@@ -58,11 +58,14 @@ for iSub = 1:length(solo_perf)
 
     auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
     auc_acc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
-    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(hc_dyad_perf{idx_pc}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
+    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_perf{idx_dy}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
     
     auc_ecc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
     auc_ecc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc_state'),cell2mat(dyad_perf{idx_dy}.ecc_state'));
-    auc_ecc_pooled_CH(scnt)         = getAUROC(cell2mat(hc_dyad_perf{idx_pc}.ecc_state'),cell2mat(dyad_perf{idx_dy}.ecc_state'));
+    auc_ecc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_perf{idx_dy}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
+
+    p_ecc_pooled_CH(scnt)        	= ranksum(cell2mat(dyad_perf{idx_dy}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
+    p_acc_pooled_CH(scnt)       	= ranksum(cell2mat(dyad_perf{idx_dy}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
 
     for iCoh = 1:length(snr)
         % Solo - Computer dyad
@@ -87,6 +90,9 @@ for iSub = 1:length(solo_perf)
         auc_acc_CH(scnt,iCoh)       = getAUROC(dyad_perf{idx_dy}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
         auc_ecc_CH(scnt,iCoh)     	= getAUROC(dyad_perf{idx_dy}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
         auc_score_CH(scnt,iCoh)  	= getAUROC(dyad_perf{idx_dy}.trg_score{iCoh},hc_dyad_perf{idx_pc}.trg_score{iCoh});
+        
+        p_acc_CH(scnt,iCoh)            = ranksum(dyad_perf{idx_dy}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+        p_ecc_CH(scnt,iCoh)            = ranksum(dyad_perf{idx_dy}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
     end
 end
 
@@ -282,13 +288,43 @@ print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_co
 %%% Reported stats
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Accuracy effect
-better_all_coh  = sum(sum(auc_acc_CH < .5,2) == size(auc_acc_CH,2)) / size(auc_acc_CH,1);
-better_zero_coh = sum(auc_acc_CH(:,1) < .5) / size(auc_acc_CH,1);
+% Accuracy [coherence pooled, within subject]
+acc_better_sign_bool  	= auc_acc_pooled_CH > .5 & p_acc_pooled_CH < ( .05 / length(p_acc_pooled_CH));
+acc_better_perc_sign    = sum(acc_better_sign_bool) / length(acc_better_sign_bool);
+acc_worse_sign_bool     = auc_acc_pooled_CH < .5 & p_acc_pooled_CH < ( .05 / length(p_acc_pooled_CH));
+acc_worse_perc_sign     = sum(acc_worse_sign_bool) / length(acc_worse_sign_bool);
 
-% Eccentricity effect
-worse_all_coh  = sum(sum(auc_ecc_CH > .5,2) == size(auc_ecc_CH,2)) / size(auc_ecc_CH,1);
-worse_98_coh = sum(auc_ecc_CH(:,end) > .5) / size(auc_ecc_CH,1);
+% Eccentricity [coherence pooled, within subject]
+ecc_better_sign_bool  	= auc_ecc_pooled_CH > .5 & p_ecc_pooled_CH < ( .05 / length(p_ecc_pooled_CH));
+ecc_better_perc_sign  	= sum(ecc_better_sign_bool) / length(ecc_better_sign_bool);
+ecc_worse_sign_bool  	= auc_ecc_pooled_CH < .5 & p_ecc_pooled_CH < ( .05 / length(p_ecc_pooled_CH));
+ecc_worse_perc_sign    	= sum(ecc_worse_sign_bool) / length(ecc_worse_sign_bool);
+
+% Test across subjects
+median(auc_ecc_pooled_CH)
+[p,h,stats] = signrank(auc_ecc_pooled_CH,.5)
+median(auc_acc_pooled_CH)
+[p,h,stats] = signrank(auc_acc_pooled_CH,.5)
+
+% Accuracy coherence effect
+sign_better_acc = auc_acc_CH > .5 & p_acc_CH < ( .05 / (size(p_acc_CH,1)*size(p_acc_CH,2)));
+acc_better_perc_sign = sum(sign_better_acc) / size(sign_better_acc,1);
+sign_worse_acc = auc_acc_CH < .5 & p_acc_CH < ( .05 / (size(p_acc_CH,1)*size(p_acc_CH,2)));
+acc_worse_perc_sign = sum(sign_worse_acc) / size(sign_worse_acc,1);
+
+n_better_zero = sum(sign_better_acc(:,1));
+acc_median_zero = median(auc_acc_CH(:,1));
+
+% Eccentricity coherence effect
+sign_better_ecc = auc_ecc_CH > .5 & p_ecc_CH < ( .05 / (size(p_ecc_CH,1)*size(p_ecc_CH,2)));
+ecc_better_perc_sign = sum(sign_better_ecc) / length(sign_better_ecc(:,1));
+sign_worse_ecc = auc_ecc_CH < .5 & p_ecc_CH < ( .05 / (size(p_ecc_CH,1)*size(p_ecc_CH,2)));
+ecc_worse_perc_sign = sum(sign_worse_ecc) / length(sign_worse_ecc(:,1));
+
+acc_median_98 = median(auc_ecc_CH(:,end));
+
+[round(min(ecc_better_perc_sign),3) round(max(ecc_better_perc_sign),3)]
+[round(min(ecc_worse_perc_sign),2) round(max(ecc_worse_perc_sign),2)]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
