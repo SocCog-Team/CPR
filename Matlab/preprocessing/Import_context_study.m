@@ -1,8 +1,8 @@
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/preprocessing
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 
-cd /Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_social_context/
-% cd /Users/fschneider/Desktop/social_context_study/
+% cd /Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_social_context/
+cd /Users/fschneider/Desktop/social_context_study/
 
 % Number of tested dyads
 num_dyads = 5;

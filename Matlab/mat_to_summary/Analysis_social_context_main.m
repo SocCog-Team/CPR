@@ -6,7 +6,7 @@ addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 
 file_pth                    = '/Users/fschneider/Desktop/social_context_study/';
-num_dyads                   = 3;
+num_dyads                   = 5;
 
 for iDyad = 1:num_dyads
     % Extract all files
@@ -47,35 +47,53 @@ for iDyad = 1:num_dyads
         [out_p1{iFile}, out_p2{iFile}] = CPR_extract_response_profile(d,idx,exp_info);
     end
     
-    dyad_summary = [out_p1 out_p2];
-    
-    for iPlayer = 1:2
-        for iCondition = 1:3
-            out = get_summary(dyad_summary, exp_info{2}, iPlayer, iCondition);
-                        
-%             ax = subplot(1,3,iCondition); hold on
-           
-            if iPlayer == 1
-                col = 'k';
-            else
-                col = 'r';
-            end
-            
-            bonus_sum(iPlayer,iCondition,iDyad) = out{1}.bonus+out{2}.bonus;
-            
-%             plot(out{1}.coh_sorted.acc_mean, col)
-%             plot(out{2}.coh_sorted.acc_mean, col)
-%             ax.Title.String = out{1}.condition;
-%             ax.YLim = [0 1];
-%             grid on
-        end
-    end
+    dyad_summary{iDyad} = [out_p1 out_p2];
 end
 
-% Compare social conditions
-% 3x3 matrix: acc, ecc, lag for neutral, cooperation and competition
+%%
+close all
+f = figure('units','centimeters','position',[0 0 40 40]);
+cmap = jet(5)./1.3;
+cnt = 0;
+for iDyad = 1:num_dyads
+    ax1 = subplot(5,4,(cnt*4)+1); hold on;
+    ax2 = subplot(5,4,(cnt*4)+2); hold on;
+    ax3 = subplot(5,4,(cnt*4)+3); hold on;
+    ax4 = subplot(5,4,(cnt*4)+4); hold on;
+    cnt = cnt+1;
+    dyad{iDyad} = dyad_summary{iDyad}{1}.dyad;
+    for iPlayer = 1:2
+        
+        for iCondition = 1:3
+            out = get_summary(dyad_summary{iDyad}, iPlayer, iCondition);
+            
+            bonus_sum(iPlayer,iCondition,iDyad) = out{iPlayer}.score;
+            hir(iPlayer,iCondition,iDyad) = out{iPlayer}.hir;
+            acc_mean(iPlayer,iCondition,iDyad) = mean(out{iPlayer}.acc_mean);
+            ecc_mean(iPlayer,iCondition,iDyad) = mean(out{iPlayer}.ecc_mean);
+        end
+        
+        axes(ax1)
+        plot([1 2 3], bonus_sum(iPlayer,:,iDyad),'Color',cmap(iDyad,:))
+        
+        axes(ax2)
+        plot([1 2 3],hir(iPlayer,:,iDyad),'Color',cmap(iDyad,:))
+        
+        axes(ax3)
+        plot([1 2 3],acc_mean(iPlayer,:,iDyad),'Color',cmap(iDyad,:))
+        
+        axes(ax4)
+        plot([1 2 3],ecc_mean(iPlayer,:,iDyad),'Color',cmap(iDyad,:))
+    end
+    change_axes(ax1,'reward score', iDyad, true)
+    change_axes(ax2,'hit rate', iDyad)
+    change_axes(ax3,'accuracy',iDyad)
+    change_axes(ax4,'eccentricity',iDyad)
+end
 
-function out = get_summary(dyad_summary, dyad_id, iPlayer, iCondition)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function out = get_summary(dyad_summary, iPlayer, iCondition)
+dyad_id = dyad_summary{1}.dyad;
 
 if iPlayer == 1
     player_idx = cellfun(@(x) strcmp(x.player_id,dyad_id(1:3)),dyad_summary);
@@ -93,4 +111,25 @@ end
 
 out = dyad_summary(condition_idx & player_idx);
 
+end
+
+function change_axes(ax,ystr,iDyad,yflag)
+if nargin < 4
+    yflag = false;
+end
+
+ax.FontSize = 14;
+ax.XTickLabel = {'Neutr','Coop','Comp'};
+ax.XTickLabelRotation = 30;
+
+if yflag == true
+    ax.YLabel.String = ['Dyad ' num2str(iDyad)];
+end
+if iDyad == 1
+    ax.Title.String = ystr;
+end
+
+if iDyad < 5
+    ax.XAxis.Visible = 'off';
+end
 end
