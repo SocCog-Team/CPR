@@ -627,7 +627,6 @@ rate                = n / length(d_better);
 [mean(s_hir) iqr(s_hir)]
 [mean(d_hir) iqr(d_hir)]
 
-
 % Accuracy [coherence pooled, within subject]
 sign_bool           = p_acc_pooled < ( .05 / length(p_acc_pooled));
 perc_sign           = sum(sign_bool) / length(sign_bool);
