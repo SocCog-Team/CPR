@@ -5,8 +5,6 @@ addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 
-
-dest_dir                    = '/Users/fschneider/Desktop/';
 file_pth                    = '/Users/fschneider/Desktop/social_context_study/';
 num_dyads                   = 5;
 
@@ -105,8 +103,6 @@ for iDyad = 1:num_dyads
     change_axes(ax4,'eccentricity',iDyad, dyad{iDyad})
 end
 
-print(f, [dest_dir '/raw_perf'], '-r500', '-dpng');
-
 %% Show normalised data for each dyadic player and condition
 
 close all
@@ -159,8 +155,6 @@ for iPlot = 1:4
     change_axes_dff_plot(ax(iPlot),ystr,ylim,[1 2],{'Coop','Comp'})
 end
 
-print(f, [dest_dir '/normalised_perf'], '-r500', '-dpng');
-
 %% Show difference between players
 
 close all
@@ -209,17 +203,15 @@ for iPlot = 1:4
         ylim = [0 .14];
     elseif iPlot == 3
         ystr = 'accuracy';
-        ylim = [0 .05];
+        ylim = [0 .04];
     elseif iPlot == 4
         ystr = 'eccentricity';
-        ylim = [0 .15];
+        ylim = [0 .1];
     end
 
     change_axes_dff_plot(ax(iPlot),ystr,ylim,[1 2 3],{'Neutral','Coop','Comp'})
 end
     
-print(f, [dest_dir '/abs_partner_dff'], '-r500', '-dpng');
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
