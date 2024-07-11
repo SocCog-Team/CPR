@@ -44,7 +44,7 @@ cyc.cEnd                    = d.time(idx.cEnd);
 cnt                         = 0;
 nLag                        = 150;
 out                         = add_exp_info(exp_info,player_flag);
-    
+
 for iCyc = 1:length(cyc.cEnd)-1
     % Trial index
     cycIdx                  = [];
@@ -167,4 +167,8 @@ end
 out.condition               = exp_info{3};
 out.block                   = exp_info{4}(1:end-3);
 
+
+if strcmp(out.condition, 'CPRcoopration')
+    out.condition           = 'CPRcooperation';
+end
 end

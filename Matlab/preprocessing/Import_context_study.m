@@ -5,7 +5,7 @@ addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 cd /Users/fschneider/Desktop/social_context_study/
 
 % Number of tested dyads
-num_dyads = 5;
+num_dyads = 7;
 
 % Configuration file
 cfg_pth = '/Users/fschneider/Documents/GitHub/CPR/Matlab/CFG/felix_context_study.cfg';
@@ -22,7 +22,7 @@ var_import = {
     '#stimDisplay'};
 
 % Loop through each dyad folder...
-for iDyad = 4:num_dyads
+for iDyad = 7:num_dyads
     % Extract all files
     file_list = dir(['Dyad' num2str(iDyad) '/mwk2/']);
     
@@ -33,3 +33,8 @@ for iDyad = 4:num_dyads
         end
     end
 end
+
+%% Manually
+
+% file_path = '/Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_social_context/Solo/AnE/20240705_ane_CPRsolo_block2_psy4.mwk2';
+% d = CPR_import_mwk2(file_path, var_import, true, cfg_pth);

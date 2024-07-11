@@ -1,6 +1,7 @@
 % Mains cript
 close all
 clear all
+
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
@@ -8,7 +9,7 @@ addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 
 dest_dir                    = '/Users/fschneider/Desktop/';
 file_pth                    = '/Users/fschneider/Desktop/social_context_study/';
-num_dyads                   = 5;
+num_dyads                   = 7;
 
 for iDyad = 1:num_dyads
     % Extract all files
@@ -56,26 +57,24 @@ end
 
 close all
 f = figure('units','centimeters','position',[0 0 40 40]);
-cmap = jet(5)./1.3;
+cmap = jet(num_dyads)./1.3;
 cnt = 0;
 lw = 1;
 sz = 75;
 
 for iDyad = 1:num_dyads
     
-    ax1 = subplot(5,4,(cnt*4)+1); hold on;
-    ax2 = subplot(5,4,(cnt*4)+2); hold on;
-    ax3 = subplot(5,4,(cnt*4)+3); hold on;
-    ax4 = subplot(5,4,(cnt*4)+4); hold on;
+    ax1 = subplot(num_dyads,4,(cnt*4)+1); hold on;
+    ax2 = subplot(num_dyads,4,(cnt*4)+2); hold on;
+    ax3 = subplot(num_dyads,4,(cnt*4)+3); hold on;
+    ax4 = subplot(num_dyads,4,(cnt*4)+4); hold on;
     cnt = cnt+1;
     dyad{iDyad} = dyad_summary{iDyad}{1}.dyad;
     
     for iPlayer = 1:2
-        for iCondition = 1:3
-            
+        for iCondition = 1:3  
             % Data from each block of a given exp. condition (i.e. neutral_psy3 and neutral_psy4)
             out = get_summary(dyad_summary{iDyad}, iPlayer, iCondition);
-            
             bonus_sum(iPlayer,iCondition,iDyad) = mean([out{1}.score out{2}.score]);
             hir(iPlayer,iCondition,iDyad) = mean([out{1}.hir out{2}.hir]);
             acc_mean(iPlayer,iCondition,iDyad) = mean([out{1}.acc_mean out{2}.acc_mean]);
@@ -116,11 +115,11 @@ for iPlot = 1:4
 ax(iPlot) = subplot(1,4,iPlot); hold on; line([1 2],[0 0], 'LineStyle',':', 'Color','k', 'LineWidth',2);
 end
 
-cmap = jet(5)./1.3;
-cnt = 0;
+cmap = jet(num_dyads)./1.3;
 lw = 1;
 sz = 75;
-xvec = 1:2
+xvec = 1:2;
+
 for iDyad = 1:num_dyads    
     for iPlayer = 1:2
         axes(ax(1))
@@ -170,7 +169,7 @@ for iPlot = 1:4
     ax(iPlot) = subplot(1,4,iPlot); hold on;
 end
 
-cmap = jet(5)./1.3;
+cmap = jet(num_dyads)./1.3;
 cnt = 0;
 lw = 1;
 sz = 75;
@@ -181,7 +180,7 @@ for iDyad = 1:num_dyads
     
     axes(ax(1))
     ydat = abs(bonus_sum(1,:,iDyad)-bonus_sum(2,:,iDyad));
-    p = plot(xvec, ydat,'Color',cmap(iDyad,:),'LineWidth', lw)
+    p = plot(xvec, ydat,'Color',cmap(iDyad,:),'LineWidth', lw);
     scatter(xvec, ydat,'MarkerEdgeColor',cmap(iDyad,:),'LineWidth', lw*3, 'Marker', 'x', 'SizeData', sz)
     
     axes(ax(2))
@@ -265,7 +264,7 @@ if iDyad == 1
     ax.Title.String = ystr;
 end
 
-if iDyad < 5
+if iDyad < 7
     ax.XAxis.Visible = 'off';
 end
 end
