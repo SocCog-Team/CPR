@@ -2020,7 +2020,7 @@ protocol 'CPR_solo' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    CTRL_NumTargets                             = 125
+    CTRL_NumTargets                             = 375
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
     CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
     CTRL_polar_step_size                        = 0.05
@@ -2230,9 +2230,9 @@ protocol 'CPR_solo' {
                     repeats                     = -999
                     cancel                      = CTRL_cancel_action_flag
                     ) {
-                    INFO_CoherenceStateCounter  += 1
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
+                    INFO_CoherenceStateCounter  += 1
                     }
 
                 TRIAL_reactionEvent = true
@@ -2592,7 +2592,7 @@ protocol 'CPR_dyadic_neutral' {
     ML_sync                                     = 1
     CTRL_NumTargets                             = 125
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
-    CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
+    CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
     CTRL_polar_step_size                        = 0.05
     CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
@@ -2867,9 +2867,9 @@ protocol 'CPR_dyadic_neutral' {
                     repeats                     = -999
                     cancel                      = CTRL_cancel_action_flag
                     ) {
-                    INFO_CoherenceStateCounter  += 1
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
+                    INFO_CoherenceStateCounter  += 1
                     }
                 
                 TRIAL_reactionEvent = true
@@ -3498,7 +3498,7 @@ protocol 'CPR_dyadic_cooperation' {
     ML_sync                                     = 1
     CTRL_NumTargets                             = 125
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
-    CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
+    CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
     CTRL_polar_step_size                        = 0.05
     CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
@@ -3776,9 +3776,9 @@ protocol 'CPR_dyadic_cooperation' {
                     repeats                     = -999
                     cancel                      = CTRL_cancel_action_flag
                     ) {
-                    INFO_CoherenceStateCounter  += 1
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
+                    INFO_CoherenceStateCounter  += 1
                     }
 
                 TRIAL_reactionEvent = true
@@ -4407,7 +4407,7 @@ protocol 'CPR_dyadic_competition' {
     ML_sync                                     = 1
     CTRL_NumTargets                             = 125
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
-    CTRL_coh_block_duration_ms                  = (1000/120) * 2400 // 2400 frames - 20000ms
+    CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
     CTRL_polar_step_size                        = 0.05
     CTRL_target_probability                     = 0.0025
     CTRL_target_ITI_ms                          = (1000/120) * 60 // 60 frames - 500ms
@@ -4681,9 +4681,9 @@ protocol 'CPR_dyadic_competition' {
                     repeats                     = -999
                     cancel                      = CTRL_cancel_action_flag
                     ) {
-                    INFO_CoherenceStateCounter  += 1
                     RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
                     TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
+                    INFO_CoherenceStateCounter  += 1
                     }
                     
                 TRIAL_reactionEvent = true
