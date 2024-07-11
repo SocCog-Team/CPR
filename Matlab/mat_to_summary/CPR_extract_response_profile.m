@@ -73,6 +73,7 @@ for iCyc = 1:length(cyc.cEnd)-1
     end
     
     % Initialise variables
+    clear rdp_dir js_dir js_dev js_ecc js_acc js_dff rdp_dff
     rdp_dir                 = nan(1,length(frame_ts));
     js_dir                  = nan(1,length(frame_ts));
     js_ecc                  = nan(1,length(frame_ts));
@@ -97,7 +98,7 @@ for iCyc = 1:length(cyc.cEnd)-1
     ex                    	= isnan(js_dff) | isnan(rdp_dff);
     js_dff(ex)            	= 0;
     rdp_dff(ex)            	= 0;
-    
+   
     % Loop through all coherence blocks in this cycle
     for iCoh = 2:length(tmp_coh_ts)
         
@@ -132,6 +133,15 @@ for iCyc = 1:length(cyc.cEnd)-1
         out.o_corr(cnt)   	= cc;
         out.x_corr{cnt}     = sxc;
         out.lag(cnt)    	= peak_sample * double(median(diff(frame_ts)))/1e3; % [ms]
+        
+        % Save raw signals
+        out.raw.ts{cnt}     	= frame_ts;
+        out.raw.ts{cnt}     	= frame_ts;
+        out.raw.rdp_dir{cnt} 	= rdp_dir;
+        out.raw.js_dir{cnt}  	= js_dir;
+        out.raw.js_dev{cnt}   	= js_dev;
+        out.raw.js_acc{cnt}   	= js_acc;
+        out.raw.js_ecc{cnt}   	= js_ecc;
     end
 end
 end
