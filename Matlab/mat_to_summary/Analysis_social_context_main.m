@@ -11,7 +11,7 @@ dest_dir                    = '/Users/fschneider/Desktop/';
 file_pth                    = '/Users/fschneider/Desktop/social_context_study/';
 num_dyads                   = 7;
 
-for iDyad = 1:num_dyads
+for iDyad = 1%:num_dyads
     % Extract all files
     h5Files = dir(fullfile([file_pth 'Dyad' num2str(iDyad)], '*.h5'));
     
@@ -51,6 +51,23 @@ for iDyad = 1:num_dyads
     end
     
     dyad_summary{iDyad} = [out_p1 out_p2];
+end
+
+%% Plot accuracy da
+dim                         = [0.6 0.8];
+row                         = .1;
+clm                         = .1;
+hofs                        = .63;
+cnt = 0;
+f = figure('units','centimeters','position',[0 0 20 40]);
+for iBlock = 1:7
+    ax0 = subplot(7,2,(cnt*2)+1); hold on;
+    ax0v = subplot(7,2,(cnt*2)+2); hold on;
+    ax0v.YAxis.Visible          = false;
+    cnt = cnt+1;
+    
+    plot_signal(ax0,ax0v,out_p1{3}.raw.ts{iBlock},out_p1{3}.raw.js_dev{iBlock},[1 0 0])
+    plot_signal(ax0,ax0v,out_p2{3}.raw.ts{iBlock},out_p2{3}.raw.js_dev{iBlock},[0 0 1])
 end
 
 %% Show average data for each dyadic player and condition 
@@ -278,5 +295,31 @@ ax.FontSize = 14;
 ax.XTickLabelRotation = 30;
 end
 
+function plot_signal(ax0, ax0v,t,y,col)
 
+t_corr = (double(t-t(1)))./1e6;
 
+% Plot the time-continuous signal
+axes(ax0)
+ln = line([t_corr(1) t_corr(end)],[0 0], 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
+plot(t_corr, y, 'b-', 'LineWidth', 1.5,'Color', col);
+ylim([min(y) max(y)])
+% xlabel('Time (s)');
+% ylabel('Signal Amplitude');
+% title('Time-Continuous Signal with PDF on Right Y-Axis');
+
+% Compute the PDF of the signal
+[pdfCounts, pdfEdges] = histcounts(y, 'Normalization', 'pdf');
+
+% Compute the centers of the PDF bins
+pdfCenters = (pdfEdges(1:end-1) + pdfEdges(2:end)) / 2;
+
+% Plot the PDF on the right Y-Axis
+axes(ax0v);
+yyaxis right
+ln = line([0 max(pdfCounts)],[0 0], 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
+plot(pdfCounts,pdfCenters, 'LineStyle', '-', 'Color',col, 'LineWidth', 1.5);
+ylim([min(y) max(y)])
+% ylabel('Probability Density');
+
+end
