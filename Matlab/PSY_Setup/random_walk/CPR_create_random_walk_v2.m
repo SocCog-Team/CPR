@@ -6,7 +6,7 @@ if nargin < 1
     param.coh_duration_ms       	= 10000;                % Duration of coherence block 
     param.walk_duration_ms      	= 60000;                % Duration of random walk
     param.Fs                        = 1000 / 120;           % Screen sampling rate [Hz]
-    param.snr_list                  = [.2 .4 .6 .8];        % Stimulus coherence
+    param.snr_list                  = [.7 .75 .8 .85 .9  .95 .99];    % Stimulus coherence
     param.jump_probability          = 0.0025;               % Probability of stimulus direction jump
     param.min_jump_interval_ms      = param.Fs * 100;       % Min interval between direction jumps
     param.feedback_probability    	= 0.0025;               % Probability of reward
@@ -40,7 +40,7 @@ end
 for iSample = 2:nSamples %*2 % Generate double the amount of samples to be on the safe side
     
     % Calculate random direction step: uniform distribution * constant (max 1.8deg/sample)
-    direction_step                      = (pi/100) * rand * sign_change(randi([1,2])); 
+    direction_step                      = (pi/50) * rand * sign_change(randi([1,2])); 
     
     % Update stimulus direction
     out.RDP_direction(iSample)          = out.RDP_direction(iSample-1) + direction_step;
@@ -49,7 +49,7 @@ for iSample = 2:nSamples %*2 % Generate double the amount of samples to be on th
     if rand < param.jump_probability && (iSample-out.jump_ts(end)) > (param.min_jump_interval_ms/param.Fs)
         cnt_jump                        = cnt_jump+1;
         out.jump_ts(cnt_jump)           = iSample;                          % Frame of feedback presentation
-        out.dir_seed(cnt_jump)          = rand * (pi*2);                    % New random seed
+        out.dir_seed(cnt_jump)          = (rand * pi * sign_change(randi([1,2]))) + out.RDP_direction(iSample-1);                    % New random seed
         out.RDP_direction(iSample)  	= out.dir_seed(cnt_jump);
     end
     

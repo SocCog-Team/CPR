@@ -38,25 +38,30 @@ ax.XLabel.String            = 'Samples [#]';
 ax.FontSize                 = 14;
 ax.XLim                     = [0 7200];
 
+
+%% MWORKS
+STIM                    	= CPR_create_random_walk_v2();            % Draw RDP stimulus parameters
+[~]                     	= CPR_write_txt(STIM,'/Users/fschneider/Desktop/');  
+
 %%
-% f = figure('Units', 'normalized', 'OuterPosition', [0 0 1 1]);
-% for iSim = 1:16
-%     % Create new stimulus
-%     out = CPR_create_random_walk_v2();
-%     dirs{iSim} = out.RDP_direction;
-%     
-%     % Visualise
-%     subplot(4,4,iSim); hold on
-%     plot(out.RDP_direction, 'k','LineWidth', 1.5) % Plot direction
-%     scatter(out.feedback_ts, out.RDP_direction(out.feedback_ts), 'ro', 'filled') % Plot reward
-%     scatter(out.jump_ts, rad2deg(out.dir_seed), 'b^', 'filled') % Plot direction of random seeds
-%     
-%     xlim([0 7200])
-%     ylim([0 360])
-%     xlabel('Frames')
-%     ylabel('Direction [deg]')
-%     set(gca, 'fontsize', 14)
-%     set(gca, 'xtick', [0 3600 7200])
-%     set(gca, 'ytick', [0 180 360])
-% end
-% legend('Dir','Rew','Seed')
+f = figure('Units', 'normalized', 'OuterPosition', [0 0 1 1]);
+for iSim = 1:16
+    % Create new stimulus
+    out = CPR_create_random_walk_v2();
+    dirs{iSim} = out.RDP_direction;
+    
+    % Visualise
+    subplot(4,4,iSim); hold on
+    plot(out.RDP_direction, 'k','LineWidth', 1.5) % Plot direction
+    scatter(out.feedback_ts, out.RDP_direction(out.feedback_ts), 'ro', 'filled') % Plot reward
+    scatter(out.jump_ts, rad2deg(out.dir_seed), 'b^', 'filled') % Plot direction of random seeds
+    
+    xlim([0 7200])
+    ylim([0 360])
+    xlabel('Frames')
+    ylabel('Direction [deg]')
+    set(gca, 'fontsize', 14)
+    set(gca, 'xtick', [0 3600 7200])
+    set(gca, 'ytick', [0 180 360])
+end
+legend('Dir','Rew','Seed')

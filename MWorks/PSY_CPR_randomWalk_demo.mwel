@@ -8,6 +8,10 @@ group VARS {
     var TRIAL_end                                   = 0
     var INFO_CoherenceStateCounter                  = 0
     var INFO_FrameCounter                           = 0
+    var INFO_TrialTargetCounter                     = 0
+    var CTRL_coh_block_duration_ms                  = 0
+    var cancelTrigger                               = false
+    var ML_sync                                     = 0
 }
 
 
@@ -17,10 +21,10 @@ group RDP {
     var RDP_y                               = 0
     var RDP_x                               = 0
     var RDP_density                         = 2.5
-    var RDP_dotsize                         = .1
+    var RDP_dotsize                         = .2
     var RDP_speed                           = 8
-    var RDP_coherence                       = 0
-    var RDP_lifetime                        = (1/120) * 30 * 1000 // 30 frames - 250ms
+    var RDP_coherence                       = 1
+    var RDP_lifetime                        = 0 // (1/120) * 30 * 1000 // 30 frames - 250ms
     var RDP_alpha                        	= 1
     var RDP_seed                            = 1
 }
@@ -34,10 +38,9 @@ group Import {
 }
 
 group Paths {
-    var fname_rdp_dir                       = '/Users/fschneider/Documents/GitHub/CPR/MWorks/stim_demo/RDP_direction.txt'
-    var fname_rdp_coh                       = '/Users/fschneider/Documents/GitHub/CPR/MWorks/stim_demo/RDP_coherence.txt'
-    var fname_feedback_ts                   = '/Users/fschneider/Documents/GitHub/CPR/MWorks/stim_demo/feedback_ts.txt'
-    var fname_counter                       = '/Users/fschneider/Documents/GitHub/CPR/MWorks/stim_demo/counter.txt'
+    var fname_rdp_dir                       = '/Users/fschneider/Desktop/RDP_direction.txt'
+    var fname_feedback_ts                   = '/Users/fschneider/Desktop/feedback_ts.txt'
+    var fname_counter                       = '/Users/fschneider/Desktop/counter.txt'
 }
 
 //
@@ -47,12 +50,6 @@ group Paths {
 filter/file2array RDP_direction_txt (
     output                                  = RDP_direction_lst
     file_name                               = fname_rdp_dir
-    version                                 = 1
-    )
-
-filter/file2array RDP_coherence_txt (
-    output                                  = RDP_coherence_lst
-    file_name                               = fname_rdp_coh
     version                                 = 1
     )
 
@@ -77,22 +74,7 @@ wav_file Acquire_sound ('./sounds/acquire.wav')
 wav_file Reward_sound ('./sounds/reward.wav')
 wav_file Failure_sound ('./sounds/failure2.wav')
 wav_file End_sound ('./sounds/Defeat Bowser.wav')
-wav_file Reward1R_sound ('./sounds/1R.wav')
-wav_file Reward1L_sound ('./sounds/1L.wav')
-wav_file Reward2R_sound ('./sounds/2R.wav')
-wav_file Reward2L_sound ('./sounds/2L.wav')
-wav_file Reward3R_sound ('./sounds/3R.wav')
-wav_file Reward3L_sound ('./sounds/3L.wav')
-wav_file Reward4R_sound ('./sounds/4R.wav')
-wav_file Reward4L_sound ('./sounds/4L.wav')
-wav_file Reward5R_sound ('./sounds/5R.wav')
-wav_file Reward5L_sound ('./sounds/5L.wav')
-wav_file Reward6R_sound ('./sounds/6R.wav')
-wav_file Reward6L_sound ('./sounds/6L.wav')
-wav_file Reward7R_sound ('./sounds/7R.wav')
-wav_file Reward7L_sound ('./sounds/7L.wav')
-wav_file Reward8R_sound ('./sounds/8R.wav')
-wav_file Reward8L_sound ('./sounds/8L.wav')
+
 
 //
 // Stimuli
@@ -107,8 +89,8 @@ stimulus/advstimulus fixationCross (
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = 0
-    x_size                                  = 1
-    y_size                                  = 1
+    x_size                                  = .5
+    y_size                                  = .5
     x_position                              = 0
     y_position                              = 0
     shape                                   = format("cross")
@@ -140,8 +122,8 @@ stimulus/advstimulus start_area (
     trigger_watch_x             			= 0   
     trigger_watch_y             			= 0   
     trigger_flag                			= 0
-    x_size                      			= 2
-    y_size                      			= 2
+    x_size                      			= 3
+    y_size                      			= 3
     x_position                  			= 0
     y_position                  			= 0
     shape                       			= format("circle")
@@ -165,6 +147,7 @@ protocol 'RDP_test' {
     // Set desired parameters
     CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
     CTRL_cycle_duration_ms                      = 60000
+    CTRL_coh_block_duration_ms                  = 10000
     TRIAL_start                                 = 0
     TRIAL_end                                   = 0
     INFO_CoherenceStateCounter                  = 0
@@ -178,7 +161,6 @@ protocol 'RDP_test' {
         
         // Update trial parameters
         fname_rdp_dir                           = fname_rdp_dir 
-        fname_rdp_coh                           = fname_rdp_coh
         fname_feedback_ts                       = fname_feedback_ts
         fname_counter                           = fname_counter
         }
@@ -195,7 +177,9 @@ protocol 'RDP_test' {
         task LOOP {
 
             state 'New Trial' (interruptible = NO) { 
+                ML_sync                         = 1 // sync
                 TRIAL_start                     += 1 // Count trial number
+                ML_sync                         = 0 // Stop sync
 
                 report ('===== STIMULUS CYCLE $TRIAL_start START =====')
                 goto ('Show Stimuli')
@@ -221,32 +205,14 @@ protocol 'RDP_test' {
                     ) {
                     INFO_FrameCounter           += 1 // use this variable to determine the onset of the actual signal
                     RDP_direction               = RDP_direction_lst[INFO_FrameCounter] // Stimulus direction of state
-                    
-                    if (INFO_FrameCounter == CTRL_feedback_ts_lst[INFO_TrialTargetCounter]) {
-                        CTRL_target_flag        = true
-                    }
                 }
-
-                schedule (
-                    delay                       = next_frame_time() - now()
-                    duration                    = CTRL_coh_block_duration_ms * 1000
-                    repeats                     = -999
-                    cancel                      = CTRL_cancel_action_flag
-                    ) {
-                    RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
-                    TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
-                    INFO_CoherenceStateCounter  += 1
-                    }
-
-                TRIAL_reactionEvent = true
-
 
                 live_queue_stimulus (RDP)
                 live_queue_stimulus (start_area)
                 live_queue_stimulus (fixationCross)
                 update_stimulus_display ()
 
-                goto ('Dequeue Target')
+                goto ('Update Stimuli')
             }
 
 
@@ -263,7 +229,6 @@ protocol 'RDP_test' {
                 dequeue_stimulus (start_area)
                 dequeue_stimulus (fixationCross)
 
-                TRIAL_align                     = 0
                 TRIAL_end                     	= TRIAL_start
                 CTRL_cancel_action_flag         = true 
 
@@ -289,7 +254,6 @@ protocol 'RDP_test' {
                     
                     // Update trial parameters
                     fname_rdp_dir                           = fname_rdp_dir 
-                    fname_rdp_coh                           = fname_rdp_coh
                     fname_feedback_ts                       = fname_feedback_ts
                     fname_counter                           = fname_counter
                     }
