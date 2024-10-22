@@ -1,14 +1,16 @@
 function [out_p1, out_p2] = CPR_extract_response_profile(d,idx,exp_info)
 
 out_p1                  = extract_response(d, idx, exp_info, 1);
-out_p2                  = extract_response(d, idx, exp_info, 2);
-
 out_p1                  = get_outcome_summary(d, idx,1,out_p1);
-out_p2                  = get_outcome_summary(d, idx,2,out_p2);
-
 out_p1                  = sort_coherence_blocks(out_p1);
-out_p2                  = sort_coherence_blocks(out_p2);
 
+if ~strcmp(exp_info{3}, 'CPRsolo')
+    out_p2            	= extract_response(d, idx, exp_info, 2);
+    out_p2            	= get_outcome_summary(d, idx,2,out_p2);
+    out_p2            	= sort_coherence_blocks(out_p2);
+else
+    out_p2              = [];
+end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,7 +43,7 @@ function out = extract_response(d, idx, exp_info, player_flag)
 cyc.cOn                     = d.time(idx.cOn);
 cyc.cEnd                    = d.time(idx.cEnd);
 
-cnt                         = 0;
+ccnt                        = 0;
 nLag                        = 150;
 out                         = add_exp_info(exp_info,player_flag);
 
@@ -99,8 +101,16 @@ for iCyc = 1:length(cyc.cEnd)-1
     js_dff(ex)            	= 0;
     rdp_dff(ex)            	= 0;
    
+    % Save raw signals
+    out.raw.ts{iCyc}     	= frame_ts;
+    out.raw.rdp_dir{iCyc} 	= rdp_dir;
+    out.raw.js_dir{iCyc}  	= js_dir;
+    out.raw.js_dev{iCyc}   	= js_dev;
+    out.raw.js_acc{iCyc}   	= js_acc;
+    out.raw.js_ecc{iCyc}   	= js_ecc;
+        
     % Loop through all coherence blocks in this cycle
-    for iCoh = 2:length(tmp_coh_ts)
+    for iCoh = 1:length(tmp_coh_ts)
         
         % Coherence block index
         if iCoh == length(tmp_coh_ts)
@@ -123,25 +133,17 @@ for iCyc = 1:length(cyc.cEnd)-1
         peak_sample         = find(sxc(:,nLag:end) == max_corr_coef);     	% Peak position of cross-correlation
         
         % Store output values for each coherence block
-        cnt                 = cnt+1;
-        out.block_num(cnt) 	= cnt;
-        out.coherence(cnt) 	= tmp_coh(iCoh);
-        out.acc_raw{cnt}    = js_acc(cIdx);
-        out.ecc_raw{cnt}    = js_ecc(cIdx);
-        out.acc_mean(cnt)   = mean(js_acc(cIdx));
-        out.ecc_mean(cnt)   = mean(js_ecc(cIdx));
-        out.o_corr(cnt)   	= cc;
-        out.x_corr{cnt}     = sxc;
-        out.lag(cnt)    	= peak_sample * double(median(diff(frame_ts)))/1e3; % [ms]
+        ccnt                = ccnt+1;
+        out.block_num(ccnt) = ccnt;
+        out.coherence(ccnt) = tmp_coh(iCoh);
+        out.acc_raw{ccnt}   = js_acc(cIdx);
+        out.ecc_raw{ccnt}   = js_ecc(cIdx);
+        out.acc_mean(ccnt)  = nanmean(js_acc(cIdx));
+        out.ecc_mean(ccnt)  = nanmean(js_ecc(cIdx));
+        out.o_corr(ccnt)   	= cc;
+        out.x_corr{ccnt}    = sxc;
+        out.lag(ccnt)    	= peak_sample * double(median(diff(frame_ts)))/1e3; % [ms]
         
-        % Save raw signals
-        out.raw.ts{cnt}     	= frame_ts;
-        out.raw.ts{cnt}     	= frame_ts;
-        out.raw.rdp_dir{cnt} 	= rdp_dir;
-        out.raw.js_dir{cnt}  	= js_dir;
-        out.raw.js_dev{cnt}   	= js_dev;
-        out.raw.js_acc{cnt}   	= js_acc;
-        out.raw.js_ecc{cnt}   	= js_ecc;
     end
 end
 end
@@ -149,12 +151,13 @@ end
 function out = sort_coherence_blocks(in)
 % Average for coherence level
 snr                         = unique(in.coherence);
+
 for iCoh = 1:length(snr)
     cindx                          = in.coherence == snr(iCoh);
-    in.coh_sorted.acc_mean(iCoh)   = mean(in.acc_mean(cindx));
-    in.coh_sorted.ecc_mean(iCoh)   = mean(in.ecc_mean(cindx));
-    in.coh_sorted.o_corr(iCoh)     = mean(in.o_corr(cindx));
-    in.coh_sorted.lag(iCoh)        = mean(in.lag(cindx));
+    in.coh_sorted.acc_mean(iCoh)   = nanmean(in.acc_mean(cindx));
+    in.coh_sorted.ecc_mean(iCoh)   = nanmean(in.ecc_mean(cindx));
+    in.coh_sorted.o_corr(iCoh)     = nanmean(in.o_corr(cindx));
+    in.coh_sorted.lag(iCoh)        = nanmean(in.lag(cindx));
 end
 
 out = in;

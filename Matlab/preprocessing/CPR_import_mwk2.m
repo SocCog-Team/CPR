@@ -30,7 +30,7 @@ addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 
 if nargin < 4
-    cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions/felix.cfg';
+    cfg_pth	= '/Users/fschneider/Documents/GitHub/CPR/Matlab/CFG/felix_solo_vs_dyadic.cfg';
 end
 
 if nargin < 3 || isempty(write_file)

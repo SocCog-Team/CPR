@@ -6,18 +6,17 @@ addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 
-
 dest_dir                    = '/Users/fschneider/Desktop/';
 file_pth                    = '/Users/fschneider/Desktop/social_context_study/';
-num_dyads                   = 7;
+num_dyads                   = 18;
 
-for iDyad = 1%:num_dyads
+for iDyad = 1:7%:num_dyads
     % Extract all files
-    h5Files = dir(fullfile([file_pth 'Dyad' num2str(iDyad)], '*.h5'));
+    h5Files = dir(fullfile([file_pth 'Dyad' num2str(iDyad) '/h5/'], '*.h5'));
     
     for iFile = 1:length(h5Files)
         % Load file
-        d                        	= MW_readH5([file_pth '/Dyad' num2str(iDyad) '/' h5Files(iFile).name]); % ...load .h5 file
+        d                        	= MW_readH5([file_pth '/Dyad' num2str(iDyad) '/h5/' h5Files(iFile).name]); % ...load .h5 file
         exp_info                    = strsplit(h5Files(iFile).name,'_');
         
         % Index variables of interest
@@ -50,22 +49,24 @@ for iDyad = 1%:num_dyads
         [out_p1{iFile}, out_p2{iFile}] = CPR_extract_response_profile(d,idx,exp_info);
     end
     
-    dyad_summary{iDyad} = [out_p1 out_p2];
+    dyad_summary{iDyad} = [out_p1' out_p2'];
 end
 
-%% Plot accuracy da
+%% Plot accuracy data - something wrong with raw data - repetition of blocks
 dim                         = [0.6 0.8];
 row                         = .1;
 clm                         = .1;
 hofs                        = .63;
 cnt = 0;
+
 f = figure('units','centimeters','position',[0 0 20 40]);
-for iBlock = 1:7
+
+for iBlock = 29:34
     ax0 = subplot(7,2,(cnt*2)+1); hold on;
     ax0v = subplot(7,2,(cnt*2)+2); hold on;
     ax0v.YAxis.Visible          = false;
     cnt = cnt+1;
-    
+
     plot_signal(ax0,ax0v,out_p1{3}.raw.ts{iBlock},out_p1{3}.raw.js_dev{iBlock},[1 0 0])
     plot_signal(ax0,ax0v,out_p2{3}.raw.ts{iBlock},out_p2{3}.raw.js_dev{iBlock},[0 0 1])
 end
@@ -129,7 +130,7 @@ close all
 f = figure('units','centimeters','position',[0 0 40 15]);
 
 for iPlot = 1:4
-ax(iPlot) = subplot(1,4,iPlot); hold on; line([1 2],[0 0], 'LineStyle',':', 'Color','k', 'LineWidth',2);
+    ax(iPlot) = subplot(1,4,iPlot); hold on; line([1 2],[0 0], 'LineStyle',':', 'Color','k', 'LineWidth',2);
 end
 
 cmap = jet(num_dyads)./1.3;
@@ -319,7 +320,8 @@ axes(ax0v);
 yyaxis right
 ln = line([0 max(pdfCounts)],[0 0], 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
 plot(pdfCounts,pdfCenters, 'LineStyle', '-', 'Color',col, 'LineWidth', 1.5);
-ylim([min(y) max(y)])
+% ylim([min(y) max(y)])
+ylim([-180 180])
 % ylabel('Probability Density');
 
 end
