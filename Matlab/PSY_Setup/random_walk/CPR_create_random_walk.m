@@ -7,10 +7,9 @@ if nargin < 1
     param.walk_duration_ms      	= 60000;                % Duration of random walk (stimulus cycle)
     param.Fs                        = 1000 / 120;           % Screen sampling rate
     param.snr_list                  = [.2 .4 .6 .8];        % Stimulus coherence
-    param.polar_step_size           = 0.05;                 % Step size in polar space
-    param.reward_probability        = 0.0025;                % Probability of reward target appearance
+    param.reward_probability        = 0.0025;               % Probability of reward target appearance
     param.feedback_duration_ms      = param.Fs * 6;         % Duration of target presentation
-    param.feedback_interval_ms      = param.Fs * 60;        % Interval between target presentations
+    param.feedback_interval_ms      = param.Fs * 100;       % Interval between target presentations
 end
 
 % Initialize variables
@@ -19,6 +18,7 @@ out.RDP_direction                   = rand * 2 * pi;      	% Random stimulus dir
 out.feedback_ts                     = 1;                    % Initialise variable
 out.RDP_coherence                   = [];                   % Initialise variable    
 cnt                                 = 0;
+sign_list                           = [-1 1];
 
 % Calculate number of samples
 nSamples                            = param.walk_duration_ms / param.Fs;                % Number of samples for random walk
@@ -38,9 +38,17 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
     % Reset flag
     feedback_flag                   = false;
     
-    % Update stimulus direction with random step from noise distribution: mean=0; std=param.polar_step_size
-    out.RDP_direction(iSample)  	= out.RDP_direction(iSample-1) + (randn * param.polar_step_size);
-      
+    % Update stimulus direction with random step from noise distribution:
+    % mean=0; std=param.polar_step_size (was 0.1)
+%     out.RDP_direction(iSample)  	= out.RDP_direction(iSample-1) + (randn * param.polar_step_size);
+
+    out.RDP_direction(iSample)  	= out.RDP_direction(iSample-1) + (rand * (pi/100) * sign_list(randi([1,2])));
+
+    % At random times
+    if rand < param.reward_probability
+        out.RDP_direction(iSample)  	= rand * (pi*2); % new random seed
+    end
+
     % Check for reward target appearance: Roll dice but only accept after certain time interval
     if rand < param.reward_probability && (iSample-out.feedback_ts(end)) > (param.feedback_interval_ms/param.Fs)
         cnt                         = cnt+1;
@@ -55,7 +63,8 @@ for iSample = 2:nSamples*2 % Generate double the amount of samples to be on the 
         end
         
         % Smooth direction values between two targets: Gaussian window - 40 samples wide
-        out.RDP_direction(sample_idx)    	= smoothdata(out.RDP_direction(sample_idx),"gaussian",40);
+%         out.RDP_direction(sample_idx)    	= smoothdata(out.RDP_direction(sample_idx),"gaussian",40);
+        out.RDP_direction(sample_idx)    	= smoothdata(out.RDP_direction(sample_idx),"gaussian",200);
     end
     
     %%% Keep RDP direction stable after target for target presentation time
