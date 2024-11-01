@@ -1,8 +1,10 @@
 close all
 
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/PSY_Setup/random_walk
+
 % Create the data
-out                         = CPR_create_random_walk();
-theta                       = deg2rad(out.RDP_direction);
+out                         = CPR_create_random_walk_v3();
+theta                       = deg2rad(out.RDP_direction_deg);
 out.RDP_coherence_smple(1) 	= 1;
 out.RDP_coherence_smple    	= [out.RDP_coherence_smple 7200];
 r                           = [];
