@@ -43,7 +43,7 @@ end
 % Set parameters
 param.trial                     = cell2mat(d.value(d.event == 'TRIAL_start'));% Trial number
 param.coh_duration_ms       	= 10000;                % Duration of coherence block
-param.walk_duration_ms      	= 10000;                % Duration of random walk
+param.walk_duration_ms      	= 60000;                % Duration of random walk
 param.Fs                        = 1000 / 120;           % Screen sampling rate [Hz]
 param.snr_list                  = [.2 .4 .6 .8];        % Stimulus coherence
 param.jump_probability          = 0.0025;               % Probability of stimulus direction jump
@@ -51,7 +51,7 @@ param.min_jump_interval_ms      = param.Fs * 100;       % Min interval between d
 param.feedback_probability    	= 0.0025;               % Probability of reward
 param.min_feedback_interval_ms  = param.Fs * 100;       % Min interval between reward administration
 
-STIM                            = CPR_create_random_walk_v2(param);            % Draw RDP stimulus parameters
+STIM                            = CPR_create_random_walk_v3(param);         % Draw RDP stimulus parameters
 [~]                             = CPR_write_txt(STIM,pth);                  % Write parameters to .txt files
 out                             = true;
 toc

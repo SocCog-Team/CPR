@@ -16,7 +16,7 @@ for iVar = 1:size(var_names,2)
     fid             = fopen([pth var_names{iVar} '.txt'],'w');
     
     if iVar == 1
-        vec         = sprintf('%d\n', STIM.RDP_direction);                  % Convert to tab-spaced vector
+        vec         = sprintf('%d\n', STIM.RDP_direction_deg);              % Convert to tab-spaced vector
         vec         = vec(1:end-1);                                         % Remove final tab
     elseif iVar == 2
         vec         = sprintf('%f\n', STIM.RDP_coherence);
