@@ -2,7 +2,7 @@
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 
-close all
+% close all
 clear all
 
 source_dir = '/Users/fschneider/ownCloud/var_plot/';
@@ -20,6 +20,8 @@ end
 nSample                     = 30;                                           % Time window size [samples]
 nLag                        = 150;                                          % Cross-correlation lag                               
 
+state_alignment           	= true;                                         % Target-alignment == False
+
 %% Convert relevant data to matrix for simplicity
 
 cnt                         = 0;
@@ -29,9 +31,15 @@ for iSubj = 1:length(sbj_lst)
     end
     
     cnt                   	= cnt + 1;
-    dyad_hir(cnt,:)        	= dyad_perf{iSubj}.hir;             % Hit rate
-    dyad_macc(cnt,:)       	= dyad_perf{iSubj}.macc_trg;        % Avg accuracy
-    dyad_mecc(cnt,:)       	= dyad_perf{iSubj}.mecc_state;      % Avg eccentricity
+    dyad_hir(cnt,:)        	= dyad_perf{iSubj}.hir;                         % Hit rate
+    
+    if state_alignment == true
+        dyad_macc(cnt,:)       	= dyad_perf{iSubj}.macc_state;              % Avg accuracy
+        dyad_mecc(cnt,:)       	= dyad_perf{iSubj}.mecc_state;              % Avg eccentricity
+    else
+        dyad_mecc(cnt,:)       	= dyad_perf{iSubj}.mecc_trg;                % Avg eccentricity
+        dyad_macc(cnt,:)       	= dyad_perf{iSubj}.macc_trg;               	% Avg accuracy
+    end
 end
 
 %% PLOT
@@ -108,36 +116,52 @@ for iSubj = 1:size(dyad_perf,2)
     cnt = cnt+1;
 
     for iCoh = 1:length(snr)
-        bl_ecc(cnt,iCoh)     	= d.sp.mecc_state(iCoh);
-        bl_acc(cnt,iCoh)     	= d.sp.macc_trg(iCoh);
-        bl_scr(cnt,iCoh)     	= d.sp.trg_mscore(iCoh);
-        bl_hir(cnt,iCoh)     	= d.sp.hir(iCoh);
-        bl_lag(cnt,iCoh)     	= mean(d.sc.lag(d.sc.coh == snr(iCoh)));
+        if state_alignment == true
+            bl_ecc(cnt,iCoh)     	= d.sp.mecc_state(iCoh);
+            bl_acc(cnt,iCoh)     	= d.sp.macc_state(iCoh);
+            [~,~,auc_acc(cnt,iCoh)] = getAUROC(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
+            [~,~,auc_ecc(cnt,iCoh)] = getAUROC(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
+            p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
+            p_ecc(cnt,iCoh)      	= ranksum(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
+        else
+            bl_ecc(cnt,iCoh)     	= d.sp.mecc_trg(iCoh);
+            bl_acc(cnt,iCoh)     	= d.sp.macc_trg(iCoh);
+            [~,~,auc_acc(cnt,iCoh)] = getAUROC(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
+            [~,~,auc_ecc(cnt,iCoh)] = getAUROC(d.sp.ecc_trg{iCoh},d.dp.ecc_trg{iCoh});
+            p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
+            p_ecc(cnt,iCoh)      	= ranksum(d.sp.ecc_trg{iCoh},d.dp.ecc_trg{iCoh});
+        end
+            
+        bl_scr(cnt,iCoh)            = d.sp.trg_mscore(iCoh);
+        bl_hir(cnt,iCoh)            = d.sp.hir(iCoh);
+        bl_lag(cnt,iCoh)            = mean(d.sc.lag(d.sc.coh == snr(iCoh)));
 
-        [~,~,auc_acc(cnt,iCoh)]     = getAUROC(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
-        [~,~,auc_ecc(cnt,iCoh)]     = getAUROC(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
         [~,~,auc_score(cnt,iCoh)]	= getAUROC(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
-        
         [~,~,auc_cc(cnt,iCoh)]    	= getAUROC(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
         [~,~,auc_xcp(cnt,iCoh)]    	= getAUROC(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
         [~,~,auc_xc(cnt,iCoh)]    	= getAUROC(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
         [~,~,auc_lag(cnt,iCoh)]    	= getAUROC(d.sc.lag(snr(iCoh) == d.sc.coh),d.dc.lag(snr(iCoh) == d.dc.coh));
-      
-        p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_trg{iCoh},d.dp.acc_trg{iCoh});
-%         p_acc(cnt,iCoh)      	= ranksum(d.sp.acc_state{iCoh},d.dp.acc_state{iCoh});
-        p_ecc(cnt,iCoh)      	= ranksum(d.sp.ecc_state{iCoh},d.dp.ecc_state{iCoh});
-        p_score(cnt,iCoh)       = ranksum(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
-        p_cc(cnt,iCoh)      	= ranksum(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
-        p_xcp(cnt,iCoh)      	= ranksum(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
-        p_xc(cnt,iCoh)       	= ranksum(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
-        p_lag(cnt,iCoh)      	= ranksum(double(d.sc.lag(snr(iCoh) == d.sc.coh)),double(d.dc.lag(snr(iCoh) == d.dc.coh)));
+
+        p_score(cnt,iCoh)           = ranksum(d.sp.trg_score{iCoh},d.dp.trg_score{iCoh});
+        p_cc(cnt,iCoh)              = ranksum(d.sc.cc(snr(iCoh) == d.sc.coh),d.dc.cc(snr(iCoh) == d.dc.coh));
+        p_xcp(cnt,iCoh)             = ranksum(d.sc.posPk(snr(iCoh) == d.sc.coh),d.dc.posPk(snr(iCoh) == d.dc.coh));
+        p_xc(cnt,iCoh)              = ranksum(d.sc.maxR(snr(iCoh) == d.sc.coh),d.dc.maxR(snr(iCoh) == d.dc.coh));
+        p_lag(cnt,iCoh)             = ranksum(double(d.sc.lag(snr(iCoh) == d.sc.coh)),double(d.dc.lag(snr(iCoh) == d.dc.coh)));
     end
     
-    p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
-    [~,~,auc_ecc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
-    
-    p_acc_pooled(cnt)           = ranksum(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
-    [~,~,auc_acc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
+    if state_alignment == true
+        p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
+        [~,~,auc_ecc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.ecc_state'),cell2mat(d.dp.ecc_state'));
+        
+        p_acc_pooled(cnt)           = ranksum(cell2mat(d.sp.acc_state'),cell2mat(d.dp.acc_state'));
+        [~,~,auc_acc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.acc_state'),cell2mat(d.dp.acc_state'));
+    else
+        p_ecc_pooled(cnt)           = ranksum(cell2mat(d.sp.ecc_trg),cell2mat(d.dp.ecc_trg));
+        [~,~,auc_ecc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.ecc_trg),cell2mat(d.dp.ecc_trg));
+        
+        p_acc_pooled(cnt)           = ranksum(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
+        [~,~,auc_acc_pooled(cnt)]  	= getAUROC(cell2mat(d.sp.acc_trg),cell2mat(d.dp.acc_trg));
+    end
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -192,16 +216,18 @@ sig_boundary                = .05 / (size(p_ecc,1) * size(p_ecc,2)); % Bonferron
 
 ax15                       	= axes('Position', [colmn(4) height(2) .1 dim(2)]); hold on
 ax15                      	= plotBar(ax15, auc_acc, p_acc, sig_boundary, lb_fs, snr);
+ax15                        = add_mean_to_bar(ax15,auc_acc,[.4 .6],[.4 .5 .6],lw,alp,col_ci);
 
 ax16                       	= axes('Position', [colmn(4) height(3) .1 dim(2)]); hold on
 ax16                      	= plotBar(ax16, auc_ecc, p_ecc, sig_boundary, lb_fs, snr);
 ax16.XAxis.Visible         	= 'on';
+ax16                        = add_mean_to_bar(ax16,auc_ecc,[.25 .75],[.3 .5 .7],lw,alp,col_ci);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Annotations
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/';
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/';
 ax00                     	= axes('Position',[0 0 1 1],'Visible','off');
 titl_fs                     = 10;
 ofs                         = 0;
@@ -210,9 +236,13 @@ text(colmn(2)+ofs,.71, 'Solo vs Dyadic', 'Parent', ax00, 'FontSize', titl_fs, 'C
 text(colmn(3)+ofs,.71, 'Effect size vs Solo', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 text(colmn(4)+ofs,.55, 'Stats', 'Parent', ax00, 'FontSize', titl_fs, 'Color', 'k')
 
-print(f, [dest_dir '/FIG_social_modulation'], '-r500', '-dpng');
-print(f, [dest_dir '/FIG_social_modulation'], '-r500', '-dsvg', '-painters');
-
+if state_alignment == true
+    print(f, [dest_dir '/FIG_social_modulation_state'], '-r500', '-dpng');
+    print(f, [dest_dir '/FIG_social_modulation_state'], '-r500', '-dsvg', '-painters');
+else
+    print(f, [dest_dir '/FIG_social_modulation_target'], '-r500', '-dpng');
+    print(f, [dest_dir '/FIG_social_modulation_target'], '-r500', '-dsvg', '-painters');
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% UPPER PANEL: Score comparison %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -375,9 +405,13 @@ ln.Color                    = [0 0 0];
 ax13.Position               = [ax20.Position(1)+.6 ax20.Position(2)+.5 .15 .3];
 
 % PRINT
-print(f, [dest_dir '/FIG_social_modulation_top'], '-r500', '-dpng');
-print(f, [dest_dir '/FIG_social_modulation_top'], '-r500', '-dsvg', '-painters');
-
+if state_alignment == true
+    print(f, [dest_dir '/FIG_social_modulation_top_state'], '-r500', '-dpng');
+    print(f, [dest_dir '/FIG_social_modulation_top_state'], '-r500', '-dsvg', '-painters');
+else
+    print(f, [dest_dir '/FIG_social_modulation_top_target'], '-r500', '-dpng');
+    print(f, [dest_dir '/FIG_social_modulation_top_target'], '-r500', '-dsvg', '-painters');
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Scatter plot for supplementary
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -390,10 +424,13 @@ ax7                         = subplot(1,4,2); hold on
 ax8                         = subplot(1,4,3); hold on
 [ax8]                       = plotScatter(ax8, bl_ecc, auc_ecc, snr, lb_fs, false, true);
 
-print(f, [dest_dir '/SFIG_social_modulation_scatter'], '-r500', '-dpng');
-print(f, [dest_dir '/SFIG_social_modulation_scatter'], '-r500', '-dsvg', '-painters');
-
-
+if state_alignment == true 
+    print(f, [dest_dir '/SFIG_social_modulation_scatter_state'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG_social_modulation_scatter_state'], '-r500', '-dsvg', '-painters');
+else
+    print(f, [dest_dir '/SFIG_social_modulation_scatter_target'], '-r500', '-dpng');
+    print(f, [dest_dir '/SFIG_social_modulation_scatter_target'], '-r500', '-dsvg', '-painters');
+end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Different grouping for supplementary
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -438,8 +475,13 @@ ax = subplot(3,3,9); hold on
 plotQuartiles(ax,bl_ecc,auc_ecc,'Eccentricity [AUC]',lw,lb_fs, true);
 ax.YLim                    = [.3 .7];
 
-print(f, [dest_dir '/SFIG_social_modulation_matrix'], '-r500', '-dpng');
-print(f, [dest_dir '/SFIG_social_modulation_matrix'], '-r500', '-dsvg', '-painters');
+if state_alignment == true 
+print(f, [dest_dir '/SFIG_social_modulation_matrix_state'], '-r500', '-dpng');
+print(f, [dest_dir '/SFIG_social_modulation_matrix_state'], '-r500', '-dsvg', '-painters');
+else
+print(f, [dest_dir '/SFIG_social_modulation_matrix_target'], '-r500', '-dpng');
+print(f, [dest_dir '/SFIG_social_modulation_matrix_target'], '-r500', '-dsvg', '-painters'); 
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Hit rates
@@ -891,4 +933,22 @@ end
 ln.LineWidth            = 1.5;
 ln.LineStyle            = ':';
 ln.Color                = [0 0 0];
+end
+
+
+function ax = add_mean_to_bar(ax,dat,ylim,ytick,lw,alp,col_ci)
+
+yyaxis right
+[CI,~]                      = bootci(1000,{@mean,dat},'Alpha',0.01); % Boostrap confidence intervals
+vec                         = 1:length(CI); 
+x_spacing                   = [vec fliplr(vec)];
+ci                          = [CI(1,:) fliplr(CI(2,:))];
+fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'FaceAlpha', alp); % Overlay confidence intervals
+mpl                         = plot(1:size(dat,2),mean(dat), 'LineWidth', lw/1.5, 'LineStyle', '-', 'Color', col_ci.*2); % Plot mean curve
+ax.YLim                     = ylim;
+ax.YTick                    = ytick;
+ax.YLabel.String            = 'AUC';
+ax.YAxis(1).Color           = 'k';
+ax.YAxis(2).Color           = col_ci.*2;
+
 end
