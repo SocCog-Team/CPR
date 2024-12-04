@@ -100,7 +100,9 @@ for iSubj = 23%:length(sbj_lst)
                         
                         % Calculate motion energy
                         frme_vec{cc}      	= extract_resultant_vector(dp,dp_ts,rdp_dir(cc),rdp_coh(cc));
-
+                        vec_len{cc}      	= frme_vec{cc}.resultant_length;
+                        act_coh{cc}      	= frme_vec{cc}.actual_coherence;
+                        
                         % Extract joystick samples
                         tmp_js_ts{cc}       = getTrialData(d.time, ssIdx, idx.JS_str);                      % Timestamps: Joystick strength
                         tmp_js_dir{cc}      = getTrialData(d.value, ssIdx, idx.JS_dir);                     % Joystick direction
@@ -125,15 +127,9 @@ for iSubj = 23%:length(sbj_lst)
     end
 end
 
-save('/Users/fschneider/Desktop/vec_stuff', 'frme_vec','js_dir','js_ecc', '-v7.3')
- 
-for cc = 1:length(frme_vec)
-    vec_len{cc}      	= frme_vec{cc}.resultant_length;
-    act_coh{cc}      	= frme_vec{cc}.actual_coherence;
-end
-
+save('/Users/fschneider/Desktop/vec_stuff', 'frme_vec', '-v7.3')
+                        
 %%
-
 win = 120;
 nSample = 29;
 mat_acc = nan(10000,300);
@@ -200,57 +196,35 @@ end
 ylim([0 1])
 set(gca,'fontsize',16)
 
-print(f, '/Users/fschneider/Desktop/duration_acc_vs_ecc', '-r500', '-dpng');
-
-
 %% Crosscorrelation between vector length and joystick dispalcement
+nLag = 150;
 smooth_win = 20;
-nSample = [];
-maxLag = 75; 
-signal_flag = false;
-
+clear xc
 figure;hold on
 for iState = 1:size(frme_vec,2)
-    clear stim joys
-    if signal_flag == true
-        stim = frme_vec{iState}.resultant_length;
-        joys = js_ecc{iState};
-    else
-        stim = rad2deg(circ_dist(deg2rad(frme_vec{iState}.resultant_deg),deg2rad(frme_vec{iState}.nominal_dir_deg)));
-        joys = rad2deg(circ_dist(deg2rad(js_dir{iState}),deg2rad(frme_vec{iState}.nominal_dir_deg)));
-    end
-    
-    [xcoef(iState,:),lags] = smooth_and_xcorr(stim,joys,smooth_win,nSample, maxLag);
-    plot(lags.*8.33, xcoef(iState,:), 'DisplayName', 'No Shift'); % Convert lag to seconds for x-axis
+    clear v_smooth c_smooth_detrend ecc_detrend
+    v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
+    v_smooth_detrend = [0 v_smooth] - nanmean(v_smooth);
+    v_smooth_detrend(isnan(v_smooth_detrend)) = 0;
+
+    ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
+    ecc_detrend(isnan(ecc_detrend)) = 0;
+
+
+%     plot(xcorr(abs(v_smooth_detrend),abs(ecc_detrend),nLag));
+%     plot(xcorr(v_smooth,js_ecc{iState},nLag));
+    xc(iState,:) = xcorr(v_smooth_detrend,ecc_detrend,nLag,'normalized');
 end
 
-figure 
-ax = subplot(2,1,1); hold on
-im = imagesc(xcoef);
-ln = line([maxLag maxLag],[0 2000], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
-cb = colorbar;
-cb.Label.String = 'XCorr coef';
-ax.XLim = [1 maxLag*2];
-ax.XAxis.Visible = 'off';
-ax.FontSize = 16;
-ax.YLabel.String = 'Stim states [#]';
-colormap('turbo')
+figure
+imagesc(xc)
 
-ax = subplot(2,1,2); hold on
-lnh = line([-maxLag maxLag],[0 0], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
-lnv = line([0 0],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
-plot(lags/120,mean(xcoef), 'LineWidth', 2, 'Color', 'b')
-ax.XLim = [min(lags / 120) max(lags / 120)];
-ax.YLim = [-.021 .01];
-ax.FontSize = 16;
-ax.YLabel.String = 'Avg XCorr Coef';
-ax.XLabel.String = 'Time [s]';
+figure
+plot(mean(xc))
 
-print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
-
-% figure; hold on
-% plot([0 stim])
-% plot(joys)
+figure; hold on
+plot([0 v_smooth_detrend])
+plot(ecc_detrend)
 
 %% Correlation between avg joystick displacement and avg vector length
 nSample         = 29; % Time window size [samples]
@@ -258,25 +232,24 @@ indx        	= ~(cell2mat(cellfun(@length,js_ecc', 'UniformOutput', false)) <= n
 roi_ecc         = cell2mat(cellfun(@(x) x(end-nSample:end),js_ecc(indx)', 'UniformOutput', false));
 roi_vec         = cell2mat(cellfun(@(x) x(end-nSample:end),vec_len(indx)', 'UniformOutput', false));
 roi_coh         = cell2mat(cellfun(@(x) x(end-nSample:end),act_coh(indx)', 'UniformOutput', false));
-snr             = unique(rdp_coh);
-col             = cool(7);
 
 e = mean(roi_ecc,2);
 v = mean(roi_vec,2);
 c = mean(roi_coh,2);
 for i = 1:size(frme_vec,2); nc(i) = frme_vec{i}.nominal_coh;end
 
-f=figure;hold on
+figure;hold on
 for i = 1:length(e)
-    scatter(e(i),v(i) ,'filled', 'MarkerFaceAlpha',.5, 'MarkerFaceColor',col(snr == nc(i),:))
+    scatter(e(i),v(i) ,'filled', 'MarkerFaceAlpha',.5, 'MarkerFaceColor', [c(i) 0 0])
 end
 xlabel('avg eccentricity')
 ylabel('avg vector length')
 set(gca, 'fontsize', 14)
-print(f, '/Users/fschneider/Desktop/scatter_vlen_ecc', '-r500', '-dpng');
 
 %%% Correlation within coherence condition
 f = figure('units','centimeters','position',[0 0 50 10]);
+snr = unique(rdp_coh);
+col = cool(7);
 for iCoh = 1:7
     subplot(1,7,iCoh); hold on
     cidx = nc == snr(iCoh);
@@ -289,7 +262,6 @@ for iCoh = 1:7
     title({['r: ' num2str(round(r(2),3))]; ['p: ' num2str(round(pv(2),3))]})
     set(gca, 'fontsize', 14)
 end
-print(f, '/Users/fschneider/Desktop/corr_vlen_ecc', '-r500', '-dpng');
 
 %% Cycle plot
 
@@ -369,16 +341,11 @@ c.Label.String = 'Derivative';
 %% angular error vs vector length
 
 cmap = cool(256);
+close all
 figure
 nSamples = 99;
 time = 1:100;
-
 for iState = 1:length(frme_vec)
-    
-    if length(frme_vec{iState}.resultant_ang_error) <= nSamples
-        continue
-    end
-    
     angular_error(iState,:) = frme_vec{iState}.resultant_ang_error(end-nSamples:end);
     vec_length(iState,:) = frme_vec{iState}.resultant_length(end-nSamples:end);
     ncoh(iState) = mean(frme_vec{iState}.actual_coherence);
@@ -399,6 +366,7 @@ view(azimuth, elevation);
 %% joystick error vs eccentricity
 
 cmap = cool(256);
+close all
 figure
 nSamples = 99;
 time = 1:100;
@@ -510,20 +478,4 @@ out.resultant_length = res_length;
 out.resultant_ts = res_ts;
 out.actual_coherence = rcoh;
 
-end
-
-function [xcoef,lags] = smooth_and_xcorr(stim,joys,smooth_win,nSample,maxLag)
-
-stim_smooth = smoothdata(stim,'gaussian',smooth_win);
-stim_smooth = stim_smooth - mean(stim_smooth);
-
-joys_smooth = smoothdata(joys,'gaussian',smooth_win);
-joys_smooth = joys_smooth - nanmean(joys_smooth);
-
-scaleopt = 'normalized';
-if isempty(nSample)
-    [xcoef, lags] = xcorr(stim_smooth, joys_smooth(2:end), maxLag, scaleopt);
-else
-    [xcoef, lags] = xcorr(stim_smooth(end-nSample:end), joys_smooth(end-nSample:end), maxLag, scaleopt);
-end
 end
