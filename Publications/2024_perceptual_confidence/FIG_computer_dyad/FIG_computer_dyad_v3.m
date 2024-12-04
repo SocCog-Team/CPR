@@ -56,16 +56,20 @@ for iSub = 1:length(solo_perf)
     hir_df_SH(scnt,:)               = dyad_perf{idx_pc}.hir - solo_perf{iSub}.hir;
     hir_df_CH(scnt,:)               = hc_dyad_perf{idx_pc}.hir - dyad_perf{idx_dy}.hir;
 
-    auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
-    auc_acc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
-    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_perf{idx_dy}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
+%     auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
+%     auc_acc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_trg),cell2mat(dyad_perf{idx_dy}.acc_trg));
+%     auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_perf{idx_dy}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg)); 
+    
+    auc_acc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_state'),cell2mat(hc_dyad_perf{idx_pc}.acc_state'));
+    auc_acc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.acc_state'),cell2mat(dyad_perf{idx_dy}.acc_state'));
+    auc_acc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_perf{idx_dy}.acc_state'),cell2mat(hc_dyad_perf{idx_pc}.acc_state'));
     
     auc_ecc_pooled_SC(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
     auc_ecc_pooled_SH(scnt)         = getAUROC(cell2mat(solo_perf{iSub}.ecc_state'),cell2mat(dyad_perf{idx_dy}.ecc_state'));
     auc_ecc_pooled_CH(scnt)         = getAUROC(cell2mat(dyad_perf{idx_dy}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
 
     p_ecc_pooled_CH(scnt)        	= ranksum(cell2mat(dyad_perf{idx_dy}.ecc_state'),cell2mat(hc_dyad_perf{idx_pc}.ecc_state'));
-    p_acc_pooled_CH(scnt)       	= ranksum(cell2mat(dyad_perf{idx_dy}.acc_trg),cell2mat(hc_dyad_perf{idx_pc}.acc_trg));
+    p_acc_pooled_CH(scnt)       	= ranksum(cell2mat(dyad_perf{idx_dy}.acc_state'),cell2mat(hc_dyad_perf{idx_pc}.acc_state'));
 
     for iCoh = 1:length(snr)
         % Solo - Computer dyad
@@ -73,12 +77,14 @@ for iSub = 1:length(solo_perf)
 %         auc_ecc_SC(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
 %         auc_score_SC(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},hc_dyad_perf{idx_pc}.trg_score{iCoh});
             
-        auc_acc_SC(scnt,iCoh)   	= getAUROC(hc_dyad_perf{idx_pc}.acc_trg{iCoh},solo_perf{iSub}.acc_trg{iCoh});
+%         auc_acc_SC(scnt,iCoh)   	= getAUROC(hc_dyad_perf{idx_pc}.acc_trg{iCoh},solo_perf{iSub}.acc_trg{iCoh});
+        auc_acc_SC(scnt,iCoh)   	= getAUROC(hc_dyad_perf{idx_pc}.acc_state{iCoh},solo_perf{iSub}.acc_state{iCoh});
         auc_ecc_SC(scnt,iCoh)     	= getAUROC(hc_dyad_perf{idx_pc}.ecc_state{iCoh},solo_perf{iSub}.ecc_state{iCoh});
         auc_score_SC(scnt,iCoh)  	= getAUROC(hc_dyad_perf{idx_pc}.trg_score{iCoh},solo_perf{iSub}.trg_score{iCoh});
         
         % Solo - Human dyad
-        auc_acc_SH(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},dyad_perf{idx_dy}.acc_trg{iCoh});
+%         auc_acc_SH(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_trg{iCoh},dyad_perf{idx_dy}.acc_trg{iCoh});
+        auc_acc_SH(scnt,iCoh)   	= getAUROC(solo_perf{iSub}.acc_state{iCoh},dyad_perf{idx_dy}.acc_state{iCoh});
         auc_ecc_SH(scnt,iCoh)     	= getAUROC(solo_perf{iSub}.ecc_state{iCoh},dyad_perf{idx_dy}.ecc_state{iCoh});
         auc_score_SH(scnt,iCoh)  	= getAUROC(solo_perf{iSub}.trg_score{iCoh},dyad_perf{idx_dy}.trg_score{iCoh});
         
@@ -87,11 +93,13 @@ for iSub = 1:length(solo_perf)
 %         auc_ecc_CH(scnt,iCoh)     	= getAUROC(hc_dyad_perf{idx_pc}.ecc_state{iCoh},dyad_perf{idx_dy}.ecc_state{iCoh});
 %         auc_score_CH(scnt,iCoh)  	= getAUROC(hc_dyad_perf{idx_pc}.trg_score{iCoh},dyad_perf{idx_dy}.trg_score{iCoh});
                 
-        auc_acc_CH(scnt,iCoh)       = getAUROC(dyad_perf{idx_dy}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+%         auc_acc_CH(scnt,iCoh)       = getAUROC(dyad_perf{idx_dy}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+        auc_acc_CH(scnt,iCoh)       = getAUROC(dyad_perf{idx_dy}.acc_state{iCoh},hc_dyad_perf{idx_pc}.acc_state{iCoh});
         auc_ecc_CH(scnt,iCoh)     	= getAUROC(dyad_perf{idx_dy}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
         auc_score_CH(scnt,iCoh)  	= getAUROC(dyad_perf{idx_dy}.trg_score{iCoh},hc_dyad_perf{idx_pc}.trg_score{iCoh});
         
-        p_acc_CH(scnt,iCoh)            = ranksum(dyad_perf{idx_dy}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+%         p_acc_CH(scnt,iCoh)            = ranksum(dyad_perf{idx_dy}.acc_trg{iCoh},hc_dyad_perf{idx_pc}.acc_trg{iCoh});
+        p_acc_CH(scnt,iCoh)            = ranksum(dyad_perf{idx_dy}.acc_state{iCoh},hc_dyad_perf{idx_pc}.acc_state{iCoh});
         p_ecc_CH(scnt,iCoh)            = ranksum(dyad_perf{idx_dy}.ecc_state{iCoh},hc_dyad_perf{idx_pc}.ecc_state{iCoh});
     end
 end
@@ -187,32 +195,48 @@ ax12.YTick                 	= .3:.1:.6;
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 ax2                         = axes('Position', [clmns(2) height(2) dim]); hold on
-[ax2,pl]                    = plotData(ax2,hir_df_CH,true,lw,alp,col_dat,col_ci);
-lm                          = line([1 7],[0 0], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
-ax2.XLim                    = [1 size(hir_df_CH,2)];
+% [ax2,pl]                    = plotData(ax2,hir_df_CH,true,lw,alp,col_dat,col_ci);
+ax2                         = add_mean_to_bar(ax2,hir_df_CH.*100,[-10 30],[-10:10:30],lw,alp,col_ci);
+
+lm                          = line([0 8],[0 0], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
+ax2.XLim                    = [0 size(hir_df_CH,2)+1];
 ax2.FontSize                = lb_fs;
 ax2.YLabel.String           = 'Difference';
 ax2.XAxis.Visible           = 'off';
-ax2.YLim                    = [-15 40];
-tx                        	= text(2.25,-10, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(2.25,35, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
+ax2.YAxis(1).Color           = 'none';
+tx                        	= text(2,-5, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
+tx                       	= text(2,25, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: AUROC Accuracy Computer-Human %%%
+%% SUBPLOT: AUROC Accuracy Computer-Human %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ax3                         = axes('Position', [clmns(2) height(3) dim]); hold on
+% ax3                         = plotAUROC(ax3,auc_acc_CH,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
+% tx                        	= text(2.25,.1, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
+% tx                       	= text(2.25,.9, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
+
+sig_boundary                = .05 / (size(p_acc_CH,1) * size(p_acc_CH,2)); % Bonferroni correction
+
 ax3                         = axes('Position', [clmns(2) height(3) dim]); hold on
-ax3                         = plotAUROC(ax3,auc_acc_CH,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
-tx                        	= text(2.25,.1, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(2.25,.9, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
+ax3                         = plotBar_coherence(ax3, auc_acc_CH, p_acc_CH, sig_boundary, lb_fs, snr);
+ax3.YLim                    = [-40 80];
+ax3                         = add_mean_to_bar(ax3,auc_acc_CH,[.35 .8],[.4:.1:8],lw,alp,col_ci);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: AUROC eccentricity Computer-Human %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ax4                         = plotAUROC(ax4,auc_ecc_CH,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
+% tx                        	= text(2.25,.1, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
+% tx                       	= text(2.25,.9, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
+
+sig_boundary                = .05 / (size(p_ecc_CH,1) * size(p_ecc_CH,2)); % Bonferroni correction
+
 ax4                         = axes('Position', [clmns(2) height(4) dim]); hold on
-ax4                         = plotAUROC(ax4,auc_ecc_CH,'AUC',lb_fs,snr,alp,lw,col_dat,col_ci);
+ax4                         = plotBar_coherence(ax4, auc_ecc_CH, p_ecc_CH, sig_boundary, lb_fs, snr);
+ax4.YLim                    = [-80 40];
+ax4                         = add_mean_to_bar(ax4,auc_ecc_CH,[.2 .65],[.2:.1:.6],lw,alp,col_ci);
 ax4.XAxis.Visible           = 'on';
-tx                        	= text(2.25,.1, 'HH dyad > HC dyad', 'FontSize', lb_fs, 'Color', 'k');
-tx                       	= text(2.25,.9, 'HC dyad > HH dyad', 'FontSize', lb_fs, 'Color', 'k');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: Scatter accuracy average Human-Computer %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -281,8 +305,8 @@ ax11                        = histogramAUROC(ax11,hir_df_SC.*100,lb_fs,coh_col,l
 %%% Export
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/raw/FIG_computer_dyad', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/raw/FIG_computer_dyad', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_computer_dyad/raw/FIG_computer_dyad', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_computer_dyad/raw/FIG_computer_dyad', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Reported stats
@@ -386,53 +410,96 @@ fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'Face
 pl                          = plot(mean(dat), 'LineWidth', lw/1.5, 'Color', col_dat);
 end
 
-function ax = plotAUROC(ax,dat,str,lb_fs,snr,alp,lw,col_dat,col_ci)
+function ax = plotBar_coherence(ax,dat,p_mat,p_val,lb_fs,snr)
 
 axes(ax); hold on
 
-% Remove zero rows
-dat(sum(dat == 0,2) == size(dat,2),:) = [];
+pos = (dat > .5) & (p_mat < p_val);
+neg = (dat < .5) & (p_mat < p_val);
+all = size(dat,1);
 
-% Plot subject-wise data
-for iL = 1:size(dat,1)
-    pl(iL)               	= plot(dat(iL,:));
-    pl(iL).Color          	= [.5 .5 .5 alp];
-    pl(iL).LineWidth      	= lw/lw;
+bp                          = bar( (sum(pos)/all) .*100);
+bp.FaceColor                = [.4 .4 .4];
+
+bn                          = bar( -(sum(neg)/all) .*100);
+bn.FaceColor                = [.1 .1 .1];
+
+ax.YLim                     = [-60 60];
+ax.YLabel.String            = '[%]';
+ax.FontSize                 = lb_fs;
+ax.XTick                 	= [1 4 7];
+ax.XTickLabel            	= round(snr([1 4 7]),2).*100;
+ax.XTickLabelRotation      	= 0;
+ax.XAxis.Visible         	= 'off';
+ax.YLabel.String           	= '[%]';
+ax.XLabel.String           	= 'Coherence [%]';
 end
 
-% Boostrap confidence intervals
-nRep                        = 1000;
-[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
 
-% Prepare filled area
-vec                         = 1:length(CI);
+function ax = add_mean_to_bar(ax,dat,ylim,ytick,lw,alp,col_ci)
+
+yyaxis right
+[CI,~]                      = bootci(1000,{@mean,dat},'Alpha',0.01); % Boostrap confidence intervals
+vec                         = 1:length(CI); 
 x_spacing                   = [vec fliplr(vec)];
 ci                          = [CI(1,:) fliplr(CI(2,:))];
-
-% Overlay confidence intervals
-fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'FaceAlpha', alp);
-
-% Plot mean curve
-pm                          = plot(mean(dat),'LineWidth', lw/1.5, 'Color', col_dat);
-
-ax.XLim                  	= [1 length(snr)];
-ax.YLim                  	= [0 1];
-ax.FontSize               	= lb_fs;
-ax.YLabel.String           	= str;
-ax.XLabel.String           	= 'Coherence [%]';
-ax.XTick                 	= 1:7;
-ax.YTick                  	= [.25 .5 .75];
-ax.XTickLabel            	= round(snr,2).*100;
-ax.XTickLabelRotation      	= 0;
-ax.XAxis.Visible            = 'off';
-
-% n                           = .05;
-% crit                        = [.5-n .5+n];
-lm                          = line([1 7],[.5 .5], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
-% ll                          = line([1 7],[crit(1) crit(1)], 'Color', 'k', 'LineStyle', '-.', 'LineWidth',lw/2);
-% lh                          = line([1 7],[crit(2) crit(2)], 'Color', 'k', 'LineStyle', '-.', 'LineWidth',lw/2);
+fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'FaceAlpha', alp); % Overlay confidence intervals
+mpl                         = plot(1:size(dat,2),mean(dat), 'LineWidth', lw/1.5, 'LineStyle', '-', 'Color', col_ci.*2); % Plot mean curve
+ax.YLim                     = ylim;
+ax.YTick                    = ytick;
+ax.YLabel.String            = 'AUC';
+ax.YAxis(1).Color           = 'k';
+ax.YAxis(2).Color           = col_ci.*2;
 
 end
+
+% function ax = plotAUROC(ax,dat,str,lb_fs,snr,alp,lw,col_dat,col_ci)
+% 
+% axes(ax); hold on
+% 
+% % Remove zero rows
+% dat(sum(dat == 0,2) == size(dat,2),:) = [];
+% 
+% % Plot subject-wise data
+% for iL = 1:size(dat,1)
+%     pl(iL)               	= plot(dat(iL,:));
+%     pl(iL).Color          	= [.5 .5 .5 alp];
+%     pl(iL).LineWidth      	= lw/lw;
+% end
+% 
+% % Boostrap confidence intervals
+% nRep                        = 1000;
+% [CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.01);
+% 
+% % Prepare filled area
+% vec                         = 1:length(CI);
+% x_spacing                   = [vec fliplr(vec)];
+% ci                          = [CI(1,:) fliplr(CI(2,:))];
+% 
+% % Overlay confidence intervals
+% fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'FaceAlpha', alp);
+% 
+% % Plot mean curve
+% pm                          = plot(mean(dat),'LineWidth', lw/1.5, 'Color', col_dat);
+% 
+% ax.XLim                  	= [1 length(snr)];
+% ax.YLim                  	= [0 1];
+% ax.FontSize               	= lb_fs;
+% ax.YLabel.String           	= str;
+% ax.XLabel.String           	= 'Coherence [%]';
+% ax.XTick                 	= 1:7;
+% ax.YTick                  	= [.25 .5 .75];
+% ax.XTickLabel            	= round(snr,2).*100;
+% ax.XTickLabelRotation      	= 0;
+% ax.XAxis.Visible            = 'off';
+% 
+% % n                           = .05;
+% % crit                        = [.5-n .5+n];
+% lm                          = line([1 7],[.5 .5], 'Color', 'k', 'LineStyle', ':', 'LineWidth',lw/2);
+% % ll                          = line([1 7],[crit(1) crit(1)], 'Color', 'k', 'LineStyle', '-.', 'LineWidth',lw/2);
+% % lh                          = line([1 7],[crit(2) crit(2)], 'Color', 'k', 'LineStyle', '-.', 'LineWidth',lw/2);
+% 
+% end
 
 function ax = plotScatter(ax,in_solo,in_pc, in_hum,coh_col,cond_str,lb_fs,id_dyad_pc,id_dyad,snr)
 
