@@ -135,6 +135,8 @@ nSample = 29;
 mat_acc = nan(10000,300);
 mat_ecc = nan(10000,300);
 c = 0;
+snr = unique(ncoh);
+col = cool(length(snr));
 
 for iState = 1:size(frme_vec,2)
 
@@ -150,9 +152,12 @@ for iState = 1:size(frme_vec,2)
     end
 end
 
+mat_acc(sum(isnan(mat_acc),2) == size(mat_acc,2),:) = [];
+mat_ecc(sum(isnan(mat_ecc),2) == size(mat_ecc,2),:) = [];
+
 f = figure;
 [v,i] = sort(slen);
-subplot(2,2,1)
+subplot(2,2,1);hold on
 imagesc(mat_acc(i,:))
 cb = colorbar;
 cb.Label.String = 'accuracy';
@@ -161,7 +166,7 @@ xlabel('State duration [remaining samples]')
 title('Accuracy')
 set(gca,'fontsize',16)
 
-subplot(2,2,2)
+subplot(2,2,2);hold on
 imagesc(mat_ecc(i,:))
 colormap('turbo')
 cb = colorbar;
@@ -169,8 +174,6 @@ cb.Label.String = 'displacement';
 title('Displacement')
 set(gca,'fontsize',16)
 
-snr = unique(ncoh);
-col = cool(length(snr));
 subplot(2,2,3);hold on
 for iCoh = 1:length(snr)
     comb = [i find(ncoh == snr(iCoh))];
@@ -196,11 +199,16 @@ end
 ylim([0 1])
 set(gca,'fontsize',16)
 
+print(f, '/Users/fschneider/Desktop/duration_acc_vs_ecc', '-r500', '-dpng');
+
+% figure; hold on
+% for iL = 1:size(mat_acc,1)
+% plot(mat_acc(iL,:),'Color',col(snr == ncoh(iL),:))
+% end
 %% Crosscorrelation between vector length and joystick dispalcement
 nLag = 150;
 smooth_win = 20;
 clear xc
-figure;hold on
 for iState = 1:size(frme_vec,2)
     clear v_smooth c_smooth_detrend ecc_detrend
     v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
@@ -215,16 +223,22 @@ for iState = 1:size(frme_vec,2)
 %     plot(xcorr(v_smooth,js_ecc{iState},nLag));
     xc(iState,:) = xcorr(v_smooth_detrend,ecc_detrend,nLag,'normalized');
 end
+% print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
 
-figure
+f=figure
+ax = subplot(2,1,1);hold on
 imagesc(xc)
+ln = line([0 0],[0 2000], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
 
-figure
+
+ax = subplot(2,1,2);hold on
 plot(mean(xc))
+ln = line([0 0],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
 
-figure; hold on
-plot([0 v_smooth_detrend])
-plot(ecc_detrend)
+% figure; hold on
+% plot([0 v_smooth_detrend])
+% plot(ecc_detrend)
+
 
 %% Correlation between avg joystick displacement and avg vector length
 nSample         = 29; % Time window size [samples]
