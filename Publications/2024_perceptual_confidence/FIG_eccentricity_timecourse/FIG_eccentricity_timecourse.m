@@ -265,7 +265,8 @@ for cc = 1:length(frme_vec)
     vec_len{cc}      	= frme_vec{cc}.resultant_length;
     act_coh{cc}      	= frme_vec{cc}.actual_coherence;
 end
-
+snr = unique(state_coh);
+col = cool(7);
 nSample         = 29; % Time window size [samples]
 indx        	= ~(cell2mat(cellfun(@length,js_ecc', 'UniformOutput', false)) <= nSample+1);
 roi_ecc         = cell2mat(cellfun(@(x) x(end-nSample:end),js_ecc(indx)', 'UniformOutput', false));
@@ -275,24 +276,26 @@ roi_coh         = cell2mat(cellfun(@(x) x(end-nSample:end),act_coh(indx)', 'Unif
 e = mean(roi_ecc,2);
 v = mean(roi_vec,2);
 c = mean(roi_coh,2);
-for i = 1:size(frme_vec,2); nc(i) = frme_vec{i}.nominal_coh;end
+for i = 1:size(frme_vec,2)
+    nc(i) = frme_vec{i}.nominal_coh;
+end
 
-figure;hold on
+f = figure;hold on
 for i = 1:length(e)
-    scatter(e(i),v(i) ,'filled', 'MarkerFaceAlpha',.5, 'MarkerFaceColor', [c(i) 0 0])
+    scatter(e(i),v(i) ,'filled', 'MarkerFaceAlpha',.5, 'MarkerFaceColor', col(find(snr == nc(i)),:))
 end
 xlabel('avg eccentricity')
 ylabel('avg vector length')
 set(gca, 'fontsize', 14)
 
+print(f, '/Users/fschneider/Desktop/scatter_vlen_ecc', '-r500', '-dpng');
+
 %%% Correlation within coherence condition
 f = figure('units','centimeters','position',[0 0 50 10]);
-snr = unique(state_coh);
-col = cool(7);
 for iCoh = 1:7
     subplot(1,7,iCoh); hold on
     cidx = nc == snr(iCoh);
-    scatter(v(cidx),e(cidx),'filled', 'MarkerFaceAlpha',.75, 'MarkerFaceColor', col(iCoh,:))
+    scatter(e(cidx),v(cidx),'filled', 'MarkerFaceAlpha',.75, 'MarkerFaceColor', col(iCoh,:))
     lsline
     [r,pv]               	= corrcoef(v(cidx),e(cidx));
     ylim([0 1])
@@ -301,6 +304,8 @@ for iCoh = 1:7
     title({['r: ' num2str(round(r(2),3))]; ['p: ' num2str(round(pv(2),3))]})
     set(gca, 'fontsize', 14)
 end
+
+print(f, '/Users/fschneider/Desktop/corr_vlen_ecc', '-r500', '-dpng');
 
 %% Cycle plot
 
