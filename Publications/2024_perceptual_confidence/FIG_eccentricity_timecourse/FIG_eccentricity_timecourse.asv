@@ -100,6 +100,8 @@ for iSubj = 23%:length(sbj_lst)
                         
                         % Calculate motion energy
                         frme_vec{cc}      	= extract_resultant_vector(dp,dp_ts,rdp_dir(cc),rdp_coh(cc));
+                        vec_len{cc}      	= frme_vec{cc}.resultant_length;
+                        act_coh{cc}      	= frme_vec{cc}.actual_coherence;
                         
                         % Extract joystick samples
                         tmp_js_ts{cc}       = getTrialData(d.time, ssIdx, idx.JS_str);                      % Timestamps: Joystick strength
@@ -133,6 +135,8 @@ nSample = 29;
 mat_acc = nan(10000,300);
 mat_ecc = nan(10000,300);
 c = 0;
+snr = unique(ncoh);
+col = cool(length(snr));
 
 for iState = 1:size(frme_vec,2)
 
@@ -148,8 +152,6 @@ for iState = 1:size(frme_vec,2)
     end
 end
 
-snr = unique(ncoh);
-col = cool(length(snr));
 mat_acc(sum(isnan(mat_acc),2) == size(mat_acc,2),:) = [];
 mat_ecc(sum(isnan(mat_ecc),2) == size(mat_ecc,2),:) = [];
 
@@ -247,7 +249,7 @@ ln = line([0 0],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
 ax.YLim = [-.05 .06];
 ax.XLim = [min(lags/120) max(lags/120)];
 ax.YLabel.String = 'XCorr coef [#]';
-ax.XLabel.String = 'Shift [s]';
+ax.XLabel.String = 'Shift [#]';
 ax.FontSize = 16;
 
 legend(plt,str,'Location','West')
@@ -260,12 +262,6 @@ print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
 
 
 %% Correlation between avg joystick displacement and avg vector length
-
-for cc = 1:length(frme_vec)
-    vec_len{cc}      	= frme_vec{cc}.resultant_length;
-    act_coh{cc}      	= frme_vec{cc}.actual_coherence;
-end
-
 nSample         = 29; % Time window size [samples]
 indx        	= ~(cell2mat(cellfun(@length,js_ecc', 'UniformOutput', false)) <= nSample+1);
 roi_ecc         = cell2mat(cellfun(@(x) x(end-nSample:end),js_ecc(indx)', 'UniformOutput', false));
@@ -287,7 +283,7 @@ set(gca, 'fontsize', 14)
 
 %%% Correlation within coherence condition
 f = figure('units','centimeters','position',[0 0 50 10]);
-snr = unique(state_coh);
+snr = unique(rdp_coh);
 col = cool(7);
 for iCoh = 1:7
     subplot(1,7,iCoh); hold on
