@@ -91,7 +91,7 @@ for iPlot = 1:4
         
         ax.YLabel.String        = 'Accuracy [AUC: Solo vs Dyadic]';
         str                     = 'Accuracy';
-        ax.XLim                 = [-.1 .1];
+        ax.XLim                 = [-.15 .15];
         ax.YLim                 = [.3 .7];
         ax0v.YLim               = [.3 .7];
 
@@ -127,7 +127,7 @@ for iPlot = 1:4
         tx.FontSize             = lb_fs;
         ax.YLabel.String        = 'AUC difference';
         str                     = 'Accuracy';
-        ax.XLim                 = [-.1 .1];
+        ax.XLim                 = [-.15 .15];
         ax.YLim                 = [0 .2];  
         [x_avg, y_avg]          = avg_win_value(x,y,win_size);
     end
