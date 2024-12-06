@@ -204,9 +204,14 @@ print(f, '/Users/fschneider/Desktop/duration_acc_vs_ecc', '-r500', '-dpng');
 % plot(mat_acc(iL,:),'Color',col(snr == ncoh(iL),:))
 % end
 %% Crosscorrelation between vector length and joystick dispalcement
+
+addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
+
 nLag = 150;
 smooth_win = 20;
 clear xc state_coh
+
+% for iState = 50:60
 for iState = 1:size(frme_vec,2)
     clear v_smooth c_smooth_detrend ecc_detrend
     v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
@@ -215,12 +220,23 @@ for iState = 1:size(frme_vec,2)
 
     ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
     ecc_detrend(isnan(ecc_detrend)) = 0;
+    
+    js_dir_error= rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
+    joystick_acc = abs(1 - abs(js_dir_error) / 180);
+    acc_detrend = joystick_acc - nanmean(joystick_acc);
+    acc_detrend(isnan(acc_detrend)) = 0;
 
     state_coh(iState) = frme_vec{iState}.nominal_coh;
 
-%     plot(xcorr(abs(v_smooth_detrend),abs(ecc_detrend),nLag));
-%     plot(xcorr(v_smooth,js_ecc{iState},nLag));
-    [xc(iState,:) lags] = xcorr(ecc_detrend,v_smooth_detrend,nLag,'normalized');
+%     [xc(iState,:) lags] = xcorr(ecc_detrend(10:end),v_smooth_detrend(10:end),nLag,'normalized');
+    [xc(iState,:) lags] = xcorr(acc_detrend(10:end),v_smooth_detrend(10:end),nLag,'normalized');
+%     [xc(iState,:) lags] = xcorr(ecc_detrend(10:end),acc_detrend(10:end),nLag,'normalized');
+    
+%     figure;hold on
+% plot([nan acc_detrend])
+% plot(ecc_detrend)
+
+
 end
 
 f=figure;
