@@ -13,8 +13,8 @@ load([source_pth '/hh_dyad_performance.mat'])
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Within-dyad effect size %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% alignment_str = 'state';
-alignment_str = 'trg';
+alignment_str = 'state';
+% alignment_str = 'trg';
 
 [acc_df, ecc_df, auc, score, hir, raw] = dyad_effect_size(solo_perf, dyad_pw_perf, alignment_str);
 
@@ -176,7 +176,7 @@ for i = 1:2
         sc2.SizeData            = sc_size;
         
         [x_fit, y_fit, r(i,2), pv(i,2)]	= regr_line(ax,acc_df.solo,df_subset,rcol,.13);
-        ax.XLim                 = [-.1 .1];
+        ax.XLim                 = [-.15 .15];
         ax.YLim                 = [-.2 .2];
         ax.YTick                = [-.2:.1:.2];
         ax.YLabel.String        = {'Accuracy Difference';' [AUROC_P1 - AUROC_P2]'};
