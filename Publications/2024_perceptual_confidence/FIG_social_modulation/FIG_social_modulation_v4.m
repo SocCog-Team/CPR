@@ -620,6 +620,24 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Lag difference
+snr = unique(dyad_cr{1}.coh);
+cnt = 0;
+for iSubj = 1:length(dyad_cr)
+    if ~isempty(dyad_perf{iSubj})
+        cnt                         = cnt+1;
+        for iCoh = 1:length(snr)
+            idx                   	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
+            avg_solo_lag(cnt,iCoh)	= mean(solo_cr{idx}.lag(solo_cr{idx}.coh == snr(iCoh)));
+            avg_dyad_lag(cnt,iCoh)	= mean(dyad_cr{iSubj}.lag(dyad_cr{iSubj}.coh == snr(iCoh)));
+        end
+    end
+end
+
+[mean(mean(avg_solo_lag,2)) iqr(mean(avg_solo_lag,2))]
+[mean(mean(avg_dyad_lag,2)) iqr(mean(avg_dyad_lag,2))]
+
+[p_lag,h_lag,stats_lag] = signrank(mean(avg_solo_lag,2), mean(avg_dyad_lag,2));
 
 % Hit rate drop for highest coherence level
 for iSubj = 1:length(solo_cr)
@@ -692,27 +710,6 @@ median(auc_ecc_pooled)
 [p,h,stats] = signrank(auc_ecc_pooled,.5)
 median(auc_acc_pooled)
 [p,h,stats] = signrank(auc_acc_pooled,.5)
-
-%%% Lag difference
-snr = unique(dyad_cr{1}.coh);
-cnt = 0;
-for iSubj = 1:length(dyad_cr)
-    if ~isempty(dyad_perf{iSubj})
-        cnt                         = cnt+1;
-        for iCoh = 1:length(snr)
-            avg_dyad_lag(cnt,iCoh)	= mean(dyad_cr{iSubj}.lag(dyad_cr{iSubj}.coh == snr(iCoh)));
-%             iqr_dyad_lag(cnt,iCoh)	= iqr(dyad_cr{iSubj}.lag(dyad_cr{iSubj}.coh == snr(iCoh)));
-            idx                   	= cellfun(@(x) strcmp(x,dyad_perf{iSubj}.id),solo_id);
-            avg_solo_lag(cnt,iCoh)	= mean(solo_cr{idx}.lag(solo_cr{idx}.coh == snr(iCoh)));
-%             iqr_solo_lag(cnt,iCoh)	= iqr(solo_cr{idx}.lag(solo_cr{idx}.coh == snr(iCoh)));
-        end
-    end
-end
-
-[mean(mean(avg_solo_lag,2)) iqr(mean(avg_solo_lag,2))]
-[mean(mean(avg_dyad_lag,2)) iqr(mean(avg_dyad_lag,2))]
-
-[p_lag,h_lag,stats_lag] = signrank(mean(avg_solo_lag,2), mean(avg_dyad_lag,2));
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
