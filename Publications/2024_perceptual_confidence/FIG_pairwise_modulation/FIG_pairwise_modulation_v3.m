@@ -343,10 +343,10 @@ for i = 1:4
         ax.XTick        = [.4:.2:1];
         ax.YTick        = [.4:.2:1];
     else
-        ax.XLim        	= [.7 1];
-        ax.YLim       	= [.7 1];
-        ax.XTick        = [.7:.1:1];
-        ax.YTick        = [.7:.1:1];
+        ax.XLim        	= [.8 1];
+        ax.YLim       	= [.8 1];
+        ax.XTick        = [.8:.1:1];
+        ax.YTick        = [.8:.1:1];
     end
     
     ax.FontSize         = lb_fs;
@@ -516,10 +516,10 @@ median([auc.ecc1,auc.ecc2])
 median([auc.acc1,auc.acc2])
 [p,h,stats] = signrank([auc.acc1,auc.acc2],.5);
 
-% Regression to mean problem
-nRep                        = 5000;
-auc_str                     = 'ecc';
-solo_str                    = 'ecc';
+%% Regression to mean problem
+nRep                        = 100000;
+% auc_str                     = 'ecc';
+% solo_str                    = 'ecc';
 % auc_str                     = 'acc';
 % solo_str                    = 'acc';
 n                           = 1;
