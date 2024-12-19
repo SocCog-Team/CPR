@@ -123,87 +123,75 @@ for iSubj = 1:length(sbj_lst)
             end
         end
     end
+    
+    save(['/Users/fschneider/Desktop/vector_subk_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
+    save(['/Users/fschneider/Desktop/joystick_subk_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
 end
-
-save('/Users/fschneider/Desktop/vec_stuff', 'frme_vec', '-v7.3')
                         
 %%
-win = 120;
-nSample = 29;
-mat_acc = nan(10000,300);
-mat_ecc = nan(10000,300);
-c = 0;
+clear avg_ecc avg_acc
 
-for iState = 1:size(frme_vec,2)
+win = 60;
 
-    if length(js_ecc{iState}) >= win
-        c           = c+1;
-        slen(c)     = length(js_ecc{iState}(win:end));
-        ncoh(c)      = frme_vec{iState}.nominal_coh;
-        ndir(c)      = frme_vec{iState}.nominal_dir_deg;
-         
-        mat_acc(c,end-slen(c)+1:end)  	= abs(1 - abs(frme_vec{iState}.resultant_ang_error(win-1:end)) / 180);
-        mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
+for iSubj = 1:length(sbj_lst)
+    
+    mat_acc = nan(10000,300);
+    mat_ecc = nan(10000,300);
+    c = 0;
+    
+    load(['/Users/fschneider/Desktop/resultant_vec/vector_subj_' sbj_lst{iSubj} '.mat'])
+    load(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj} '.mat'])
+    
+    clear ncoh slen ndir
+    
+    for iState = 1:size(frme_vec,2)
         
+        if length(js_ecc{iState}) >= win && length(js_ecc{iState}) == length(frme_vec{iState}.resultant_ang_error)+1
+            c           = c+1;
+            slen(c)     = length(js_ecc{iState}(win:end));
+            ncoh(c)    	= frme_vec{iState}.nominal_coh;
+            ndir(c)    	= frme_vec{iState}.nominal_dir_deg;
+            
+            mat_acc(c,end-slen(c)+1:end)  	= abs(1 - abs(frme_vec{iState}.resultant_ang_error(win-1:end)) / 180);
+            mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
+        end
+    end
+    
+    snr_lst = unique(ncoh);
+    if length(snr_lst)>7
+       snr_lst = snr_lst(1:2:end);
+    end
+    
+    mat_acc(sum(isnan(mat_acc),2) == size(mat_acc,2),:) = [];
+    mat_ecc(sum(isnan(mat_ecc),2) == size(mat_ecc,2),:) = [];
+    
+    for iCoh = 1:length(snr_lst)
+        cidx = ncoh == snr_lst(iCoh);
+        avg_acc(iSubj,iCoh,:) = nanmean(mat_acc(cidx,:));
+        avg_ecc(iSubj,iCoh,:) = nanmean(mat_ecc(cidx,:));
     end
 end
 
-snr = unique(ncoh);
-col = cool(length(snr));
-mat_acc(sum(isnan(mat_acc),2) == size(mat_acc,2),:) = [];
-mat_ecc(sum(isnan(mat_ecc),2) == size(mat_ecc,2),:) = [];
-
+%%% PLOT
 f = figure;
-[v,i] = sort(slen);
-subplot(2,2,1);hold on
-imagesc(mat_acc(i,:))
-cb = colorbar;
-cb.Label.String = 'accuracy';
-ylabel('State [#]')
-xlabel('State duration [remaining samples]')
-title('Accuracy')
-set(gca,'fontsize',16)
+col = cool(length(snr_lst));
+ax1 = subplot(1,2,1); hold on
+ax2 = subplot(1,2,2); hold on
 
-subplot(2,2,2);hold on
-imagesc(mat_ecc(i,:))
-colormap('turbo')
-cb = colorbar;
-cb.Label.String = 'displacement';
-title('Displacement')
-set(gca,'fontsize',16)
+for iCoh = 1:length(snr_lst)
+   
+    [ax1, pl(iCoh)] = plot_averages(ax1,squeeze(avg_acc(:,iCoh,:)),col(iCoh, :));
+    [axw, pl(iCoh)] = plot_averages(ax2,squeeze(avg_ecc(:,iCoh,:)),col(iCoh, :));
 
-subplot(2,2,3);hold on
-for iCoh = 1:length(snr)
-    comb = [i find(ncoh == snr(iCoh))];
-    [uniqueNumbers, ~, indices] = unique(comb);
-    counts = accumarray(indices, 1);
-    indx = uniqueNumbers(counts > 1);
-
-    scatter(slen(indx), nanmean(mat_acc(indx,end-nSample:end),2),'filled', 'MarkerFaceColor', col(iCoh,:), 'MarkerFaceAlpha', .5)
 end
-ylabel('JS accuracy')
-ylim([0 1])
-xlabel('State duration [remaining samples]')
-set(gca,'fontsize',16)
 
-subplot(2,2,4);hold on
-for iCoh = 1:length(snr)
-    comb = [i find(ncoh == snr(iCoh))];
-    [uniqueNumbers, ~, indices] = unique(comb);
-    counts = accumarray(indices, 1);
-    indx = uniqueNumbers(counts > 1);
-    scatter(slen(indx), nanmean(mat_ecc(indx,end-nSample:end),2),'filled', 'MarkerFaceColor', col(iCoh,:), 'MarkerFaceAlpha', .5)
-end
-ylim([0 1])
-set(gca,'fontsize',16)
+ax1 = adjust_axes(ax1,'accuracy [norm]');
+ax2 = adjust_axes(ax2,'tilt [norm]');
 
-print(f, '/Users/fschneider/Desktop/duration_acc_vs_ecc', '-r500', '-dpng');
+print(f, '/Users/fschneider/Desktop/acg_timeline_pop', '-r500', '-dpng');
 
-% figure; hold on
-% for iL = 1:size(mat_acc,1)
-% plot(mat_acc(iL,:),'Color',col(snr == ncoh(iL),:))
-% end
-%% Crosscorrelation between vector length and joystick dispalcement
+
+%% Crosscorrelation between vector length and joystick displacement
 
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 
@@ -211,32 +199,34 @@ nLag = 150;
 smooth_win = 20;
 clear xc state_coh
 
-% for iState = 50:60
-for iState = 1:size(frme_vec,2)
-    clear v_smooth c_smooth_detrend ecc_detrend
-    v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
-    v_smooth_detrend = [0 v_smooth] - nanmean(v_smooth);
-    v_smooth_detrend(isnan(v_smooth_detrend)) = 0;
-
-    ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
-    ecc_detrend(isnan(ecc_detrend)) = 0;
+for iSubj = 1:length(sbj_lst)
     
-    js_dir_error= rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
-    joystick_acc = abs(1 - abs(js_dir_error) / 180);
-    acc_detrend = joystick_acc - nanmean(joystick_acc);
-    acc_detrend(isnan(acc_detrend)) = 0;
-
-    state_coh(iState) = frme_vec{iState}.nominal_coh;
-
-%     [xc(iState,:) lags] = xcorr(ecc_detrend(10:end),v_smooth_detrend(10:end),nLag,'normalized');
-    [xc(iState,:) lags] = xcorr(acc_detrend(10:end),v_smooth_detrend(10:end),nLag,'normalized');
-%     [xc(iState,:) lags] = xcorr(ecc_detrend(10:end),acc_detrend(10:end),nLag,'normalized');
     
-%     figure;hold on
-% plot([nan acc_detrend])
-% plot(ecc_detrend)
-
-
+    for iState = 1:size(frme_vec,2)
+        clear v_smooth v_smooth_detrend ecc_detrend js_dir_error joystick_acc acc_detrend
+        
+        v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
+        v_smooth_detrend = [0 v_smooth] - nanmean(v_smooth);
+        v_smooth_detrend(isnan(v_smooth_detrend)) = 0;
+        
+        ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
+        ecc_detrend(isnan(ecc_detrend)) = 0;
+        
+        js_dir_error= rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
+        joystick_acc = abs(1 - abs(js_dir_error) / 180);
+        acc_detrend = joystick_acc - nanmean(joystick_acc);
+        acc_detrend(isnan(acc_detrend)) = 0;
+        
+        state_coh(iState) = frme_vec{iState}.nominal_coh;
+        
+        [xc_acc_vec(iState,:) lags] = xcorr(ecc_detrend,v_smooth_detrend,nLag,'normalized');
+        [xc_ecc_vec(iState,:) lags] = xcorr(acc_detrend,v_smooth_detrend,nLag,'normalized');
+        [xc_ecc_acc(iState,:) lags] = xcorr(ecc_detrend,acc_detrend,nLag,'normalized');
+        [control(iState,:) lags] = xcorr(v_smooth_detrend(1:end-19),v_smooth_detrend(20:end),nLag,'normalized');
+        
+    end
+    
+    avg_xc_acc_vec(iSubj,:) = nanmean(xc_acc_vec)
 end
 
 f=figure;
@@ -273,184 +263,6 @@ print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
 % figure; hold on
 % plot([0 v_smooth_detrend])
 % plot(ecc_detrend)
-
-
-%% Correlation between avg joystick displacement and avg vector length
-
-for cc = 1:length(frme_vec)
-    vec_len{cc}      	= frme_vec{cc}.resultant_length;
-    act_coh{cc}      	= frme_vec{cc}.actual_coherence;
-end
-snr = unique(state_coh);
-col = cool(7);
-nSample         = 29; % Time window size [samples]
-indx        	= ~(cell2mat(cellfun(@length,js_ecc', 'UniformOutput', false)) <= nSample+1);
-roi_ecc         = cell2mat(cellfun(@(x) x(end-nSample:end),js_ecc(indx)', 'UniformOutput', false));
-roi_vec         = cell2mat(cellfun(@(x) x(end-nSample:end),vec_len(indx)', 'UniformOutput', false));
-roi_coh         = cell2mat(cellfun(@(x) x(end-nSample:end),act_coh(indx)', 'UniformOutput', false));
-
-e = mean(roi_ecc,2);
-v = mean(roi_vec,2);
-c = mean(roi_coh,2);
-for i = 1:size(frme_vec,2)
-    nc(i) = frme_vec{i}.nominal_coh;
-end
-
-f = figure;hold on
-for i = 1:length(e)
-    scatter(e(i),v(i) ,'filled', 'MarkerFaceAlpha',.5, 'MarkerFaceColor', col(find(snr == nc(i)),:))
-end
-xlabel('avg eccentricity')
-ylabel('avg vector length')
-set(gca, 'fontsize', 14)
-
-print(f, '/Users/fschneider/Desktop/scatter_vlen_ecc', '-r500', '-dpng');
-
-%%% Correlation within coherence condition
-f = figure('units','centimeters','position',[0 0 50 10]);
-for iCoh = 1:7
-    subplot(1,7,iCoh); hold on
-    cidx = nc == snr(iCoh);
-    scatter(e(cidx),v(cidx),'filled', 'MarkerFaceAlpha',.75, 'MarkerFaceColor', col(iCoh,:))
-    lsline
-    [r,pv]               	= corrcoef(v(cidx),e(cidx));
-    ylim([0 1])
-    ylabel('vector length')
-    xlabel('displacement')
-    title({['r: ' num2str(round(r(2),3))]; ['p: ' num2str(round(pv(2),3))]})
-    set(gca, 'fontsize', 14)
-end
-
-print(f, '/Users/fschneider/Desktop/corr_vlen_ecc', '-r500', '-dpng');
-
-%% Cycle plot
-
-idx = 31:60;
-f = figure('units','normalized','position',[0 0 1 1]); hold on
-subplot(2,3,1)
-imagesc(roi_ecc(idx,:))
-xlabel('# frames before direction change')
-ylabel('# stimulus state')
-title('joystick eccentricity')
-set(gca, 'fontsize', 14)
-set(gca, 'xtick', [1 50 100])
-set(gca, 'xticklabels', [-100 -50 0])
-colormap('gray')
-c = colorbar;
-c.Label.String = 'joystick eccentricity';
-
-subplot(2,3,2)
-imagesc(roi_vec(idx,:))
-xlabel('# frames before direction change')
-ylabel('# stimulus state')
-title('resultant vector length')
-set(gca, 'fontsize', 14)
-set(gca, 'xtick', [1 50 100])
-set(gca, 'xticklabels', [-100 -50 0])
-colormap('gray')
-c = colorbar;
-c.Label.String = 'vector length';
-
-subplot(2,3,3)
-imagesc(roi_coh(idx,:))
-xlabel('# frames before direction change')
-ylabel('# stimulus state')
-title('physical coherence')
-set(gca, 'xtick', [1 50 100])
-set(gca, 'xticklabels', [-100 -50 0])
-set(gca, 'fontsize', 14)
-colormap('gray')
-c = colorbar;
-c.Label.String = 'Dot coherence';
-
-subplot(2,3,4)
-imagesc(diff([nan(size(roi_ecc(idx,:),1),1) roi_ecc(idx,:)],1,2))
-xlabel('# frames before direction change')
-ylabel('# stimulus state')
-set(gca, 'xtick', [1 50 100])
-set(gca, 'xticklabels', [-100 -50 0])
-set(gca, 'fontsize', 14)
-colormap('gray')
-c = colorbar;
-c.Label.String = 'Derivative';
-
-
-subplot(2,3,5)
-imagesc(diff([nan(size(roi_vec(idx,:),1),1) roi_vec(idx,:)],1,2))
-xlabel('# frames before direction change')
-ylabel('# stimulus state')
-set(gca, 'xtick', [1 50 100])
-set(gca, 'xticklabels', [-100 -50 0])
-set(gca, 'fontsize', 14)
-colormap('gray')
-c = colorbar;
-c.Label.String = 'Derivative';
-
-subplot(2,3,6)
-imagesc(diff([nan(size(roi_coh(idx,:),1),1) roi_coh(idx,:)],1,2))
-xlabel('# frames before direction change')
-ylabel('# stimulus state')
-set(gca, 'xtick', [1 50 100])
-set(gca, 'xticklabels', [-100 -50 0])
-set(gca, 'fontsize', 16)
-colormap('gray')
-c = colorbar;
-c.Label.String = 'Derivative';
-
-
-%% angular error vs vector length
-
-cmap = cool(256);
-close all
-figure
-nSamples = 99;
-time = 1:100;
-for iState = 1:length(frme_vec)
-    angular_error(iState,:) = frme_vec{iState}.resultant_ang_error(end-nSamples:end);
-    vec_length(iState,:) = frme_vec{iState}.resultant_length(end-nSamples:end);
-    ncoh(iState) = mean(frme_vec{iState}.actual_coherence);
-    
-    p3 = plot3(time, vec_length(iState,:),angular_error(iState,:)); hold on
-    p3.Color = cmap(ceil(256*ncoh(iState)),:);
-    
-end
-
-xlabel('time [frames]')
-ylabel('length of resultant vector [coherence]')
-zlabel('angular error between nominal and actual direction')
-set(gca, 'fontsize', 20)
-azimuth = 245; % Horizontal rotation (in degrees)
-elevation = 25; % Vertical elevation (in degrees)
-view(azimuth, elevation);
-
-%% joystick error vs eccentricity
-
-cmap = cool(256);
-close all
-figure
-nSamples = 99;
-time = 1:100;
-pcoh = rdp_coh;
-pcoh(pcoh==0) = 0.0001;
-for iState = 1:length(frme_vec)
-    if length(js_ecc{iState}) < nSamples+1
-        continue
-    end
-    %     js_angular_error(iState,:) = rad2deg(circ_dist(deg2rad(js_dir{iState}(end-nSamples:end)), deg2rad(rdp_dir(iState))));
-    %     p3 = plot3(time, js_ecc{iState}(end-nSamples:end),js_angular_error(iState,:)); hold on
-    p3 = plot3(time, js_ecc{iState}(end-nSamples:end),frme_vec{iState}.resultant_ang_error(end-nSamples:end)); hold on
-    p3.Color = [cmap(ceil(256*pcoh(iState)),:) .5];
-    
-end
-
-xlabel('time [frames]')
-ylabel('joystick eccentricity')
-% zlabel('angular error between nominal and joystick direction')
-zlabel('angular error between nominal and actual direction')
-set(gca, 'fontsize', 20)
-azimuth = 245; % Horizontal rotation (in degrees)
-elevation = 25; % Vertical elevation (in degrees)
-view(azimuth, elevation)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
@@ -538,4 +350,39 @@ out.resultant_length = res_length;
 out.resultant_ts = res_ts;
 out.actual_coherence = rcoh;
 
+end
+
+function [ax, pl] = plot_averages(ax,dat,col)
+    axes(ax)
+    
+    % Boostrap confidence intervals
+    nRep        	= 5000;
+    ofs             = 100;
+    [CI,~]        	= bootci(nRep,{@mean,dat(:,100:end)},'Alpha',0.05);
+    
+    % Prepare filled area
+    vec           	= 1:length(CI);
+    x_spacing     	= [vec fliplr(vec)]+ofs;
+    ci            	= [CI(1,:) fliplr(CI(2,:))];
+
+    % Overlay confidence intervals
+    fl           	= fill(x_spacing,ci,col,'EdgeColor','none', 'FaceAlpha', .3);
+    
+    % Plot mean curve
+    pl              = plot(nanmean(dat), 'LineWidth', 2, 'Color', col); 
+    
+end
+
+function ax = adjust_axes(ax,ystr)
+    ax.YLabel.String 	= ystr;
+    ax.XLabel.String 	= 'time [ms]';
+    ax.YLim             = [0 1];
+    ax.XLim             = [100 300];
+    ax.XTick            = 100:100:300;
+    tmp_lab             = cellfun(@str2num, ax.XTickLabel, 'UniformOutput', false);
+    ax.FontSize         = 16;
+    
+    for iLab = 1:length(tmp_lab)
+        ax.XTickLabel{iLab} = num2str(round((tmp_lab{iLab} - ax.XTick(end)) * 8.333));
+    end
 end
