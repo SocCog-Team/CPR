@@ -195,73 +195,108 @@ print(f, '/Users/fschneider/Desktop/acg_timeline_pop', '-r500', '-dpng');
 
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 
-nLag = 75;
-smooth_win = 20;
-clear xc_acc_vec xc_ecc_vec xc_ecc_acc state_coh control
+nLag        = 150;
+smooth_win  = 20;
+n_ofs       = 5;
+nshift      = 35;
 
-for iSubj = 1:length(sbj_lst)
+clear avg_xc_acc_vec avg_xc_ecc_vec avg_xc_ecc_acc avg_xc_control
+
+for iSubj = 1:10%length(sbj_lst) 
     
-    
+    clear frme_vec js_ecc js_dir xc_acc_vec xc_ecc_vec xc_ecc_acc state_coh xc_control 
+
+    load(['/Users/fschneider/Desktop/resultant_vec/vector_subj_' sbj_lst{iSubj} '.mat'])
+    load(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj} '.mat'])
+    cnt = 0;
+
     for iState = 1:size(frme_vec,2)
         clear v_smooth v_smooth_detrend ecc_detrend js_dir_error joystick_acc acc_detrend
         
-        v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
-        v_smooth_detrend = [0 v_smooth] - nanmean(v_smooth);
-        v_smooth_detrend(isnan(v_smooth_detrend)) = 0;
-        
-        ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
-        ecc_detrend(isnan(ecc_detrend)) = 0;
-        
-        js_dir_error= rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
-        joystick_acc = abs(1 - abs(js_dir_error) / 180);
-        acc_detrend = joystick_acc - nanmean(joystick_acc);
-        acc_detrend(isnan(acc_detrend)) = 0;
-        
-        state_coh(iState) = frme_vec{iState}.nominal_coh;
-        
-        [xc_acc_vec(iState,:) lags] = xcorr(ecc_detrend,v_smooth_detrend,nLag,'normalized');
-        [xc_ecc_vec(iState,:) lags] = xcorr(acc_detrend,v_smooth_detrend,nLag,'normalized');
-        [xc_ecc_acc(iState,:) lags] = xcorr(ecc_detrend,acc_detrend,nLag,'normalized');
-        [control(iState,:) lags] = xcorr(v_smooth_detrend(1:end-19),v_smooth_detrend(20:end),nLag,'normalized');
+        if length(js_ecc{iState}) == length(frme_vec{iState}.resultant_length)+1
+            cnt = cnt+1;
+            v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
+            v_smooth_detrend = [0 v_smooth - nanmean(v_smooth)];
+            
+            ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
+            
+            js_dir_error = rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
+            joystick_acc = abs(1 - abs(js_dir_error) / 180);
+            acc_detrend = joystick_acc - nanmean(joystick_acc);
+            
+            
+            state_coh(cnt) = frme_vec{iState}.nominal_coh;
+            
+            [xc_acc_vec(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
+            [xc_ecc_vec(cnt,:) lags] = xcorr(acc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
+            [xc_ecc_acc(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),acc_detrend(n_ofs:end),nLag,'normalized');
+            [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
+        end
     end
     
-    avg_xc_acc_vec(iSubj,:) = nanmean(xc_acc_vec);
+%     snr_lst = unique(state_coh);
+%     if length(snr_lst)>7
+%         snr_lst = snr_lst(1:2:end);
+%     end
+    
+    for iCoh = 1:length(snr_lst)
+        cidx = state_coh == snr_lst(iCoh);
+        str{iCoh} = num2str(round(snr_lst(iCoh),2));
+        avg_xc_acc_vec(iSubj,iCoh,:) = nanmean(xc_acc_vec(cidx,:));
+        avg_xc_ecc_vec(iSubj,iCoh,:) = nanmean(xc_ecc_vec(cidx,:));
+        avg_xc_ecc_acc(iSubj,iCoh,:) = nanmean(xc_ecc_acc(cidx,:));
+        avg_xc_control(iSubj,iCoh,:) = nanmean(xc_control(cidx,:));
+    end
 end
 
-f=figure;
-ax = subplot(2,1,1);hold on
-imagesc(xc(:,nLag:end))
-ax.YLim = [1 size(xc,1)];
-ax.XLim = [1 nLag];
-ax.FontSize = 16;
-ax.XTickLabel       = round(cellfun(@str2num, ax.XTickLabel) * (1000/120));
-ax.XLabel.String = 'Shift [ms]';
-ax.YLabel.String = 'State [#]';
-colormap('turbo')
-cb = colorbar;
-cb.Label.String = 'XCorr coef';
+%% PLOT
+f = figure('units','centimeters','position',[0 0 50 10]);
 
-snr = unique(state_coh);
-col = cool(7);
-ax = subplot(2,1,2);hold on
-for iCoh = 1:length(snr)
-    plt(iCoh) = plot(lags/120,mean(xc(state_coh == snr(iCoh),:)),'Color', col(iCoh,:), 'LineWidth', 2);
-    str{iCoh} = num2str(round(snr(iCoh),2));
+for iPlot = 1:4
+    clear dat
+    if iPlot == 1
+        dat = avg_xc_control;
+        ylim = [-.5 1];
+        tstr = 'control - shifted by 250ms';
+    elseif iPlot == 2
+        dat = avg_xc_ecc_acc;
+        tstr = 'accuracy - ecc';
+        ylim = [-.1 .35];
+    elseif iPlot == 3
+        dat = avg_xc_ecc_vec;
+        tstr = 'ecc - res.vec';
+        ylim = [-.1 .1];
+    elseif iPlot == 4
+        dat = avg_xc_acc_vec;
+        tstr = 'acc - res.vec';
+        ylim = [-.1 .1];
+    end
+    
+    ax = subplot(1,4,iPlot); hold on
+    ln = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);    
+
+    for iCoh = 1:length(snr_lst)
+%         plt(iCoh) = plot(lags./120,mean(squeeze(dat(:,iCoh,:))),'Color', col(iCoh,:), 'LineWidth', 2);
+         [ax, pl] = xc_plot_averages(ax,squeeze(dat(:,iCoh,:)),col(iCoh,:));
+    end
+    
+    ax.XLabel.String = 'Shift [ms]';
+    ax.YLabel.String = 'XCorr coef';
+    ax.Title.String = tstr;
+    ax.FontSize = 14;
+    ax.YLim = ylim;
+    ax.XTick = [0 75 150 225 300];
+    
+    for iLab = 1:length(ax.XTickLabel)
+        ax.XTickLabel{iLab} = num2str( round((str2num(ax.XTickLabel{iLab})-nLag) * (1000/120)));
+    end
+    
+    axis tight
 end
-ln = line([0 0],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
-ax.YLim = [-.05 .06];
-ax.XLim = [min(lags/120) max(lags/120)];
-ax.YLabel.String = 'XCorr coef [#]';
-ax.XLabel.String = 'Shift [s]';
-ax.FontSize = 16;
 
-legend(plt,str,'Location','West')
+lg = legend(plt,str,'Location','West');
+
 % print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
-
-
-figure; hold on
-plot([0 v_smooth_detrend])
-plot(ecc_detrend)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
@@ -384,4 +419,24 @@ function ax = adjust_axes(ax,ystr)
     for iLab = 1:length(tmp_lab)
         ax.XTickLabel{iLab} = num2str(round((tmp_lab{iLab} - ax.XTick(end)) * 8.333));
     end
+end
+
+function [ax, pl] = xc_plot_averages(ax,dat,col)
+    axes(ax); hold on
+    
+    % Boostrap confidence intervals
+    nRep        	= 5000;
+    [CI,~]        	= bootci(nRep,{@mean,dat},'Alpha',0.05);
+    
+    % Prepare filled area
+    vec           	= 1:length(CI);
+    x_spacing     	= [vec fliplr(vec)];
+    ci            	= [CI(1,:) fliplr(CI(2,:))];
+
+    % Overlay confidence intervals
+    fl           	= fill(x_spacing,ci,col,'EdgeColor','none', 'FaceAlpha', .3);
+    
+    % Plot mean curve
+    pl              = plot(nanmean(dat), 'LineWidth', 2, 'Color', col); 
+    
 end
