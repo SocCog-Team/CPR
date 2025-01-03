@@ -1,0 +1,184 @@
+//
+// Variables
+//
+
+group CTRL {
+	var CTRL_index 							= 0
+	var CTRL_direction_lst 					= [0, 45, 90, 135, 180, 225, 270, 315, 345]
+	var CTRL_coherence_lst 					= [0, .25, .5, .75, .99]
+	var CTRL_trial_duration_ms 				= 20000
+	var CTRL_coherence_duration_ms 			= 5000
+	var CTRL_direction_duration_ms 			= 2500
+	var CTRL_ITI_ms 						= 1000
+	var CTRL_cancel_action_flag 			= true
+}
+
+group TRIAL {
+    var TRIAL_start                         = 0
+    var TRIAL_end                           = 0
+}
+
+group RDP {
+    var RDP_direction                       = 0 // degree (0 up, 90 right)
+    var RDP_radius                          = 8 // degree visual angle (dva)
+    var RDP_y                               = 0 // screen coordinates - [0x 0y] is center
+    var RDP_x                               = 0
+    var RDP_density                         = 2.5 // dots per dva
+    var RDP_dotsize                         = .1 // dva
+    var RDP_speed                           = 8 // dva per second
+    var RDP_coherence                       = 1 // noise
+    var RDP_lifetime                        = (1/120) * 30 * 1000 // 30 frames - 250ms
+    var RDP_alpha                        	= 1 // transparency
+    var RDP_seed                            = 1
+}
+
+group COL {
+	var COL_bg_r                            = 0
+    var COL_bg_g                            = 0
+    var COL_bg_b                            = 0
+    var COL_rdp_r                           = 1
+    var COL_rdp_g                           = 1
+    var COL_rdp_b                           = 1
+}
+
+//
+// Stimuli
+//
+
+blank_screen Background (
+    color                       			= COL_bg_r,COL_bg_g,COL_bg_b
+    )
+
+stimulus/r_d_p RDP (
+    radius                      			= RDP_radius
+    x_position                  			= RDP_x
+    y_position                  			= RDP_y
+    dot_density                 			= RDP_density 
+    dot_size                    			= RDP_dotsize 
+    color                       			= COL_rdp_r,COL_rdp_g,COL_rdp_b
+    alpha_multiplier            			= RDP_alpha
+    direction                   			= RDP_direction
+    speed                       			= RDP_speed 
+    coherence                   			= RDP_coherence
+    lifetime                    			= RDP_lifetime
+    announce_dots               			= YES // YES to store dot position
+    autoplay                    			= YES
+    )
+
+
+//
+// Protocols
+//
+
+protocol 'Test RDP' {
+
+    report ('Hello human! Starting Experiment...')
+    
+    live_queue_stimulus (Background)
+    CTRL_cancel_action_flag         			= true
+
+
+    trial 'Trial Structure' (interruptible = YES) {
+        task LOOP {
+           
+            
+            state 'Start Trial' (interruptible = YES)  {
+			    TRIAL_start     				+= 1
+			    live_queue_stimulus (RDP)
+			    update_stimulus_display ()
+
+                start_timer (
+	                timer                       = TrialTimer
+	                duration                    = CTRL_trial_duration_ms
+	                duration_units              = ms
+                )
+
+                start_timer (
+	                timer                       = DirectionTimer
+	                duration                    = CTRL_direction_duration_ms
+	                duration_units              = ms
+                )
+
+                start_timer (
+	                timer                       = CoherenceTimer
+	                duration                    = CTRL_coherence_duration_ms
+	                duration_units              = ms
+                )
+
+                goto ('Change direction')
+            }
+
+
+            state 'Change direction' {
+                CTRL_index           		= disc_rand(0,size(CTRL_direction_lst)-1)
+                RDP_direction               = CTRL_direction_lst[CTRL_index] 
+
+                start_timer (
+	                timer                       = DirectionTimer
+	                duration                    = CTRL_direction_duration_ms
+	                duration_units              = ms
+                )
+
+                goto ('Update stimulus')
+            }
+
+
+            state 'Change coherence' {
+                CTRL_index           		= disc_rand(0,size(CTRL_coherence_lst)-1)
+                RDP_coherence               = CTRL_coherence_lst[CTRL_index] 
+
+                start_timer (
+	                timer                       = CoherenceTimer
+	                duration                    = CTRL_coherence_duration_ms
+	                duration_units              = ms
+                )
+
+                goto ('Update stimulus')
+            }
+
+
+            state 'Update stimulus' (interruptible = NO) {
+                goto (
+                    target                      = 'End Trial'
+                    when                        = timer_expired(TrialTimer)
+                    )
+
+                goto (
+                    target                      = 'Change direction'
+                    when                        = timer_expired(DirectionTimer)
+                    )
+
+                goto (
+                    target                      = 'Change coherence'
+                    when                        = timer_expired(CoherenceTimer)
+                    )
+            }
+
+
+            state 'End Trial' (interruptible = NO) {
+			    TRIAL_end     					= TRIAL_start
+                CTRL_cancel_action_flag         = true
+
+                //Remove RDP from screen
+                dequeue_stimulus (RDP)
+                update_stimulus_display ()
+                
+                goto ('Inter-trial interval')
+            }
+
+
+            state 'Inter-trial interval' (interruptible = YES) {
+                start_timer (
+	                timer                       = ITI_Timer
+	                duration                    = CTRL_ITI_ms
+	                duration_units              = ms
+                	)
+
+                goto (
+                    target                      = 'Start Trial'
+                    when                        = timer_expired(ITI_Timer)
+                    )
+            }
+        }
+    }
+}

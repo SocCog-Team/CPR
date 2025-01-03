@@ -75,13 +75,13 @@ for iExample = [13 20 37]
     ax2.YLim                = [0 1];
     ax2.Title.String        = ['Subject: ' num2str(iExample)];   
     
-    print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/subject_distribution/SFIG2a' num2str(iExample)], '-r500', '-dpng');
-    print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/subject_distribution/SFIG2a' num2str(iExample)], '-r500', '-dsvg', '-painters');
+    print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/subject_distribution/subject' num2str(iExample)], '-r500', '-dpng');
+    print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/subject_distribution/subject' num2str(iExample)], '-r500', '-dsvg', '-painters');
 
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% SUBPLOT: Example AUROC %%%
+%% SUBPLOT: Example AUROC %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f                      	= figure('units','centimeters','position',[0 0 5 5]); 
 ax = gca; hold on
@@ -102,11 +102,11 @@ ax.XTickLabel            	= round(snr,2).*100;
 ax.XTickLabelRotation      	= 0;
 lm                          = line([1 7],[.5 .5], 'Color', 'k', 'LineStyle', ':', 'LineWidth',2);
     
-print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/SFIG_auroc'], '-r500', '-dpng');
-print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/SFIG_auroc'], '-r500', '-dsvg', '-painters');
+print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/SFIG_auroc'], '-r500', '-dpng');
+print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/SFIG_auroc'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% Convert relevant data to matrix for simplicity
+%% Convert relevant data to matrix for simplicity
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 lb_fs                       = 8;
@@ -191,9 +191,9 @@ ax2.XTickLabelRotation      = 0;
 %%% SUBPLOT: DYADIC - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = subplot(1,4,2); hold on
-[ax3,pl]                    = plotData(ax3,dyad_macc,true,lw,alp,col_dat,col_ci);
+[ax3,pl]                    = plotData(ax3,(1-dyad_macc).*180,false,lw,alp,col_dat,col_ci);
 ax3.XLim                    = [1 size(dyad_macc,2)];
-ax3.YLim                    = [30 100];
+ax3.YLim                    = [0 100];
 ax3.XLabel.String           = 'Coherence [%]';
 ax3.YLabel.String           = 'Accuracy [%]';
 ax3.XTick                   = 1:length(snr);
@@ -217,8 +217,8 @@ ax4.FontSize                = lb_fs;
 ax4.XTickLabelRotation      = 0;
 ax4.XAxis.Visible           = 'on';
 
-print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/SFIG_dyad'], '-r500', '-dpng');
-print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_social_modulation/raw/SFIG_dyad'], '-r500', '-dsvg', '-painters');
+print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/SFIG_dyad'], '-r500', '-dpng');
+print(f, ['/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_social_modulation/raw/SFIG_dyad'], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions

@@ -31,10 +31,10 @@ for iSubj = 1:length(sbj_lst)
     end
     
     cnt                   	= cnt + 1;
-    solo_hir(cnt,:)        	= solo_perf{iSubj}.hir;             % Hit rate
-    solo_trg_score(cnt,:)  	= solo_perf{iSubj}.trg_mscore;      % Avg target scores
-    solo_macc(cnt,:)       	= solo_perf{iSubj}.macc_trg;        % Avg accuracy
-    solo_mecc(cnt,:)       	= solo_perf{iSubj}.mecc_state;  	% Avg eccentricity
+    solo_hir(cnt,:)        	= solo_perf{iSubj}.hir;                       	% Hit rate
+    solo_trg_score(cnt,:)  	= solo_perf{iSubj}.trg_mscore;                  % Avg target scores
+    solo_macc(cnt,:)       	= (1-solo_perf{iSubj}.macc_trg).*180;           % Avg accuracy (target-aligned)
+    solo_mecc(cnt,:)       	= solo_perf{iSubj}.mecc_state;                  % Avg eccentricity (state-aligned)
 end
 
 %% PLOT
@@ -96,11 +96,11 @@ ax1.XTickLabelRotation      = 0;
 %%% SUBPLOT: SOLO - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = subplot(1,4,2); hold on
-[ax3,pl]                    = plotData(ax3,solo_macc,true,lw,alp,col_dat,col_ci);
+[ax3,pl]                    = plotData(ax3,solo_macc,false,lw,alp,col_dat,col_ci);
 ax3.XLim                    = [1 size(solo_macc,2)];
-ax3.YLim                    = [30 100];
+% ax3.YLim                    = [30 100];
 ax3.XLabel.String           = 'Coherence [%]';
-ax3.YLabel.String           = 'Accuracy [%]';
+ax3.YLabel.String           = 'Angular error [deg]';
 ax3.YLabel.Position(1)      = -.4;
 ax3.XTick                   = 1:length(snr);
 ax3.XTickLabel              = round(snr,2)*100;
@@ -115,14 +115,14 @@ ax4                         = subplot(1,4,3); hold on
 ax4.XLim                    = [1 size(solo_mecc,2)];
 ax4.YLim                    = [20 100];
 ax4.XLabel.String           = 'Coherence [%]';
-ax4.YLabel.String           = 'Eccentricity [%]';
+ax4.YLabel.String           = 'Displacement [%]';
 ax4.YLabel.Position(1)      = -.4;
 ax4.XTick                   = 1:length(snr);
 ax4.XTickLabel              = round(snr,2)*100;
 ax4.FontSize                = lb_fs;
 ax4.XTickLabelRotation      = 0;
 
-dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_solo_behaviour/raw/';
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
 print(f, [dest_dir '/FIG1_solo_data'], '-r500', '-dpng');
 print(f, [dest_dir '/FIG1_solo_data'], '-r500', '-dsvg', '-painters');
 

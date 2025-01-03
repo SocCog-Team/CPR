@@ -471,10 +471,10 @@ trg_n                       = cellfun(@length,in.trg_ecc(logical(in.trg_shown)))
 trg_coh                     = in.rdp_coh(logical(in.trg_shown));
 tmp_trg_ts                  = in.trg_ts(logical(in.trg_shown));
 tmp_frame1_ts             	= cellfun(@(x) x(1), in.frme_ts(logical(in.trg_shown)));
-
+    
 for j = 1:length(trg_n)
     tmp_trg_all_coh{j}   	= repmat(trg_coh(j),1,trg_n(j));
-    tmp_trg_ts_state{j} 	= (tmp_trg_ts{j} - tmp_frame1_ts(j)) ./ 1e3;  
+    tmp_trg_ts_state{j} 	= double((tmp_trg_ts{j} - tmp_frame1_ts(j)) ./ 1e3);  
 end
 out.trg_all_coh            	= cell2mat(tmp_trg_all_coh);
 out.trg_ts_state            = cell2mat(tmp_trg_ts_state);
@@ -522,26 +522,28 @@ for iCoh = 1:length(snr)
     t1_outc                 = cellfun(@(x) x(1), in.trg_hit,'UniformOutput', false);
     t1_ts                   = cellfun(@(x) x(1), cellfun(@double,in.trg_ts,'UniformOutput', false));
     f1_ts                   = cellfun(@(x) x(1), cellfun(@double,in.frme_ts,'UniformOutput', false));
-    trgIdx                  = (t1_ts-f1_ts) >= 1e6;
+    trgIdx                  = (t1_ts-f1_ts) >= 1e6; % First target appearance 1s afer direction change
     rdp_dir                 = in.rdp_dir(cIdx & in.trg_shown & trgIdx);
     js_dir                  = in.js_dir(cIdx & in.trg_shown & trgIdx);
     js_ecc_tmp              = in.js_ecc(cIdx & in.trg_shown & trgIdx);
     frmes                   = in.frme_ts(cIdx & in.trg_shown & trgIdx);
     trg1_ts                 = t1_ts(cIdx & in.trg_shown & trgIdx);
     
-    clear js_acc js_ecc
+    clear js_acc js_ecc js_ecc_end_of_state
     for iTrg = 1:length(rdp_dir)
         clear js_dev
         smpl_idx            = find(frmes{iTrg} < trg1_ts(iTrg),1,'last')-nSample : find(frmes{iTrg} < trg1_ts(iTrg),1,'last');
         js_dev              = rad2deg(circ_dist(deg2rad(js_dir{iTrg}(smpl_idx)),deg2rad(rdp_dir(iTrg))));  % Minimum RDP-Joystick difference
-        js_acc(iTrg)      = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
-        js_ecc(iTrg)      = nanmean(js_ecc_tmp{iTrg}(smpl_idx));
+        js_acc(iTrg)        = nanmean(abs(1 - abs(js_dev) / 180));         	% Joystick accuracy
+        js_ecc(iTrg)      	= nanmean(js_ecc_tmp{iTrg}(smpl_idx));
+        js_ecc_end_of_state(iTrg) = nanmean(js_ecc_tmp{iTrg}(end-nSample:end));%%%
     end
     
     out.macc_trg(iCoh)      = nanmedian(js_acc);
     out.mecc_trg(iCoh)      = nanmedian(js_ecc);
     out.acc_trg{iCoh}     	= js_acc;
     out.ecc_trg{iCoh}       = js_ecc;
+    out.ecc_end_of_state{iCoh} = js_ecc_end_of_state;%%%
     out.outc_trg{iCoh}      = cell2mat(t1_outc(cIdx & in.trg_shown & trgIdx));
     out.carr(iCoh)         	= snr(iCoh);
 end
