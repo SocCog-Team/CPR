@@ -7,8 +7,7 @@ load([source_dir '/solo_performance.mat'])
 load([source_dir '/hh_dyad_performance.mat'])
 load([source_dir '/solo_correlation.mat'])
 load([source_dir '/hh_dyad_correlation.mat'])
-
-dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_solo_behaviour/SFIG_metacognition/raw/';
+dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_metacognition/raw/';
 col                 = cool(7);
 lw                  = 1;
 lb_fs               = 8;
@@ -122,7 +121,8 @@ for iSubj = 1:length(in_perf)
     acc             = in_perf{iSubj}.acc_state; % accuracy
     
     for iCoh = 1:length(snr)
-        acc_idx     = acc{iCoh} > median(acc{iCoh}); % Index: Above median accuracy
+        clear dat1 dat2 ecc_idx
+%         acc_idx     = acc{iCoh} > median(acc{iCoh}); % Index: Above median accuracy
         ecc_idx     = ecc{iCoh} > median(ecc{iCoh}); % Index: Above median eccentricity
         
         dat1        = acc{iCoh}(ecc_idx); % accuracy(high eccentricity)
