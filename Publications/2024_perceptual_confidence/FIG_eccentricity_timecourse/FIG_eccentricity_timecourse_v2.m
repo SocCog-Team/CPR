@@ -152,7 +152,9 @@ for iSubj = 1:length(sbj_lst)
             ncoh(c)    	= frme_vec{iState}.nominal_coh;
             ndir(c)    	= frme_vec{iState}.nominal_dir_deg;
             
-            mat_acc(c,end-slen(c)+1:end)  	= abs(1 - abs(frme_vec{iState}.resultant_ang_error(win-1:end)) / 180);
+            js_dir_error = rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
+            joystick_acc = abs(1 - abs(js_dir_error) / 180);
+            mat_acc(c,end-slen(c)+1:end)    = joystick_acc(win:end);
             mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
         end
     end
@@ -172,7 +174,7 @@ for iSubj = 1:length(sbj_lst)
     end
 end
 
-%%% PLOT
+%% PLOT
 f = figure;
 col = cool(length(snr_lst));
 ax1 = subplot(1,2,1); hold on
@@ -202,7 +204,7 @@ nshift      = 35;
 
 clear avg_xc_acc_vec avg_xc_ecc_vec avg_xc_ecc_acc avg_xc_control
 
-for iSubj = 1:10%length(sbj_lst) 
+for iSubj = 1:length(sbj_lst) 
     
     clear frme_vec js_ecc js_dir xc_acc_vec xc_ecc_vec xc_ecc_acc state_coh xc_control 
 
@@ -250,29 +252,25 @@ for iSubj = 1:10%length(sbj_lst)
 end
 
 %% PLOT
-f = figure('units','centimeters','position',[0 0 50 10]);
+f = figure('units','centimeters','position',[0 0 25 25]);
 
 for iPlot = 1:4
     clear dat
     if iPlot == 1
         dat = avg_xc_control;
-        ylim = [-.5 1];
         tstr = 'control - shifted by 250ms';
     elseif iPlot == 2
         dat = avg_xc_ecc_acc;
-        tstr = 'accuracy - ecc';
-        ylim = [-.1 .35];
+        tstr = 'accuracy - tilt';
     elseif iPlot == 3
         dat = avg_xc_ecc_vec;
-        tstr = 'ecc - res.vec';
-        ylim = [-.1 .1];
+        tstr = 'res.vec - tilt';
     elseif iPlot == 4
         dat = avg_xc_acc_vec;
-        tstr = 'acc - res.vec';
-        ylim = [-.1 .1];
+        tstr = 'res.vec - accuracy';
     end
     
-    ax = subplot(1,4,iPlot); hold on
+    ax = subplot(2,2,iPlot); hold on
     ln = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);    
 
     for iCoh = 1:length(snr_lst)
@@ -284,7 +282,6 @@ for iPlot = 1:4
     ax.YLabel.String = 'XCorr coef';
     ax.Title.String = tstr;
     ax.FontSize = 14;
-    ax.YLim = ylim;
     ax.XTick = [0 75 150 225 300];
     
     for iLab = 1:length(ax.XTickLabel)
@@ -292,11 +289,19 @@ for iPlot = 1:4
     end
     
     axis tight
+    if iPlot == 1
+        ax.YLim = [-.5 1];
+    elseif iPlot == 2
+        ax.YLim = [-.1 .3];
+    elseif iPlot == 3
+        ax.YLim = [-.05 .05];
+    elseif iPlot == 4
+        ax.YLim = [-.05 .05];
+    end
+    
 end
 
-lg = legend(plt,str,'Location','West');
-
-% print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
+print(f, '/Users/fschneider/Desktop/xcorr_pop', '-r500', '-dpng');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
