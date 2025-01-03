@@ -221,30 +221,26 @@ ax2 = adjust_axes(ax2,'tilt [norm]');
 
 print(f, '/Users/fschneider/Desktop/avg_timeline_pop', '-r500', '-dpng');
 
-%% Physical coherence for high vs low joystick tilt
+% Physical coherence for high vs low joystick tilt
+f       = figure('units','centimeters','position',[0 0 30 10]);
+iplot   = 0;
 
-f = figure('units','centimeters','position',[0 0 30 10]);
-
-iplot = 0;
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         [p(iSubj,iCoh),h(iSubj,iCoh)] = ranksum(avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
         
-        if iSubj == 13
+        if iSubj == 10
             iplot = iplot+1;
             ax(iplot) = subplot(2,7,iplot); hold on
-            ax(iplot) = plot_coh_histograms(ax(iplot), iplot, avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
+            ax(iplot) = plot_coh_histograms(ax(iplot), iplot, col, avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
             ax(iplot).Title.String = num2str(round(snr_lst(iCoh),2));
                         
             ax(iplot) = subplot(2,7,iplot+7); hold on
-            ax(iplot) = plot_acc_histograms(ax(iplot), iplot, avg_acc_larger_median{iSubj,iCoh},avg_acc_smaller_median{iSubj,iCoh});
+            ax(iplot) = plot_acc_histograms(ax(iplot), iplot, col, avg_acc_larger_median{iSubj,iCoh},avg_acc_smaller_median{iSubj,iCoh});
 
         end
     end
 end
-
-lg = legend('high tilt','low tilt', 'Location', 'northwest');
-lg.FontSize = 10;
 
 sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bonferroni correction
 
@@ -502,14 +498,14 @@ function [ax, pl] = xc_plot_averages(ax,dat,col)
     
 end
 
-function ax = plot_coh_histograms(ax, iplot, in_larger, in_smaller)
+function ax = plot_coh_histograms(ax, iplot, col, in_larger, in_smaller)
 ofs = .012;
-step = .001;
+step = .002;
 edges = median(in_larger)-ofs:step:median(in_larger)+ofs;
 
 h1 = histogram(in_larger,edges);
 h1.FaceAlpha = .35;
-h1.FaceColor = [.6 0 0];
+h1.FaceColor = col(iplot,:);
 h1.EdgeAlpha = 0;
 
 h2 = histogram(in_smaller,edges);
@@ -524,20 +520,27 @@ end
 if iplot == 4
     ax.XLabel.String = 'Physical Coherence';
 end
+
+if iplot == 7
+    lg = legend('high tilt','low tilt', 'Location', 'northwest');
+    lg.FontSize = 10;
+    lg.Position(2) = .46;
+end
+
 ax.XTick = round(median(in_larger),3);
 ax.FontSize = 14;
 ax.XTickLabelRotation = 0;
 end
 
-function ax = plot_acc_histograms(ax, iplot, in_larger, in_smaller)
-nBins = 50;
+function ax = plot_acc_histograms(ax, iplot, col, in_larger, in_smaller)
+edges                   = 0:.05:1;
 
-h1 = histogram(in_larger,nBins);
+h1 = histogram(in_larger,edges);
 h1.FaceAlpha = .35;
-h1.FaceColor = [.6 0 0];
+h1.FaceColor = col(iplot,:);
 h1.EdgeAlpha = 0;
 
-h2 = histogram(in_smaller,nBins);
+h2 = histogram(in_smaller,edges);
 h2.FaceAlpha = .35;
 h2.FaceColor = [0 0 0];
 h2.EdgeAlpha = 0;
