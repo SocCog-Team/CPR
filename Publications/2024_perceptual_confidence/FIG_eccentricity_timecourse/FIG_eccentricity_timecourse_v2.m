@@ -128,12 +128,17 @@ for iSubj = 1:length(sbj_lst)
     save(['/Users/fschneider/Desktop/joystick_subk_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
 end
                         
-%%
+%% Timecourse of joystick response
+
+% Import subject summary spreadsheet
+pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
+x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
+sbj_lst                     = x.Abbreviation;                               % Subject ID list
+sbj_lst(cellfun(@isempty,sbj_lst)) = [];
+win                         = 60;
 clear avg_ecc avg_acc
 
-win = 60;
-
-for iSubj = 1:length(sbj_lst)
+for iSubj = 1:10%length(sbj_lst)
     
     mat_acc = nan(10000,300);
     mat_ecc = nan(10000,300);
@@ -154,6 +159,7 @@ for iSubj = 1:length(sbj_lst)
             
             mat_acc(c,end-slen(c)+1:end)  	= abs(1 - abs(frme_vec{iState}.resultant_ang_error(win-1:end)) / 180);
             mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
+            %%% physical coherence?
         end
     end
     
@@ -188,7 +194,7 @@ end
 ax1 = adjust_axes(ax1,'accuracy [norm]');
 ax2 = adjust_axes(ax2,'tilt [norm]');
 
-print(f, '/Users/fschneider/Desktop/acg_timeline_pop', '-r500', '-dpng');
+print(f, '/Users/fschneider/Desktop/avg_timeline_pop', '-r500', '-dpng');
 
 
 %% Crosscorrelation between vector length and joystick displacement
@@ -249,9 +255,8 @@ for iSubj = 1:10%length(sbj_lst)
     end
 end
 
-%% PLOT
+%%% PLOT XCORR %%%
 f = figure('units','centimeters','position',[0 0 50 10]);
-
 for iPlot = 1:4
     clear dat
     if iPlot == 1
@@ -297,6 +302,9 @@ end
 lg = legend(plt,str,'Location','West');
 
 % print(f, '/Users/fschneider/Desktop/xcorr', '-r500', '-dpng');
+
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
