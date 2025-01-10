@@ -1,9 +1,8 @@
-%%% Crosscorrelation between vector length and joystick displacement
 
-addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
+%% Crosscorrelation between vector length and joystick displacement
+
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 
-addpath 
 nLag        = 150;
 smooth_win  = 20;
 n_ofs       = 3;
@@ -81,8 +80,7 @@ ax                  = gca;
 dat                 = avg_xc_ecc_acc;
 lb_fs               = 8;
 lw                  = 1.5;
-col                 = cool(length(snr_lst));
-
+col                 = coll(length(snr_lst))
 ln = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 1);
 
 for iCoh = 1:length(snr_lst)

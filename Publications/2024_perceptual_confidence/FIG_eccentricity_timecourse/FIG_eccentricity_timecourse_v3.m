@@ -106,6 +106,18 @@ for iSubj = 1:length(sbj_lst)
                         tmp_js_dir{cc}      = getTrialData(d.value, ssIdx, idx.JS_dir);                     % Joystick direction
                         tmp_js_ecc{cc}      = getTrialData(d.value, ssIdx, idx.JS_str);                     % Joystick strength
                         
+                        % Extract timestamp of first target
+                        tmp_trg_on          = getTrialData(d.value, ssIdx, idx.trg_on); 
+                        tmp_trg_ts          = getTrialData(d.time, ssIdx, idx.trg_on);
+                        try
+                            onset_all_ts{cc}  	= tmp_trg_ts(logical(tmp_trg_on));
+                            onset_all_ms        = double(tmp_trg_ts(logical(tmp_trg_on)) - dp_ts(1)) ./1e3;
+                            trg1_onset_ms(cc)   = onset_all_ms(1);
+                        catch
+                            onset_all_ts{cc}  	= nan;
+                            trg1_onset_ms(cc)   = nan;
+                        end
+                        
                         % Build frame-wise vector for joystick data
                         for iFrme = 1:length(dp_ts)
                             fIdx                  	= [];
@@ -117,6 +129,13 @@ for iSubj = 1:length(sbj_lst)
                                 js_dir{cc}(iFrme)	= tmp_js_dir{cc}(fIdx);
                                 js_ecc{cc}(iFrme)	= tmp_js_ecc{cc}(fIdx);
                             end
+                            
+                            % Frame before forst target?
+                            if dp_ts(iFrme) < onset_all_ts{cc}(1)
+                                trg1_index{cc}(iFrme)	= true;             % prior to first target
+                            else
+                                trg1_index{cc}(iFrme)	= false;            % after first target
+                            end
                         end
                     end
                 end
@@ -124,13 +143,14 @@ for iSubj = 1:length(sbj_lst)
         end
     end
     
-    save(['/Users/fschneider/Desktop/vector_subk_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
-    save(['/Users/fschneider/Desktop/joystick_subk_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
+    save(['/Users/fschneider/Desktop/resultant_vec/vector_subj_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
+    save(['/Users/fschneider/Desktop/resultant_vec/trg_subj_'  sbj_lst{iSubj}],  'trg1_index','trg1_onset_ms', '-v7.3')
+    save(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
 end
         
 load('/Users/fschneider/Desktop/subj_lst.mat', 'sbj_lst', '-v7.3')
 
-%% Plot timeline of joystick response; Extract physical coherence leve
+%% Plot timeline of joystick response; Extract physical coherence level
 %%% Remove all sample after first target appearance!
 % Show only 100 samples before direction change
 
@@ -186,11 +206,7 @@ for iSubj = 1:length(sbj_lst)
         avg_acc(iSubj,iCoh,:)           = nanmean(mat_acc(cidx,:));
         avg_ecc(iSubj,iCoh,:)           = nanmean(mat_ecc(cidx,:));
         
-%         %%% Median split %%%
-%         if iSubj ==13 && iCoh == 5
-%             dbstop
-%         end
-        
+        %%% Median split %%%
         clear pcoh_data avg_ecc_time_win idx_larger_than_median
         ecc_data                            = nanmean(mat_ecc(cidx,end-nSample:end),2);
         pcoh_data                           = nanmean(mat_pcoh(cidx,end-nSample:end),2);
@@ -205,6 +221,7 @@ for iSubj = 1:length(sbj_lst)
     end
 end
 
+%%% Plot timeline %%%
 f = figure;
 col = cool(length(snr_lst));
 ax1 = subplot(1,2,1); hold on
@@ -224,139 +241,41 @@ print(f, '/Users/fschneider/Desktop/avg_timeline_pop', '-r500', '-dpng');
 
 %% Physical coherence for high vs low joystick tilt
 
-f       = figure('units','centimeters','position',[0 0 30 10]);
 iplot   = 0;
 
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         [p(iSubj,iCoh),h(iSubj,iCoh)] = ranksum(avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
         pcoh_group_average(iSubj,iCoh,:) = [median(avg_pcoh_larger_median{iSubj,iCoh}) median(avg_pcoh_smaller_median{iSubj,iCoh})];
-        
-        if iSubj == 10
-            iplot = iplot+1;
-            ax(iplot) = subplot(2,7,iplot); hold on
-            ax(iplot) = plot_coh_histograms(ax(iplot), iplot, col, avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
-            ax(iplot).Title.String = num2str(round(snr_lst(iCoh),2));
-                        
-            ax(iplot) = subplot(2,7,iplot+7); hold on
-            ax(iplot) = plot_acc_histograms(ax(iplot), iplot, col, avg_acc_larger_median{iSubj,iCoh},avg_acc_smaller_median{iSubj,iCoh});
-
-        end
     end
 end
 
+group_dff = pcoh_group_average(:,:,1) - pcoh_group_average(:,:,2);
+
+%%% Correction %%%
 sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bonferroni correction
 
-print(f, '/Users/fschneider/Desktop/physical_coherence', '-r500', '-dpng');
-
-%% Crosscorrelation between vector length and joystick displacement
-
-addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
-
-nLag        = 150;
-smooth_win  = 20;
-n_ofs       = 5;
-nshift      = 35;
-
-clear avg_xc_acc_vec avg_xc_ecc_vec avg_xc_ecc_acc avg_xc_control
-
-for iSubj = 1:length(sbj_lst) 
+%%% PLOT %%%
+f = figure;hold on
+ln = line([0 0],[0 20], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
+edges = -.002 :.00025: .002;
+for iCoh = 1:length(snr_lst)
+    [pt(iCoh), ht(iCoh)] = ttest(group_dff(:,iCoh));
     
-    clear frme_vec js_ecc js_dir xc_acc_vec xc_ecc_vec xc_ecc_acc state_coh xc_control 
-
-    load(['/Users/fschneider/Desktop/resultant_vec/vector_subj_' sbj_lst{iSubj} '.mat'])
-    load(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj} '.mat'])
-    cnt = 0;
-
-    for iState = 1:size(frme_vec,2)
-        clear v_smooth v_smooth_detrend ecc_detrend js_dir_error joystick_acc acc_detrend
-        
-        if length(js_ecc{iState}) == length(frme_vec{iState}.resultant_length)+1
-            cnt = cnt+1;
-            v_smooth = smoothdata(frme_vec{iState}.resultant_length,'gaussian',smooth_win);
-            v_smooth_detrend = [0 v_smooth - nanmean(v_smooth)];
-            
-            ecc_detrend = js_ecc{iState} - nanmean(js_ecc{iState});
-            
-            js_dir_error = rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
-            joystick_acc = abs(1 - abs(js_dir_error) / 180);
-            acc_detrend = joystick_acc - nanmean(joystick_acc);
-            
-            
-            state_coh(cnt) = frme_vec{iState}.nominal_coh;
-            
-            [xc_acc_vec(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
-            [xc_ecc_vec(cnt,:) lags] = xcorr(acc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
-            [xc_ecc_acc(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),acc_detrend(n_ofs:end),nLag,'normalized');
-            [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
-        end
-    end
-    
-%     snr_lst = unique(state_coh);
-%     if length(snr_lst)>7
-%         snr_lst = snr_lst(1:2:end);
-%     end
-    
-    for iCoh = 1:length(snr_lst)
-        cidx = state_coh == snr_lst(iCoh);
-        str{iCoh} = num2str(round(snr_lst(iCoh),2));
-        avg_xc_acc_vec(iSubj,iCoh,:) = nanmean(xc_acc_vec(cidx,:));
-        avg_xc_ecc_vec(iSubj,iCoh,:) = nanmean(xc_ecc_vec(cidx,:));
-        avg_xc_ecc_acc(iSubj,iCoh,:) = nanmean(xc_ecc_acc(cidx,:));
-        avg_xc_control(iSubj,iCoh,:) = nanmean(xc_control(cidx,:));
-    end
+    histogram(group_dff(:,iCoh),edges,'FaceColor',col(iCoh,:),'FaceAlpha',.2,'EdgeAlpha',0)
 end
 
-f = figure('units','centimeters','position',[0 0 25 25]);
+ax = gca;
+ax.YLabel.String = '#';
+ax.XLabel.String = 'Median coherence difference';
+ax.FontSize = 14;
+ax.XTickLabelRotation = 0;
 
-for iPlot = 1:4
-    clear dat
-    if iPlot == 1
-        dat = avg_xc_control;
-        tstr = 'control - shifted by 250ms';
-    elseif iPlot == 2
-        dat = avg_xc_ecc_acc;
-        tstr = 'accuracy - tilt';
-    elseif iPlot == 3
-        dat = avg_xc_ecc_vec;
-        tstr = 'res.vec - tilt';
-    elseif iPlot == 4
-        dat = avg_xc_acc_vec;
-        tstr = 'res.vec - accuracy';
-    end
-    
-    ax = subplot(2,2,iPlot); hold on
-    ln = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);    
+print(f, '/Users/fschneider/Desktop/physical_coherence_dff', '-r500', '-dpng');
 
-    for iCoh = 1:length(snr_lst)
-%         plt(iCoh) = plot(lags./120,mean(squeeze(dat(:,iCoh,:))),'Color', col(iCoh,:), 'LineWidth', 2);
-         [ax, pl] = xc_plot_averages(ax,squeeze(dat(:,iCoh,:)),col(iCoh,:));
-    end
-    
-    ax.XLabel.String = 'Shift [ms]';
-    ax.YLabel.String = 'XCorr coef';
-    ax.Title.String = tstr;
-    ax.FontSize = 14;
-    ax.XTick = [0 75 150 225 300];
-    
-    for iLab = 1:length(ax.XTickLabel)
-        ax.XTickLabel{iLab} = num2str( round((str2num(ax.XTickLabel{iLab})-nLag) * (1000/120)));
-    end
-    
-    axis tight
-    if iPlot == 1
-        ax.YLim = [-.5 1];
-    elseif iPlot == 2
-        ax.YLim = [-.1 .3];
-    elseif iPlot == 3
-        ax.YLim = [-.05 .05];
-    elseif iPlot == 4
-        ax.YLim = [-.05 .05];
-    end
-    
-end
-
-print(f, '/Users/fschneider/Desktop/xcorr_pop', '-r500', '-dpng');
+%%% Check significant example
+mean(group_dff(:,logical(pt)))
+figure;histogram(group_dff(:,logical(pt)),20)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
