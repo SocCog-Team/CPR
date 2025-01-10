@@ -59,7 +59,7 @@ ax.FontSize      	= lb_fs;
 % lg.Box              = 'off';
 % lg.Location         = 'northwest';
 
-dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_solo_behaviour/raw/';
+dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
 print(f, [dest_dir '/subj_correlation'], '-r500', '-dpng');
 print(f, [dest_dir '/subj_correlation'], '-r500', '-dsvg');
 

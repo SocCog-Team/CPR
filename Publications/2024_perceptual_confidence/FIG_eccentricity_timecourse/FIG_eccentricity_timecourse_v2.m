@@ -124,16 +124,19 @@ for iSubj = 1:length(sbj_lst)
         end
     end
     
-    save(['/Users/fschneider/Desktop/vector_subk_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
-    save(['/Users/fschneider/Desktop/joystick_subk_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
+    save(['/Users/fschneider/Desktop/vector_subj_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
+    save(['/Users/fschneider/Desktop/joystick_subj_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
 end
-                        
+
+save(['/Users/fschneider/Desktop/subj_lst'], 'sbj_lst', '-v7.3')
+                     
 %%
 clear avg_ecc avg_acc
+load(['/Users/fschneider/Desktop/resultant_vec/subj_lst.mat'])
 
 win = 60;
 
-for iSubj = 1:length(sbj_lst)
+for iSubj = 1:38%length(sbj_lst)
     
     mat_acc = nan(10000,300);
     mat_ecc = nan(10000,300);
@@ -175,10 +178,10 @@ for iSubj = 1:length(sbj_lst)
 end
 
 %% PLOT
-f = figure;
-col = cool(length(snr_lst));
-ax1 = subplot(1,2,1); hold on
-ax2 = subplot(1,2,2); hold on
+f                	= figure;
+col                 = cool(length(snr_lst));
+ax1                 = subplot(1,2,1); hold on
+ax2                 = subplot(1,2,2); hold on
 
 for iCoh = 1:length(snr_lst)
    
@@ -187,8 +190,8 @@ for iCoh = 1:length(snr_lst)
 
 end
 
-ax1 = adjust_axes(ax1,'accuracy [norm]');
-ax2 = adjust_axes(ax2,'tilt [norm]');
+ax1                 = adjust_axes(ax1,'accuracy [norm]');
+ax2                 = adjust_axes(ax2,'tilt [norm]');
 
 print(f, '/Users/fschneider/Desktop/acg_timeline_pop', '-r500', '-dpng');
 
@@ -235,12 +238,7 @@ for iSubj = 1:length(sbj_lst)
             [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
         end
     end
-    
-%     snr_lst = unique(state_coh);
-%     if length(snr_lst)>7
-%         snr_lst = snr_lst(1:2:end);
-%     end
-    
+
     for iCoh = 1:length(snr_lst)
         cidx = state_coh == snr_lst(iCoh);
         str{iCoh} = num2str(round(snr_lst(iCoh),2));
@@ -252,7 +250,7 @@ for iSubj = 1:length(sbj_lst)
 end
 
 %% PLOT
-f = figure('units','centimeters','position',[0 0 25 25]);
+f                	= figure('units','centimeters','position',[0 0 6 5]);
 
 for iPlot = 1:4
     clear dat
