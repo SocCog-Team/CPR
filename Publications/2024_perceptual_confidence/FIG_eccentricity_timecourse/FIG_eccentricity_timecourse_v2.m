@@ -124,41 +124,50 @@ for iSubj = 1:length(sbj_lst)
         end
     end
     
-    save(['/Users/fschneider/Desktop/vector_subj_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
-    save(['/Users/fschneider/Desktop/joystick_subj_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
+    save(['/Users/fschneider/Desktop/vector_subk_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
+    save(['/Users/fschneider/Desktop/joystick_subk_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
 end
+                        
+%% Plot timeline of joystick response; Extract physical coherence level
 
-save(['/Users/fschneider/Desktop/subj_lst'], 'sbj_lst', '-v7.3')
-                     
-%%
-clear avg_ecc avg_acc
-load(['/Users/fschneider/Desktop/resultant_vec/subj_lst.mat'])
+clear avg_ecc avg_acc avg_pcoh
 
-win = 60;
+% Import subject summary spreadsheet
+pth                         = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
+x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
+sbj_lst                     = x.Abbreviation;                               % Subject ID list
+sbj_lst(cellfun(@isempty,sbj_lst)) = [];
+win                         = 60;
+nSample                     = 29;
 
-for iSubj = 1:38%length(sbj_lst)
-    
-    mat_acc = nan(10000,300);
-    mat_ecc = nan(10000,300);
+for iSubj = 1:length(sbj_lst)
+    clear ncoh slen ndir
+    mat_acc                 = nan(10000,300);
+    mat_ecc                 = nan(10000,300);
+    mat_pcoh                = nan(10000,300);
     c = 0;
     
     load(['/Users/fschneider/Desktop/resultant_vec/vector_subj_' sbj_lst{iSubj} '.mat'])
     load(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj} '.mat'])
-    
-    clear ncoh slen ndir
-    
+        
     for iState = 1:size(frme_vec,2)
         
         if length(js_ecc{iState}) >= win && length(js_ecc{iState}) == length(frme_vec{iState}.resultant_ang_error)+1
+            % Nominal parameters
             c           = c+1;
             slen(c)     = length(js_ecc{iState}(win:end));
             ncoh(c)    	= frme_vec{iState}.nominal_coh;
             ndir(c)    	= frme_vec{iState}.nominal_dir_deg;
             
+            % Joystick response
             js_dir_error = rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
             joystick_acc = abs(1 - abs(js_dir_error) / 180);
             mat_acc(c,end-slen(c)+1:end)    = joystick_acc(win:end);
             mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
+            
+            % Physical coherence level
+            mat_pcoh(c,end-slen(c)+1:end)  	= frme_vec{iState}.actual_coherence(win-1:end); % shorter bcs of pairwise frame computation
+
         end
     end
     
@@ -169,32 +178,73 @@ for iSubj = 1:38%length(sbj_lst)
     
     mat_acc(sum(isnan(mat_acc),2) == size(mat_acc,2),:) = [];
     mat_ecc(sum(isnan(mat_ecc),2) == size(mat_ecc,2),:) = [];
+    mat_pcoh(sum(isnan(mat_pcoh),2) == size(mat_pcoh,2),:) = [];
     
     for iCoh = 1:length(snr_lst)
-        cidx = ncoh == snr_lst(iCoh);
-        avg_acc(iSubj,iCoh,:) = nanmean(mat_acc(cidx,:));
-        avg_ecc(iSubj,iCoh,:) = nanmean(mat_ecc(cidx,:));
+        cidx                            = ncoh == snr_lst(iCoh);
+        avg_acc(iSubj,iCoh,:)           = nanmean(mat_acc(cidx,:));
+        avg_ecc(iSubj,iCoh,:)           = nanmean(mat_ecc(cidx,:));
+        
+%         %%% Median split %%%
+%         if iSubj ==13 && iCoh == 5
+%             dbstop
+%         end
+        
+        clear pcoh_data avg_ecc_time_win idx_larger_than_median
+        ecc_data                            = nanmean(mat_ecc(cidx,end-nSample:end),2);
+        pcoh_data                           = nanmean(mat_pcoh(cidx,end-nSample:end),2);
+        acc_data                            = nanmean(mat_acc(cidx,end-nSample:end),2);
+        idx_larger_than_median              = ecc_data > median(ecc_data);
+ 
+        avg_pcoh_larger_median{iSubj,iCoh}  = pcoh_data(idx_larger_than_median);
+        avg_pcoh_smaller_median{iSubj,iCoh} = pcoh_data(~idx_larger_than_median);
+        
+        avg_acc_larger_median{iSubj,iCoh}   = acc_data(idx_larger_than_median);
+        avg_acc_smaller_median{iSubj,iCoh}  = acc_data(~idx_larger_than_median);
     end
 end
 
-%% PLOT
-f                	= figure;
-col                 = cool(length(snr_lst));
-ax1                 = subplot(1,2,1); hold on
-ax2                 = subplot(1,2,2); hold on
+f = figure;
+col = cool(length(snr_lst));
+ax1 = subplot(1,2,1); hold on
+ax2 = subplot(1,2,2); hold on
 
 for iCoh = 1:length(snr_lst)
    
     [ax1, pl(iCoh)] = plot_averages(ax1,squeeze(avg_acc(:,iCoh,:)),col(iCoh, :));
-    [axw, pl(iCoh)] = plot_averages(ax2,squeeze(avg_ecc(:,iCoh,:)),col(iCoh, :));
+    [ax2, pl(iCoh)] = plot_averages(ax2,squeeze(avg_ecc(:,iCoh,:)),col(iCoh, :));
 
 end
 
-ax1                 = adjust_axes(ax1,'accuracy [norm]');
-ax2                 = adjust_axes(ax2,'tilt [norm]');
+ax1 = adjust_axes(ax1,'accuracy [norm]');
+ax2 = adjust_axes(ax2,'tilt [norm]');
 
-print(f, '/Users/fschneider/Desktop/acg_timeline_pop', '-r500', '-dpng');
+print(f, '/Users/fschneider/Desktop/avg_timeline_pop', '-r500', '-dpng');
 
+% Physical coherence for high vs low joystick tilt
+f       = figure('units','centimeters','position',[0 0 30 10]);
+iplot   = 0;
+
+for iSubj = 1:length(sbj_lst)
+    for iCoh = 1:length(snr_lst)
+        [p(iSubj,iCoh),h(iSubj,iCoh)] = ranksum(avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
+        
+        if iSubj == 10
+            iplot = iplot+1;
+            ax(iplot) = subplot(2,7,iplot); hold on
+            ax(iplot) = plot_coh_histograms(ax(iplot), iplot, col, avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
+            ax(iplot).Title.String = num2str(round(snr_lst(iCoh),2));
+                        
+            ax(iplot) = subplot(2,7,iplot+7); hold on
+            ax(iplot) = plot_acc_histograms(ax(iplot), iplot, col, avg_acc_larger_median{iSubj,iCoh},avg_acc_smaller_median{iSubj,iCoh});
+
+        end
+    end
+end
+
+sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bonferroni correction
+
+print(f, '/Users/fschneider/Desktop/physical_coherence', '-r500', '-dpng');
 
 %% Crosscorrelation between vector length and joystick displacement
 
@@ -238,7 +288,12 @@ for iSubj = 1:length(sbj_lst)
             [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
         end
     end
-
+    
+%     snr_lst = unique(state_coh);
+%     if length(snr_lst)>7
+%         snr_lst = snr_lst(1:2:end);
+%     end
+    
     for iCoh = 1:length(snr_lst)
         cidx = state_coh == snr_lst(iCoh);
         str{iCoh} = num2str(round(snr_lst(iCoh),2));
@@ -249,8 +304,7 @@ for iSubj = 1:length(sbj_lst)
     end
 end
 
-%% PLOT
-f                	= figure('units','centimeters','position',[0 0 6 5]);
+f = figure('units','centimeters','position',[0 0 25 25]);
 
 for iPlot = 1:4
     clear dat
@@ -442,4 +496,62 @@ function [ax, pl] = xc_plot_averages(ax,dat,col)
     % Plot mean curve
     pl              = plot(nanmean(dat), 'LineWidth', 2, 'Color', col); 
     
+end
+
+function ax = plot_coh_histograms(ax, iplot, col, in_larger, in_smaller)
+ofs = .012;
+step = .002;
+edges = median(in_larger)-ofs:step:median(in_larger)+ofs;
+
+h1 = histogram(in_larger,edges);
+h1.FaceAlpha = .35;
+h1.FaceColor = col(iplot,:);
+h1.EdgeAlpha = 0;
+
+h2 = histogram(in_smaller,edges);
+h2.FaceAlpha = .35;
+h2.FaceColor = [0 0 0];
+h2.EdgeAlpha = 0;
+
+if iplot == 1
+    ax.YLabel.String = '#';
+end
+
+if iplot == 4
+    ax.XLabel.String = 'Physical Coherence';
+end
+
+if iplot == 7
+    lg = legend('high tilt','low tilt', 'Location', 'northwest');
+    lg.FontSize = 10;
+    lg.Position(2) = .46;
+end
+
+ax.XTick = round(median(in_larger),3);
+ax.FontSize = 14;
+ax.XTickLabelRotation = 0;
+end
+
+function ax = plot_acc_histograms(ax, iplot, col, in_larger, in_smaller)
+edges                   = 0:.05:1;
+
+h1 = histogram(in_larger,edges);
+h1.FaceAlpha = .35;
+h1.FaceColor = col(iplot,:);
+h1.EdgeAlpha = 0;
+
+h2 = histogram(in_smaller,edges);
+h2.FaceAlpha = .35;
+h2.FaceColor = [0 0 0];
+h2.EdgeAlpha = 0;
+
+if iplot == 1
+    ax.YLabel.String = '#';
+end
+
+if iplot == 4
+    ax.XLabel.String = 'Accuracy';
+end
+ax.FontSize = 14;
+ax.XTickLabelRotation = 0;
 end
