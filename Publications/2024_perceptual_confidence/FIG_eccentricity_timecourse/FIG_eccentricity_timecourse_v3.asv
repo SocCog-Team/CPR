@@ -15,10 +15,12 @@ x                           = readtable([pth 'Subjects_summary.xlsx']);     % Sp
 sbj_lst                     = x.Abbreviation;                               % Subject ID list
 sbj_lst(cellfun(@isempty,sbj_lst)) = [];
 
-cc                          = 0;
-
 % For all subjects
 for iSubj = 1:length(sbj_lst)
+    
+    % Reset counter 
+    cc                          = 0;
+    clear rdp_coh rdp_dir trg1_index trg1_onset_ms frme_vec tmp_js_ts tmp_js_dir tmp_js_ecc
     
     disp(['Processing subject: ' sbj_lst{iSubj}])
     data_pth                                = [pth sbj_lst{iSubj} '/raw/'];     % Data path
@@ -109,10 +111,15 @@ for iSubj = 1:length(sbj_lst)
                         % Extract timestamp of first target
                         tmp_trg_on          = getTrialData(d.value, ssIdx, idx.trg_on); 
                         tmp_trg_ts          = getTrialData(d.time, ssIdx, idx.trg_on);
-                        trg1_onset_ts{cc}  	= tmp_trg_ts(logical(tmp_trg_on));
-                        onset_all_ms        = double(tmp_trg_ts(logical(tmp_trg_on)) - dp_ts(1)) ./1e3;
-                        trg1_onset_ms{cc}   = onset_all_ms(1);
-
+                        try
+                            onset_all_ts{cc}  	= tmp_trg_ts(logical(tmp_trg_on));
+                            onset_all_ms        = double(tmp_trg_ts(logical(tmp_trg_on)) - dp_ts(1)) ./1e3;
+                            trg1_onset_ms(cc)   = onset_all_ms(1);
+                        catch
+                            onset_all_ts{cc}  	= nan;
+                            trg1_onset_ms(cc)   = nan;
+                        end
+                        
                         % Build frame-wise vector for joystick data
                         for iFrme = 1:length(dp_ts)
                             fIdx                  	= [];
@@ -125,13 +132,12 @@ for iSubj = 1:length(sbj_lst)
                                 js_ecc{cc}(iFrme)	= tmp_js_ecc{cc}(fIdx);
                             end
                             
-                            if dp_ts(iFrme) < trg1_onset_ts{cc}(1)
+                            % Frame before forst target?
+                            if dp_ts(iFrme) < onset_all_ts{cc}(1)
                                 trg1_index{cc}(iFrme)	= true;             % prior to first target
                             else
                                 trg1_index{cc}(iFrme)	= false;            % after first target
                             end
-                            
-                            
                         end
                     end
                 end
@@ -139,12 +145,12 @@ for iSubj = 1:length(sbj_lst)
         end
     end
     
-    save(['/Users/fschneider/Desktop/vector_subj'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
-    save(['/Users/fschneider/Desktop/trg_subj_'  sbj_lst{iSubj}],  'trg1_index','js_ecc', '-v7.3')
-    save(['/Users/fschneider/Desktop/joystick_subj_' sbj_lst{iSubj}], 'js_dir','trg1_onset_ms', '-v7.3')
+    save(['/Users/fschneider/Desktop/resultant_vec/vector_subj_'  sbj_lst{iSubj}], 'frme_vec', '-v7.3')
+    save(['/Users/fschneider/Desktop/resultant_vec/trg_subj_'  sbj_lst{iSubj}],  'trg1_index','trg1_onset_ms', '-v7.3')
+    save(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj}], 'js_dir','js_ecc', '-v7.3')
 end
         
-load('/Users/fschneider/Desktop/subj_lst.mat', 'sbj_lst', '-v7.3')
+save('/Users/fschneider/Desktop/subj_lst.mat', 'sbj_lst', '-v7.3')
 
 %% Plot timeline of joystick response; Extract physical coherence level
 %%% Remove all sample after first target appearance!
@@ -158,46 +164,68 @@ win                         = 60;
 nSample                     = 29;
 
 for iSubj = 1:length(sbj_lst)
-    clear ncoh slen ndir
+    clear ncoh slen ndir 
     mat_acc                 = nan(10000,300);
     mat_ecc                 = nan(10000,300);
     mat_pcoh                = nan(10000,300);
     c = 0;
     
+    load(['/Users/fschneider/Desktop/resultant_vec/trg_subj_' sbj_lst{iSubj} '.mat'])
     load(['/Users/fschneider/Desktop/resultant_vec/vector_subj_' sbj_lst{iSubj} '.mat'])
     load(['/Users/fschneider/Desktop/resultant_vec/joystick_subj_' sbj_lst{iSubj} '.mat'])
         
     for iState = 1:size(frme_vec,2)
+        % Identify 1st sample after target
+        trg1  = find(~trg1_index{iState},1,'first');
         
-        if length(js_ecc{iState}) >= win && length(js_ecc{iState}) == length(frme_vec{iState}.resultant_ang_error)+1
+        if length(js_ecc{iState}) >= win && length(js_ecc{iState}) <= 300 && (trg1 > win+5 || isnan(trg1_onset_ms(iState))) && length(js_ecc{iState}) == length(frme_vec{iState}.resultant_ang_error)+1
             % Nominal parameters
             c           = c+1;
+                        
             slen(c)     = length(js_ecc{iState}(win:end));
             ncoh(c)    	= frme_vec{iState}.nominal_coh;
             ndir(c)    	= frme_vec{iState}.nominal_dir_deg;
             
-            % Joystick response
+            % Calculate joystick accuracy
             js_dir_error = rad2deg(circ_dist(deg2rad(js_dir{iState}), deg2rad(frme_vec{iState}.nominal_dir_deg)));
             joystick_acc = abs(1 - abs(js_dir_error) / 180);
-            mat_acc(c,end-slen(c)+1:end)    = joystick_acc(win:end);
-            mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
             
-            % Physical coherence level
-            mat_pcoh(c,end-slen(c)+1:end)  	= frme_vec{iState}.actual_coherence(win-1:end); % shorter bcs of pairwise frame computation
-
+            if isnan(trg1_onset_ms(iState))
+                % Joystick response
+                mat_acc(c,end-slen(c)+1:end)    = joystick_acc(win:end);
+                mat_ecc(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
+                
+                % Physical coherence level
+                mat_pcoh(c,end-slen(c)+1:end)  	= frme_vec{iState}.actual_coherence(win-1:end);
+            else
+                tindx                           = false(1,300);             % Initialise    
+                tmp_idx                         = trg1_index{iState};       % Extract samples of interest
+                tmp_idx(1:win)                  = false;                    % Exclude initial time window
+                tindx(end-length(tmp_idx)+1:end)= tmp_idx;                 % Get position with respect to other states
+                
+                % Joystick response
+                mat_acc(c,tindx)             	= joystick_acc(tmp_idx);
+                mat_ecc(c,tindx)                = js_ecc{iState}(tmp_idx);
+                
+                % Physical coherence level
+                mat_pcoh(c,tindx)               = frme_vec{iState}.actual_coherence(tmp_idx);
+            end
         end
     end
     
+    % Coherence list
     snr_lst = unique(ncoh);
     if length(snr_lst)>7
        snr_lst = snr_lst(1:2:end);
     end
     
+    % Remove empty rows
     mat_acc(sum(isnan(mat_acc),2) == size(mat_acc,2),:) = [];
     mat_ecc(sum(isnan(mat_ecc),2) == size(mat_ecc,2),:) = [];
     mat_pcoh(sum(isnan(mat_pcoh),2) == size(mat_pcoh,2),:) = [];
     
     for iCoh = 1:length(snr_lst)
+        cidx                            = [];
         cidx                            = ncoh == snr_lst(iCoh);
         avg_acc(iSubj,iCoh,:)           = nanmean(mat_acc(cidx,:));
         avg_ecc(iSubj,iCoh,:)           = nanmean(mat_ecc(cidx,:));
@@ -217,7 +245,7 @@ for iSubj = 1:length(sbj_lst)
     end
 end
 
-%%% Plot timeline %%%
+%% Plot timeline %%%
 f = figure;
 col = cool(length(snr_lst));
 ax1 = subplot(1,2,1); hold on
@@ -233,7 +261,7 @@ end
 ax1 = adjust_axes(ax1,'accuracy [norm]');
 ax2 = adjust_axes(ax2,'tilt [norm]');
 
-print(f, '/Users/fschneider/Desktop/avg_timeline_pop', '-r500', '-dpng');
+% print(f, '/Users/fschneider/Desktop/avg_timeline_pop', '-r500', '-dpng');
 
 %% Physical coherence for high vs low joystick tilt
 
@@ -333,6 +361,16 @@ clear resultant res_length res_ts rcoh
 
 % Loop through each calculated vector set to find the resultant
 for iVec = 1:length(dt)
+    
+    if sum(dot_idx{iVec}) < 2
+        res_deg(iVec)       = nan;
+        res_length(iVec)    = nan;
+        res_ts(iVec)        = nan;
+        ang_error(iVec)     = nan;
+        rcoh(iVec)          = nan;
+        continue
+    end
+    
     % Calculate mean difference vector for stable dots
     meanDelta = mean(dt{iVec}(dot_idx{iVec}, :));
     
