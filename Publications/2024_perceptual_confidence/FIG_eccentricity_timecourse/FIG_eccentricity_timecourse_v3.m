@@ -8,19 +8,19 @@ addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
-
-% Import subject summary spreadsheet
-pth                         = '/Volumes/T7_Shield/CPR_0psychophysics/';      % Local hard drive
-x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
-sbj_lst                     = x.Abbreviation;                               % Subject ID list
-sbj_lst(cellfun(@isempty,sbj_lst)) = [];
-
-save('/Users/fschneider/Desktop/subj_lst.mat', 'sbj_lst', '-v7.3')
-
-% For all subjects
-parfor iSubj = 1:length(sbj_lst)
-    sebastian_hats_gesagt(iSubj,sbj_lst,pth)
-end
+% 
+% % Import subject summary spreadsheet
+% pth                         = '/Volumes/T7_Shield/CPR_0psychophysics/';      % Local hard drive
+% x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
+% sbj_lst                     = x.Abbreviation;                               % Subject ID list
+% sbj_lst(cellfun(@isempty,sbj_lst)) = [];
+% 
+% save('/Users/fschneider/Desktop/subj_lst.mat', 'sbj_lst', '-v7.3')
+% 
+% % For all subjects
+% parfor iSubj = 1:length(sbj_lst)
+%     sebastian_hats_gesagt(iSubj,sbj_lst,pth)
+% end
         
 %% Plot timeline of joystick response; Extract physical coherence level
 
@@ -95,7 +95,8 @@ for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         cidx                            = [];
         cidx                            = ncoh == snr_lst(iCoh);
-        avg_ecc(iSubj,iCoh,:)           = nanmean(mat_ecc_all(cidx,:));
+        avg_acc(iSubj,iCoh,:)           = nanmean(mat_acc(cidx,:));
+        avg_ecc(iSubj,iCoh,:)           = nanmean(mat_ecc(cidx,:));
         
         %%% Median split %%%
         clear pcoh_data avg_ecc_time_win idx_larger_than_median
@@ -184,7 +185,7 @@ sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bo
 f = figure('units','centimeters','position',[0 0 25 5]);
 edges = -.002 :.0005: .002;
 for iCoh = 1:length(snr_lst)
-    [pt(iCoh), ht(iCoh)] = ttest(group_dff(:,iCoh));
+    [ht(iCoh), pt(iCoh)] = ttest(group_dff(:,iCoh));
     ax = subplot(1,7,iCoh); hold on
     ln = line([0 0],[0 20], 'Color', 'k','LineStyle', ':', 'LineWidth', 2);
     hh = histogram(group_dff(:,iCoh),edges,'DisplayStyle','stairs','EdgeColor',col(iCoh,:), 'LineWidth', 2);
@@ -194,10 +195,15 @@ for iCoh = 1:length(snr_lst)
     ax.FontSize = 8;
     ax.XTickLabelRotation = 0;
     ax.YLim = [0 max(hh.Values)+1];
-    ax.Title.String = [num2str(sum(h(:,iCoh))) '/' num2str(length(h(:,iCoh)))];
+    
+    if ht(iCoh)
+        ax.Title.String = {[num2str(sum(h(:,iCoh))) '/' num2str(length(h(:,iCoh)))]; ['p=' num2str(round(pt(iCoh),4))]};
+    else
+        ax.Title.String = {[num2str(sum(h(:,iCoh))) '/' num2str(length(h(:,iCoh)))]; ['n.s.']};
+    end
     
     if iCoh == 4
-            ax.XLabel.String = 'Median coherence difference';
+        ax.XLabel.String = 'Median coherence difference';
     end
 end
 
