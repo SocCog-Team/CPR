@@ -2,8 +2,7 @@
 
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
-
-addpath 
+ 
 nLag        = 150;
 smooth_win  = 20;
 n_ofs       = 3;
@@ -76,7 +75,7 @@ avg_pk_pos = cellfun(@median,pk_pos);
 std_pk_pos = cellfun(@std,pk_pos);
 
 %% PLOT
-f                	= figure('units','centimeters','position',[0 0 6 5]);
+f                	= figure('units','centimeters','position',[0 0 5 5]);
 ax                  = gca;
 dat                 = avg_xc_ecc_acc;
 lb_fs               = 8;
@@ -108,7 +107,7 @@ print(f, [dest_dir '/xcorr_joy_pop'], '-r500', '-dpng');
 %%
 frme_ms             = 1000/120;
 
-f                   = figure('units','centimeters','position',[0 0 5 6]); hold on
+f                   = figure('units','centimeters','position',[0 0 5 5]); hold on
 ax = subplot(2,1,1);
 vl                  = violinplot( ((avg_pk_pos-nLag) * frme_ms) ./1e3);
 vl                  = improveViolin(vl,col);
@@ -134,8 +133,9 @@ ax.FontSize      	= lb_fs;
 ax.Box              = 'off';
 axis tight
 
-print(f, ['/Users/fschneider/Desktop/pop_tilt_acc_corr'], '-r500', '-dpng');
-print(f, ['/Users/fschneider/Desktop/pop_tilt_acc_corr'], '-r500', '-dsvg');
+dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
+print(f, [dest_dir '/xcorr_joy_peaks'], '-r500', '-dsvg');
+print(f, [dest_dir '/xcorr_joy_peaks'], '-r500', '-dpng');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
