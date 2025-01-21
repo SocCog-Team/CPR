@@ -75,7 +75,8 @@ for iSubj = 1:length(sbj_lst)
             end
             
             % Physical coherence level
-            mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.actual_coherence(win-1:end);
+%             mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.actual_coherence(win-1:end);
+            mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.resultant_length(win-1:end);
             mat_ecc_all(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
         end
     end
@@ -160,6 +161,7 @@ print(f, [dest_dir '/slope'], '-r500', '-dpng');
 iplot   = 0;
 col = cool(7);
 c_sum = 0;
+summary = [];
 
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
@@ -175,7 +177,19 @@ for iSubj = 1:length(sbj_lst)
     end
 end
 
+% Sort the summary by the second column (SNR)
+summary = sortrows(summary, 2);
 
+% Prepare the data with headers
+fileName = 'summary_sorted.xlsx';
+filePath = fullfile('/Users/fschneider/Desktop', fileName);
+header = {'Subject', 'SNR', 'Difference'};
+summary_with_header = [header; num2cell(summary)];
+
+% Write to an Excel file
+writecell(summary_with_header, filePath);
+
+% Median difference between groups
 group_dff = pcoh_group_average(:,:,1) - pcoh_group_average(:,:,2);
 
 %%% Correction %%%
@@ -183,7 +197,7 @@ sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bo
 
 %%% PLOT %%%
 f = figure('units','centimeters','position',[0 0 25 5]);
-edges = -.002 :.0005: .002;
+edges = -.02 :.005: .02;
 for iCoh = 1:length(snr_lst)
     [ht(iCoh), pt(iCoh)] = ttest(group_dff(:,iCoh));
     ax = subplot(1,7,iCoh); hold on
@@ -195,6 +209,7 @@ for iCoh = 1:length(snr_lst)
     ax.FontSize = 8;
     ax.XTickLabelRotation = 0;
     ax.YLim = [0 max(hh.Values)+1];
+    ax.XTick = [-.02 0 .02];
     
     if ht(iCoh)
         ax.Title.String = {[num2str(sum(h(:,iCoh))) '/' num2str(length(h(:,iCoh)))]; ['p=' num2str(round(pt(iCoh),4))]};
