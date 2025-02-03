@@ -230,7 +230,8 @@ iplot   = 0;
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         [p(iSubj,iCoh),h(iSubj,iCoh)] = ranksum(avg_pcoh_larger_median{iSubj,iCoh},avg_pcoh_smaller_median{iSubj,iCoh});
-        pcoh_group_average(iSubj,iCoh,:) = [median(avg_pcoh_larger_median{iSubj,iCoh}) median(avg_pcoh_smaller_median{iSubj,iCoh})];
+        group_average(iSubj,iCoh,:) = [median(avg_pcoh_larger_median{iSubj,iCoh}) median(avg_pcoh_smaller_median{iSubj,iCoh})]
+        
         
         if iSubj == 10
             iplot = iplot+1;
