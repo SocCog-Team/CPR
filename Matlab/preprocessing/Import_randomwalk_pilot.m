@@ -29,7 +29,7 @@ file_list = {'20250121_Sebastian_CPRsolo_randomwalk.mwk2';
 nSample                     = 29;                                           % Time window size [samples]
 nLag                        = 150;                                          % Cross-correlation lag
 
-
+%%
 % Convert each CPR .mwk2 file to .h5
 for iFile = 1:length(file_list)
     % Import and write file
@@ -69,16 +69,63 @@ for iFile = 1:length(file_list)
     lag(iFile,:)                = out.coh_sorted.lag;
 end
 
-%%
-snr_lst = round(unique(out.coherence).*100);
-col = turbo(size(acc,1))
-figure; hold on
-for iFile = 1:size(acc,1)
-    plot(snr_lst,acc(iFile,:),'LineStyle','-', 'Marker','x', 'LineWidth',2,'Color', col(iFile,:))
-%     scatter(snr_lst,acc(iFile,:), 'Marker','x', 'SizeData',30,'MarkerFaceColor', col(iFile,:))
-%     f=fit(snr_lst',acc(iFile,:)','poly2');
-%     plot(snr_lst',acc(iFile,:)')   
+%% Load 
+for iFile = 1:length(file_list)
+    exp_info                    = strsplit(file_list{iFile},'_');
+    load(['/Users/fschneider/Desktop/randomwalk_pilot/' exp_info{2} '.mat'])
+    
+    acc(iFile,:)                = out.coh_sorted.acc_mean;
+    ecc(iFile,:)                = out.coh_sorted.ecc_mean;
+    o_corr(iFile,:)             = out.coh_sorted.o_corr;
+    lag(iFile,:)                = out.coh_sorted.lag;
 end
+
+snr_lst                         = round(unique(out.coherence).*100);
+lb_fs                           = 8;
+col                             = turbo(size(acc,1));
+lw                              = 3;
+alp                             = .4;
+col_dat                         = [0 0 0];
+col_ci                          = [.3 0 0];
+
+f                               = figure('units','centimeters','position',[0 0 22.5 5]); hold on
+ax3                              = subplot(1,4,2);
+[ax3,pl]                       	= plotData(ax3,acc,true,lw,alp,col_dat,col_ci);
+ax3.XLim                        = [1 7];
+ax3.YLim                        = [0 100];
+ax3.XLabel.String               = 'Coherence [%]';
+ax3.YLabel.String               = 'Accuracy [%]';
+ax3.XTick                       = 1:length(snr_lst);
+ax3.XTickLabel                  = round(snr_lst,2);
+ax3.FontSize                    = lb_fs;
+ax3.XTickLabelRotation          = 0;
+ax3.XAxis.Visible               = 'on';
+
+ax2                              = subplot(1,4,3);
+[ax2,pl]                       	= plotData(ax2,ecc,true,lw,alp,col_dat,col_ci);
+ax2.XLim                        = [1 7];
+ax2.YLim                        = [0 100];
+ax2.XLabel.String               = 'Coherence [%]';
+ax2.YLabel.String               = 'Eccentricity [%]';
+ax2.XTick                       = 1:length(snr_lst);
+ax2.XTickLabel                  = round(snr_lst,2);
+ax2.FontSize                    = lb_fs;
+ax2.XTickLabelRotation          = 0;
+ax2.XAxis.Visible               = 'on';
+
+% ax4                             = subplot(1,4,4);
+% [ax4,pl]                       	= plotData(ax4,lag,false,lw,alp,col_dat,col_ci);
+% ax4.XLim                        = [1 7];
+% ax4.YLim                        = [0 1000];
+% ax4.XLabel.String               = 'Coherence [%]';
+% ax4.YLabel.String               = 'Accuracy [%]';
+% ax4.XTick                       = 1:length(snr_lst);
+% ax4.XTickLabel                  = round(snr_lst,2);
+% ax4.FontSize                    = lb_fs;
+% ax4.XTickLabelRotation          = 0;
+% ax4.XAxis.Visible               = 'on';
+
+print(f, ['/Users/fschneider/Desktop/randwalk'], '-r500', '-dpng');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Functions
@@ -251,4 +298,36 @@ out.block                   = exp_info{4}(1:end-3);
 if strcmp(out.condition, 'CPRcoopration')
     out.condition           = 'CPRcooperation';
 end
+end
+
+function [ax,pl] = plotData(ax,dat,scale_flag,lw,alp,col_dat,col_ci)
+
+% Remove NaNs and zero rows
+dat(sum(isnan(dat),2)>0,:)  = [];
+dat(sum(dat==0,2)>0,:)      = [];
+
+if scale_flag
+    dat                     = dat.*100;
+end
+
+% Boostrap confidence intervals
+nRep                        = 1000;
+[CI,~]                      = bootci(nRep,{@mean,dat},'Alpha',0.05);
+
+% Prepare filled area
+vec                         = 1:length(CI);
+x_spacing                   = [vec fliplr(vec)];
+ci                          = [CI(1,:) fliplr(CI(2,:))];
+
+% Plot subject-wise data
+hold on
+for iL = 1:size(dat,1)
+    pl(iL)                  = plot(dat(iL,:), 'LineWidth', lw/lw, 'Color', [.5 .5 .5 alp]);
+end
+
+% Overlay confidence intervals
+fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'FaceAlpha', alp);
+
+% Plot mean curve
+pl                          = plot(mean(dat), 'LineWidth', lw/1.5, 'Color', col_dat);
 end
