@@ -97,11 +97,11 @@ ax1.XTickLabelRotation      = 0;
 %%% SUBPLOT: SOLO - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = subplot(1,4,2); hold on
-[ax3,pl]                    = plotData(ax3,solo_macc,false,lw,alp,col_dat,col_ci);
+[ax3,pl]                    = plotData(ax3,solo_macc,true,lw,alp,col_dat,col_ci);
 ax3.XLim                    = [1 size(solo_macc,2)];
 % ax3.YLim                    = [30 100];
 ax3.XLabel.String           = 'Coherence [%]';
-ax3.YLabel.String           = 'Angular error [deg]';
+ax3.YLabel.String           = 'Accuracy [%]';
 ax3.YLabel.Position(1)      = -.4;
 ax3.XTick                   = 1:length(snr);
 ax3.XTickLabel              = round(snr,2)*100;
@@ -117,12 +117,15 @@ nRep                        = 1000;
 vec                         = 1:length(CI);
 x_spacing                   = [vec fliplr(vec)];
 ci                          = [CI(1,:) fliplr(CI(2,:))];
+ax3.YAxis(2).Color          = ax3.YAxis(2).Color/2;
 
 % Overlay confidence intervals
-fl                          = fill(x_spacing,ci,col_ci,'EdgeColor','none', 'FaceAlpha', alp);
+fl                          = fill(x_spacing,ci,col_ci,'FaceColor',ax3.YAxis(2).Color,'EdgeColor','none', 'FaceAlpha', alp);
 
 % Plot mean curve
-pl                          = plot(mean(dat), 'LineWidth', lw/1.5, 'Color', col_dat);
+pl                          = plot(mean((1-solo_macc).*180), 'LineWidth', lw/1.5, 'Color', ax3.YAxis(2).Color);
+% ax3.YLabel.String           = 'Angular error [deg]';
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: SOLO - Avg eccentricity raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
