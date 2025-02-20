@@ -138,51 +138,39 @@ print(f, [dest_dir '/xcorr_joy_peaks'], '-r500', '-dsvg');
 print(f, [dest_dir '/xcorr_joy_peaks'], '-r500', '-dpng');
 
 %%
-f                	= figure('units','centimeters','position',[0 0 15 15]);
-lb_fs               = 8;
-lw                  = 1.5;
-col                 = cool(length(snr_lst));
+f                	= figure('units','centimeters','position',[0 0 5 5]);
 
 for iPlot = 1:2
     
-    ax          	= subplot(2,2,iPlot);
+    ax                  = subplot(2,2,iPlot)
+    if iP
+    dat                 = avg_xc_ecc_acc;
+    lb_fs               = 8;
+    lw                  = 1.5;
+    col                 = cool(length(snr_lst));
     
-    if iPlot == 1
-            dat  	= avg_xc_acc_vec;
-            tstr    = 'Accuracy';
-    else
-            dat  	= avg_xc_ecc_vec;
-            tstr    = 'Tilt';
-    end
-    
-    ln              = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 1);
+    ln = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 1);
     
     for iCoh = 1:length(snr_lst)
-        [ax, pl]    = xc_plot_averages(ax,squeeze(dat(:,iCoh,:)),col(iCoh,:));
+        [ax, pl] = xc_plot_averages(ax,squeeze(dat(:,iCoh,:)),col(iCoh,:));
     end
     
-    ax.Title.String = tstr;
     ax.XLabel.String = 'Lag [ms]';
-    
-    if iPlot == 1
-        ax.YLabel.String = {'Cross-correlation'; 'coefficient [norm.]'};
-    end
-    
-    ax.FontSize     = lb_fs;
-    ax.XTick        = [150-60 150 150+60 150+120];
+    ax.YLabel.String = 'XCorr coef';
+    ax.FontSize = lb_fs;
+    ax.XTick = [150-60 150 150+60 150+120];
     
     for iLab = 1:length(ax.XTickLabel)
         ax.XTickLabel{iLab} = num2str( round((str2num(ax.XTickLabel{iLab})-nLag) * (1000/120)));
     end
     
     axis tight
-    ax.YLim         = [-.05 .05];
+    ax.YLim = [-.1 .3];
 end
 
-dest_dir            = '/Users/fschneider/Desktop/revision/';
-print(f, [dest_dir '/xcorr_vec'], '-r500', '-dsvg');
-print(f, [dest_dir '/xcorr_vec'], '-r500', '-dpng');
-
+dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
+print(f, [dest_dir '/xcorr_joy_pop'], '-r500', '-dsvg');
+print(f, [dest_dir '/xcorr_joy_pop'], '-r500', '-dpng');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

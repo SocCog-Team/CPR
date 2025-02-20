@@ -76,7 +76,7 @@ for iSubj = 1:length(sbj_lst)
             
             % Physical coherence level
 %             mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.actual_coherence(win-1:end);
-            mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.resultant_length(win-1:end).*100;
+            mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.resultant_length(win-1:end);
             mat_ecc_all(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
         end
     end
@@ -122,8 +122,8 @@ pl      = plot(x,yfit,'color',col(iCoh,:), 'linewidth',2);
 end
 
 ylim([.5 1])
-xlabel('Confidence [a.u.]')
-ylabel('Accuracy [a.u.]')
+xlabel('confidence [a.u.')
+ylabel('accuracy')
 set(gca, 'fontsize',16)
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
@@ -178,6 +178,9 @@ print(f, [dest_dir '/slope'], '-r500', '-dpng');
 
 %% Physical coherence for high vs low joystick tilt
 
+%%% PLOT IN % COHERENCE, MULTIPLY BY 100
+%%% is this based on the vector now?
+
 iplot   = 0;
 col = cool(7);
 c_sum = 0;
@@ -192,7 +195,7 @@ for iSubj = 1:length(sbj_lst)
             c_sum = c_sum+1;
             summary(c_sum,1) = iSubj;
             summary(c_sum,2) = round(snr_lst(iCoh),2);
-            summary(c_sum,3) = round(pcoh_group_average(iSubj,iCoh,1) - pcoh_group_average(iSubj,iCoh,2),3);
+            summary(c_sum,3) = pcoh_group_average(iSubj,iCoh,1) - pcoh_group_average(iSubj,iCoh,2);
         end
     end
 end
@@ -217,7 +220,7 @@ sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bo
 
 %%% PLOT %%%
 f = figure('units','centimeters','position',[0 0 25 5]);
-edges = -2 :.5: 2;
+edges = -.02 :.005: .02;
 for iCoh = 1:length(snr_lst)
     [ht(iCoh), pt(iCoh)] = ttest(group_dff(:,iCoh));
     ax = subplot(1,7,iCoh); hold on
@@ -229,7 +232,7 @@ for iCoh = 1:length(snr_lst)
     ax.FontSize = 8;
     ax.XTickLabelRotation = 0;
     ax.YLim = [0 max(hh.Values)+1];
-    ax.XTick = [-2 0 2];
+    ax.XTick = [-.02 0 .02];
     
     if ht(iCoh)
         ax.Title.String = {[num2str(sum(h(:,iCoh))) '/' num2str(length(h(:,iCoh)))]; ['p=' num2str(round(pt(iCoh),4))]};
@@ -238,14 +241,14 @@ for iCoh = 1:length(snr_lst)
     end
     
     if iCoh == 4
-        ax.XLabel.String = 'Median coherence difference [%]';
+        ax.XLabel.String = 'Median coherence difference';
     end
 end
 
-print(f, '/Users/fschneider/Desktop/revision/physical_coherence_dff', '-r500', '-dpng');
+print(f, '/Users/fschneider/Desktop/physical_coherence_dff', '-r500', '-dpng');
 
 % %%% Check significant example
-% mean(group_dff(:,logical(ht)))
+% mean(group_dff(:,logical(pt)))
 % figure;histogram(group_dff(:,logical(pt)),20)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
