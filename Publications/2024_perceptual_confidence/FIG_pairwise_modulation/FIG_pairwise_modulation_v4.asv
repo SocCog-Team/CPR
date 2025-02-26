@@ -26,8 +26,118 @@ hcol                        = [.1 .1 .1];
 lw                         	= 1;
 lb_fs                    	= 8;
 sc_size                     = 10;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Scatter dyadic modulation %%%
+%% PLOT: Solo vs dyadic joystick difference
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+close all
+clear g
+
+p1_better = raw.ecc1 > raw.ecc2;
+ecc_solo_dff = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+ecc_dyad_dff = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2(~p1_better) - raw.decc1(~p1_better)];
+
+g(1,1)=gramm('x',abs(ecc_solo_dff)','y',abs(ecc_dyad_dff)');
+% g(1,1)=gramm('x',abs(ecc_df.solo)','y',abs(ecc_df.dyad)');
+g(1,1).geom_point();
+g(1,1).stat_cornerhist('edges',-.3:0.015:.3,'aspect',.3,'fill','face');
+g(1,1).geom_abline();
+g(1,1).set_names('x','Solo interplayer distance','y','Dyadic interplayer distance');
+g(1,1).set_color_options('map',[.3 .3 .3]);
+
+[r_ecc,pv_ecc]          = corrcoef(abs(ecc_df.solo),abs(ecc_df.dyad));
+[p_ecc,h_ecc, stats_ecc] = signrank(abs(ecc_df.solo),abs(ecc_df.dyad));
+
+% if pv_ecc(2) < .05
+%     tx               	= text(0,0,{['r=' num2str(round(r_ecc(2),2))];['p=' num2str(round(pv_ecc(2),2))]});
+%     tx.Color         	= [.1 .1 .1];
+%     tx.FontSize        	= lb_fs;
+% end
+
+p1_better = raw.acc1 > raw.acc2;
+acc_solo_dff = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+acc_dyad_dff = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2(~p1_better) - raw.dacc1(~p1_better)];
+
+g(1,2)=gramm('x',abs(acc_solo_dff),'y',abs(acc_dyad_dff));
+g(1,2).geom_point();
+g(1,2).stat_cornerhist('edges',-.1:0.005:.1,'aspect',.3,'fill','face');
+g(1,2).geom_abline();
+g(1,2).set_names('x','Solo interplayer distance','y','Dyadic interplayer distance');
+g(1,2).set_color_options('map',[.3 .3 .3]);
+
+figure('Position',[100 100 560 420/2]);
+g.draw();
+
+[r_acc,pv_acc]          = corrcoef(abs(acc_df.solo),abs(acc_df.dyad));
+[p_acc,h_acc, stats_acc] = signrank(abs(acc_df.solo),abs(acc_df.dyad));
+
+% if pv_acc(2) < .05
+%     tx                 	= text(0,0,{['r=' num2str(round(r_acc(2),2))];['p=' num2str(round(pv_acc(2),2))]});
+%     tx.Color         	= [.1 .1 .1];
+%     tx.FontSize     	= lb_fs;
+% end
+
+print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dsvg', '-painters');
+print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dpng', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% PLOT: P_better minus P-worse AUC difference
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+addpath /Users/fschneider/Documents/MATLAB/cbrewer
+
+n = 50;
+subsets = nan(n,1);
+subsets(auc.ecc1 > .5 & auc.ecc2 > .5) = 1;
+subsets(auc.ecc1 < .5 & auc.ecc2 < .5) = 2;
+subsets(auc.ecc1 < .5 & auc.ecc2 > .5) = 3;
+subsets(auc.ecc1 > .5 & auc.ecc2 < .5) = 3;
+cval={'both better' 'both worse' 'mixed'};
+c=cval(subsets);
+
+
+f = figure;
+ax = subplot(2,2,1);hold on
+x = 0:.05:.35;
+cmap=cbrewer('qual', 'Dark2', 3);
+p1_better = raw.ecc1 > raw.ecc2;
+ecc_better_minus_worse = [auc.ecc1(p1_better) - auc.ecc2(p1_better) auc.ecc2(~p1_better) - auc.ecc1(~p1_better)];
+ecc_solo_dff = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+for i=1:3
+    sc = scatter(abs(ecc_solo_dff(subsets==i)), ecc_better_minus_worse(subsets==i));
+    sc.MarkerFaceColor = cmap(i,:);
+    sc.MarkerEdgeColor = 'none';
+end
+fit_ecc = polyfit(abs(ecc_solo_dff),ecc_better_minus_worse,1);
+plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2])
+
+ax.XLim = [0 .35];
+ax.XLabel.String = {'Solo interplayer distance'; 'Tilt.better - Tilt.worse'};
+ax.YLabel.String = {'Social modulation difference';'AUC.better - AUC.worse'};
+ax.FontSize = lb_fs;
+
+ax = subplot(2,2,2);hold on
+x = 0:.05:.15;
+p1_better = raw.acc1 > raw.acc2;
+acc_better_minus_worse = [auc.acc1(p1_better) - auc.acc2(p1_better) auc.acc2(~p1_better) - auc.acc1(~p1_better)];
+acc_solo_dff = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+for i=1:3
+    sc = scatter(abs(acc_solo_dff(subsets==i)), acc_better_minus_worse(subsets==i));
+    sc.MarkerFaceColor = cmap(i,:);
+    sc.MarkerEdgeColor = 'none';
+end
+fit_ecc = polyfit(abs(acc_solo_dff),acc_better_minus_worse,1);
+plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2])
+
+ax.XLim = [0 .15];
+ax.XLabel.String = {'Solo interplayer distance'; 'Accuracy.better - Accuracy.worse'};
+ax.YLabel.String = {'Social modulation difference';'AUC.better - AUC.worse'};
+ax.FontSize = lb_fs;
+
+print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dpng', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% SFIGURE: Scatter dyadic modulation %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
@@ -140,146 +250,6 @@ end
 
 print(f, [dest_dir '/FIG_auc_' alignment_str], '-r500', '-dpng');
 print(f, [dest_dir '/FIG_auc_' alignment_str], '-r500', '-dsvg', '-painters');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Effect size difference
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-f                          	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
-
-for i = 1:2
-    ax = subplot(2,2,i); hold on
-    
-    ln                     	= line([0 0],[-1 1]);
-    ln.Color              	= [0 0 0];
-    ln.LineWidth           	= lw;
-    ln.LineStyle           	= ':';
-    
-    ln                     	= line([-1 1],[0 0]);
-    ln.Color              	= [0 0 0];
-    ln.LineWidth           	= lw;
-    ln.LineStyle           	= ':';
-    
-    if i == 1
-        df_subset               = auc.ecc1 - auc.ecc2;
-        sc1                     = scatter(ecc_df.solo,df_subset,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc1.SizeData            = sc_size;
-        
-        [x_fit, y_fit, r(i,1), pv(i,1)]	= regr_line(ax,ecc_df.solo,df_subset,rcol, .3);
-        ax.XLim                 = [-.35 .35];
-        ax.YLim                 = [-.55 .55];
-        ax.YTick                = [-.5:.25:.5];
-        ax.YLabel.String        = {'Eccentricity Difference';' [AUROC_P1 - AUROC_P2]'};
-    elseif i == 2
-        df_subset               = auc.acc1 - auc.acc2;
-        sc2                     = scatter(acc_df.solo,df_subset,'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc2.SizeData            = sc_size;
-        
-        [x_fit, y_fit, r(i,2), pv(i,2)]	= regr_line(ax,acc_df.solo,df_subset,rcol,.13);
-        ax.XLim                 = [-.15 .15];
-        ax.YLim                 = [-.2 .2];
-        ax.YTick                = [-.2:.1:.2];
-        ax.YLabel.String        = {'Accuracy Difference';' [AUROC_P1 - AUROC_P2]'};
-    end
-    
-    ax.YLabel.Interpreter       = 'none';
-    ax.Position(1)              = ax.Position(1);
-    ax.FontSize                 = lb_fs;
-    ax.XLabel.String            = {'Within-dyad difference [P1 - P2]'};
-    
-end
-
-dest_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_pairwise_modulation/raw/';
-print(f, [dest_dir '/FIG_dff_scatter_' alignment_str], '-r500', '-dpng');
-print(f, [dest_dir '/FIG_dff_scatter_' alignment_str], '-r500', '-dsvg', '-painters');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Solo vs dyadic difference
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% %Corner histogram
-% g(2,3)=gramm('x',(cars.Horsepower-nanmean(cars.Horsepower))/nanstd(cars.Horsepower),'y',-(cars.Acceleration-nanmean(cars.Acceleration))/nanstd(cars.Acceleration),'color',cars.Cylinders,'subset',cars.Cylinders~=3 & cars.Cylinders~=5);
-% g(2,3).geom_point();
-% g(2,3).stat_cornerhist('edges',-4:0.2:4,'aspect',0.6);
-% g(2,3).geom_abline();
-% g(2,3).set_title('stat_cornerhist()');
-% g(2,3).set_names('x','z(Horsepower)','y','-z(Acceleration)');
-% 
-% g.set_title('Visualization of Y~X relationship with both X and Y as continuous variables');
-% figure('Position',[100 100 800 550]);
-% g.draw();
-addpath Users/fschneider/Documents/MATLAB/piermorel-gramm-b0fc592/
-
-f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
-
-for iPlot = 1:2
-%     ax                      = subplot(2,2,iPlot); hold on
-
-    if iPlot == 1
-        %Corner histogram
-        clear g
-        g(1,1)=gramm('x',abs(ecc_df.solo),'y',abs(ecc_df.dyad));
-        g(1,1).geom_point();
-        g(1,1).stat_cornerhist('edges',-.3:0.025:.3,'aspect',.3);
-        g(1,1).geom_abline();
-        g(1,1).set_title('stat_cornerhist()');
-        g(1,1).set_names('x','z(Horsepower)','y','-z(Acceleration)');
-        g.draw();
-
-%         sc1                     = scatter(abs(ecc_df.solo),abs(ecc_df.dyad),'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-%         sc1.MarkerFaceAlpha     = .5;
-%         sc1.SizeData            = sc_size;
-%         ax.XLim                 = [0 .4];
-%         ax.YLim                 = [0 .4];
-%         subset_str              = 'Eccentricity';
-%         
-        [r_ecc,pv_ecc]          = corrcoef(abs(ecc_df.solo),abs(ecc_df.dyad));
-        [p_ecc,h_ecc, stats_ecc] = signrank(abs(ecc_df.solo),abs(ecc_df.dyad));
-        
-        if pv_ecc(2) < .05
-            tx               	= text(0,.3,{['r=' num2str(round(r_ecc(2),2))];['p=' num2str(round(pv_ecc(2),2))]});
-            tx.Color         	= [.1 .1 .1];
-            tx.FontSize        	= lb_fs;
-        end
-
-    elseif iPlot == 2
-        sc2                     = scatter(abs(acc_df.solo),abs(acc_df.dyad),'MarkerFaceColor',scol,'MarkerFaceAlpha',.5, 'MarkerEdgeColor','none');
-        sc2.MarkerFaceAlpha     = .5;
-        sc2.SizeData            = sc_size;
-        ax.XLim                 = [0 .12];
-        ax.YLim                 = [0 .12];
-        subset_str              = 'Accuracy';
-                
-        [r_acc,pv_acc]          = corrcoef(abs(acc_df.solo),abs(acc_df.dyad));
-        [p_acc,h_acc, stats_acc] = signrank(abs(acc_df.solo),abs(acc_df.dyad));
-
-        if pv_acc(2) < .05
-            tx                 	= text(0,.3,{['r=' num2str(round(r_acc(2),2))];['p=' num2str(round(pv_acc(2),2))]});
-            tx.Color         	= [.1 .1 .1];
-            tx.FontSize     	= lb_fs;
-        end
-    end
-
-    lsl                         = lsline;
-    lsl.Color                   = rcol;
-    lsl.LineWidth               = lw;
-
-    ln                          = line([0 .4],[0 .4]);
-    ln.Color                    = scol;
-    ln.LineWidth                = lw;
-    ln.LineStyle                = ':';
-    
-    ax.FontSize                 = lb_fs;
-    ax.XLabel.String            = {'Difference [Solo]'; subset_str};
-    ax.YLabel.String            = 'Difference [Dyad]';
-    ax.XTickLabelRotation       = 0;
-    ax.YLabel.Interpreter       = 'none';
-    ax.Position(1)              = ax.Position(1);
-    ax.FontSize                 = lb_fs;
-end
-
-print(f, [dest_dir '/FIG_dff_solo_dyad_' alignment_str], '-r500', '-dsvg', '-painters');
-print(f, [dest_dir '/FIG_dff_solo_dyad_' alignment_str], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% PLOT: Dyadic modulation - histogram %%% SUPPLEMENTARY
