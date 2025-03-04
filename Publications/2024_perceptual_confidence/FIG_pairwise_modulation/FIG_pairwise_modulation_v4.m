@@ -1,6 +1,9 @@
 close all
 clear all
 
+addpath /Users/fschneider/Documents/MATLAB/piermorel-gramm-b0fc592
+addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
+
 source_pth = '/Users/fschneider/ownCloud/var_plot/';
 load([source_pth '/solo_correlation.mat'])
 load([source_pth '/solo_performance.mat'])
@@ -28,107 +31,139 @@ lb_fs                    	= 8;
 sc_size                     = 10;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Solo vs dyadic joystick difference
+%% FIGURE: Solo vs dyadic joystick difference
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 close all
 clear g
 
 %%% Eccentricity
-p1_better = raw.ecc1 > raw.ecc2;
-ecc_solo_dff = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
-ecc_dyad_dff = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2(~p1_better) - raw.decc1(~p1_better)];
+p1_better               = raw.ecc1 > raw.ecc2;
+ecc_solo_dff            = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+ecc_dyad_dff            = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2(~p1_better) - raw.decc1(~p1_better)];
+[r_ecc,pv_ecc]          = corrcoef(abs(ecc_df.solo),abs(ecc_df.dyad));
+[p_ecc,h_ecc, stats_ecc]= signrank(abs(ecc_df.solo),abs(ecc_df.dyad));
+g(1,1)                  = gramm('x',abs(ecc_solo_dff)','y',abs(ecc_dyad_dff)');
 
-g(1,1)=gramm('x',abs(ecc_solo_dff)','y',abs(ecc_dyad_dff)');
 g(1,1).geom_point();
 g(1,1).stat_cornerhist('edges',-.3:0.015:.3,'aspect',.3,'fill','face');
 g(1,1).geom_abline();
 g(1,1).set_names('x','Solo interplayer distance','y','Dyadic interplayer distance');
 g(1,1).set_color_options('map',[.3 .3 .3]);
 
-[r_ecc,pv_ecc]          = corrcoef(abs(ecc_df.solo),abs(ecc_df.dyad));
-[p_ecc,h_ecc, stats_ecc] = signrank(abs(ecc_df.solo),abs(ecc_df.dyad));
-
 %%% Accuracy
-p1_better = raw.acc1 > raw.acc2;
-acc_solo_dff = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
-acc_dyad_dff = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2(~p1_better) - raw.dacc1(~p1_better)];
+p1_better               = raw.acc1 > raw.acc2;
+acc_solo_dff            = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+acc_dyad_dff            = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2(~p1_better) - raw.dacc1(~p1_better)];
+[r_acc,pv_acc]          = corrcoef(abs(acc_df.solo),abs(acc_df.dyad));
+[p_acc,h_acc, stats_acc]= signrank(abs(acc_df.solo),abs(acc_df.dyad));
+g(1,2)                  = gramm('x',abs(acc_solo_dff),'y',abs(acc_dyad_dff));
 
-g(1,2)=gramm('x',abs(acc_solo_dff),'y',abs(acc_dyad_dff));
 g(1,2).geom_point();
 g(1,2).stat_cornerhist('edges',-.1:0.005:.1,'aspect',.3,'fill','face');
 g(1,2).geom_abline();
 g(1,2).set_names('x','Solo interplayer distance','y','Dyadic interplayer distance');
 g(1,2).set_color_options('map',[.3 .3 .3]);
 
-figure('Position',[100 100 560 420/2]);
+figure('Position',[100 100 600 300]);
 g.draw();
 
-[r_acc,pv_acc]          = corrcoef(abs(acc_df.solo),abs(acc_df.dyad));
-[p_acc,h_acc, stats_acc] = signrank(abs(acc_df.solo),abs(acc_df.dyad));
+axis normal
+axis square
 
 print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dsvg', '-painters');
 print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: P_better minus P-worse AUC difference
+%% FIGURE: P_better minus P-worse AUC difference
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 addpath /Users/fschneider/Documents/MATLAB/cbrewer
 
-n = 50;
-subsets = nan(n,1);
+n                       = 50;
+subsets                 = nan(n,1);
 subsets(auc.ecc1 > .5 & auc.ecc2 > .5) = 1;
 subsets(auc.ecc1 < .5 & auc.ecc2 < .5) = 2;
 subsets(auc.ecc1 < .5 & auc.ecc2 > .5) = 3;
 subsets(auc.ecc1 > .5 & auc.ecc2 < .5) = 3;
 cval={'both better' 'both worse' 'mixed'};
-c=cval(subsets);
 
 
-f = figure;
-ax = subplot(2,2,1);hold on
-x = 0:.05:.35;
-cmap = cbrewer('qual', 'Dark2', 3);
+f                       = figure;
+ax                      = subplot(2,2,1);hold on
+x                       = 0:.05:.35;
+% cmap                  = cbrewer('qual', 'Dark2', 3);
+cmap                    = [42 182 115;...
+                            190 30 45;...
+                            247 147 29]./255;
 
-p1_better = raw.ecc1 > raw.ecc2;
-ecc_better_minus_worse = [auc.ecc1(p1_better) - auc.ecc2(p1_better) auc.ecc2(~p1_better) - auc.ecc1(~p1_better)];
-ecc_solo_dff = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+p1_better               = raw.ecc1 > raw.ecc2; % Solo
+ecc_better_minus_worse  = [auc.ecc1(p1_better) - auc.ecc2(p1_better) auc.ecc2(~p1_better) - auc.ecc1(~p1_better)];
+ecc_solo_dff            = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
+c                       = cval(subsets_remap);
+
 for i=1:3
-    sc = scatter(abs(ecc_solo_dff(subsets==i)), ecc_better_minus_worse(subsets==i));
-    sc.MarkerFaceColor = cmap(i,:);
-    sc.MarkerEdgeColor = 'none';
+    sc                  = scatter(abs(ecc_solo_dff(subsets_remap==i)), ecc_better_minus_worse(subsets_remap==i));
+    sc.MarkerFaceColor  = cmap(i,:);
+    sc.MarkerEdgeColor  = 'none';
+    sc.MarkerFaceAlpha  = .75;
     
     text(.1,i/10,num2str(i), 'Color', cmap(i,:))
 end
-fit_ecc = polyfit(abs(ecc_solo_dff),ecc_better_minus_worse,1);
-plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2])
+fit_ecc                 = polyfit(abs(ecc_solo_dff),ecc_better_minus_worse,1);
+pl                      = plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2]);
+[r_ecc,pv_ecc]          = corrcoef(abs(ecc_solo_dff),ecc_better_minus_worse);
+ax.XLim                 = [0 .35];
+ax.YLim                 = [-.55 .55];
+ax.YTick                = [-.5 -.25 0  .25 .5];
+ax.XLabel.String        = {'Solo interplayer distance'; 'Tilt.better - Tilt.worse'};
+ax.YLabel.String        = {'Social modulation difference';'AUC.better - AUC.worse'};
+ax.FontSize             = lb_fs;
 
-ax.XLim = [0 .35];
-ax.XLabel.String = {'Solo interplayer distance'; 'Tilt.better - Tilt.worse'};
-ax.YLabel.String = {'Social modulation difference';'AUC.better - AUC.worse'};
-ax.FontSize = lb_fs;
+text(.2,0,['r=' num2str(round(r_ecc(2),3)) ' p=' num2str(pv_ecc(2))])
+axis square
 
-ax = subplot(2,2,2);hold on
-x = 0:.05:.15;
-p1_better = raw.acc1 > raw.acc2;
-acc_better_minus_worse = [auc.acc1(p1_better) - auc.acc2(p1_better) auc.acc2(~p1_better) - auc.acc1(~p1_better)];
-acc_solo_dff = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+ax                      = subplot(2,2,2);hold on
+x                       = 0:.05:.15;
+p1_better               = raw.acc1 > raw.acc2; % Solo
+acc_better_minus_worse  = [auc.acc1(p1_better) - auc.acc2(p1_better) auc.acc2(~p1_better) - auc.acc1(~p1_better)];
+acc_solo_dff            = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
+c                       = cval(subsets_remap);
+
 for i=1:3
-    sc = scatter(abs(acc_solo_dff(subsets==i)), acc_better_minus_worse(subsets==i));
-    sc.MarkerFaceColor = cmap(i,:);
-    sc.MarkerEdgeColor = 'none';
+    sc                  = scatter(abs(acc_solo_dff(subsets_remap==i)), acc_better_minus_worse(subsets_remap==i));
+    sc.MarkerFaceColor  = cmap(i,:);
+    sc.MarkerEdgeColor  = 'none';
+    sc.MarkerFaceAlpha  = .75;
 end
-fit_ecc = polyfit(abs(acc_solo_dff),acc_better_minus_worse,1);
-plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2])
+fit_ecc                 = polyfit(abs(acc_solo_dff),acc_better_minus_worse,1);
+pl                      = plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2]);
+[r_acc,pv_acc]          = corrcoef(abs(acc_solo_dff),acc_better_minus_worse);
+ax.XLim                 = [0 .15];
+ax.YLim                 = [-.15 .15];
+ax.YTick                = [-.15 -.1 -.05 0 .05 .1 .15];
+ax.XLabel.String        = {'Solo interplayer distance'; 'Accuracy.better - Accuracy.worse'};
+ax.YLabel.String        = {'Social modulation difference';'AUC.better - AUC.worse'};
+ax.FontSize             = lb_fs;
 
-ax.XLim = [0 .15];
-ax.XLabel.String = {'Solo interplayer distance'; 'Accuracy.better - Accuracy.worse'};
-ax.YLabel.String = {'Social modulation difference';'AUC.better - AUC.worse'};
-ax.FontSize = lb_fs;
-
-
+text(.1,0,['r=' num2str(round(r_acc(2),3)) ' p=' num2str(pv_acc(2))])
+axis square
 
 print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dpng', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% FIGURE: Magnitude/step size of social modulation %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+f                       = figure('units','centimeters','position',[0 0 25 10]);hold on
+ax1                     = subplot(1,2,1);
+[ax1]                   = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.ecc1,auc.ecc2);
+ax2                     = subplot(1,2,2);
+[ax2]                   = modulation_violin(ax2,raw.acc1,raw.acc2,auc.acc1,auc.acc2);
+
+print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SFIGURE: Scatter dyadic modulation %%%
@@ -216,7 +251,7 @@ for iPlot = 1:4
         str                     = 'Eccentricity';
         ax.XLim                 = [-.35 .35];
         ax.YLim                 = [0 .5];
-        [x_avg, y_avg] = avg_win_value(x,y, win_size);
+        [x_avg, y_avg]          = avg_win_value(x,y,win_size);
     elseif iPlot == 4
         x                       = acc_df.solo';
         y                       = abs(auc.acc1-auc.acc2)';
@@ -241,58 +276,11 @@ for iPlot = 1:4
     ax.XLabel.String            = {'Within-dyad difference [P1 - P2]',str};
 end
 
-
 print(f, [dest_dir '/FIG_auc_' alignment_str], '-r500', '-dpng');
 print(f, [dest_dir '/FIG_auc_' alignment_str], '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Dyadic modulation - histogram %%% SUPPLEMENTARY
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
-ofs                         = .025;
-nbin                        = 12;
-
-for iPlot = 1:2
-    ax                      = subplot(2,2,iPlot); hold on
-    
-    if iPlot == 1
-        auc1                    = auc.ecc1 - .5;
-        auc2                    = auc.ecc2 - .5;
-        h                       = histogram([auc1 auc2],nbin,'FaceColor',hcol, 'EdgeColor','none');
-        h.BinLimits             = [-.5 .5];
-        ax.XLabel.String        = 'Eccentricity change';
-        ax.YLabel.String        = '# Players';
-        ax.XLim                 = h.BinLimits;
-        ax.YLim                 = [0 max(h.BinCounts)];
-
-        ln                     	= line([median([auc1 auc2]) median([auc1 auc2])],[0 max(h.BinCounts)]);
-        ln.Color              	= rcol;
-        ln.LineWidth           	= lw;
-        ln.LineStyle           	= ':';
-    
-    elseif iPlot == 2
-        auc1                    = auc.acc1 - .5;
-        auc2                    = auc.acc2 - .5;
-        h                       = histogram([auc1 auc2],nbin,'FaceColor',hcol, 'EdgeColor','none');
-        h.BinLimits             = [-.2 .2];
-        ax.XLabel.String        = 'Accuracy change';
-        ax.YLabel.String        = '# Players';
-        ax.XLim                 = h.BinLimits;
-        ax.YLim                 = [0 max(h.BinCounts)];
-        %%%  Significance test             signrank([[auc1 auc2]])   
-        ln                     	= line([median([auc1 auc2]) median([auc1 auc2])],[0 max(h.BinCounts)]);
-        ln.Color              	= rcol;
-        ln.LineWidth           	= lw;
-        ln.LineStyle           	= ':';
-    end
-end
-
-print(f, [dest_dir '/FIG_auc_hist_' alignment_str], '-r500', '-dpng');
-print(f, [dest_dir '/FIG_auc_hist_' alignment_str], '-r500', '-dsvg', '-painters');
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Solo vs dyadic correlation between players %% SUPPLEMENTARY
+%% SFIGURE: Solo vs dyadic correlation between players %% SUPPLEMENTARY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 
@@ -344,7 +332,7 @@ for i = 1:4
     lsl.Color          	= rcol;
     lsl.LineWidth     	= lw;
     
-    [r,pv]              = corrcoef(dat1,dat2)
+    [r,pv]              = corrcoef(dat1,dat2);
     title({str, [' r = ' num2str(round(r(2),2)) ' pv = ' num2str(round(pv(2),2))]})
 end
 
@@ -352,7 +340,7 @@ print(f, [dest_dir '/FIG_corr_solo_dyad_' alignment_str], '-r500', '-dsvg', '-pa
 print(f, [dest_dir '/FIG_corr_solo_dyad_' alignment_str], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Solo difference vs average social modulation %% SUPPLEMENTARY
+%% SFIGURE: Solo difference vs average social modulation %% SUPPLEMENTARY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 
@@ -409,7 +397,7 @@ print(f, [dest_dir '/FIG_corr_solo_auc_' alignment_str], '-r500', '-dsvg', '-pai
 print(f, [dest_dir '/FIG_corr_solo_auc_' alignment_str], '-r500', '-dpng', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%% PLOT: Solo difference vs dyadic performance %% SUPPLEMENTARY
+%% SFIGURE: Solo difference vs dyadic performance %% SUPPLEMENTARY
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 f                      	= figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 
@@ -496,28 +484,13 @@ print(f, [dest_dir '/FIG_corr_solo_score_' alignment_str], '-r500', '-dpng', '-p
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % Different from 0.5
 median([auc.ecc1,auc.ecc2])
 [p,h,stats] = signrank([auc.ecc1,auc.ecc2],.5);
 
 median([auc.acc1,auc.acc2])
 [p,h,stats] = signrank([auc.acc1,auc.acc2],.5);
-
-%% Regression to mean problem
-nRep                        = 100000;
-% auc_str                     = 'ecc';
-% solo_str                    = 'ecc';
-% auc_str                     = 'acc';
-% solo_str                    = 'acc';
-n                           = 1;
-[shuffl_coeff, true_coeff]  = regr_ci(nRep,auc,raw,auc_str,solo_str);
-p_actual                    = mean(shuffl_coeff(:,1) <= true_coeff(1))
-
-%%% See coefficients here
-% figure
-% histogram(shuffl_coeff(:,n)) 
-% line([true_coeff(n) true_coeff(n)],[0 1000],'Color',[0 0 0], 'LineWidth', 2, 'LineStyle','--')
-% ylim([0 500])
 
 % Dyadic improvement
 ecc_class       = sum([auc.ecc1' auc.ecc2']>.5,2);
@@ -558,19 +531,6 @@ end
 
 summary_table = array2table(dat, 'VariableNames',var_names,'RowNames',row_names);
 writetable(summary_table, 'summary_table.xlsx')
-
-% T = summary_table;
-% % Get the table in string form.
-% TString = evalc('disp(T)');
-% % Use TeX Markup for bold formatting and underscores.
-% TString = strrep(TString,'<strong>','\bf');
-% TString = strrep(TString,'</strong>','\rm');
-% TString = strrep(TString,'_','\_');
-% % Get a fixed-width font.
-% FixedWidth = get(0,'FixedWidthFontName');
-% % Output the table using the annotation command.
-% annotation(gcf,'Textbox','String',TString,'Interpreter','Tex',...
-%     'FontName',FixedWidth,'Units','Normalized','Position',[0 0 1 1]);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
@@ -665,55 +625,6 @@ for i = 1:length(df)
 end
 end
 
-function [x_fit, y_fit, r, pv] = regr_line(ax,x_in,y_in,col,height)
-
-if nargin < 5
-    height = 0;
-end
-
-axes(ax); hold on
-
-[r,pv]= corrcoef(x_in,y_in);
-r = r(2);
-pv = pv(2);
-
-linearCoefficients = polyfit(x_in, y_in, 1);
-x_fit = linspace(-.5, .5, 50);
-y_fit = polyval(linearCoefficients, x_fit);
-pl = plot(x_fit, y_fit, '-', 'LineWidth', 1,'Color',col);
-
-if pv < .05
-    pl.Color                    = col;
-    tx                          = text(0,height,{['r=' num2str(round(r,2))];['p=' num2str(round(pv,2))]});
-    tx.Color                    = [.1 .1 .1];
-    tx.FontSize                 = 8;
-end
-
-end
-
-function [shuffl_coeff, true_coeff] = regr_ci(nRep,auc,raw,auc_str,solo_str)
-
-auc1                    = auc.([auc_str num2str(1)])';
-auc2                    = auc.([auc_str num2str(2)])';
-solo1                   = raw.([solo_str num2str(1)])';
-solo2                   = raw.([solo_str num2str(2)])';
-
-true_coeff              = polyfit(solo1-solo2, auc1-auc2, 1);
-
-for iRep = 1:nRep
-    idx                 = randperm(size(auc1,1));
-    shuffled_auc2       = auc2(idx);
-    shuffled_solo2      = solo2(idx);
-    auc_df              = auc1 - shuffled_auc2;
-    solo_df            	= solo1 - shuffled_solo2;
-    
-    excl                = solo_df == 0;
-    auc_df              = auc_df(~excl);
-    solo_df             = solo_df(~excl);
-    shuffl_coeff(iRep,:)= polyfit(solo_df, auc_df, 1);
-end
-end
-
 function [x_avg, y_avg] = avg_win_value(x,y,win_size)
 
 [x_val,idx]     = sort(x);
@@ -726,37 +637,47 @@ p_avg       	= plot(x_avg,y_avg);
 p_avg.Color     = [.1 .1 .1];
 p_avg.LineWidth = 1;
 p_avg.LineStyle = '-';
-
-% for i = 1:length(y)-win_size
-%     x_avg(i) = mean(x_val(i:i+win_size));
-%     y_avg(i) = mean(y_val(i:i+win_size));
-% end
 end
 
-% function [avgY, binEdges] = avg_bin_value(x,y)
-% % Define bin edges
-% binEdges = linspace(min(x), max(x), 10);  % Adjust numberOfBins as needed
-% 
-% % Use histcounts to bin the data
-% [counts, binEdges] = histcounts(x, binEdges);
-% 
-% % Initialize arrays to store the sum and count for each bin
-% sumY = zeros(1, length(binEdges) - 1);
-% countY = zeros(1, length(binEdges) - 1);
-% 
-% % Loop through each bin and accumulate the sum and count of Y-values
-% for i = 1:length(binEdges) - 1
-%     indices = x >= binEdges(i) & x < binEdges(i + 1);
-%     sumY(i) = sum(y(indices));
-%     countY(i) = sum(indices);
-% end
-% 
-% % Calculate the average Y-value for each bin
-% avgY = sumY ./ countY;
-% 
-% % % Plot the results
-% % bar(binEdges(1:end-1), averageY)
-% % xlabel('X-axis')
-% % ylabel('Average Y-value')
-% % title('Binned Data with Average Y-values')
-% end
+function [ax] = modulation_violin(ax,raw1,raw2,auc1,auc2)
+
+p1_better = raw1 > raw2;
+better_solo_player = [auc1(p1_better) auc2(~p1_better)];
+worse_solo_player = [auc2(p1_better) auc1(~p1_better)];
+
+line([.5 2.5],[.5 .5], 'LineStyle',':','LineWidth', 1.5, 'Color', [0 0 0])
+vl = violinplot([worse_solo_player' better_solo_player']);
+vl(1).ViolinColor{1} = [.1 .1 .1];
+vl(2).ViolinColor{1} = [.5 .5 .5];
+
+for iDyad = 1:length(auc1)
+    ln = line([vl(1).ScatterPlot.XData(iDyad) vl(2).ScatterPlot.XData(iDyad)],[vl(1).ScatterPlot.YData(iDyad) vl(2).ScatterPlot.YData(iDyad)]);
+    ln.Color = [.8 .8 .8];
+    ln.LineWidth = 1;
+    uistack(ln, 'bottom');
+end
+
+ax.XLim = [.6 2.4];
+ax.YLim = [0 1];
+ax.XTick = [1 2];
+ax.XTickLabel = {'Worse solo player', 'Better solo player'};
+ax.YLabel.String = 'Social modulation [AUC]';
+ax.FontSize = 8;
+
+box off
+
+nBinEdge                = [0:.05:1];
+h_ofs                   = .35;
+ax0v                    = axes('Position', [ax.Position(1)+h_ofs ax.Position(2) ax.Position(3)/5 ax.Position(4)]); hold on
+[v, edg]                = histcounts([auc1,auc2],nBinEdge);
+cntr                    = edg(1:end-1) + diff(edg) ./ 2;
+st                      = stairs(v,cntr);
+st.LineWidth            = 2;
+st.Color                = [0 0 0];
+mln                      = line([0 max(v)],[median([auc1,auc2]) median([auc1,auc2])]);
+mln.LineWidth            = 2;
+mln.Color                = [.6 0 0];
+ax0v.XAxis.Visible      = 'off';
+ax0v.YAxis.Visible      = 'off';
+ax0v.YLim               = [0 1];
+end
