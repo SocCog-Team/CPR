@@ -17,6 +17,7 @@ function out = CPR_main_online_v3(data,varargin)
 % Version history
 %   1.0     (fxs 2024-04-18) Initial version.
 %   1.1     (fxs 2024-10-30) Random walk implemented. Variables renamed.
+%   1.2     (fxs 2024-10-30) Created random walk agent.
 
 tic
 setup = 'PSY4';
@@ -47,6 +48,7 @@ param.cycle_duration_ms      	= cell2mat(d.value(d.event == 'TMP_cycle_duration_
 param.coh_duration_ms       	= cell2mat(d.value(d.event == 'TMP_coh_block_duration_ms'));  	% Duration of coherence block
 param.feedback_probability     	= cell2mat(d.value(d.event == 'TMP_feedback_probability')); 	% Probability of reward target appearance
 param.min_feedback_interval_ms 	= cell2mat(d.value(d.event == 'TMP_feedback_ITI_ms'));      	% Interval between consecutive feedback presentations
+param.agent_flag                = cell2mat(d.value(d.event == 'TMP_show_agent'));
 param.Fs                        = 1000 / 120;                                                   % Screen sampling rate
 param.pth                       = pth;
 tmp_snr                         = d.value(d.event == 'TMP_snr_list');                           % Stimulus coherence list
@@ -54,7 +56,21 @@ param.snr_list                  = cellfun(@double, tmp_snr{1});
 
 % Create and write new stimulus cycle
 STIM                            = CPR_create_random_walk_v3(param);        	% Draw RDP stimulus parameters
-[~]                             = CPR_write_txt(STIM,pth);                  % Write parameters to .txt files
+
+% Prepare agent response
+if param.agent_flag == true
+    AGNT.dir_sigma          	= 15;                                       % Direction sigma [deg]
+    AGNT.str_sigma            	= .1;                                       % Eccentricity sigma [%]
+    AGNT.str                    = .5;                                       % Eccentricity [norm]
+    AGNT.lag                  	= 50;                                       % Delay to reference point [samples]
+    AGNT.win                 	= 50;                                       % Smoothing window size [samples]
+    AGNT.smooth_kernel        	= 'gaussian';                               % Smoothing kernel [samples]
+    AGNT                        = CPR_create_agent_random_walk(STIM,AGNT);
+    [~]                       	= CPR_write_txt(STIM,AGNT, pth);            % Write parameters to .txt files
+else
+    [~]                       	= CPR_write_txt(STIM,[],pth);               % Write parameters to .txt files
+end
+    
 out                             = true;
 toc
 end

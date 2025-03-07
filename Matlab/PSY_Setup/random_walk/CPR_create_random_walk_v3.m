@@ -22,33 +22,40 @@ out.feedback_ts                     = 1;                                        
 out.trial                           = param.trial;                                      % Trial number
 cnt_fb                              = 0;
 
+%%% This requires SNR inputs to match die duration of the cycle %%%
+
 % Shuffle coherence values (except for first trial)
 if param.trial == 0
     out.RDP_coherence              	= fliplr(param.snr_list);                           % Ordered coherence values
 else
-    out.RDP_coherence            	= param.snr_list(randperm(length(param.snr_list))); % Shuffled coherence values
+    tmp = [1 1];
+    while sum(diff(tmp) == 0) ~= 0
+        tmp                         = param.snr_list(randperm(length(param.snr_list))); % Shuffled coherence values
+    end
+    out.RDP_coherence               = tmp;
 end
 
 % Set parameters for random walk
 dt                                  = 1/120;                                % Time step (sec @ 120Hz)
-tau_sec                             = 1;                                    % Time constant for the angular velocity decay
-sigma_rpm                           = 1.5;                                  % Standard deviation for the random noise in omega
+tau_sec                             = 2;                                    % Time constant for the angular velocity decay
+sigma_rpm                           = .1;                                   % Standard deviation for the random noise in omega
 omega                               = zeros(1, nSamples);                  	% Array to store angular velocities
 angle                               = zeros(1, nSamples);                 	% Array to store angles
 
 % Initial seed
-omega(1)                            = 2 * pi * (rand - 0.5);                % Initial random angular velocity
+omega(1)                            = 0;                % Initial random angular velocity
+% omega(1)                            = 2 * pi * (rand - 0.5);                % Initial random angular velocity
 angle(1)                            = 2 * pi * rand;                        % Initial random angle between 0 and 2*pi
 
 %%%% NOTES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% tau: A larger value keeps the angular velocity persistent longer, 
-%      while a smaller value makes it decay faster.
-% sigma: A larger value increases the randomness in the angular velocity.
-% dt: Controls the resolution of the time steps.
+% tau:      A larger value keeps the angular velocity persistent longer, 
+%           while a smaller value makes it decay faster.
+% sigma:    A larger value increases the randomness in the angular velocity.
+% dt:       Controls the resolution of the time steps.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Random walk in polar space
-for i = 2:nSamples*2 % Double number for safety reasons
+for i = 2:nSamples%*2 % Double number for safety reasons
     % Update omega [Revolutions per minute] - Gaussian random noise with standard deviation scaled by sqrt(dt)
     omega(i) = omega(i-1) - (omega(i-1) / tau_sec) * dt + sigma_rpm * randn * sqrt(2*dt/tau_sec);
     
@@ -68,6 +75,20 @@ end
 % Convert to degree
 out.RDP_direction_rad               	= angle;
 out.RDP_direction_deg               	= rad2deg(angle);
+
+% close all
+% figure;hold on
+% plot(omega(1:7200));
+% line([0 7200],[0 0])
+% xlabel('time [frames]')
+% ylabel('ang. velocity [rpm]')
+% title('omega (ang. vel.)')
+% 
+% figure
+% plot(angle(1:7200));
+% xlabel('time [frames]')
+% ylabel('angle [rad]')
+% title('RDP direction')
 end
 
 % figure; hold on

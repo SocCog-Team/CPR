@@ -98,6 +98,8 @@ cmap                    = [42 182 115;...
 p1_better               = raw.ecc1 > raw.ecc2; % Solo
 ecc_better_minus_worse  = [auc.ecc1(p1_better) - auc.ecc2(p1_better) auc.ecc2(~p1_better) - auc.ecc1(~p1_better)];
 ecc_solo_dff            = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+ecc_dyad_dff            = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2(~p1_better) - raw.decc1(~p1_better)];
+conv                    = ecc_solo_dff > ecc_dyad_dff;
 subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
 c                       = cval(subsets_remap);
 
@@ -112,6 +114,7 @@ end
 fit_ecc                 = polyfit(abs(ecc_solo_dff),ecc_better_minus_worse,1);
 pl                      = plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2]);
 [r_ecc,pv_ecc]          = corrcoef(abs(ecc_solo_dff),ecc_better_minus_worse);
+[r_ecc_conv,pv_ecc_conv] = corrcoef(abs(ecc_solo_dff(conv)),ecc_better_minus_worse(conv));
 ax.XLim                 = [0 .35];
 ax.YLim                 = [-.55 .55];
 ax.YTick                = [-.5 -.25 0  .25 .5];
@@ -119,7 +122,8 @@ ax.XLabel.String        = {'Solo interplayer distance'; 'Tilt.better - Tilt.wors
 ax.YLabel.String        = {'Social modulation difference';'AUC.better - AUC.worse'};
 ax.FontSize             = lb_fs;
 
-text(.2,0,['r=' num2str(round(r_ecc(2),3)) ' p=' num2str(pv_ecc(2))])
+text(.2,0,['All: r=' num2str(round(r_ecc(2),3)) ' p=' num2str(pv_ecc(2))])
+text(.2,.15,['Conv: r=' num2str(round(r_ecc_conv(2),3)) ' p=' num2str(pv_ecc_conv(2))])
 axis square
 
 ax                      = subplot(2,2,2);hold on
@@ -127,6 +131,14 @@ x                       = 0:.05:.15;
 p1_better               = raw.acc1 > raw.acc2; % Solo
 acc_better_minus_worse  = [auc.acc1(p1_better) - auc.acc2(p1_better) auc.acc2(~p1_better) - auc.acc1(~p1_better)];
 acc_solo_dff            = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+acc_dyad_dff            = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2(~p1_better) - raw.dacc1(~p1_better)];
+conv                    = acc_solo_dff > acc_dyad_dff;
+
+subsets                 = nan(n,1);
+subsets(auc.acc1 > .5 & auc.acc2 > .5) = 1;
+subsets(auc.acc1 < .5 & auc.acc2 < .5) = 2;
+subsets(auc.acc1 < .5 & auc.acc2 > .5) = 3;
+subsets(auc.acc1 > .5 & auc.acc2 < .5) = 3;
 subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
 c                       = cval(subsets_remap);
 
@@ -139,6 +151,7 @@ end
 fit_ecc                 = polyfit(abs(acc_solo_dff),acc_better_minus_worse,1);
 pl                      = plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2]);
 [r_acc,pv_acc]          = corrcoef(abs(acc_solo_dff),acc_better_minus_worse);
+[r_acc_conv,pv_acc_conv] = corrcoef(abs(acc_solo_dff(conv)),acc_better_minus_worse(conv));
 ax.XLim                 = [0 .15];
 ax.YLim                 = [-.15 .15];
 ax.YTick                = [-.15 -.1 -.05 0 .05 .1 .15];
@@ -146,7 +159,8 @@ ax.XLabel.String        = {'Solo interplayer distance'; 'Accuracy.better - Accur
 ax.YLabel.String        = {'Social modulation difference';'AUC.better - AUC.worse'};
 ax.FontSize             = lb_fs;
 
-text(.1,0,['r=' num2str(round(r_acc(2),3)) ' p=' num2str(pv_acc(2))])
+text(.05,0,['All: r=' num2str(round(r_acc(2),3)) ' p=' num2str(pv_acc(2))])
+text(.05,.05,['Conv: r=' num2str(round(r_acc_conv(2),3)) ' p=' num2str(pv_acc_conv(2))])
 axis square
 
 print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dsvg', '-painters');
@@ -666,18 +680,20 @@ ax.FontSize = 8;
 
 box off
 
-nBinEdge                = [0:.05:1];
+bins                    = [0:.05:1];
 h_ofs                   = .35;
 ax0v                    = axes('Position', [ax.Position(1)+h_ofs ax.Position(2) ax.Position(3)/5 ax.Position(4)]); hold on
-[v, edg]                = histcounts([auc1,auc2],nBinEdge);
-cntr                    = edg(1:end-1) + diff(edg) ./ 2;
-st                      = stairs(v,cntr);
+% [v, edg]                = histcounts([auc1,auc2],'BinWidth',.05);
+[v,edg]                 = histcounts([auc1,auc2],bins);
+cntr                    = edg(2:end) - diff(edg)./2;
+% st                      = stairs(v,cntr);
+st                      = stairs(v,edg(2:end)); hold on
 st.LineWidth            = 2;
 st.Color                = [0 0 0];
-mln                      = line([0 max(v)],[median([auc1,auc2]) median([auc1,auc2])]);
-mln.LineWidth            = 2;
+mln                     = line([0 max(v)],[median([auc1,auc2]) median([auc1,auc2])]);
+mln.LineWidth           = 2;
 mln.Color                = [.6 0 0];
-ax0v.XAxis.Visible      = 'off';
-ax0v.YAxis.Visible      = 'off';
+% ax0v.XAxis.Visible      = 'off';
+% ax0v.YAxis.Visible      = 'off';
 ax0v.YLim               = [0 1];
 end
