@@ -7,11 +7,9 @@ close all
 
 %% Import
 pth                         = '/Users/fschneider/Desktop/EPHYS/pilot_data/';
-% fname                       = 'fxs-RF_20230707-cla-016-01+01.mwk2';
 fname                       = '20250312_nil_CPRsolo_block1_physio4.mwk2';
 fname_splt                  = split(fname,'_');
 date                        = fname_splt{2}(4:end);
-% rec_pos                     = fname_splt{2}(18:22);
 dest_dir                    = '/Users/fschneider/Desktop/EPHYS/RF/';
 
 var_import = {
@@ -162,7 +160,6 @@ end
 
 %% PLOT: Linear arrangement -> RF Mapping/Tuning
 
-close all
 f                           = figure('units','normalized','position',[0 0 .3 3]);
 height                      = linspace(.95,.01, 32);
 mat_sum                     = nan(size(stim_id));
