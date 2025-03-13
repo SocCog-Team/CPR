@@ -7,7 +7,7 @@ close all
 
 %% Import
 pth                         = '/Users/fschneider/Desktop/EPHYS/pilot_data/';
-fname                       = '20250312_nil_CPRsolo_block1_physio4.mwk2';
+fname                       = '20250313_nil_CPRsolo_block1_phy4.mwk2';
 fname_splt                  = split(fname,'_');
 date                        = fname_splt{2}(4:end);
 dest_dir                    = '/Users/fschneider/Desktop/EPHYS/RF/';
