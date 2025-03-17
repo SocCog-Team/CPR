@@ -4,7 +4,8 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-source_pth = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([source_pth '/solo_correlation.mat'])
 load([source_pth '/solo_performance.mat'])
 load([source_pth '/comp_performance.mat'])
@@ -25,7 +26,7 @@ load([source_pth '/hh_dyad_performance.mat'])
 %% PLOT: Scatter dyadic modulation %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_pairwise_modulation/SFIG_pairwise_modulation_grouping/raw/';
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_pairwise_modulation/SFIG_pairwise_modulation_grouping/raw/';
 f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 lw                          = 1;
 lb_fs                       = 8;
@@ -90,7 +91,7 @@ end
 %% PLOT: Scatter dyadic modulation corrected for Player1 %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_pairwise_modulation/SFIG_pairwise_modulation_grouping/raw/';
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_pairwise_modulation/SFIG_pairwise_modulation_grouping/raw/';
 f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 lw                          = 1;
 lb_fs                       = 8;
@@ -184,7 +185,7 @@ end
 %% PLOT: Dyadic modulation - histogram %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_pairwise_modulation/SFIG_pairwise_modulation_grouping/raw/';
+dest_dir                    = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_pairwise_modulation/SFIG_pairwise_modulation_grouping/raw/';
 f                           = figure('units','centimeters','position',[0 0 7.5 7.5]); hold on
 lb_fs                       = 8;
 ofs                         = .025;

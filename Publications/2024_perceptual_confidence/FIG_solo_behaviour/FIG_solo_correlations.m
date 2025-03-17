@@ -3,9 +3,10 @@ clear all
 
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 
-source_dir = '/Users/fschneider/ownCloud/var_plot/';
-load([ source_dir '/solo_correlation.mat'])
-load([ source_dir '/solo_performance.mat'])
+% Adjust path
+source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
+load([ source_pth '/solo_correlation.mat'])
+load([ source_pth '/solo_performance.mat'])
 
 lw                  = 1.5;
 lb_fs               = 8;

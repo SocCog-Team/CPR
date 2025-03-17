@@ -8,7 +8,7 @@ addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
-% 
+ 
 % % Import subject summary spreadsheet
 % pth                         = '/Volumes/T7_Shield/CPR_0psychophysics/';      % Local hard drive
 % x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
@@ -19,7 +19,7 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 % 
 % % For all subjects
 % parfor iSubj = 1:length(sbj_lst)
-%     sebastian_hats_gesagt(iSubj,sbj_lst,pth)
+%     export_vector(iSubj,sbj_lst,pth)
 % end
         
 %% Plot timeline of joystick response; Extract physical coherence level
@@ -461,7 +461,7 @@ ax.FontSize = 14;
 ax.XTickLabelRotation = 0;
 end
 
-function sebastian_hats_gesagt(iSubj, sbj_lst, pth)
+function export_vector(iSubj, sbj_lst, pth)
     % Reset counter and clear variables
     cc                          = 0;
     clear rdp_coh rdp_dir trg1_index trg1_onset_ms frme_vec tmp_js_ts tmp_js_dir tmp_js_ecc

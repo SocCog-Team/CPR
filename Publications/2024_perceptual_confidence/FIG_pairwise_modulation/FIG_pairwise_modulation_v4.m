@@ -4,7 +4,8 @@ clear all
 addpath /Users/fschneider/Documents/MATLAB/piermorel-gramm-b0fc592
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 
-source_pth = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([source_pth '/solo_correlation.mat'])
 load([source_pth '/solo_performance.mat'])
 load([source_pth '/hh_dyad_pairwise_correlation.mat'])
