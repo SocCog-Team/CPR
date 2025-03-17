@@ -6,7 +6,8 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-source_pth = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([source_pth '/solo_performance.mat'])
 load([source_pth '/hh_dyad_performance.mat'])
 load([source_pth '/hc_dyad_performance.mat'])
@@ -105,7 +106,7 @@ ax0v                       	= axes('Position', [clm row-hofs dim(1) dim(2)/5]); 
 ax0h                        = axes('Position', [clm-hofs row dim(1)/5 dim(2)]); hold on
 ax0                       	= axes('Position', [clm row dim]); hold on
 
-load('/Volumes/T7_Shield/CPR_psychophysics/RoH/summary/20220622_agnt_CPRagent_block1_tbl.mat')
+load([source_pth '20220622_agnt_CPRagent_block1_tbl.mat'])
 t_agnt_plot                 = t;
 
 % Extracte experimental data
@@ -299,8 +300,8 @@ lofs                        = .225;
 
 % text(0.2,.75, 'Coherence', 'Parent', ax0, 'FontSize', lg_fs, 'Color', [.99 .99 .99])
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/SFIG_computer_dyad/raw/SFIGraw_part1', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/SFIG_computer_dyad/raw/SFIGraw_part1', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_computer_dyad/SFIG_computer_agent/raw/SFIGraw_part1', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_computer_dyad/SFIG_computer_agent/raw/SFIGraw_part1', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
