@@ -1,7 +1,8 @@
 close all 
 clear all
 
-source_dir = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([ source_dir '/solo_performance.mat'])
 load([ source_dir '/hh_dyad_correlation.mat'])
 load([ source_dir '/hh_dyad_performance.mat'])

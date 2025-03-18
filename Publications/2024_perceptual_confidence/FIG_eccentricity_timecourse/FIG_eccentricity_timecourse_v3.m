@@ -8,7 +8,7 @@ addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/mat_to_summary/
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
-% 
+ 
 % % Import subject summary spreadsheet
 % pth                         = '/Volumes/T7_Shield/CPR_0psychophysics/';      % Local hard drive
 % x                           = readtable([pth 'Subjects_summary.xlsx']);     % Spreadsheet
@@ -19,7 +19,7 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 % 
 % % For all subjects
 % parfor iSubj = 1:length(sbj_lst)
-%     sebastian_hats_gesagt(iSubj,sbj_lst,pth)
+%     export_vector(iSubj,sbj_lst,pth)
 % end
         
 %% Plot timeline of joystick response; Extract physical coherence level
@@ -76,7 +76,7 @@ for iSubj = 1:length(sbj_lst)
             
             % Physical coherence level
 %             mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.actual_coherence(win-1:end);
-            mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.resultant_length(win-1:end);
+            mat_pcoh(c,end-slen(c)+1:end)     	= frme_vec{iState}.resultant_length(win-1:end).*100;
             mat_ecc_all(c,end-slen(c)+1:end) 	= js_ecc{iState}(win:end);
         end
     end
@@ -99,6 +99,8 @@ for iSubj = 1:length(sbj_lst)
         avg_acc(iSubj,iCoh,:)           = nanmean(mat_acc(cidx,:));
         avg_ecc(iSubj,iCoh,:)           = nanmean(mat_ecc(cidx,:));
         
+        p_fit(iSubj,iCoh,:)             = polyfit(nanmean(mat_ecc(cidx,:),2),nanmean(mat_acc(cidx,:),2),1);
+        
         %%% Median split %%%
         clear pcoh_data avg_ecc_time_win idx_larger_than_median
         ecc_data                            = nanmean(mat_ecc_all(cidx,end-nSample:end),2);
@@ -109,6 +111,24 @@ for iSubj = 1:length(sbj_lst)
         avg_pcoh_smaller_median{iSubj,iCoh} = pcoh_data(~idx_larger_than_median);
     end
 end
+
+%% Plot relationship between accuracy and confidence
+x       = [0:.1:1];
+avg_sub = squeeze(mean(p_fit,1));
+f       = figure;hold on
+for iCoh = 1:length(snr_lst)
+yfit    = polyval(avg_sub(iCoh,:),x);
+pl      = plot(x,yfit,'color',col(iCoh,:), 'linewidth',2);
+end
+
+ylim([.5 1])
+xlabel('Confidence [a.u.]')
+ylabel('Accuracy [a.u.]')
+set(gca, 'fontsize',16)
+
+dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
+print(f, [dest_dir '/lin_regr_acc_conf'], '-r500', '-dsvg');
+print(f, [dest_dir '/lin_regr_acc_conf'], '-r500', '-dpng');
 
 %% Plot timeline %%%
 f = figure('units','centimeters','position',[0 0 6 5]);
@@ -172,7 +192,7 @@ for iSubj = 1:length(sbj_lst)
             c_sum = c_sum+1;
             summary(c_sum,1) = iSubj;
             summary(c_sum,2) = round(snr_lst(iCoh),2);
-            summary(c_sum,3) = pcoh_group_average(iSubj,iCoh,1) - pcoh_group_average(iSubj,iCoh,2);
+            summary(c_sum,3) = round(pcoh_group_average(iSubj,iCoh,1) - pcoh_group_average(iSubj,iCoh,2),3);
         end
     end
 end
@@ -197,7 +217,7 @@ sum(sum(p < .05/(size(p,1)*size(p,2)))) % Number of significant results after Bo
 
 %%% PLOT %%%
 f = figure('units','centimeters','position',[0 0 25 5]);
-edges = -.02 :.005: .02;
+edges = -2 :.5: 2;
 for iCoh = 1:length(snr_lst)
     [ht(iCoh), pt(iCoh)] = ttest(group_dff(:,iCoh));
     ax = subplot(1,7,iCoh); hold on
@@ -209,7 +229,7 @@ for iCoh = 1:length(snr_lst)
     ax.FontSize = 8;
     ax.XTickLabelRotation = 0;
     ax.YLim = [0 max(hh.Values)+1];
-    ax.XTick = [-.02 0 .02];
+    ax.XTick = [-2 0 2];
     
     if ht(iCoh)
         ax.Title.String = {[num2str(sum(h(:,iCoh))) '/' num2str(length(h(:,iCoh)))]; ['p=' num2str(round(pt(iCoh),4))]};
@@ -218,14 +238,14 @@ for iCoh = 1:length(snr_lst)
     end
     
     if iCoh == 4
-        ax.XLabel.String = 'Median coherence difference';
+        ax.XLabel.String = 'Median coherence difference [%]';
     end
 end
 
-print(f, '/Users/fschneider/Desktop/physical_coherence_dff', '-r500', '-dpng');
+print(f, '/Users/fschneider/Desktop/revision/physical_coherence_dff', '-r500', '-dpng');
 
 % %%% Check significant example
-% mean(group_dff(:,logical(pt)))
+% mean(group_dff(:,logical(ht)))
 % figure;histogram(group_dff(:,logical(pt)),20)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -441,7 +461,7 @@ ax.FontSize = 14;
 ax.XTickLabelRotation = 0;
 end
 
-function sebastian_hats_gesagt(iSubj, sbj_lst, pth)
+function export_vector(iSubj, sbj_lst, pth)
     % Reset counter and clear variables
     cc                          = 0;
     clear rdp_coh rdp_dir trg1_index trg1_onset_ms frme_vec tmp_js_ts tmp_js_dir tmp_js_ecc

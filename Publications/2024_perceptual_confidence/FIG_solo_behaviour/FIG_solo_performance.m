@@ -33,7 +33,8 @@ for iSubj = 1:length(sbj_lst)
     cnt                   	= cnt + 1;
     solo_hir(cnt,:)        	= solo_perf{iSubj}.hir;                       	% Hit rate
     solo_trg_score(cnt,:)  	= solo_perf{iSubj}.trg_mscore;                  % Avg target scores
-    solo_macc(cnt,:)       	= (1-solo_perf{iSubj}.macc_trg).*180;           % Avg accuracy (target-aligned)
+%     solo_macc(cnt,:)       	= (1-solo_perf{iSubj}.macc_trg).*180;           % Avg accuracy (target-aligned)
+    solo_macc(cnt,:)       	= solo_perf{iSubj}.macc_trg;                    % Avg accuracy (target-aligned)
     solo_mecc(cnt,:)       	= solo_perf{iSubj}.mecc_state;                  % Avg eccentricity (state-aligned)
 end
 
@@ -96,16 +97,34 @@ ax1.XTickLabelRotation      = 0;
 %%% SUBPLOT: SOLO - Avg accuracy raw %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 ax3                         = subplot(1,4,2); hold on
-[ax3,pl]                    = plotData(ax3,solo_macc,false,lw,alp,col_dat,col_ci);
+[ax3,pl]                    = plotData(ax3,solo_macc,true,lw,alp,col_dat,col_ci);
 ax3.XLim                    = [1 size(solo_macc,2)];
 % ax3.YLim                    = [30 100];
 ax3.XLabel.String           = 'Coherence [%]';
-ax3.YLabel.String           = 'Angular error [deg]';
+ax3.YLabel.String           = 'Accuracy [%]';
 ax3.YLabel.Position(1)      = -.4;
 ax3.XTick                   = 1:length(snr);
 ax3.XTickLabel              = round(snr,2)*100;
 ax3.FontSize                = lb_fs;
 ax3.XTickLabelRotation      = 0;
+
+yyaxis right
+% Boostrap confidence intervals
+nRep                        = 1000;
+[CI,~]                      = bootci(nRep,{@mean,(1-solo_macc).*180},'Alpha',0.01);
+
+% Prepare filled area
+vec                         = 1:length(CI);
+x_spacing                   = [vec fliplr(vec)];
+ci                          = [CI(1,:) fliplr(CI(2,:))];
+ax3.YAxis(2).Color          = ax3.YAxis(2).Color/2;
+
+% Overlay confidence intervals
+fl                          = fill(x_spacing,ci,col_ci,'FaceColor',ax3.YAxis(2).Color,'EdgeColor','none', 'FaceAlpha', alp);
+
+% Plot mean curve
+pl                          = plot(mean((1-solo_macc).*180), 'LineWidth', lw/1.5, 'Color', ax3.YAxis(2).Color);
+% ax3.YLabel.String           = 'Angular error [deg]';
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% SUBPLOT: SOLO - Avg eccentricity raw %%%
@@ -115,7 +134,7 @@ ax4                         = subplot(1,4,3); hold on
 ax4.XLim                    = [1 size(solo_mecc,2)];
 ax4.YLim                    = [20 100];
 ax4.XLabel.String           = 'Coherence [%]';
-ax4.YLabel.String           = 'Displacement [%]';
+ax4.YLabel.String           = 'Tilt [%]';
 ax4.YLabel.Position(1)      = -.4;
 ax4.XTick                   = 1:length(snr);
 ax4.XTickLabel              = round(snr,2)*100;

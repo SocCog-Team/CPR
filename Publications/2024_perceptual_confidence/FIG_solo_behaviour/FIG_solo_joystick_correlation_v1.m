@@ -137,6 +137,52 @@ dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_
 print(f, [dest_dir '/xcorr_joy_peaks'], '-r500', '-dsvg');
 print(f, [dest_dir '/xcorr_joy_peaks'], '-r500', '-dpng');
 
+%%
+f                	= figure('units','centimeters','position',[0 0 15 15]);
+lb_fs               = 8;
+lw                  = 1.5;
+col                 = cool(length(snr_lst));
+
+for iPlot = 1:2
+    
+    ax          	= subplot(2,2,iPlot);
+    
+    if iPlot == 1
+            dat  	= avg_xc_acc_vec;
+            tstr    = 'Accuracy';
+    else
+            dat  	= avg_xc_ecc_vec;
+            tstr    = 'Tilt';
+    end
+    
+    ln              = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 1);
+    
+    for iCoh = 1:length(snr_lst)
+        [ax, pl]    = xc_plot_averages(ax,squeeze(dat(:,iCoh,:)),col(iCoh,:));
+    end
+    
+    ax.Title.String = tstr;
+    ax.XLabel.String = 'Lag [ms]';
+    
+    if iPlot == 1
+        ax.YLabel.String = {'Cross-correlation'; 'coefficient [norm.]'};
+    end
+    
+    ax.FontSize     = lb_fs;
+    ax.XTick        = [150-60 150 150+60 150+120];
+    
+    for iLab = 1:length(ax.XTickLabel)
+        ax.XTickLabel{iLab} = num2str( round((str2num(ax.XTickLabel{iLab})-nLag) * (1000/120)));
+    end
+    
+    axis tight
+    ax.YLim         = [-.05 .05];
+end
+
+dest_dir            = '/Users/fschneider/Desktop/revision/';
+print(f, [dest_dir '/xcorr_vec'], '-r500', '-dsvg');
+print(f, [dest_dir '/xcorr_vec'], '-r500', '-dpng');
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

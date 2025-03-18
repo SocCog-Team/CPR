@@ -2,10 +2,11 @@
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
 addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 
-% close all
+close all
 clear all
 
-source_dir = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([ source_dir '/solo_correlation.mat'])
 load([ source_dir '/solo_performance.mat'])
 load([ source_dir '/hh_dyad_correlation.mat'])
@@ -621,6 +622,11 @@ end
 %% Reported stats in paper
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Lag difference
+% Dyad vs solo scores comparison
+for iSubj = 1:size(solo_perf,2)
+    solo_id{iSubj}  = solo_perf{iSubj}.id;
+end
+
 snr = unique(dyad_cr{1}.coh);
 cnt = 0;
 for iSubj = 1:length(dyad_cr)
@@ -646,11 +652,6 @@ for iSubj = 1:length(solo_cr)
 end
 n                   = sum(hir_drop);
 rate                = n / length(hir_drop);
-
-% Dyad vs solo scores comparison
-for iSubj = 1:size(solo_perf,2)
-    solo_id{iSubj}  = solo_perf{iSubj}.id;
-end
 
 cnt = 0;
 for iSubj = 1:length(dyad_perf)

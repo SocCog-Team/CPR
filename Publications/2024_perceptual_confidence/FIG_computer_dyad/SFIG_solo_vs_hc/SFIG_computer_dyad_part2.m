@@ -5,7 +5,8 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-source_pth = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([source_pth '/solo_performance.mat'])
 load([source_pth '/hh_dyad_performance.mat'])
 load([source_pth '/hc_dyad_performance.mat'])
@@ -156,8 +157,8 @@ legend off
 %%% Export
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/SFIG_computer_dyad/raw/SFIGraw_part2', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG_computer_dyad/SFIG_computer_dyad/raw/SFIGraw_part2', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_computer_dyad/SFIG_computer_agent/raw/SFIGraw_part2', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_computer_dyad/SFIG_computer_agent/raw/SFIGraw_part2', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
