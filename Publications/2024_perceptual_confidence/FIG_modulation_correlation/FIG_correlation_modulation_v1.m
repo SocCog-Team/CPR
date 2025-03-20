@@ -1,7 +1,8 @@
 close all
 clear all
 
-source_pth = '/Users/fschneider/ownCloud/var_plot/';
+% Adjust path
+source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([source_pth '/solo_correlation.mat'])
 load([source_pth '/solo_performance.mat'])
 load([source_pth '/hh_dyad_pairwise_correlation.mat'])
