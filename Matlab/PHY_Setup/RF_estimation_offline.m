@@ -6,8 +6,8 @@ clear all
 close all
 
 %% Import
-pth                         = '/Users/fschneider/Desktop/EPHYS/pilot_data/';
-fname                       = '20250313_nil_CPRsolo_block1_phy4.mwk2';
+pth                         = '/Volumes/DPZ/KognitiveNeurowissenschaften/CNL/DATA/fxs/CPR_electrophysiology/Nilan/mwk2/';
+fname                       = '20250307_nil_CPRsolo_block1_phy4.mwk2';
 fname_splt                  = split(fname,'_');
 date                        = fname_splt{2}(4:end);
 dest_dir                    = '/Users/fschneider/Desktop/EPHYS/RF/';
@@ -20,9 +20,10 @@ var_import = {
     'IO_spikes',...
     'EYE_x_dva',...
     'EYE_y_dva',...
+    'IO_syncWord',...
     '#stimDisplay'};
 
-d                           = CPR_import_mwk2([pth fname], var_import, false);
+d                           = CPR_import_mwk2([pth fname], var_import, true,'/Users/fschneider/Documents/GitHub/CPR/Matlab/PHY_Setup/server_code/felix_nhp_solo.cfg');
 
 %% Process RF Mapping
 
