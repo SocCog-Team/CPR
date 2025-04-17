@@ -30,6 +30,7 @@ load('/Users/fschneider/Desktop/resultant_vec/subj_lst.mat')
 
 win                         = 60;
 nSample                     = 29;
+col = cool(7);
 
 for iSubj = 1:length(sbj_lst)
     clear ncoh slen ndir 
@@ -121,6 +122,7 @@ yfit    = polyval(avg_sub(iCoh,:),x);
 pl      = plot(x,yfit,'color',col(iCoh,:), 'linewidth',2);
 end
 
+%%% State wise average, all states, witgh subj, regr. slope for n=38
 ylim([.5 1])
 xlabel('Confidence [a.u.]')
 ylabel('Accuracy [a.u.]')
@@ -158,7 +160,7 @@ win             = 100;
 
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
-        dat                 = squeeze(avg_ecc(iSubj,iCoh,:));
+        dat                 = squeeze(avg_acc(iSubj,iCoh,:));
         p                   = polyfit(1:win, dat(end-(win-1):end), 1);
         slope(iSubj,iCoh)   = p(1);
     end

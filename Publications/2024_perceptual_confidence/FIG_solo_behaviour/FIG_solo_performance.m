@@ -5,7 +5,7 @@ addpath /Users/fschneider/Documents/MATLAB/cbrewer/
 close all
 clear all
 
-source_dir = '/Users/fschneider/ownCloud/var_plot/';
+source_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 load([ source_dir '/solo_correlation.mat'])
 load([ source_dir '/solo_performance.mat'])
 load([ source_dir '/hh_dyad_correlation.mat'])

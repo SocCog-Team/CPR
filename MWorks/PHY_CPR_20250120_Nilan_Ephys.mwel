@@ -1106,8 +1106,8 @@ protocol 'RF_exploration' {
                     duration_units      = ms
                     )
 
-                TRIAL_end               = TRIAL_start
                 TRIAL_align             = 0
+                TRIAL_end               = TRIAL_start
 
                 report ('==== END OF TRIAL $TRIAL_end ====')
                 goto ('ITI')
@@ -1229,7 +1229,6 @@ protocol 'RF_Mapping' {
             }
 
             state 'New trial' {
-                IO_syncWord             = 1
                 ML_sync                 = 1
 
                 action/omniplex_strobe (
@@ -1392,7 +1391,6 @@ protocol 'RF_Mapping' {
                     )   
 
                 ML_sync                 = 0
-                IO_syncWord             = 0
 
                 start_timer (
                     timer               = ITI_Timer
@@ -1544,7 +1542,6 @@ protocol 'RF_Tuning' {
             }
 
             state 'New trial' {
-                IO_syncWord             = 1
                 ML_sync                 = 1
 
                 action/omniplex_strobe (
@@ -1701,7 +1698,6 @@ protocol 'RF_Tuning' {
                     )   
 
                 ML_sync                 = 0
-                IO_syncWord             = 0
 
                 start_timer (
                     timer               = ITI_Timer
@@ -1945,7 +1941,6 @@ protocol 'CPR_solo' {
 
             state 'New Trial' {      
                 CTRL_fixationWidth_dva          = TMP_dva_trial
-                IO_syncWord                     = 1
                 ML_sync                         = 1 // Matlab sync event
 
                 action/omniplex_strobe (
@@ -2228,6 +2223,8 @@ protocol 'CPR_solo' {
                 dequeue_stimulus (arc)
                 dequeue_stimulus (fixationCross)
 
+                TRIAL_align                     = 0
+
                 action/omniplex_strobe (
                     variable                    = TRIAL_end
                     value                       = TRIAL_start
@@ -2240,9 +2237,6 @@ protocol 'CPR_solo' {
                     duration                    = CTRL_ITI_ms
                     duration_units              = ms
                     )
-
-                TRIAL_align                     = 0
-                IO_syncWord                     = 0
 
                 update_stimulus_display ()
                 report ('===== TRIAL $TRIAL_end ENDS =====')
