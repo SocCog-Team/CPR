@@ -7,7 +7,7 @@ if nargin < 1
     param.cycle_duration_ms      	= 60000;                                % Duration of random walk
     param.Fs                        = 1000 / 120;                           % Screen sampling rate [ms]
     param.snr_list                  = [.7 .75 .8 .85 .9  .95 .99];          % Stimulus coherence
-    param.feedback_probability    	= 0.0035;                                % Probability of reward
+    param.feedback_probability    	= 0.0035;                               % Probability of reward
     param.min_feedback_interval_ms  = param.Fs * 100;                       % Min interval between reward administration
 end
 
@@ -22,7 +22,7 @@ out.feedback_ts                     = 1;                                        
 out.trial                           = param.trial;                                      % Trial number
 cnt_fb                              = 0;
 
-%%% This requires SNR inputs to match die duration of the cycle %%%
+%%% This requires SNR inputs to match the duration of the cycle %%%
 
 % Shuffle coherence values (except for first trial)
 if param.trial == 0
@@ -43,7 +43,7 @@ omega                               = zeros(1, nSamples);                  	% Ar
 angle                               = zeros(1, nSamples);                 	% Array to store angles
 
 % Initial seed
-omega(1)                            = 0;                % Initial random angular velocity
+omega(1)                            = 0;                                    % Initial random angular velocity
 % omega(1)                            = 2 * pi * (rand - 0.5);                % Initial random angular velocity
 angle(1)                            = 2 * pi * rand;                        % Initial random angle between 0 and 2*pi
 
@@ -75,7 +75,7 @@ end
 % Convert to degree
 out.RDP_direction_rad               	= angle;
 out.RDP_direction_deg               	= rad2deg(angle);
-
+ 
 % close all
 % figure;hold on
 % plot(omega(1:7200));
