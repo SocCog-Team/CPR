@@ -23,11 +23,15 @@ out.trial                           = param.trial;                              
 cnt_fb                              = 0;
 
 %%% This requires SNR inputs to match the duration of the cycle %%%
+if (param.coh_duration_ms * length(param.snr_list)) < param.cycle_duration_ms 
+    warning('Coherence parameter do not match the duration of the stimulus cycle')
+end
 
 % Shuffle coherence values (except for first trial)
 if param.trial == 0
     out.RDP_coherence              	= fliplr(param.snr_list);                           % Ordered coherence values
 else
+    % Quick fix to avoid adjacent blocks with similar coherence
     tmp = [1 1];
     while sum(diff(tmp) == 0) ~= 0
         tmp                         = param.snr_list(randperm(length(param.snr_list))); % Shuffled coherence values
@@ -44,7 +48,6 @@ angle                               = zeros(1, nSamples);                 	% Arr
 
 % Initial seed
 omega(1)                            = 0;                                    % Initial random angular velocity
-% omega(1)                            = 2 * pi * (rand - 0.5);                % Initial random angular velocity
 angle(1)                            = 2 * pi * rand;                        % Initial random angle between 0 and 2*pi
 
 %%%% NOTES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -75,7 +78,12 @@ end
 % Convert to degree
 out.RDP_direction_rad               	= angle;
 out.RDP_direction_deg               	= rad2deg(angle);
- 
+
+% Add timestamps [s]
+dt = param.Fs/1e3;  % 120Hz step size (seconds)
+maxt = param.cycle_duration_ms/1e3;  % ending time (seconds)
+out.time_vector = 0:dt:(maxt-dt);
+
 % close all
 % figure;hold on
 % plot(omega(1:7200));
