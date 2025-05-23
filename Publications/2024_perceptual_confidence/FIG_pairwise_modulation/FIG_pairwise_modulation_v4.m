@@ -45,6 +45,8 @@ ecc_dyad_dff            = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2
 [p_ecc,h_ecc, stats_ecc]= signrank(abs(ecc_df.solo),abs(ecc_df.dyad));
 g(1,1)                  = gramm('x',abs(ecc_solo_dff)','y',abs(ecc_dyad_dff)');
 
+sum(ecc_solo_dff > ecc_dyad_dff)
+
 g(1,1).geom_point();
 g(1,1).stat_cornerhist('edges',-.3:0.015:.3,'aspect',.3,'fill','face');
 g(1,1).geom_abline();
@@ -58,6 +60,8 @@ acc_dyad_dff            = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2
 [r_acc,pv_acc]          = corrcoef(abs(acc_df.solo),abs(acc_df.dyad));
 [p_acc,h_acc, stats_acc]= signrank(abs(acc_df.solo),abs(acc_df.dyad));
 g(1,2)                  = gramm('x',abs(acc_solo_dff),'y',abs(acc_dyad_dff));
+
+sum(acc_solo_dff > acc_dyad_dff)
 
 g(1,2).geom_point();
 g(1,2).stat_cornerhist('edges',-.1:0.005:.1,'aspect',.3,'fill','face');
@@ -522,6 +526,11 @@ acc_mixed       = sum(acc_class == 1) / length(acc_class);
 sum(abs(ecc_df.solo) > abs(ecc_df.dyad)) / length(ecc_df.dyad)
 sum(abs(acc_df.solo) > abs(acc_df.dyad)) / length(acc_df.dyad)
 
+% Convergence - regression panel B 
+sum(ecc_better_minus_worse<0) 
+sum(acc_better_minus_worse<0) 
+length(ecc_better_minus_worse) 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Covert to table
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -660,11 +669,12 @@ p1_better = raw1 > raw2;
 better_solo_player = [auc1(p1_better) auc2(~p1_better)];
 worse_solo_player = [auc2(p1_better) auc1(~p1_better)];
 
+disp('n: '); length(better_solo_player)
 disp('signrank(better_solo_player,worse_solo_player)')
-[p,h]=signrank(better_solo_player,worse_solo_player)
+[p,h,stats]=signrank(better_solo_player,worse_solo_player)
 
 disp('signrank(abs(better_solo_player-.5),abs(worse_solo_player-.5))')
-[p,h]=signrank(abs(better_solo_player-.5),abs(worse_solo_player-.5))
+[p,h,stats]=signrank(abs(better_solo_player-.5),abs(worse_solo_player-.5))
 
 line([.5 2.5],[.5 .5], 'LineStyle',':','LineWidth', 1.5, 'Color', [0 0 0])
 vl = violinplot([worse_solo_player' better_solo_player']);
@@ -690,7 +700,6 @@ box off
 bins                    = [0:.05:1];
 h_ofs                   = .35;
 ax0v                    = axes('Position', [ax.Position(1)+h_ofs ax.Position(2) ax.Position(3)/5 ax.Position(4)]); hold on
-% [v, edg]                = histcounts([auc1,auc2],'BinWidth',.05);
 [v,edg]                 = histcounts([auc1,auc2],bins);
 cntr                    = edg(2:end) - diff(edg)./2;
 % st                      = stairs(v,cntr);
@@ -703,4 +712,13 @@ mln.Color                = [.6 0 0];
 % ax0v.XAxis.Visible      = 'off';
 % ax0v.YAxis.Visible      = 'off';
 ax0v.YLim               = [0 1];
+
+disp('n: '); length([auc1,auc2])
+
+disp('signrank([auc1,auc2],.5)')
+[p,h,stats]=signrank([auc1,auc2],.5)
+
+disp('median([auc1,auc2])')
+median([auc1,auc2])
+
 end

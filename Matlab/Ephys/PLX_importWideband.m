@@ -1,15 +1,15 @@
 addpath('/Users/fschneider/Documents/MATLAB/PlexonMatlabOfflineFilesSDK/');
 
 % Get channel information
-pl2file                     = '/Volumes/T7_Shield/plexon/Data_Nilan/fxs-CPR20250312-nil-010-01+01-sorted.pl2';
+pl2file                     = '/Volumes/T7_Shield/plexon/Data_Nilan/20250515_nil_CPR_block1_phy4_rec022_fxs.pl2';
 [pl2]                       = PL2GetFileIndex(pl2file);
 wideband_data               = struct();
-dest_dir                    = '/Users/fschneider/Desktop/plx_wb_20250312_Nilan/';
+dest_dir                    = '/Users/fschneider/Desktop/plx_wb_20250515_Nilan/';
 filter_cutoff               = [300 5000];
 
-for iChan = 1:33
+for iChan = 1:64
     % Only include channels that are enabled
-    if pl2.EventChannels{iChan}.Enabled
+    if pl2.AnalogChannels{iChan}.Enabled
         disp(['Process Channel: ' pl2.AnalogChannels{iChan}.Name])
    
         % Import analog data
