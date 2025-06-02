@@ -10,7 +10,7 @@ iodevice/omniplex Omniplex (
     output_variable                         = IO_spikes
     omniplex_ip                             = '192.168.1.2'
     port                                    = 27015
-    bkohg_out16                             = IO_sync_16bit
+    bkohg_out16                             = IO_syncWord
     )
 
 iodevice/mio mIO (
@@ -18,7 +18,7 @@ iodevice/mio mIO (
     joystick_x_raw                          = IO_joystickX_raw
     joystick_y_raw                          = IO_joystickY_raw
     reward_a                                = IO_rewardA
-    sendword                                = IO_sync_16bit
+    sendword                                = IO_syncWord
 
     // 2nd joystick with single IO/Board
     joystick_b_x_raw                        = IO_joystickX2_raw
@@ -323,8 +323,8 @@ group COL {
     var COL_arc2_g                          = .5
     var COL_arc2_b                          = .5
     var COL_target_r                        = 1
-    var COL_target_g                        = .84
-    var COL_target_b                        = 0
+    var COL_target_g                        = 1
+    var COL_target_b                        = 1
     var COL_fix_r                           = 1
     var COL_fix_g                           = 1
     var COL_fix_b                           = 1
@@ -418,7 +418,6 @@ group IO {
     var IO_joystickY2_raw_min               = 0
     var IO_joystickTrigger2                 = false
     var IO_syncWord                         = 0
-    var IO_sync_16bit                       = 0
 
     var IO_spikes                           = (float)(0.0)
 
@@ -2316,7 +2315,7 @@ protocol 'CPR_solo' {
                     )
                 goto (
                     target                      = 'Reset Flags'
-                    when                        = (CTRL_hit_flag || CTRL_miss_flag) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag) && TRIAL_reactionTrigger
                     )
                 goto (
                     target                      = 'Target presentation'
@@ -2658,9 +2657,9 @@ protocol 'CPR_dyatic' {
     CTRL_NoTargets                              = 500
     CTRL_NoStates                               = 15
     CTRL_NoCoherenceStates                      = 5 
-    CTRL_state_min_ms                           = 1500 
+    CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
-    CTRL_nTarget                                = 299 // 99 = 1%
+    CTRL_nTarget                                = 249 // 99 = 1%
     CTRL_cpr_treshold                           = .2 // Initial threshold to start cycle
     
     CTRL_show_agent                             = false
@@ -2669,12 +2668,8 @@ protocol 'CPR_dyatic' {
     CTRL_arc_size                               = 1.75
     CTRL_target_deg                             = 10
     
-    CTRL_target_size                            = .3
-    CTRL_target_alpha                           = 1
-    CTRL_target_offset                          = .8
-    CTRL_target_duration_ms                     = 50
     CTRL_target_ITI_ms                          = 500
-    CTRL_target_ban_duration_ms                 = 750
+    CTRL_target_ban_duration_ms                 = 300
 
     CTRL_ITI_ms                                 = 1000
     CTRL_minFixBreak_duration_ms                = 300
@@ -2749,12 +2744,6 @@ protocol 'CPR_dyatic' {
 
     start_timer (
         timer                                   = TargetBanTimer
-        duration                                = 1
-        duration_units                          = ms
-    )
-
-    start_timer (
-        timer                                   = TargetDurationTimer
         duration                                = 1
         duration_units                          = ms
     )
@@ -2889,10 +2878,6 @@ protocol 'CPR_dyatic' {
             }
 
             state 'Reset Flags' {
-                 //Remove target from screen
-                dequeue_stimulus (target)
-                update_stimulus_display ()
-
                 // Reset flag
                 TRIAL_reactionTrigger           = 0
                 CTRL_hit_flag                   = 0
@@ -2965,7 +2950,7 @@ protocol 'CPR_dyatic' {
                     )
                 goto (
                     target                      = 'Reset Flags'
-                    when                        = (CTRL_hit_flag || CTRL_miss_flag || CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag || CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger
                     )
                 goto (
                     target                      = 'Target presentation'
@@ -2973,19 +2958,19 @@ protocol 'CPR_dyatic' {
                     ) 
                 goto (
                     target                      = 'Single Hit Monkey'
-                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag == 0 || CTRL_fixation2_penalty_flag == 1) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag == 0 || CTRL_fixation2_penalty_flag == 1) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0
                     ) 
                 goto (
                     target                      = 'Single Hit Human'
-                    when                        = (CTRL_arc_flag == 0 || CTRL_fixation_penalty_flag == 1) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0  && timer_expired(TargetDurationTimer) == 0 
+                    when                        = (CTRL_arc_flag == 0 || CTRL_fixation_penalty_flag == 1) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
                     )
                 goto (
                     target                      = 'DoubleHit'
-                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0
                     )  
                 goto (
                     target                      = 'DoubleMiss'
-                    when                        =  timer_expired(TargetDurationTimer) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
+                    when                        = TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
                     )              
                 goto (
                     target                      = 'Check Counters'
@@ -3035,21 +3020,8 @@ protocol 'CPR_dyatic' {
             }
 
             state 'Target presentation' {
-                // Target coordinates according to RDP direction
-                CTRL_target_x                   = CTRL_fixation_x + (sin((RDP_direction)*(pi/180)) * (CTRL_target_offset)) 
-                CTRL_target_y                   = CTRL_fixation_y + (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) 
-
-                live_queue_stimulus (target)
-                update_stimulus_display ()
-
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
-
-                start_timer (
-                    timer                       = TargetDurationTimer
-                    duration                    = CTRL_target_duration_ms
-                    duration_units              = ms
-                    )
 
                 // Block target appearance for given interval
                 start_timer (
@@ -3319,7 +3291,6 @@ protocol 'CPR_dyatic' {
                 dequeue_stimulus (arc)
                 dequeue_stimulus (arc2)
                 dequeue_stimulus (fixationCross)
-                dequeue_stimulus (target)
 
                 action/omniplex_strobe (
                     variable                    = TRIAL_end
@@ -3488,23 +3459,19 @@ protocol 'CPR_dyatic_computer' {
     CTRL_NoTargets                              = 500
     CTRL_NoStates                               = 15
     CTRL_NoCoherenceStates                      = 5 
-    CTRL_state_min_ms                           = 1500 
+    CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
-    CTRL_nTarget                                = 299 // 99 = 1%
+    CTRL_nTarget                                = 249 // 99 = 1%
     CTRL_cpr_treshold                           = .2 // Initial threshold to start cycle
     
     CTRL_show_agent                             = true
     
     CTRL_arc_alpha                              = .5
     CTRL_arc_size                               = 1.75
-   
     CTRL_target_deg                             = 10
-    CTRL_target_size                            = .3
-    CTRL_target_alpha                           = 1
-    CTRL_target_offset                          = .8
-    CTRL_target_duration_ms                     = 50
+    
     CTRL_target_ITI_ms                          = 500
-    CTRL_target_ban_duration_ms                 = 750
+    CTRL_target_ban_duration_ms                 = 300
 
     CTRL_ITI_ms                                 = 1000
     CTRL_minFixBreak_duration_ms                = 300
@@ -3581,12 +3548,6 @@ protocol 'CPR_dyatic_computer' {
 
     start_timer (
         timer                                   = TargetBanTimer
-        duration                                = 1
-        duration_units                          = ms
-    )
-    
-    start_timer (
-        timer                                   = TargetDurationTimer
         duration                                = 1
         duration_units                          = ms
     )
@@ -3720,10 +3681,6 @@ protocol 'CPR_dyatic_computer' {
             }
 
             state 'Reset Flags' {
-                //Remove target from screen
-                dequeue_stimulus (target)
-                update_stimulus_display ()
-
                 // Reset flag
                 TRIAL_reactionTrigger           = 0
                 CTRL_hit_flag                   = 0
@@ -3796,7 +3753,7 @@ protocol 'CPR_dyatic_computer' {
                     )
                 goto (
                     target                      = 'Reset Flags'
-                    when                        = (CTRL_hit_flag || CTRL_miss_flag || CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger && timer_expired(TargetDurationTimer)
+                    when                        = (CTRL_hit_flag || CTRL_miss_flag || CTRL_hit_flag2 || CTRL_miss_flag2) && TRIAL_reactionTrigger
                     )
                 goto (
                     target                      = 'Target presentation'
@@ -3804,19 +3761,19 @@ protocol 'CPR_dyatic_computer' {
                     ) 
                 goto (
                     target                      = 'Single Hit Monkey'
-                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && AGNT_arc_flag == 0  && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (AGNT_arc_flag == 0 || CTRL_fixation2_penalty_flag == 1) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0
                     ) 
                 goto (
                     target                      = 'Single Hit Computer'
-                    when                        = (CTRL_arc_flag == 0 || CTRL_fixation_penalty_flag == 1) && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
+                    when                        = (CTRL_arc_flag == 0 || CTRL_fixation_penalty_flag == 1) && (AGNT_arc_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
                     )
                 goto (
                     target                      = 'DoubleHit'
-                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && AGNT_arc_flag && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 && timer_expired(TargetDurationTimer) == 0 
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == 0) && (CTRL_arc2_flag && CTRL_fixation2_penalty_flag == 0) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0
                     )  
                 goto (
                     target                      = 'DoubleMiss'
-                    when                        =  timer_expired(TargetDurationTimer) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
+                    when                        = TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == 0 
                     )              
                 goto (
                     target                      = 'Check Counters'
@@ -3866,22 +3823,9 @@ protocol 'CPR_dyatic_computer' {
             }
 
             state 'Target presentation' {
-                // Target coordinates according to RDP direction
-                CTRL_target_x                   = CTRL_fixation_x + (sin((RDP_direction)*(pi/180)) * (CTRL_target_offset)) 
-                CTRL_target_y                   = CTRL_fixation_y + (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) 
-
-                live_queue_stimulus (target)
-                update_stimulus_display ()
-
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
 
-                start_timer (
-                    timer                       = TargetDurationTimer
-                    duration                    = CTRL_target_duration_ms
-                    duration_units              = ms
-                    )
-                
                 // Block target appearance for given interval
                 start_timer (
                     timer                       = Target_ITI_Timer
@@ -4149,7 +4093,6 @@ protocol 'CPR_dyatic_computer' {
                 dequeue_stimulus (arc)
                 dequeue_stimulus (AGNT_arc)
                 dequeue_stimulus (fixationCross)
-                dequeue_stimulus (target)
 
                 action/omniplex_strobe (
                     variable                    = TRIAL_end
