@@ -1624,7 +1624,7 @@ protocol 'RF_Mapping' {
 
                 goto (
                     target              = 'End paradigm'
-                    when                = INFO_StateCounter == CTRL_NoStimuli
+                    when                = INFO_StateCounter >= CTRL_NoStimuli
                     ) 
                 goto ('ITI') 
 
