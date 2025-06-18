@@ -26,7 +26,7 @@ mouse_input Mouse (
 
 
 iodevice/usbhid_generic joystick (
-       preferred_location_id                = 336592896
+       preferred_location_id                = 337641472
        usage_page                           = 1
        usage                                = 4
        log_all_input_values                 = NO
@@ -45,7 +45,7 @@ iodevice/usbhid_generic joystick (
 }
 
 iodevice/usbhid_generic joystick2 (
-       preferred_location_id                = 337641472
+       preferred_location_id                = 338690048
        usage_page                           = 1
        usage                                = 4
        log_all_input_values                 = NO
@@ -133,7 +133,7 @@ group CTRL {
     var CTRL_ITI_ms                         = 0
     var CTRL_coherence_steps                = 0
     var CTRL_state_duration_ms              = 0
-    var CTRL_directionChange_list           = [30, 60, 90, 120]
+    var CTRL_directionChange_list           = [30, 60, 90, 120, 150, 180]
     var CTRL_directionChange_deg            = 0
     var CTRL_directionChange_speed          = 0
     var CTRL_directionChange_type           = 'step'
@@ -251,12 +251,12 @@ group IO {
             
             // Calculate reward score
             if (IO_joystickStrength <= 1) {
-                TMP_score                   = IO_joystickStrength * TMP_accuracy
+                TMP_score                   = IO_joystickStrength
             }
 
             // Cap at maximum
             if (IO_joystickStrength > 1) {
-                TMP_score                   = 1 * TMP_accuracy
+                TMP_score                   = 1
             }
             
             // Compute trigger boundaries & flag
@@ -313,12 +313,12 @@ group IO {
             
             // Calculate reward score
             if (IO_joystickStrength2 <= 1) {
-                TMP_score2                   = IO_joystickStrength2 * TMP_accuracy2
+                TMP_score2                   = IO_joystickStrength2
             }
 
             // Cap at maximum
             if (IO_joystickStrength2 > 1) {
-                TMP_score2                   = 1 * TMP_accuracy2
+                TMP_score2                   = 1
             }
             
             // Compute trigger boundaries & flag
@@ -348,8 +348,8 @@ group TMP {
     var TMP_speed                           = 0
     var TMP_text                            = 0
     var TMP_textlevel                       = 0
-    var TMP_textScore                       = (string)"temp"
-    var TMP_textScore2                       = (string)"temp"
+    var TMP_textScore                       = (string)"0"
+    var TMP_textScore2                       = (string)"0"
     var pi                                  = 3.14159265359
 
 }
@@ -423,7 +423,7 @@ text ButtonNewSubjectText (
     text_alignment                          = center
     color                                   = 1,1,1
     x_size                                  = 8
-    y_size                                  = 5
+    y_size                                  = 4
     x_position                              = 0
     y_position                              = -1.7
     rotation                                = 0
@@ -493,9 +493,9 @@ text ButtonStopText (
     )
 
 text GoodbyeText (
-    text                                    = "Wow $INFO_Score sweets!!"
+    text                                    = "Wow $INFO_Score coins!!"
     font_name                               = 'Arial'
-    font_size                               = 24
+    font_size                               = 30
     text_alignment                          = center
     color                                   = COL_arc_r,COL_arc_g,COL_arc_b
     x_size                                  = 30
@@ -507,9 +507,9 @@ text GoodbyeText (
     )
 
 text GoodbyeText2 (
-    text                                    = "Wow $INFO_Score2 sweets!!"
+    text                                    = "Wow $INFO_Score2 coins!!"
     font_name                               = 'Arial'
-    font_size                               = 24
+    font_size                               = 30
     text_alignment                          = center
     color                                   = COL_arc2_r,COL_arc2_g,COL_arc2_b
     x_size                                  = 30
@@ -523,7 +523,7 @@ text GoodbyeText2 (
 text GoodbyeText3 (
     text                                    = "You have completed the game! \nThanks for participating!"
     font_name                               = 'Arial'
-    font_size                               = 24
+    font_size                               = 30
     text_alignment                          = center
     color                                   = 1,1,1
     x_size                                  = 30
@@ -535,9 +535,9 @@ text GoodbyeText3 (
     )
 
 text WelcomeText (
-    text                                    = "Welcome to the \nContinuous Perceptual Report game"
+    text                                    = "Welcome to the \nContinuous Perceptual Report game \n\nMove both joysticks to start"
     font_name                               = 'Arial'
-    font_size                               = 24
+    font_size                               = 30
     text_alignment                          = center
     color                                   = 1,1,1
     x_size                                  = 30
@@ -617,8 +617,8 @@ stimulus/advstimulus target (
 
 image_file target_coin (
     path                                    = './coin.png'
-    x_size                                  = 2
-    y_size                                  = 2
+    x_size                                  = 1.5
+    y_size                                  = 1.5
     x_position                              = CTRL_target_x
     y_position                              = CTRL_target_y
     rotation                                = 0
@@ -631,7 +631,7 @@ rectangle pointsBar (
     x_size                                  = 1
     y_size                                  = INFO_Score
     x_position                              = -15
-    y_position                              = -(TMP_scoreBar/2) + (INFO_Score/2)
+    y_position                              = -(TMP_scoreBar/4) + (INFO_Score/4)
     rotation                                = 0
     alpha_multiplier                        = 1
     )
@@ -641,7 +641,7 @@ rectangle pointsBar2 (
     x_size                                  = 1
     y_size                                  = INFO_Score2
     x_position                              = 15
-    y_position                              = -(TMP_scoreBar2/2) + (INFO_Score2/2)
+    y_position                              = -(TMP_scoreBar2/4) + (INFO_Score2/4)
     rotation                                = 0
     alpha_multiplier                        = 1
     )
@@ -649,7 +649,7 @@ rectangle pointsBar2 (
 text text (
     text                                    = TMP_text
     font_name                               = 'Terminal'
-    font_size                               = 24
+    font_size                               = 30
     text_alignment                          = center
     color                                   = 1,1,1
     x_size                                  = 30
@@ -663,13 +663,13 @@ text text (
 text score (
     text                                    = TMP_textScore
     font_name                               = 'Terminal'
-    font_size                               = 18
+    font_size                               = 30
     text_alignment                          = center
     color                                   = COL_arc_r,COL_arc_g,COL_arc_b
     x_size                                  = 10
     y_size                                  = 4
-    x_position                              = -14
-    y_position                              = 6
+    x_position                              = -15
+    y_position                              = -8
     rotation                                = 0
     alpha_multiplier                        = 1
     )
@@ -677,41 +677,41 @@ text score (
 text score2 (
     text                                    = TMP_textScore2
     font_name                               = 'Terminal'
-    font_size                               = 18
+    font_size                               = 30
     text_alignment                          = center
     color                                   = COL_arc2_r,COL_arc2_g,COL_arc2_b
     x_size                                  = 10
     y_size                                  = 4
-    x_position                              = 14
-    y_position                              = 6
+    x_position                              = 15
+    y_position                              = -8
     rotation                                = 0
     alpha_multiplier                        = 1
     )
 
 text score_text (
-    text                                    = "Sweets"
+    text                                    = "Coins"
     font_name                               = 'Terminal'
-    font_size                               = 22
+    font_size                               = 30
     text_alignment                          = center
     color                                   = COL_arc_r,COL_arc_g,COL_arc_b
     x_size                                  = 10
     y_size                                  = 4
-    x_position                              = -14
-    y_position                              = 8
+    x_position                              = -15
+    y_position                              = -7
     rotation                                = 0
     alpha_multiplier                        = 1
     )
 
 text score_text2 (
-    text                                    = "Sweets"
+    text                                    = "Coins"
     font_name                               = 'Terminal'
-    font_size                               = 22
+    font_size                               = 30
     text_alignment                          = center
     color                                   = COL_arc2_r,COL_arc2_g,COL_arc2_b
     x_size                                  = 10
     y_size                                  = 4
-    x_position                              = 14
-    y_position                              = 8
+    x_position                              = 15
+    y_position                              = -7
     rotation                                = 0
     alpha_multiplier                        = 1
     )
@@ -752,7 +752,7 @@ protocol 'CPR solo - LNdW2025' {
     CTRL_target_duration_ms                     = 250
     CTRL_target_ITI_ms                          = 2000
     CTRL_target_alpha                           = 1
-    CTRL_ITI_ms                                 = 2000
+    CTRL_ITI_ms                                 = 1000
     CTRL_directionChange_speed                  = 120 // deg/s
     CTRL_deg_per_frame                          = CTRL_directionChange_speed * (1/120)
     CTRL_coherence_steps                        = .02                        
@@ -812,11 +812,18 @@ protocol 'CPR solo - LNdW2025' {
 
                 update_stimulus_display()
 
+
+                start_timer (
+                    timer                       = ReadThis
+                    duration                    = 1
+                    duration_units              = s
+                    )
+
                 IO_mouse_down = 0
-                // generate a new subject ID
+
                 goto (
                     target                      = 'New Game'
-                    when                        = (IO_mouse_down #AND IO_ButtonNewSubject) #OR IO_joystick_click
+                    when                        = timer_expired(ReadThis) && (IO_joystickStrength > CTRL_cpr_treshold) && (IO_joystickStrength2 > CTRL_cpr_treshold) 
                     )
             }
 
@@ -839,7 +846,8 @@ protocol 'CPR solo - LNdW2025' {
                 }
 
                 // Randomise speed
-                RDP_speed = CTRL_speed[disc_rand(0,1)]
+                //RDP_speed = CTRL_speed[disc_rand(0,1)]
+                RDP_speed = CTRL_speed[1]
                 INFO_speed = RDP_speed
 
                 // Reset trial parameters
@@ -860,8 +868,11 @@ protocol 'CPR solo - LNdW2025' {
             state 'Wait for Joystick Movement' {
 
                 if (TRIAL_subj_start == 0) {
-                TMP_text = "Move both joysticks to start the game"
-                }
+                    TMP_text = "The dots tell you where to find coins \nCollect them with your cursor \nCoins are worth more if you collect them with a smaller cursor \n\nTry to beat your partner. \n\nMove both joysticks to start - Ready, set, go"
+                    CTRL_target_x = 8
+                    CTRL_target_y = 4.5
+                    live_queue_stimulus (target_coin)
+                    }
 
                 if (TRIAL_subj_start == 1) {
                     TMP_text = "Wow, you are doing well!"
@@ -875,19 +886,28 @@ protocol 'CPR solo - LNdW2025' {
                     TMP_text = "Almost Done! "
                     }
 
+
                 dequeue_stimulus(ButtonNewSubject)
                 dequeue_stimulus(ButtonNewSubjectText)
                 dequeue_stimulus(WelcomeText)
                 queue_stimulus (text)
                 update_stimulus_display ()
+                
+                start_timer (
+                    timer                       = ReadThis
+                    duration                    = 1
+                    duration_units              = s
+                    )
 
                 goto (
                     target                      = 'New Trial'
-                    when                        = (IO_joystickStrength > CTRL_cpr_treshold) && (IO_joystickStrength2 > CTRL_cpr_treshold) 
+                    when                        = timer_expired(ReadThis) && (IO_joystickStrength > CTRL_cpr_treshold) && (IO_joystickStrength2 > CTRL_cpr_treshold) 
                     )
             }
 
             state 'New Trial' { 
+                dequeue_stimulus (target_coin)
+
                 TRIAL_start                     += 1 // Count trial number
                 TRIAL_align                     = 1 // Trial align event
                 TRIAL_subj_start                += 1
@@ -1035,6 +1055,12 @@ protocol 'CPR solo - LNdW2025' {
                     duration_units              = ms
                 )
 
+                start_timer (
+                    timer                       = TargetBanTimer
+                    duration                    = 300
+                    duration_units              = ms
+                )
+
                 // report ('--- State $INFO_StateCounter ---')
                 goto ('Update Stimuli')
             }
@@ -1060,7 +1086,7 @@ protocol 'CPR solo - LNdW2025' {
                     )
                 goto (
                     target                      = 'Target presentation'
-                    when                        = CTRL_target_idx == 0 && TRIAL_reactionTrigger == 0 && timer_expired(Target_ITI_Timer) && TMP_transition_flag == false
+                    when                        = timer_expired(TargetBanTimer) && CTRL_target_idx == 0 && TRIAL_reactionTrigger == 0 && timer_expired(Target_ITI_Timer) && TMP_transition_flag == false
                     ) 
                 goto (
                     target                      = 'Double Hit'
@@ -1091,7 +1117,7 @@ protocol 'CPR solo - LNdW2025' {
                 CTRL_target_y                   = (cos((RDP_direction)*(pi/180)) * (CTRL_target_offset)) + RDP_x
 
                 live_queue_stimulus (target)
-                //live_queue_stimulus (target_coin)
+                live_queue_stimulus (target_coin)
                 update_stimulus_display ()
 
                 TRIAL_reactionTrigger           = 1
@@ -1130,8 +1156,8 @@ protocol 'CPR solo - LNdW2025' {
                 INFO_Score2                      += TMP_score2
                 INFO_TrialScore2                += TMP_score2
                 
-                TMP_textScore                   = (string)(INFO_Score)
-                TMP_textScore2                   = (string)(INFO_Score2)
+                TMP_textScore                   = (string)(round(INFO_Score*100)/100)
+                TMP_textScore2                   = (string)(round(INFO_Score2*100)/100)
                 update_stimulus_display()
 
                 if (TRIAL_subj_start > 1) { 
@@ -1161,8 +1187,8 @@ protocol 'CPR solo - LNdW2025' {
                 INFO_Score2                      += 0
                 INFO_TrialScore2                += 0
 
-                TMP_textScore                   = (string)(INFO_Score)
-                TMP_textScore2                   = (string)(INFO_Score2)
+                TMP_textScore                   = (string)(round(INFO_Score*100)/100)
+                TMP_textScore2                   = (string)(round(INFO_Score2*100)/100)
                 update_stimulus_display()
 
                 play_sound(Reward_sound)
@@ -1189,8 +1215,8 @@ protocol 'CPR solo - LNdW2025' {
                 INFO_Score2                      += TMP_score2
                 INFO_TrialScore2                += TMP_score2
 
-                TMP_textScore                   = (string)(INFO_Score)
-                TMP_textScore2                   = (string)(INFO_Score2)
+                TMP_textScore                   = (string)(round(INFO_Score*100)/100)
+                TMP_textScore2                   = (string)(round(INFO_Score2*100)/100)
                 update_stimulus_display()
 
                 play_sound(Reward_sound)
@@ -1284,16 +1310,16 @@ protocol 'CPR solo - LNdW2025' {
                 live_queue_stimulus(ButtonStopText)
                 update_stimulus_display()
 
-                // If continue, go to New Trial
-                goto (
-                    target                      = 'New Trial'
-                    when                        = IO_mouse_down #AND IO_ButtonContinue
+                start_timer (
+                    timer                       = ReadThis
+                    duration                    = 3
+                    duration_units              = s
                     )
 
                 // If stop or timer expired go to Start Screen
                 goto (
                     target                      = 'Start Screen'
-                    when                        = IO_mouse_down #AND IO_ButtonStop
+                    when                        = timer_expired(ReadThis) && (IO_joystickStrength > CTRL_cpr_treshold) && (IO_joystickStrength2 > CTRL_cpr_treshold)
                     )
 
             }
