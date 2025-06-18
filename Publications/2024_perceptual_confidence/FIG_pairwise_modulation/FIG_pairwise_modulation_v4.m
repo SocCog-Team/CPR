@@ -660,8 +660,15 @@ p1_better = raw1 > raw2;
 better_solo_player = [auc1(p1_better) auc2(~p1_better)];
 worse_solo_player = [auc2(p1_better) auc1(~p1_better)];
 
+disp('[median(better_solo_player) median(worse_solo_player)]')
+[median(better_solo_player) median(worse_solo_player)]
+
 disp('signrank(better_solo_player,worse_solo_player)')
 [p,h]=signrank(better_solo_player,worse_solo_player)
+
+
+disp('median(abs(better_solo_player-.5)) median(abs(worse_solo_player-.5))')
+[median(abs(better_solo_player-.5)) median(abs(worse_solo_player-.5))]
 
 disp('signrank(abs(better_solo_player-.5),abs(worse_solo_player-.5))')
 [p,h]=signrank(abs(better_solo_player-.5),abs(worse_solo_player-.5))
