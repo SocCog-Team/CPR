@@ -95,8 +95,7 @@ for iCoh = 1:length(snr_lst)
     end  
 end
 
-mean(mean(xc_lag,2)) * (1000/120)
-[P,H, stats] = signrank(mean(xc_lag,2))
+[P(iCoh),H(iCoh), stats(iCoh)] = signrank(xc_lag(:,iCoh));
 
 ax.XLabel.String = 'Lag [ms]';
 ax.YLabel.String = 'XCorr coef';

@@ -737,6 +737,11 @@ protocol 'CPR solo - LNdW2025' {
     live_queue_stimulus (Background)
     update_stimulus_display ()
 
+    INFO_Score = 0
+    INFO_Score2 = 0
+    TMP_textScore = "0"
+    TMP_textScore2 = "0"
+    
     // Set desired parameters
     CTRL_verbose                                = 0
     CTRL_NoStates                               = 20
@@ -828,6 +833,12 @@ protocol 'CPR solo - LNdW2025' {
             }
 
             state 'New Game' {
+
+                INFO_Score = 0
+                INFO_Score2 = 0
+                TMP_textScore = "0"
+                TMP_textScore2 = "0" 
+                
                 // Assign unique subject ID based on time
                 INFO_subject = (string)date("%H%M%S")
                 report(" +++++ New Subject ID: $INFO_subject")

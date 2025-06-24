@@ -45,7 +45,7 @@ iodevice/usbhid_generic joystick (
 }
 
 iodevice/usbhid_generic joystick2 (
-       preferred_location_id                = 338690048
+       preferred_location_id                = 336592896
        usage_page                           = 1
        usage                                = 4
        log_all_input_values                 = NO
@@ -828,6 +828,12 @@ protocol 'CPR solo - LNdW2025' {
             }
 
             state 'New Game' {
+
+                INFO_Score = 0
+                INFO_Score2 = 0
+                TMP_textScore = "0"
+                TMP_textScore2 = "0" 
+                
                 // Assign unique subject ID based on time
                 INFO_subject = (string)date("%H%M%S")
                 report(" +++++ New Subject ID: $INFO_subject")
