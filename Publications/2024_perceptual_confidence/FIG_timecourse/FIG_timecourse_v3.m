@@ -162,11 +162,23 @@ for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         dat                 = squeeze(avg_acc(iSubj,iCoh,:));
         p                   = polyfit(1:win, dat(end-(win-1):end), 1);
-        slope(iSubj,iCoh)   = p(1);
+        slope_acc(iSubj,iCoh) = p(1);
     end
 end
+mean(mean(slope_acc,2))
+[P,H, stats] = signrank(mean(slope_acc,2))
 
-vl              = violinplot(slope);
+for iSubj = 1:length(sbj_lst)
+    for iCoh = 1:length(snr_lst)
+        dat                 = squeeze(avg_ecc(iSubj,iCoh,:));
+        p                   = polyfit(1:win, dat(end-(win-1):end), 1);
+        slope_ecc(iSubj,iCoh) = p(1);
+    end
+end
+mean(mean(slope_ecc,2))
+[P,H, stats] = signrank(mean(slope_ecc,2))
+
+vl              = violinplot(slope_acc);
 vl              = improveViolin(vl,cool(length(snr_lst)));
 ax              = gca;
 ax.XTickLabel   = {round(snr_lst,2)};
