@@ -478,27 +478,27 @@ print(f, [dest_dir '/FIG_corr_solo_score_' alignment_str], '-r500', '-dpng', '-p
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %% Dyadic Reward
+%% Dyadic Reward
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% figure
-% s_score             = sum(score.solo,2);
-% d_score             = sum(score.dyad,2);
-% [p,h,z] = signrank(s_score, d_score);
-% 
-% vl                  = violinplot([s_score, d_score]);
-% 
-% for iDyad = 1:length(s_score)
-%     d_greater(iDyad)= s_score(iDyad) < d_score(iDyad);
-%     sd_dff(iDyad)   = s_score(iDyad) - d_score(iDyad);
-% end
-% 
-% ax = gca;
-% ax.FontSize = 24;
-% ax.YLabel.String = 'Sum of scores [P1 + P2]';
-% ax.XTick = [1 2];
-% ax.XTickLabel = {'Solo','Dyadic'};
-% ax.Title.String = {['Dyad > Solo: ' num2str((sum(d_greater)/length(d_greater))*100) '%; p<0.001']; ['Mean(Solo-Dyad): ' num2str(mean(sd_dff))]};
-% ax.Title.FontSize = ax.FontSize;
+figure
+s_score             = sum(score.solo,2);
+d_score             = sum(score.dyad,2);
+[p,h,z] = signrank(s_score, d_score);
+
+vl                  = violinplot([s_score, d_score]);
+
+for iDyad = 1:length(s_score)
+    d_greater(iDyad)= s_score(iDyad) < d_score(iDyad);
+    sd_dff(iDyad)   = s_score(iDyad) - d_score(iDyad);
+end
+
+ax = gca;
+ax.FontSize = 24;
+ax.YLabel.String = 'Sum of scores [P1 + P2]';
+ax.XTick = [1 2];
+ax.XTickLabel = {'Solo','Dyadic'};
+ax.Title.String = {['Dyad > Solo: ' num2str((sum(d_greater)/length(d_greater))*100) '%; p<0.001']; ['Mean(Solo-Dyad): ' num2str(mean(sd_dff))]};
+ax.Title.FontSize = ax.FontSize;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper

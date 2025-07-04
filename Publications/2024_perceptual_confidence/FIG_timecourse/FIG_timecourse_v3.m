@@ -165,9 +165,15 @@ for iSubj = 1:length(sbj_lst)
         slope_acc(iSubj,iCoh) = p(1);
     end
 end
+% coherence averaged
 mean(mean(slope_acc,2))
 [P,H, stats] = signrank(mean(slope_acc,2))
-
+% Per coherence level
+mean(slope_acc,1)
+for iCoh = 1:length(snr_lst)
+    [P_acc(iCoh),H_acc(iCoh), stats_acc(iCoh)] = signrank(slope_acc(:,iCoh));
+end
+   
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         dat                 = squeeze(avg_ecc(iSubj,iCoh,:));
@@ -175,8 +181,14 @@ for iSubj = 1:length(sbj_lst)
         slope_ecc(iSubj,iCoh) = p(1);
     end
 end
+% coherence averaged
 mean(mean(slope_ecc,2))
-[P,H, stats] = signrank(mean(slope_ecc,2))
+[P,H, stats] = signrank(mean(slope_ecc,2));
+% Per coherence level
+mean(slope_ecc,1)
+for iCoh = 1:length(snr_lst)
+    [P_ecc(iCoh),H_ecc(iCoh), stats_ecc(iCoh)] = signrank(slope_ecc(:,iCoh));
+end
 
 vl              = violinplot(slope_acc);
 vl              = improveViolin(vl,cool(length(snr_lst)));

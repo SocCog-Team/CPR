@@ -95,8 +95,12 @@ for iCoh = 1:length(snr_lst)
     end  
 end
 
+avg_xc_peak = mean(xc_lag,1) * (1000/120);
 mean(mean(xc_lag,2)) * (1000/120)
-[P,H, stats] = signrank(mean(xc_lag,2))
+for iCoh = 1:size(xc_lag,2)
+    [P_xc(iCoh),H_xc(iCoh), stats_xc(iCoh)] = signrank(xc_lag(:,iCoh));
+end
+P_xc < (.05/7) & avg_xc_peak > 0
 
 ax.XLabel.String = 'Lag [ms]';
 ax.YLabel.String = 'XCorr coef';

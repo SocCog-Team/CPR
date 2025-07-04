@@ -16,7 +16,7 @@ writeH5_flag    = true;
 dest_dir_tbl    ='/Users/fschneider/Desktop/';
 dest_dir_plot   ='/Users/fschneider/Desktop/';
 
-mwk2_lst = {'20250508_nil_CPRsolo_block2_physio4.mwk2'};
+mwk2_lst = {'20250312_nil_CPRsolo_block1_phy4.mwk2'};
 for iFile = 1:length(mwk2_lst)
     fname = mwk2_lst{iFile};
     [d,t] = copy_PHY_daily_summary_test(data_pth, fname, cfg_pth, writeH5_flag, dest_dir_tbl, dest_dir_plot);
