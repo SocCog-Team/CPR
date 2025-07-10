@@ -184,6 +184,7 @@ ax2                     = subplot(1,2,2);
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dpng', '-painters');
 
+% CONSISTENT RELATIONSHIP?
 sum((p1_better_acc - p1_better_conf) == 0) / length((p1_better_acc - p1_better_conf))
 
 % %% Sanity check
