@@ -177,12 +177,21 @@ print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dpng', '-p
 
 f                       = figure('units','centimeters','position',[0 0 25 10]);hold on
 ax1                     = subplot(1,2,1);
-[ax1]                   = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.ecc1,auc.ecc2);
+[ax1,p1_better_conf]    = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.ecc1,auc.ecc2);
 ax2                     = subplot(1,2,2);
-[ax2]                   = modulation_violin(ax2,raw.acc1,raw.acc2,auc.acc1,auc.acc2);
+[ax2,p1_better_acc]     = modulation_violin(ax2,raw.acc1,raw.acc2,auc.acc1,auc.acc2);
 
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dpng', '-painters');
+
+sum((p1_better_acc - p1_better_conf) == 0) / length((p1_better_acc - p1_better_conf))
+
+% %% Sanity check
+% figure
+% ax1                     = subplot(1,2,1);
+% [ax1,p1_better_conf]    = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.acc1,auc.acc2);
+% ax2                     = subplot(1,2,2);
+% [ax2,p1_better_acc]     = modulation_violin(ax2,raw.acc1,raw.acc2,auc.ecc1,auc.ecc2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SFIGURE: Scatter dyadic modulation %%%
@@ -663,7 +672,7 @@ p_avg.LineWidth = 1;
 p_avg.LineStyle = '-';
 end
 
-function [ax] = modulation_violin(ax,raw1,raw2,auc1,auc2)
+function [ax, p1_better] = modulation_violin(ax,raw1,raw2,auc1,auc2)
 
 p1_better = raw1 > raw2;
 better_solo_player = [auc1(p1_better) auc2(~p1_better)];
