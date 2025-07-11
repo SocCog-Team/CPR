@@ -124,8 +124,8 @@ end
 
 %%% State wise average, all states, witgh subj, regr. slope for n=38
 ylim([.5 1])
-xlabel('Confidence [a.u.]')
-ylabel('Accuracy [a.u.]')
+xlabel('Confidence')
+ylabel('Accuracy')
 set(gca, 'fontsize',16)
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
@@ -156,7 +156,7 @@ print(f, [dest_dir '/avg_timeline_pop'], '-r500', '-dpng');
 
 f               = figure('units','centimeters','position',[0 0 10 5]);
 ln              = line([0 8],[0 0], 'Color', 'k','LineStyle', ':', 'LineWidth', 1.5);
-win             = 100;
+win             = 200;
 
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
@@ -190,7 +190,7 @@ for iCoh = 1:length(snr_lst)
     [P_ecc(iCoh),H_ecc(iCoh), stats_ecc(iCoh)] = signrank(slope_ecc(:,iCoh));
 end
 
-vl              = violinplot(slope_acc);
+vl              = violinplot(slope_ecc);
 vl              = improveViolin(vl,cool(length(snr_lst)));
 ax              = gca;
 ax.XTickLabel   = {round(snr_lst,2)};

@@ -33,12 +33,13 @@ for iSubj = 1:length(sbj_lst)
             joystick_acc = abs(1 - abs(js_dir_error) / 180);
             acc_detrend = joystick_acc - nanmean(joystick_acc);
             
+            
             state_coh(cnt) = frme_vec{iState}.nominal_coh;
             
             [xc_acc_vec(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
             [xc_ecc_vec(cnt,:) lags] = xcorr(acc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
             [xc_ecc_acc(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),acc_detrend(n_ofs:end),nLag,'normalized');
-%             [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
+            [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
         end
     end
     
@@ -54,7 +55,7 @@ for iSubj = 1:length(sbj_lst)
         avg_xc_acc_vec(iSubj,iCoh,:) = nanmean(xc_acc_vec(cidx' & nanidx,:));
         avg_xc_ecc_vec(iSubj,iCoh,:) = nanmean(xc_ecc_vec(cidx' & nanidx,:));
         avg_xc_ecc_acc(iSubj,iCoh,:) = nanmean(xc_ecc_acc(cidx' & nanidx,:));
-%         avg_xc_control(iSubj,iCoh,:) = nanmean(xc_c ontrol(cidx' & nanidx,:));
+        avg_xc_control(iSubj,iCoh,:) = nanmean(xc_control(cidx' & nanidx,:));
         
         clear tmp_corr
         tmp_corr = xc_ecc_acc(cidx' & nanidx,:);
