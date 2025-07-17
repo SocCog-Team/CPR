@@ -536,27 +536,27 @@ ax.Title.FontSize = ax.FontSize;
 % xlabel('Accuracy')
 % ylabel('Social modulation [AUC]')
 % 
-% p1_better               = raw.ecc1 > raw.ecc2;
-% ecc_solo_better         = [raw.ecc1(p1_better) raw.ecc2(~p1_better)];
-% ecc_auc_better          = [auc.ecc1(p1_better) auc.ecc2(~p1_better)];
-% 
-% ecc_solo_worse          = [raw.ecc1(~p1_better) raw.ecc2(p1_better)];
-% ecc_auc_worse           = [auc.ecc1(~p1_better) auc.ecc2(p1_better)];
-% 
-% figure; hold on
-% ln                     	= line([.8 1],[0.5 0.5]);
-% ln.Color              	= [0 0 0];
-% ln.LineWidth           	= lw;
-% ln.LineStyle           	= ':';
-% 
-% sc = scatter(ecc_solo_better,ecc_auc_better);
-% % [r,p] = corrcoef(ecc_solo_better,ecc_auc_better)
-% % sc = scatter(ecc_solo_worse,ecc_auc_worse);
-% % [r,p] = corrcoef(ecc_solo_worse,ecc_auc_worse)
-% 
-% legend('','better','worse')
-% xlabel('Tilt')
-% ylabel('Social modulation [AUC]')
+p1_better               = raw.ecc1 > raw.ecc2;
+ecc_solo_better         = [raw.ecc1(p1_better) raw.ecc2(~p1_better)];
+ecc_auc_better          = [auc.ecc1(p1_better) auc.ecc2(~p1_better)];
+
+ecc_solo_worse          = [raw.ecc1(~p1_better) raw.ecc2(p1_better)];
+ecc_auc_worse           = [auc.ecc1(~p1_better) auc.ecc2(p1_better)];
+
+figure; hold on
+ln                     	= line([.8 1],[0.5 0.5]);
+ln.Color              	= [0 0 0];
+ln.LineWidth           	= lw;
+ln.LineStyle           	= ':';
+
+sc = scatter(ecc_solo_better,ecc_auc_better);
+% [r,p] = corrcoef(ecc_solo_better,ecc_auc_better)
+% sc = scatter(ecc_solo_worse,ecc_auc_worse);
+% [r,p] = corrcoef(ecc_solo_worse,ecc_auc_worse)
+
+legend('','better','worse')
+xlabel('Tilt')
+ylabel('Social modulation [AUC]')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
