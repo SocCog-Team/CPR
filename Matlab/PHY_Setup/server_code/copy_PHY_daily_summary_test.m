@@ -73,6 +73,7 @@ var_import  = {
 
 % Import (and H5-convert) data. If H5 exists already, set flag to false
 d           = PHY_import_mwk2(fname, var_import, writeH5_flag, cfg_pth);
+save(['/Users/fschneider/Desktop/data'],'d','-v7.3')
 
 %% Construct data table
 
@@ -97,7 +98,6 @@ idx.trg                     = d.event == 'TRIAL_reactionTrigger';
 idx.eye_x_dva              	= d.event == 'EYE_x_dva';
 idx.eye_y_dva             	= d.event == 'EYE_y_dva';
 idx.reward                  = d.event == 'INFO_Juice_ml';
-rew_str                     = 'ml';
 
 idx.JS2_dir          	= d.event == 'IO_joystickDirection2';
 idx.JS2_str         	= d.event == 'IO_joystickStrength2';
@@ -105,7 +105,7 @@ idx.fixation2       	= d.event == 'IO_fixation2_flag';
 idx.outcome2          	= d.event == 'TRIAL_outcome2';
 idx.eye_x2_dva       	= d.event == 'EYE_x2_dva';
 idx.eye_y2_dva       	= d.event == 'EYE_y2_dva';
-idx.reward2           	= d.event == 'INFO_Score2';
+idx.reward2           	= d.event == 'INFO_Juice2_ml';
 
 % Get trial timestamps
 cyc.cOn                     = d.time(idx.cOn);
@@ -119,7 +119,7 @@ cyc.cEnd                    = d.time(idx.cEnd);
 %     t = tmp.t;
 % else
 fid                         = strsplit(fname,'_');
-t                           = PHY_construct_table(fid{2}, fname, d, cyc, idx, false); % Don't write table through this fuction...
+tbl{1}                     	= PHY_construct_table(fid{2}, fname, d, cyc, idx, false); % Don't write table through this fuction...
 
 if contains(fname,'dyad')
     
@@ -144,14 +144,16 @@ if contains(fname,'dyad')
     idx2.reward           	= idx.reward2;
     
     % Construct data table for subject2
-    t{2}               	= PHY_construct_table(fid{6}(1:3), fname, d, cyc, idx2, false);
+    tbl{2}               	= PHY_construct_table(fid{6}(1:3), fname, d, cyc, idx2, false);
 end
 
 % ...save data table as .mat file here
-save([dest_dir_tbl fname(1:end-5) '_tbl.mat'], 't', '-v7.3')
+save([dest_dir_tbl fname(1:end-5) '_tbl.mat'], 'tbl', '-v7.3')
 % end
 
 %% Analyse behavior
+
+t = tbl{1}; % NHP
 
 %%% Performance [time window analysis]
 nSample                 = 29;
@@ -503,7 +505,7 @@ js_ecc_val                       	= d.value(idx.JS_str);
 for iTarget = 1:length(trg_ts)
     iState                       	= find(trg_ts(iTarget) >= state_on, 1,'last');              % Find target state
     
-    if isempty(iState)
+    if isempty(iState) || iTarget > length(outcome) 
         continue
     end
     
@@ -515,6 +517,15 @@ for iTarget = 1:length(trg_ts)
     t.trg_hit{iState}               = [t.trg_hit{iState} , strcmp(outcome(iTarget), 'hit')];         % Indicate if hit or miss
     
     smple                           = find(d.time(idx.JS_dir) <= trg_ts(iTarget), 1, 'last');  	% Extract last JS sample before target
+    
+    if isempty(smple)
+        continue
+    end
+   
+    if strcmp(class(js_dir_val{smple}), 'int64')
+        continue
+    end
+    
     js_dev                          = rad2deg(circ_dist(deg2rad(js_dir_val{smple}),deg2rad(t.rdp_dir(iState)))); % Get circular distance to RDP direction
     js_acc                       	= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
     

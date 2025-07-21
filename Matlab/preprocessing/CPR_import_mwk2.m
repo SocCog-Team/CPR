@@ -1,6 +1,6 @@
 function d = CPR_import_mwk2(fname, var_lst, write_file, cfg_pth)
 
-% This function imports .mwk2 files into a data structure using the 
+% This function imports .mwk2 files into a data structure using the
 % MW_readFile function developed by Ralf Brockhausen.
 %
 % Input:  	.fname          String or cell containing multiple strings.
@@ -10,8 +10,8 @@ function d = CPR_import_mwk2(fname, var_lst, write_file, cfg_pth)
 %           .write_file     Boolean, Indicates if structure is written to
 %                           .mat file in same directory.
 %
-% Output:   .d              Structure, Data structure containing variable 
-%                           names, time stamps and respective values. 
+% Output:   .d              Structure, Data structure containing variable
+%                           names, time stamps and respective values.
 %
 %
 % Example:	d = CPR_import_mwk2('fname', [], false)
@@ -26,7 +26,7 @@ function d = CPR_import_mwk2(fname, var_lst, write_file, cfg_pth)
 
 %% Check input
 
-addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
+addpath /Users/fschneider/Documents/GitLab/matlab4mworks
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab
 
 if nargin < 4
@@ -47,26 +47,28 @@ if nargin < 2 || isempty(var_lst)
         'IO_joystickDirection', ...
         'IO_joystickStrength',...
         'IO_fixation_flag',...
-        'EYE_x_dva',... 
+        'EYE_x_dva',...
         'EYE_y_dva'};
 end
 
 if nargin < 1 || isempty(fname)
-   error('File name not specified') 
+    error('File name not specified')
 end
 
 %% Import data file
 
 if iscell(fname)                                                            % If multiple files ...
-    if isfile([fname{1}(1:12) '_merged.mat']) && write_file == false   
-        d           = MW_readH5([fname{1}(1:34) '_merged.h5']);
+    if isfile([fname{1}(1:12) '_merged.mat']) && write_file == false
+        %         d           = MW_readH5([fname{1}(1:34) '_merged.h5']);
+        d           = MW_readData(fname, 'include', var_lst, '~typeOutcomeCheck'); % Import .mwk2 file
     else
         d.time      = [];                                                  	% Otherwise, import & merge...
         d.event     = [];
         d.value     = [];
         
         for i = 1:size(fname,2)
-            tmp    	= MW_readFile(fname{i}, 'include', var_lst, '~typeOutcomeCheck','dotPositions');
+            %             tmp    	= MW_readFile(fname{i}, 'include', var_lst, '~typeOutcomeCheck','dotPositions');
+            d     	= MW_readData(fname, 'include', var_lst, '~typeOutcomeCheck'); % Import .mwk2 file
             
             d.time  = [d.time tmp.time];
             d.event = [d.event tmp.event];
@@ -75,15 +77,17 @@ if iscell(fname)                                                            % If
         
         if write_file
             disp('Save struct...')
-            MW_writeH5(d, [fname{1}(1:end-5) 'CPR_merged.h5'], 'replace', 'privateCFG', cfg_pth)  
+            MW_writeH5(d, [fname{1}(1:end-5) 'CPR_merged.h5'], 'replace', 'privateCFG', cfg_pth)
             disp('Done!')
         end
     end
 else
     if isfile([fname(1:end-5) '.h5']) && write_file == false                 % If file available...
-        d       = MW_readH5([fname(1:end-5) '.h5']);                        % ...load .h5 file
+        %         d       = MW_readH5([fname(1:end-5) '.h5']);                        % ...load .h5 file
+        d     	= MW_readData(fname, 'include', var_lst, '~typeOutcomeCheck');
     else
-        d     	= MW_readFile(fname, 'include', var_lst, '~typeOutcomeCheck','dotPositions'); % Import .mwk2 file
+        %         d     	= MW_readFile(fname, 'include', var_lst, '~typeOutcomeCheck','dotPositions'); % Import .mwk2 file
+        d     	= MW_readData(fname, 'include', var_lst, '~typeOutcomeCheck');
         
         if write_file
             disp('Save data structure...')

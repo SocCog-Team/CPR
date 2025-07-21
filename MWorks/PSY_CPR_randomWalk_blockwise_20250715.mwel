@@ -219,13 +219,11 @@ group CTRL {
     var CTRL_arc_flag                       = (bool) false
     var CTRL_arc2_flag                      = (bool) false
     var CTRL_arc2_alpha                     = 0 {
-    	CTRL_indicator2_alpha               = CTRL_arc2_alpha
     }
     var CTRL_arc_size                       = 0
-    var CTRL_arcMask_size                   = 0
     var CTRL_arc2_size                      = 0
-    var CTRL_arcMask2_size                  = 0
     var CTRL_arc_position                   = 0
+    var CTRL_arc_mask_alpha                 = .9
 
 	var CTRL_start_area_size                = 0 
     var CTRL_start_area_alpha               = 0
@@ -259,12 +257,6 @@ group CTRL {
 
     var CTRL_cursor_radius                  = .5
 
-    var CTRL_indicator_size                 = 0
-    var CTRL_indicator_offset               = 0
-    var CTRL_indicator_alpha                = 0
-    var CTRL_indicator2_offset              = 0
-    var CTRL_indicator2_alpha               = 0
-    
     var CTRL_fixationWidth_dva              = 100
     var CTRL_fixation_duration_ms           = 500
     var CTRL_fixationDotSize_dva            = .3
@@ -456,7 +448,6 @@ group AGNT {
     var AGNT_arc_flag                       = 0
     var AGNT_arc_trigger_min                = 0
     var AGNT_arc_trigger_max                = 0 
-    var AGNT_indicator_offset               = 0
     var AGNT_strength                       = 0 {                     
         if (TRIAL_start > TRIAL_end) {
             // Set arc width
@@ -881,14 +872,14 @@ stimulus/advstimulus arc_mask (
     trigger_watch_x                         = 0
     trigger_watch_y                         = 0
     trigger_flag                            = CTRL_arc_flag
-    x_size                                  = (CTRL_arc_size*.9)
-    y_size                                  = (CTRL_arc_size*.9)
+    x_size                                  = (CTRL_arc_size-.5)
+    y_size                                  = (CTRL_arc_size-.5)
     x_position                              = RDP_x
     y_position                              = RDP_y
-    shape                                   = format("circle %d", (integer)IO_arc_width)    
+    shape                                   = format("circle %d", (integer)IO_arc_width-5)    
     color                                   = 0,0,0
-    rotation                                = -IO_joystickDirection + (IO_arc_width/2)
-    alpha_multiplier                        = .5
+    rotation                                = -IO_joystickDirection + ((IO_arc_width-5)/2)
+    alpha_multiplier                        = CTRL_arc_mask_alpha
     version                                 = 1
     autoplay                                = YES
     )
@@ -910,6 +901,24 @@ stimulus/advstimulus arc2 (
     autoplay                                = YES
     )
 
+stimulus/advstimulus arc2_mask(
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = CTRL_arc2_flag
+    x_size                                  = (CTRL_arc2_size-.5)
+    y_size                                  = (CTRL_arc2_size-.5)
+    x_position                              = -RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)IO_arc2_width-5)    
+    color                                   = 0,0,0
+    rotation                                = -IO_joystickDirection2 + ((IO_arc2_width-5)/2)
+    alpha_multiplier                        = CTRL_arc_mask_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+
 stimulus/advstimulus arc_agnt (
     trigger_width                           = 0
     trigger_watch_x                         = 0
@@ -922,7 +931,24 @@ stimulus/advstimulus arc_agnt (
     shape                                   = format("circle %d", (integer)AGNT_arc_width)    
     color                                   = COL_arc2_r,COL_arc2_g,COL_arc2_b
     rotation                                = -AGNT_direction + (AGNT_arc_width/2)
-    alpha_multiplier                        = CTRL_arc2_alpha
+    alpha_multiplier                        = CTRL_arc_alpha
+    version                                 = 1
+    autoplay                                = YES
+    )
+
+stimulus/advstimulus arc_agnt_mask (
+    trigger_width                           = 0
+    trigger_watch_x                         = 0
+    trigger_watch_y                         = 0
+    trigger_flag                            = 0
+    x_size                                  = (CTRL_arc2_size-.5)
+    y_size                                  = (CTRL_arc2_size-.5)
+    x_position                              = RDP_x
+    y_position                              = RDP_y
+    shape                                   = format("circle %d", (integer)AGNT_arc_width-5)    
+    color                                   = 0,0,0
+    rotation                                = -AGNT_direction + ((AGNT_arc_width-5)/2)
+    alpha_multiplier                        = CTRL_arc_mask_alpha
     version                                 = 1
     autoplay                                = YES
     )
@@ -1569,6 +1595,7 @@ protocol 'CPR_solo' {
     CTRL_feedback_ITI_ms                        = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = .1
+    CTRL_arc_mask_alpha                         = .5
     CTRL_arc_size                               = RDP_radius*2
     CTRL_start_area_size                        = 2
     CTRL_start_area_alpha                       = 1
@@ -1863,7 +1890,6 @@ protocol 'CPR_solo' {
                 COL_fix_b                       = 0
                 COL_fix_g                       = 0
                 CTRL_arc_alpha                  = 0
-                CTRL_indicator_alpha            = 0
                 CTRL_fixation_penalty_flag 		= 1
 
                 start_timer (
@@ -1882,8 +1908,7 @@ protocol 'CPR_solo' {
                 COL_fix_r                       = 1
                 COL_fix_b                       = 1
                 COL_fix_g                       = 1
-                CTRL_arc_alpha                  = 1
-                CTRL_indicator_alpha            = 1
+                CTRL_arc_alpha                  = .1
                 CTRL_fixation_break_flag        = false
                 CTRL_fixation_penalty_flag 		= false
 
@@ -2084,6 +2109,7 @@ protocol 'CPR_dyadic_agnt' {
     CTRL_feedback_ITI_ms                        = (1000/120) * 100 // 100 frames - 833ms
     CTRL_cpr_treshold                           = .2
     CTRL_arc_alpha                              = .1
+    CTRL_arc_mask_alpha                         = .5
     CTRL_arc2_alpha                             = .1
     CTRL_arc_size                               = RDP_radius*2
     CTRL_arc2_size                              = RDP_radius*2 
@@ -2327,12 +2353,16 @@ protocol 'CPR_dyadic_agnt' {
                 // Alternative layers
                 if (CTRL_arc_position == 1) {
                     live_queue_stimulus (arc)
+                    live_queue_stimulus (arc_mask)
                     live_queue_stimulus (arc_agnt)
+                    live_queue_stimulus (arc_agnt_mask)
                 }
 
                 if (CTRL_arc_position == 0) {
                     live_queue_stimulus (arc_agnt)
+                    live_queue_stimulus (arc_agnt_mask)
                     live_queue_stimulus (arc)
+                    live_queue_stimulus (arc_mask)
                 }
 
                 live_queue_stimulus (RDP)
@@ -2468,7 +2498,6 @@ protocol 'CPR_dyadic_agnt' {
                 if (IO_fixation_flag == false && CTRL_fixation_break_flag) {
                     report ('FIX BREAK PENALTY A')
                     CTRL_arc_alpha                  = 0
-                    CTRL_indicator_alpha            = 0
                     CTRL_fixation_penalty_flag      = 1
 
                     start_timer (
@@ -2481,7 +2510,6 @@ protocol 'CPR_dyadic_agnt' {
                 if (IO_fixation2_flag == false && CTRL_fixation2_break_flag) {
                     report ('FIX BREAK PENALTY B')
                     CTRL_arc2_alpha                 = 0
-                    CTRL_indicator2_alpha           = 0
                     CTRL_fixation2_penalty_flag     = 1
 
                     start_timer (
@@ -2497,16 +2525,14 @@ protocol 'CPR_dyadic_agnt' {
             state 'Fixation restored' (interruptible = NO) {
                 if (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) {
                     report ('FIX RESTORED A')
-                    CTRL_arc_alpha                  = 1
-                    CTRL_indicator_alpha            = 1
+                    CTRL_arc_alpha                  = .1
                     CTRL_fixation_break_flag        = 0
                     CTRL_fixation_penalty_flag      = 0
                 }
 
                 if (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag) {
                     report ('FIX RESTORED B')
-                    CTRL_arc2_alpha                 = 1
-                    CTRL_indicator2_alpha           = 1
+                    CTRL_arc2_alpha                 = .1
                     CTRL_fixation2_break_flag       = 0
                     CTRL_fixation2_penalty_flag     = 0
                 }
@@ -2815,6 +2841,8 @@ protocol 'CPR_dyadic_agnt' {
                 dequeue_stimulus (start_area)
                 dequeue_stimulus (arc_agnt)
                 dequeue_stimulus (arc)
+                dequeue_stimulus (arc_agnt_mask)
+                dequeue_stimulus (arc_mask)
                 dequeue_stimulus (fixationCross)
                 dequeue_stimulus (fixationCross2)
                 dequeue_stimulus (feedback1)

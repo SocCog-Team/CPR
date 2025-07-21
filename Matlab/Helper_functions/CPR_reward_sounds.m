@@ -89,3 +89,10 @@ end
 
 audiowrite([dest_dir 'noise_R.wav'],[zeros(nsamples,1) nse_r'],fs)
 audiowrite([dest_dir 'noise_L.wav'],[nse_r' zeros(nsamples,1)],fs)
+
+%% Failure sound for each speaker
+
+[Y, FS] = audioread('/Volumes/cnl/Desktop/Felix/sounds/failure2.wav');
+
+audiowrite([dest_dir 'failure2_R.wav'],[zeros(length(Y),1) Y],FS)
+audiowrite([dest_dir 'failure2_L.wav'],[Y zeros(length(Y),1)],FS)

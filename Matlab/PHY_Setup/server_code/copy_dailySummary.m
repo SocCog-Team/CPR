@@ -17,11 +17,12 @@ dest_dir_tbl    ='/Users/fschneider/Desktop/A01/tbl/';
 dest_dir_plot   ='/Users/fschneider/Desktop/A01/png/';
 
 % mwk2_lst = {'20250312_nil_CPRsolo_block1_phy4.mwk2'};
+cd(data_pth)
 mwk2_lst = dir('*.mwk2');
 
 %%
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/PHY_Setup/server_code/
-for iFile = 1:length(mwk2_lst)
+for iFile = 4:length(mwk2_lst)
     disp(['File: ' num2str(iFile) '/' num2str(length(mwk2_lst))])
 %     fname = mwk2_lst{iFile};
     fname = mwk2_lst(iFile).name;

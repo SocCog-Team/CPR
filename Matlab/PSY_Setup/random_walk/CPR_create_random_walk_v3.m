@@ -7,7 +7,7 @@ if nargin < 1
     param.cycle_duration_ms      	= 60000;                                % Duration of random walk
     param.Fs                        = 1000 / 120;                           % Screen sampling rate [ms]
     param.snr_list                  = [.7 .75 .8 .85 .9  .95 .99];          % Stimulus coherence
-    param.feedback_probability    	= 0.0035;                               % Probability of reward
+    param.feedback_probability    	= 0.0035;                                % Probability of reward
     param.min_feedback_interval_ms  = param.Fs * 100;                       % Min interval between reward administration
 end
 
@@ -22,32 +22,23 @@ out.feedback_ts                     = 1;                                        
 out.trial                           = param.trial;                                      % Trial number
 cnt_fb                              = 0;
 
-%%% This requires SNR inputs to match the duration of the cycle %%%
-if (param.coh_duration_ms * length(param.snr_list)) < param.cycle_duration_ms 
-    warning('Coherence parameter do not match the duration of the stimulus cycle')
-end
-
 % Shuffle coherence values (except for first trial)
 if param.trial == 0
     out.RDP_coherence              	= fliplr(param.snr_list);                           % Ordered coherence values
 else
-    % Quick fix to avoid adjacent blocks with similar coherence
-    tmp = [1 1];
-    while sum(diff(tmp) == 0) ~= 0
-        tmp                         = param.snr_list(randperm(length(param.snr_list))); % Shuffled coherence values
-    end
-    out.RDP_coherence               = tmp;
+    out.RDP_coherence            	= param.snr_list(randperm(length(param.snr_list))); % Shuffled coherence values
 end
 
 % Set parameters for random walk
 dt                                  = 1/120;                                % Time step (sec @ 120Hz)
-tau_sec                             = 2;                                    % Time constant for the angular velocity decay
-sigma_rpm                           = .1;                                   % Standard deviation for the random noise in omega
+tau_sec                             = 1;                                  % Time constant for the angular velocity decay
+sigma_rpm                           = .5;                                   % Standard deviation for the random noise in omega
 omega                               = zeros(1, nSamples);                  	% Array to store angular velocities
 angle                               = zeros(1, nSamples);                 	% Array to store angles
 
 % Initial seed
-omega(1)                            = 0;                                    % Initial random angular velocity
+omega(1)                            = 0;                % Initial random angular velocity
+% omega(1)                            = 2 * pi * (rand - 0.5);              % Initial random angular velocity
 angle(1)                            = 2 * pi * rand;                        % Initial random angle between 0 and 2*pi
 
 %%%% NOTES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,7 +49,7 @@ angle(1)                            = 2 * pi * rand;                        % In
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Random walk in polar space
-for i = 2:nSamples%*2 % Double number for safety reasons
+for i = 2:nSamples*2 % Double number for safety reasons
     % Update omega [Revolutions per minute] - Gaussian random noise with standard deviation scaled by sqrt(dt)
     omega(i) = omega(i-1) - (omega(i-1) / tau_sec) * dt + sigma_rpm * randn * sqrt(2*dt/tau_sec);
     
@@ -78,11 +69,6 @@ end
 % Convert to degree
 out.RDP_direction_rad               	= angle;
 out.RDP_direction_deg               	= rad2deg(angle);
-
-% Add timestamps [s]
-dt = param.Fs/1e3;  % 120Hz step size (seconds)
-maxt = param.cycle_duration_ms/1e3;  % ending time (seconds)
-out.time_vector = 0:dt:(maxt-dt);
 
 % close all
 % figure;hold on
