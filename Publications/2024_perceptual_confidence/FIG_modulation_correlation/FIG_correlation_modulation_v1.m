@@ -59,8 +59,7 @@ for iPlot = 1:4
         sc.MarkerFaceAlpha      = .5;
         ax.XLabel.String        = 'Accuracy change [AUC]';
         ax.YLabel.String        = 'Eccentricity change [AUC]';
-        ax.XLim                 = [.3 .6];
-        ax.XTick                = [.3:.1:.6];
+        ax.XLim                 = [.4 .6];
         ax.YLim                 = [0 1];
         
         [r,pv]               	= corrcoef([auc.acc1 auc.acc2],[auc.ecc1 auc.ecc2]);
@@ -85,8 +84,7 @@ for iPlot = 1:4
         sc.MarkerFaceAlpha      = .5;
         ax.YLabel.String        = 'Abs ecc dff [Solo]';
         ax.XLabel.String        = 'Avg. accuracy change [AUC]';
-        ax.XLim                 = [.4 .75];
-        ax.XTick                = [.4:.1:.7];
+        ax.XLim                 = [.4 .6];
         ax.YLim                 = [0 .4];
         
         [r,pv]               	= corrcoef(mean([auc.acc1; auc.acc2]),abs(raw.ecc1 - raw.ecc2));
@@ -129,8 +127,7 @@ for iPlot = 1:4
         ax.YLabel.String        = 'Eccentricity change [AUC]';
         ax.XLabel.String        = 'Accuracy change [AUC]';
         ax.YLim                 = [0 1];
-        ax.XLim                 = [.4 .75];
-        ax.XTick                = [.4:.1:.7];
+        ax.XLim                 = [.4 .8];
         
     elseif iPlot == 4
         %%% HH vs HC modulation comparison
@@ -158,8 +155,7 @@ for iPlot = 1:4
         ax.YLabel.String      	= 'AUC: Eccentricity';
         ax.XLabel.String       	= 'AUC: Accuracy';
         ax.YLim                 = [0 1];
-        ax.XLim                 = [.4 .75];  
-        ax.XTick                = [.4:.1:.7];
+        ax.XLim                 = [.4 .8];    
     end
     
     sc.SizeData             = sc_size;
