@@ -38,6 +38,17 @@ for iSubj = 1:length(sbj_lst)
     solo_mecc(cnt,:)       	= solo_perf{iSubj}.mecc_state;                  % Avg eccentricity (state-aligned)
 end
 
+%% Correlation of average solo accuracy and solo confidence
+
+for iSubj = 1:38
+   solo_accuracy(iSubj) = mean(solo_perf{iSubj}.macc_state);
+   solo_confidence(iSubj) = mean(solo_perf{iSubj}.mecc_state);
+end
+
+% figure
+% scatter(solo_accuracy, solo_confidence);
+[r,p]=corrcoef(solo_accuracy, solo_confidence);
+
 %% PLOT
 
 f                           = figure('units','centimeters','position',[0 0 20 4]);

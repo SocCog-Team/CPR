@@ -173,12 +173,22 @@ print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dpng', '-p
 
 f                       = figure('units','centimeters','position',[0 0 25 10]);hold on
 ax1                     = subplot(1,2,1);
-[ax1]                   = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.ecc1,auc.ecc2);
+[ax1,p1_better_conf]    = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.ecc1,auc.ecc2);
 ax2                     = subplot(1,2,2);
-[ax2]                   = modulation_violin(ax2,raw.acc1,raw.acc2,auc.acc1,auc.acc2);
+[ax2,p1_better_acc]     = modulation_violin(ax2,raw.acc1,raw.acc2,auc.acc1,auc.acc2);
 
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dpng', '-painters');
+
+% CONSISTENT RELATIONSHIP?
+sum((p1_better_acc - p1_better_conf) == 0) / length((p1_better_acc - p1_better_conf))
+
+% %% Sanity check
+% figure
+% ax1                     = subplot(1,2,1);
+% [ax1,p1_better_conf]    = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.acc1,auc.acc2);
+% ax2                     = subplot(1,2,2);
+% [ax2,p1_better_acc]     = modulation_violin(ax2,raw.acc1,raw.acc2,auc.ecc1,auc.ecc2);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% SFIGURE: Scatter dyadic modulation %%%
@@ -474,27 +484,75 @@ print(f, [dest_dir '/FIG_corr_solo_score_' alignment_str], '-r500', '-dpng', '-p
 
 
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% %% Dyadic Reward
+%% Dyadic Reward
 % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% figure
-% s_score             = sum(score.solo,2);
-% d_score             = sum(score.dyad,2);
-% [p,h,z] = signrank(s_score, d_score);
+figure
+s_score             = sum(score.solo,2);
+d_score             = sum(score.dyad,2);
+[p,h,z] = signrank(s_score, d_score);
+
+vl                  = violinplot([s_score, d_score]);
+
+for iDyad = 1:length(s_score)
+    d_greater(iDyad)= s_score(iDyad) < d_score(iDyad);
+    sd_dff(iDyad)   = s_score(iDyad) - d_score(iDyad);
+end
+
+ax = gca;
+ax.FontSize = 24;
+ax.YLabel.String = 'Sum of scores [P1 + P2]';
+ax.XTick = [1 2];
+ax.XTickLabel = {'Solo','Dyadic'};
+ax.Title.String = {['Dyad > Solo: ' num2str((sum(d_greater)/length(d_greater))*100) '%; p<0.001']; ['Mean(Solo-Dyad): ' num2str(mean(sd_dff))]};
+ax.Title.FontSize = ax.FontSize;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% FIGURE: Better player social modulation - for reviewer %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% p1_better               = raw.acc1 > raw.acc2;
+% acc_solo_better         = [raw.acc1(p1_better) raw.acc2(~p1_better)];
+% acc_auc_better          = [auc.acc1(p1_better) auc.acc2(~p1_better)];
 % 
-% vl                  = violinplot([s_score, d_score]);
+% acc_solo_worse          = [raw.acc1(~p1_better) raw.acc2(p1_better)];
+% acc_auc_worse           = [auc.acc1(~p1_better) auc.acc2(p1_better)];
 % 
-% for iDyad = 1:length(s_score)
-%     d_greater(iDyad)= s_score(iDyad) < d_score(iDyad);
-%     sd_dff(iDyad)   = s_score(iDyad) - d_score(iDyad);
-% end
+% figure; hold on
+% ln                     	= line([.8 1],[0.5 0.5]);
+% ln.Color              	= [0 0 0];
+% ln.LineWidth           	= lw;
+% ln.LineStyle           	= ':';
 % 
-% ax = gca;
-% ax.FontSize = 24;
-% ax.YLabel.String = 'Sum of scores [P1 + P2]';
-% ax.XTick = [1 2];
-% ax.XTickLabel = {'Solo','Dyadic'};
-% ax.Title.String = {['Dyad > Solo: ' num2str((sum(d_greater)/length(d_greater))*100) '%; p<0.001']; ['Mean(Solo-Dyad): ' num2str(mean(sd_dff))]};
-% ax.Title.FontSize = ax.FontSize;
+% sc = scatter(acc_solo_better,acc_auc_better);
+% % [r,p] = corrcoef(acc_solo_better,acc_auc_better)
+% sc = scatter(acc_solo_worse,acc_auc_worse);
+% % [r,p] = corrcoef(acc_solo_worse,acc_auc_worse)
+% 
+% legend('','better','worse')
+% xlabel('Accuracy')
+% ylabel('Social modulation [AUC]')
+% 
+p1_better               = raw.ecc1 > raw.ecc2;
+ecc_solo_better         = [raw.ecc1(p1_better) raw.ecc2(~p1_better)];
+ecc_auc_better          = [auc.ecc1(p1_better) auc.ecc2(~p1_better)];
+
+ecc_solo_worse          = [raw.ecc1(~p1_better) raw.ecc2(p1_better)];
+ecc_auc_worse           = [auc.ecc1(~p1_better) auc.ecc2(p1_better)];
+
+figure; hold on
+ln                     	= line([.8 1],[0.5 0.5]);
+ln.Color              	= [0 0 0];
+ln.LineWidth           	= lw;
+ln.LineStyle           	= ':';
+
+sc = scatter(ecc_solo_better,ecc_auc_better);
+% [r,p] = corrcoef(ecc_solo_better,ecc_auc_better)
+% sc = scatter(ecc_solo_worse,ecc_auc_worse);
+% [r,p] = corrcoef(ecc_solo_worse,ecc_auc_worse)
+
+legend('','better','worse')
+xlabel('Tilt')
+ylabel('Social modulation [AUC]')
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Reported stats in paper
@@ -654,7 +712,7 @@ p_avg.LineWidth = 1;
 p_avg.LineStyle = '-';
 end
 
-function [ax] = modulation_violin(ax,raw1,raw2,auc1,auc2)
+function [ax, p1_better] = modulation_violin(ax,raw1,raw2,auc1,auc2)
 
 p1_better = raw1 > raw2;
 better_solo_player = [auc1(p1_better) auc2(~p1_better)];

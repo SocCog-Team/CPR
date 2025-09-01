@@ -60,8 +60,7 @@ STIM                            = CPR_create_random_walk_v3(param);        	% Dr
 % Prepare agent response
 if param.agent_flag == true
     AGNT.dir_sigma          	= 15;                                       % Direction sigma [deg]
-    AGNT.str_sigma            	= .1;                                       % Eccentricity sigma [%]
-    AGNT.str                    = .5;                                       % Eccentricity [norm]
+    AGNT.str_sigma            	= .025;                                       % Eccentricity sigma [%]
     AGNT.lag                  	= 50;                                       % Delay to reference point [samples]
     AGNT.win                 	= 50;                                       % Smoothing window size [samples]
     AGNT.smooth_kernel        	= 'gaussian';                               % Smoothing kernel [samples]

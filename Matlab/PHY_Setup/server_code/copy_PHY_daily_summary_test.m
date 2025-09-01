@@ -70,9 +70,10 @@ var_import  = {
     'EYE_x_dva',...
     'EYE_y_dva',...
     '#stimDisplay'};
-  
+
 % Import (and H5-convert) data. If H5 exists already, set flag to false
 d           = PHY_import_mwk2(fname, var_import, writeH5_flag, cfg_pth);
+save(['/Users/fschneider/Desktop/data'],'d','-v7.3')
 
 %% Construct data table
 
@@ -97,8 +98,15 @@ idx.trg                     = d.event == 'TRIAL_reactionTrigger';
 idx.eye_x_dva              	= d.event == 'EYE_x_dva';
 idx.eye_y_dva             	= d.event == 'EYE_y_dva';
 idx.reward                  = d.event == 'INFO_Juice_ml';
-rew_str                     = 'ml';
-    
+
+idx.JS2_dir          	= d.event == 'IO_joystickDirection2';
+idx.JS2_str         	= d.event == 'IO_joystickStrength2';
+idx.fixation2       	= d.event == 'IO_fixation2_flag';
+idx.outcome2          	= d.event == 'TRIAL_outcome2';
+idx.eye_x2_dva       	= d.event == 'EYE_x2_dva';
+idx.eye_y2_dva       	= d.event == 'EYE_y2_dva';
+idx.reward2           	= d.event == 'INFO_Juice2_ml';
+
 % Get trial timestamps
 cyc.cOn                     = d.time(idx.cOn);
 cyc.cEnd                    = d.time(idx.cEnd);
@@ -110,14 +118,42 @@ cyc.cEnd                    = d.time(idx.cEnd);
 %     tmp = load([dest_dir_tbl fname(1:end-5) '_tbl.mat']);
 %     t = tmp.t;
 % else
-    fid                         = strsplit(fname,'_');
-    t                           = PHY_construct_table(fid{2}, fname, d, cyc, idx, false); % Don't write table through this fuction...
+fid                         = strsplit(fname,'_');
+tbl{1}                     	= PHY_construct_table(fid{2}, fname, d, cyc, idx, false); % Don't write table through this fuction...
+
+if contains(fname,'dyad')
     
-    % ...save data table as .mat file here
-    save([dest_dir_tbl fname(1:end-5) '_tbl.mat'], 't', '-v7.3')
+    % Define fields that index variables of subject 2
+    fields = {'JS2_dir',...
+        'JS2_str',...
+        'outcome2',...
+        'fixation2',...
+        'eye_x2_dva',...
+        'eye_y2_dva',...
+        'reward2'};
+    
+    % Create new structure. Use subj1 fieldnames but fill with subj2
+    % variable index. Necessary to construct similar table for both subjects.
+    idx2                    = rmfield(idx,fields);
+    idx2.JS_dir          	= idx.JS2_dir;
+    idx2.JS_str         	= idx.JS2_str;
+    idx2.outcome          	= idx.outcome2 ;
+    idx2.fixation       	= idx.fixation2;
+    idx2.eye_x_dva       	= idx.eye_x2_dva;
+    idx2.eye_y_dva       	= idx.eye_y2_dva;
+    idx2.reward           	= idx.reward2;
+    
+    % Construct data table for subject2
+    tbl{2}               	= PHY_construct_table(fid{6}(1:3), fname, d, cyc, idx2, false);
+end
+
+% ...save data table as .mat file here
+save([dest_dir_tbl fname(1:end-5) '_tbl.mat'], 'tbl', '-v7.3')
 % end
 
 %% Analyse behavior
+
+t = tbl{1}; % NHP
 
 %%% Performance [time window analysis]
 nSample                 = 29;
@@ -134,7 +170,7 @@ cyc_boundary        	= [0; find(diff(t.cyc_no) ~= 0)];
 
 %% Plot data
 lw                      = 2;
-fsz                     = 12;       
+fsz                     = 12;
 colmn                   = linspace(.1,.8,4);
 height                  = [.77 .5 .23];
 dim                     = [.15 .2];
@@ -142,7 +178,7 @@ dim                     = [.15 .2];
 % Initialise figure
 f                       = figure('units','centimeters','position',[0 0 40 30]);
 
-% PERFORMANCE: HIT RATE 
+% PERFORMANCE: HIT RATE
 ax0                  	= axes('Position', [colmn(1) height(1) dim]); hold on
 b                       = bar([solo_perf.hir;1-solo_perf.hir]','stacked');
 b(1).FaceColor          = [.5 .5 .5]; % Hit
@@ -154,7 +190,7 @@ ax0.XLabel.String    	= 'Performance';
 ax0.YLabel.String    	= 'Avg. correlation coefficient';
 ax0.FontSize         	= fsz;
 
-% PERFORMANCE: Fluid/Score 
+% PERFORMANCE: Fluid/Score
 ax1                  	= axes('Position', [colmn(2) height(1) dim]); hold on
 [dat,cond]              = transformData(solo_perf.trg_score);
 col                     = cool(length(solo_perf.carr));
@@ -222,13 +258,13 @@ fixbreak_ratio        	= sum(strcmp(outcome, 'FixationBreak')) / length(cyc.cOn)
 
 % Text displaying general information of training session
 string_info = {['nCycles [#]: ' num2str(length(cyc.cOn))], ...
-               ['nTargets [#]: ' num2str(length(solo_perf.trg_all_outc))], ...
-               ['hir [%]: ' num2str(solo_perf.hir_pool)], ...
-               ['juice [ml]: ' num2str(reward_cumulative{end})],...
-               ['fixBreak [%]: ' num2str(fixbreak_ratio)]};
+    ['nTargets [#]: ' num2str(length(solo_perf.trg_all_outc))], ...
+    ['hir [%]: ' num2str(solo_perf.hir_pool)], ...
+    ['juice [ml]: ' num2str(reward_cumulative{end})],...
+    ['fixBreak [%]: ' num2str(fixbreak_ratio)]};
 
 annotation('textbox', [0.35, 0.3, 0.2, 0.1], 'String', string_info, ...
-           'FitBoxToText', 'on', 'EdgeColor', 'none', 'HorizontalAlignment', 'left', 'FontSize',16);
+    'FitBoxToText', 'on', 'EdgeColor', 'none', 'HorizontalAlignment', 'left', 'FontSize',16);
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Anahita - please add the functionality below %%%
@@ -469,25 +505,34 @@ js_ecc_val                       	= d.value(idx.JS_str);
 for iTarget = 1:length(trg_ts)
     iState                       	= find(trg_ts(iTarget) >= state_on, 1,'last');              % Find target state
     
-    if isempty(iState)
+    if isempty(iState) || iTarget > length(outcome) 
         continue
     end
     
     t.trg_shown(iState)             = true;                                                     % Indicate target state
     t.trg_ts{iState}                = [t.trg_ts{iState} trg_ts(iTarget)];                       % Extract target timestamp
     
-%     tmp_outcome                     = outcome(find(outcome_ts >= trg_ts(iTarget),1,'first'));    % Extract target outcome
-%     t.trg_hit{iState}               = [t.trg_hit{iState} , strcmp(tmp_outcome, 'hit')];         % Indicate if hit or miss
+    %     tmp_outcome                     = outcome(find(outcome_ts >= trg_ts(iTarget),1,'first'));    % Extract target outcome
+    %     t.trg_hit{iState}               = [t.trg_hit{iState} , strcmp(tmp_outcome, 'hit')];         % Indicate if hit or miss
     t.trg_hit{iState}               = [t.trg_hit{iState} , strcmp(outcome(iTarget), 'hit')];         % Indicate if hit or miss
     
     smple                           = find(d.time(idx.JS_dir) <= trg_ts(iTarget), 1, 'last');  	% Extract last JS sample before target
+    
+    if isempty(smple)
+        continue
+    end
+   
+    if strcmp(class(js_dir_val{smple}), 'int64')
+        continue
+    end
+    
     js_dev                          = rad2deg(circ_dist(deg2rad(js_dir_val{smple}),deg2rad(t.rdp_dir(iState)))); % Get circular distance to RDP direction
     js_acc                       	= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
     
     t.trg_acc{iState}               = [t.trg_acc{iState} js_acc];                               % Add accuracy to vector
     t.trg_ecc{iState}               = [t.trg_ecc{iState} js_ecc_val{smple}];                    % Add eccentricity to vector
     
-%     if strcmp(tmp_outcome, 'hit')
+    %     if strcmp(tmp_outcome, 'hit')
     if strcmp(outcome(iTarget), 'hit')
         rew_idx                     = find(rew_ts > trg_ts(iTarget),1,'first');                 % Get reward score
         last_score                  = rew_score{rew_idx-1};
@@ -495,7 +540,7 @@ for iTarget = 1:length(trg_ts)
         if iTarget == 1
             t.trg_score{iState}    	= [t.trg_score{iState} rew_score{rew_idx}-0];               % Add score to vector
         else
-            t.trg_score{iState}   	= [t.trg_score{iState} rew_score{rew_idx}-rew_score{rew_idx-1}]; 
+            t.trg_score{iState}   	= [t.trg_score{iState} rew_score{rew_idx}-rew_score{rew_idx-1}];
         end
         
     else
@@ -534,7 +579,7 @@ end
 function out = sum_duration_fix_breaks(in_val, in_ts, duration, last_sample)
 break_dur                   = [];
 
-if ~isempty(in_val)    
+if ~isempty(in_val)
     % Add duration of all fixation breaks
     for iBreak = find(cell2mat(in_val) == 0)
         if iBreak == length(in_val)
@@ -544,7 +589,7 @@ if ~isempty(in_val)
         end
         
         break_dur = [break_dur (break_stop - in_ts(iBreak))/1e3];               % Duration of fixation breaks
-    end   
+    end
 end
 
 % Add fixation flag [boolean]
@@ -622,7 +667,7 @@ for iTrl = 1:size(in.frme_ts,2)
         js_dff(iSample)     	= rad2deg(circ_dist(deg2rad(in.js_dir{iTrl}(iSample)),deg2rad(in.js_dir{iTrl}(iSample+1))));
         rdp_dff(iSample)     	= rad2deg(circ_dist(deg2rad(in.rdp_dir{iTrl}(iSample)),deg2rad(in.rdp_dir{iTrl}(iSample+1))));
     end
- 
+    
     js_dff                      = [0 js_dff];
     rdp_dff                     = [0 rdp_dff];
     
@@ -635,13 +680,13 @@ for iTrl = 1:size(in.frme_ts,2)
     cindx                       = diff(in.rdp_coh{iTrl}) ~=0;
     cid                         = in.rdp_coh{iTrl}([true cindx]);
     cts                         = in.frme_ts{iTrl}([true cindx]);
-            
+    
     if length(cid) > 3 || sum(rdp_dff) == 0
         continue
     end
-        
+    
     for iCoh = 1:size(cts,2)
-                
+        
         % Build coherence index
         if iCoh < size(cts,2)
             cIdx                = in.frme_ts{iTrl} >= cts(iCoh) & in.frme_ts{iTrl} < cts(iCoh+1);
@@ -664,7 +709,7 @@ for iTrl = 1:size(in.frme_ts,2)
         
         fs(count)               = rfr{iTrl};
         lg(count)             	= (find(sxc(count,nLag:end) == max(sxc(count,nLag:end))) * fs(count)) / 1e3; % Calculate lag using sample rate
-
+        
         try
             auPk(count,:)     	= trapz(sxc(count,posPk(count)-10:posPk(count)+10));                        % Area under cross-correlation peak
         catch
@@ -674,7 +719,7 @@ for iTrl = 1:size(in.frme_ts,2)
         if plotFlag
             % Plot trial-wise cross-correlation
             ps              	= plot(sxc(count,nLag:end),'Color',[.5 .5 .5 .1], 'Marker','none', 'LineWidth',2);
-        else 
+        else
             ps                  = [];
         end
     end
@@ -744,7 +789,7 @@ tmp_frame1_ts             	= cellfun(@(x) x(1), in.frme_ts(logical(in.trg_shown)
 
 for j = 1:length(trg_n)
     tmp_trg_all_coh{j}   	= repmat(trg_coh(j),1,trg_n(j));
-    tmp_trg_ts_state{j} 	= (tmp_trg_ts{j} - tmp_frame1_ts(j)) ./ 1e3;  
+    tmp_trg_ts_state{j} 	= (tmp_trg_ts{j} - tmp_frame1_ts(j)) ./ 1e3;
 end
 out.trg_all_coh            	= cell2mat(tmp_trg_all_coh);
 out.trg_ts_state            = cell2mat(tmp_trg_ts_state);
@@ -771,7 +816,7 @@ for iCoh = 1:length(snr)
     % Joystick displacement
     out.mecc_state(iCoh)  	= nanmedian(cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx)));
     out.ecc_state{iCoh}   	= cellfun(@(x) nanmedian(x(end-nSample:end)), in.js_ecc(cIdx));
-   
+    
     % Joystick accuracy [state-wise]
     tmp_js_dir_state        = in.js_dir(cIdx);
     tmp_rdp_dir_state       = in.rdp_dir(cIdx);
@@ -866,14 +911,14 @@ box off
 end
 
 function [dat, cond]= transformData(in)
-    dat = []; cond = [];
-    
-    for iCoh = 1:length(in)
-        if size(in{iCoh},1) == 1
-            dat            	= [dat; in{iCoh}'];
-        else
-            dat          	= [dat; in{iCoh}];
-        end
-        cond             	= [cond; repmat(iCoh,length(in{iCoh}),1)];
+dat = []; cond = [];
+
+for iCoh = 1:length(in)
+    if size(in{iCoh},1) == 1
+        dat            	= [dat; in{iCoh}'];
+    else
+        dat          	= [dat; in{iCoh}];
     end
+    cond             	= [cond; repmat(iCoh,length(in{iCoh}),1)];
+end
 end

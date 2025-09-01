@@ -124,8 +124,8 @@ end
 
 %%% State wise average, all states, witgh subj, regr. slope for n=38
 ylim([.5 1])
-xlabel('Confidence [a.u.]')
-ylabel('Accuracy [a.u.]')
+xlabel('Confidence')
+ylabel('Accuracy')
 set(gca, 'fontsize',16)
 
 dest_dir            = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/raw/';
@@ -156,17 +156,41 @@ print(f, [dest_dir '/avg_timeline_pop'], '-r500', '-dpng');
 
 f               = figure('units','centimeters','position',[0 0 10 5]);
 ln              = line([0 8],[0 0], 'Color', 'k','LineStyle', ':', 'LineWidth', 1.5);
-win             = 100;
+win             = 200;
 
 for iSubj = 1:length(sbj_lst)
     for iCoh = 1:length(snr_lst)
         dat                 = squeeze(avg_acc(iSubj,iCoh,:));
         p                   = polyfit(1:win, dat(end-(win-1):end), 1);
-        slope(iSubj,iCoh)   = p(1);
+        slope_acc(iSubj,iCoh) = p(1);
     end
 end
+% coherence averaged
+mean(mean(slope_acc,2))
+[P,H, stats] = signrank(mean(slope_acc,2))
+% Per coherence level
+mean(slope_acc,1)
+for iCoh = 1:length(snr_lst)
+    [P_acc(iCoh),H_acc(iCoh), stats_acc(iCoh)] = signrank(slope_acc(:,iCoh));
+end
+   
+for iSubj = 1:length(sbj_lst)
+    for iCoh = 1:length(snr_lst)
+        dat                 = squeeze(avg_ecc(iSubj,iCoh,:));
+        p                   = polyfit(1:win, dat(end-(win-1):end), 1);
+        slope_ecc(iSubj,iCoh) = p(1);
+    end
+end
+% coherence averaged
+mean(mean(slope_ecc,2))
+[P,H, stats] = signrank(mean(slope_ecc,2));
+% Per coherence level
+mean(slope_ecc,1)
+for iCoh = 1:length(snr_lst)
+    [P_ecc(iCoh),H_ecc(iCoh), stats_ecc(iCoh)] = signrank(slope_ecc(:,iCoh));
+end
 
-vl              = violinplot(slope);
+vl              = violinplot(slope_ecc);
 vl              = improveViolin(vl,cool(length(snr_lst)));
 ax              = gca;
 ax.XTickLabel   = {round(snr_lst,2)};

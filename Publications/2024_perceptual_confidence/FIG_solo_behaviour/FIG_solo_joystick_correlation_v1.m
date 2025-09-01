@@ -33,13 +33,12 @@ for iSubj = 1:length(sbj_lst)
             joystick_acc = abs(1 - abs(js_dir_error) / 180);
             acc_detrend = joystick_acc - nanmean(joystick_acc);
             
-            
             state_coh(cnt) = frme_vec{iState}.nominal_coh;
             
             [xc_acc_vec(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
             [xc_ecc_vec(cnt,:) lags] = xcorr(acc_detrend(n_ofs:end),v_smooth_detrend(n_ofs:end),nLag,'normalized');
             [xc_ecc_acc(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end),acc_detrend(n_ofs:end),nLag,'normalized');
-            [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
+%             [xc_control(cnt,:) lags] = xcorr(ecc_detrend(n_ofs:end-nshift+n_ofs),ecc_detrend(nshift:end),nLag,'normalized');
         end
     end
     
@@ -55,7 +54,7 @@ for iSubj = 1:length(sbj_lst)
         avg_xc_acc_vec(iSubj,iCoh,:) = nanmean(xc_acc_vec(cidx' & nanidx,:));
         avg_xc_ecc_vec(iSubj,iCoh,:) = nanmean(xc_ecc_vec(cidx' & nanidx,:));
         avg_xc_ecc_acc(iSubj,iCoh,:) = nanmean(xc_ecc_acc(cidx' & nanidx,:));
-        avg_xc_control(iSubj,iCoh,:) = nanmean(xc_control(cidx' & nanidx,:));
+%         avg_xc_control(iSubj,iCoh,:) = nanmean(xc_c ontrol(cidx' & nanidx,:));
         
         clear tmp_corr
         tmp_corr = xc_ecc_acc(cidx' & nanidx,:);
@@ -85,8 +84,22 @@ col                 = cool(length(snr_lst));
 ln = line([nLag nLag],[-1 1], 'Color', 'k','LineStyle', ':', 'LineWidth', 1);
 
 for iCoh = 1:length(snr_lst)
-    [ax, pl] = xc_plot_averages(ax,squeeze(dat(:,iCoh,:)),col(iCoh,:));
+    cmat = []; cmat = squeeze(dat(:,iCoh,:));
+    [ax, pl] = xc_plot_averages(ax,cmat,col(iCoh,:));
+
+    max_pos = cmat == max(cmat,[],2);
+    
+    for iSubj = 1:size(max_pos,1)
+        xc_lag(iSubj,iCoh) = find(max_pos(iSubj,:))-nLag;  
+    end  
 end
+
+avg_xc_peak = mean(xc_lag,1) * (1000/120);
+mean(mean(xc_lag,2)) * (1000/120)
+for iCoh = 1:size(xc_lag,2)
+    [P_xc(iCoh),H_xc(iCoh), stats_xc(iCoh)] = signrank(xc_lag(:,iCoh));
+end
+P_xc < (.05/7) & avg_xc_peak > 0
 
 ax.XLabel.String = 'Lag [ms]';
 ax.YLabel.String = 'XCorr coef';

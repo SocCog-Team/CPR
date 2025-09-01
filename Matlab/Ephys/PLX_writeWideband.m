@@ -6,6 +6,7 @@ pl2_files = dir(fullfile('/Volumes/T7_Shield/plexon/Data_Nilan', '*.pl2'));
 
 %%% File-Loop %%%
 for iFile = 1:length(pl2_files)
+    disp(['Processing: ' pl2_files(iFile).name])
     [pl2]                       = PL2GetFileIndex([pl2_files(iFile).folder '/' pl2_files(iFile).name]);
     wideband_data               = struct();
     exp_info                    = split(pl2_files(iFile).name,'_');
@@ -20,7 +21,7 @@ for iFile = 1:length(pl2_files)
         
         % Only include enabled channels
         if pl2.AnalogChannels{iChan}.Enabled
-            disp(['Process Channel: ' pl2.AnalogChannels{iChan}.Name])
+            disp(['Processing Channel: ' pl2.AnalogChannels{iChan}.Name])
             
             % Import analog data
             [ad]                = PL2Ad([pl2_files(iFile).folder '/' pl2_files(iFile).name], pl2.AnalogChannels{iChan}.Name);
@@ -46,11 +47,13 @@ for iFile = 1:length(pl2_files)
             
             % Save raw signal in structure for each channel
             raw                 = [];
-            raw.name            = [exp_info{1} '_' exp_info{2} '_' exp_info{6} '_' exp_info{4} '_ch' num2str(pad(iChan, 2, 'left', '0')) '_wb'];
+            raw.fname           = [exp_info{1} '_' exp_info{2} '_' exp_info{6} '_' exp_info{4} '_ch' pad(num2str(iChan), 2, 'left', '0') '_wb'];
             raw.Fs              = ad.ADFreq;
-            raw.ad_raw          = ad.Values;
+            raw.ad_raw_mv       = ad.Values;
+            raw.gain_rec        = pl2.AnalogChannels{iChan}.TotalGain;
+            raw.conv_coeff_mv   = pl2.AnalogChannels{iChan}.CoeffToConvertToUnits;
             
-            save([dest_dir '/' raw.name '.mat'], 'raw', '-v7.3');
+            save([dest_dir '/' raw.fname '.mat'], 'raw', '-v7.3');
         end
     end
 end
