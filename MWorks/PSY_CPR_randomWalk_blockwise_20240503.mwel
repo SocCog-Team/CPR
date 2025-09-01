@@ -444,8 +444,8 @@ group COL {
     var COL_arc2_g                          = 0
     var COL_arc2_b                          = 0    
     var COL_target_r                        = 1
-    var COL_target_g                        = 1
-    var COL_target_b                        = 1
+    var COL_target_g                        = .84
+    var COL_target_b                        = 0
     var COL_feedback_r                      = 0
     var COL_feedback_g                      = 0
     var COL_feedback_b                      = 0

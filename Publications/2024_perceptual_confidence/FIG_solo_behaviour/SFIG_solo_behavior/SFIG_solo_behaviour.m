@@ -10,7 +10,7 @@ clear all
 %%% Session ID %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/solo_correlation.mat')
 
 pth             = '/Volumes/T7_Shield/CPR_psychophysics/';      % Local hard drive
 cnt             = 0;
@@ -108,9 +108,8 @@ set(icons,'MarkerSize',30);
 
 axis equal
 axis tight
-
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1x', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1x', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/sessionID', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/sessionID', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%  Subject-wise score over time %%%
@@ -120,10 +119,10 @@ x = readtable([pth 'Subjects_summary.xlsx']); % Spreadsheet
 sbj_lst = x.Abbreviation; % Subject ID list
 sbj_lst(cellfun(@isempty,sbj_lst)) = [];
 [trg_score, exp, dte]   = getFinalScore(local_pth, sbj_lst);
-dest_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/';
+dest_dir = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/';
 save([dest_dir 'subject_scores.mat'], 'trg_score', 'exp', 'dte', '-v7.3');
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/subject_scores.mat')
-
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/subject_scores.mat')
+%%
 f                      	= figure('units','centimeters','position',[0 0 7 7]); hold on
 alph                    = .3;
 
@@ -165,14 +164,14 @@ ax3.YLim                = [50 275];
 axis square
 axis tight
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1c', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1c', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/score/', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/score/', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Response lag %%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-load('/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/var_plot/solo_correlation.mat')
+load('/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/var_plot/solo_correlation.mat')
 
 f                      	= figure('units','centimeters','position',[0 0 18 18]); hold on
 dim                     = [.1 .175];
@@ -232,8 +231,8 @@ for iSubj = 1:length(solo_cr)
    end
 end
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1l', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1l', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/lag/', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/lag/', '-r500', '-dsvg', '-painters');
 
 
 f               = figure('units','centimeters','position',[0 0 3 3]);
@@ -247,7 +246,7 @@ cl              = linspace(0,.99,256)';
 axis off
 colormap(gray(256))
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1_col_bar', '-r500', '-dsvg', '-painters');
+print(f,'/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/col_bar/', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Extract subject-wise RT data %%%
@@ -305,8 +304,8 @@ ax0.YLabel.String       = 'Reaction time [ms]';
 ax0.XLabel.String       = 'Subjects';
 ax0.FontSize            = lb_fs;
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1a', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1a', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/RT/', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/RT/', '-r500', '-dsvg', '-painters');
 
 f                      	= figure('units','centimeters','position',[0 0 5 5]);
 vec                     = 0:30:360;
@@ -329,8 +328,8 @@ ax1                     = gca;
 ax1.RLim                = [0 400];
 ax1.FontSize            = lb_fs;
 
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1b', '-r500', '-dpng');
-print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2023_perceptual_confidence/FIG1/SFIG1/SFIG1b', '-r500', '-dsvg', '-painters');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/mRT/', '-r500', '-dpng');
+print(f, '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptual_confidence/FIG_solo_behaviour/SFIG_solo_behavior/raw/mRT/', '-r500', '-dsvg', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% Functions
