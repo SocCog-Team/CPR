@@ -3,7 +3,7 @@ cd /Volumes/T7_Shield/plexon/Data_Nilan
 
 % Compile list of all data files
 pl2_files = dir(fullfile('/Volumes/T7_Shield/plexon/Data_Nilan', '*.pl2'));
-
+pl2_files = pl2_files(end)
 %%% File-Loop %%%
 for iFile = 1:length(pl2_files)
     disp(['Processing: ' pl2_files(iFile).name])
@@ -18,7 +18,7 @@ for iFile = 1:length(pl2_files)
     
     %%% Channel-Loop %%%
     for iChan = 1:64
-        
+
         % Only include enabled channels
         if pl2.AnalogChannels{iChan}.Enabled
             disp(['Processing Channel: ' pl2.AnalogChannels{iChan}.Name])
@@ -42,7 +42,7 @@ for iFile = 1:length(pl2_files)
                     ts          = t0 + (0:n_samples-1) / ad.ADFreq;
                     timestamps  = [timestamps, ts];
                 end
-                save([dest_dir '/timestamps.mat'], 'timestamps', '-v7.3');
+                save(['/Volumes/T7_Shield/plexon/Data_Nilan/' dest_dir '/timestamps.mat'], 'timestamps', '-v7.3');
             end
             
             % Save raw signal in structure for each channel
@@ -53,7 +53,7 @@ for iFile = 1:length(pl2_files)
             raw.gain_rec        = pl2.AnalogChannels{iChan}.TotalGain;
             raw.conv_coeff_mv   = pl2.AnalogChannels{iChan}.CoeffToConvertToUnits;
             
-            save([dest_dir '/' raw.fname '.mat'], 'raw', '-v7.3');
+            save(['/Volumes/T7_Shield/plexon/Data_Nilan/' dest_dir '/' raw.fname '.mat'], 'raw', '-v7.3');
         end
     end
 end
