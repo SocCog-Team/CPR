@@ -673,22 +673,24 @@ wav_file Failure_sound ('./sounds/failure2.wav')
 wav_file FixBreak_sound ('./sounds/fixbreak.wav')
 wav_file Reward_sound ('./sounds/reward.wav')
 wav_file End_sound ('./sounds/Defeat Bowser.wav')
-wav_file Reward1R_sound ('./sounds/1R.wav')
+wav_file Reward1R_sound ('./sounds/1R_nse.wav')
 wav_file Reward1L_sound ('./sounds/1L.wav')
-wav_file Reward2R_sound ('./sounds/2R.wav')
+wav_file Reward2R_sound ('./sounds/2R_nse.wav')
 wav_file Reward2L_sound ('./sounds/2L.wav')
-wav_file Reward3R_sound ('./sounds/3R.wav')
+wav_file Reward3R_sound ('./sounds/3R_nse.wav')
 wav_file Reward3L_sound ('./sounds/3L.wav')
-wav_file Reward4R_sound ('./sounds/4R.wav')
+wav_file Reward4R_sound ('./sounds/4R_nse.wav')
 wav_file Reward4L_sound ('./sounds/4L.wav')
-wav_file Reward5R_sound ('./sounds/5R.wav')
+wav_file Reward5R_sound ('./sounds/5R_nse.wav')
 wav_file Reward5L_sound ('./sounds/5L.wav')
-wav_file Reward6R_sound ('./sounds/6R.wav')
+wav_file Reward6R_sound ('./sounds/6R_nse.wav')
 wav_file Reward6L_sound ('./sounds/6L.wav')
-wav_file Reward7R_sound ('./sounds/7R.wav')
+wav_file Reward7R_sound ('./sounds/7R_nse.wav')
 wav_file Reward7L_sound ('./sounds/7L.wav')
-wav_file Reward8R_sound ('./sounds/8R.wav')
+wav_file Reward8R_sound ('./sounds/8R_nse.wav')
 wav_file Reward8L_sound ('./sounds/8L.wav')
+wav_file Failure_R_sound ('./sounds/failure2_R.wav')
+wav_file Failure_L_sound ('./sounds/failure2_L.wav')
 
 //
 // Stimuli
@@ -1391,8 +1393,8 @@ protocol 'RF_Mapping' {
     INFO_task                               = "RF_mapping"
     INFO_date                               = "fill_me"
     INFO_block                              = "fill_me"
-    INFO_setup                              = "fill_me"
-    INFO_subject                            = "fill_me"
+    INFO_setup                              = "phy4"
+    INFO_subject                            = "nil"
 
     CTRL_reward_ml                          = .2
     CTRL_NoStimuli                          = 1800 //10x * 9y * 20reps/pos
@@ -1410,7 +1412,8 @@ protocol 'RF_Mapping' {
 
     TRIAL_start                             = 0
     TRIAL_end                               = 0
-    
+    INFO_Juice_ml                           = 0
+     
     INFO_StateCounter                       = 0
     INFO_HitCounter                         = 0
     INFO_ErrorCounter                       = 0
@@ -2425,42 +2428,42 @@ protocol 'CPR_solo' {
                 // Auditory feedback
                 // PRESENT BOTH SPEAKERS - SETUP INDEPENDENT
                 if (IO_joystickStrength > .875) {
-                    play_sound (Reward8R_sound)
+                    //play_sound (Reward8R_sound)
                     play_sound (Reward8L_sound)
                 }
 
                 if (IO_joystickStrength > .75 && IO_joystickStrength <= .875) {
-                    play_sound (Reward7R_sound)
+                    //play_sound (Reward7R_sound)
                     play_sound (Reward7L_sound)
                 }
 
                 if (IO_joystickStrength > .625 && IO_joystickStrength <= .75) {
-                    play_sound (Reward6R_sound)
+                    //play_sound (Reward6R_sound)
                     play_sound (Reward6L_sound)
                 }
 
                 if (IO_joystickStrength > .5 && IO_joystickStrength <= .625) {
-                    play_sound (Reward5R_sound)
+                    //play_sound (Reward5R_sound)
                     play_sound (Reward5L_sound)
                 }
 
                 if (IO_joystickStrength > .375 && IO_joystickStrength <= .5) {
-                    play_sound (Reward4R_sound)
+                    //play_sound (Reward4R_sound)
                     play_sound (Reward4L_sound)
                 }
 
                 if (IO_joystickStrength > .25 && IO_joystickStrength <= .375) {
-                    play_sound (Reward3R_sound)
+                    //play_sound (Reward3R_sound)
                     play_sound (Reward3L_sound)
                 }
 
                 if (IO_joystickStrength > .125 && IO_joystickStrength <= .25) {
-                    play_sound (Reward2R_sound)
+                    //play_sound (Reward2R_sound)
                     play_sound (Reward2L_sound)
                 }
 
                 if (IO_joystickStrength <= .125) {
-                    play_sound (Reward1R_sound)
+                    //play_sound (Reward1R_sound)
                     play_sound (Reward1L_sound)
                 }
 
@@ -2472,7 +2475,7 @@ protocol 'CPR_solo' {
             }
     
             state 'Miss' {
-                play_sound (Failure_sound)
+                play_sound (Failure_L_sound)
 
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
@@ -3235,6 +3238,8 @@ protocol 'CPR_dyadic' {
                 CTRL_reward2_target_ml          = 0
                 INFO_Juice2_ml                  += CTRL_reward2_target_ml
                 INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                
+                play_sound (Failure_R_sound)
 
                 //Visual feedback
                 live_queue_stimulus (fixationCross)
@@ -3254,6 +3259,8 @@ protocol 'CPR_dyadic' {
                 CTRL_reward_target_ml           = 0
                 INFO_Juice_ml                  += CTRL_reward_target_ml
                 INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                
+                play_sound (Failure_L_sound)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
@@ -3311,7 +3318,8 @@ protocol 'CPR_dyadic' {
             }
             
             state 'DoubleMiss' {
-                //play_sound (Failure_sound)
+                play_sound (Failure_L_sound)
+                play_sound (Failure_R_sound)
 
                 // Set flags
                 TRIAL_outcome                   = "miss"
@@ -4083,6 +4091,8 @@ protocol 'CPR_dyatic_computer' {
                 INFO_Juice2_ml                  += CTRL_reward2_target_ml
                 INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
 
+                play_sound (Failure_R_sound)
+
                 //Visual feedback
                 live_queue_stimulus (fixationCross)
                 update_stimulus_display ()
@@ -4101,6 +4111,8 @@ protocol 'CPR_dyatic_computer' {
                 CTRL_reward_target_ml           = 0
                 INFO_Juice_ml                  += CTRL_reward_target_ml
                 INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                
+                play_sound (Failure_L_sound)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
@@ -4157,7 +4169,8 @@ protocol 'CPR_dyatic_computer' {
             }
             
             state 'DoubleMiss' {
-                //play_sound (Failure_sound)
+                play_sound (Failure_L_sound)
+                play_sound (Failure_R_sound)
 
                 // Set flags
                 TRIAL_outcome                   = "miss"
