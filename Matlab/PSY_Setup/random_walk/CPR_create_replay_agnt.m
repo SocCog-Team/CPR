@@ -7,6 +7,10 @@ iCyc = cycIdx + 1;
 % Import frame-wise behavior from solo session
 load(solo_summary_file)
 
+if iCyc > length(out.raw.js_dir)
+    iCyc = 1;
+end
+
 % Initialise variables
 n = 7250; % Length/cycle (1min 7200 samples + 50 buffer for safety)
 replay.rdp_dir = nan([n 1]);
