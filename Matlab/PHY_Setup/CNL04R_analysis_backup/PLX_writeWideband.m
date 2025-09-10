@@ -1,9 +1,19 @@
+% This script writes wideband electrophysiology data from raw Plexon files.
+% It requires 
+%   .PL2 Plexon data file
+%   .PlexonMatlabOfflineFilesSDK library
+%
+% Felix Schneider, CNL
+%
+% Version history
+%   1.0     (fxs 2025-09-05) Initial version.
+
 addpath('/Users/cnl/Desktop/CPR/PlexonMatlabOfflineFilesSDK/');
 cd /Users/cnl/Documents/DATA/Nilan/pl2/
 
 % Compile list of all data files
 pl2_files = dir(fullfile('/Users/cnl/Documents/DATA/Nilan/pl2/', '*.pl2'));
-pl2_files = pl2_files(end)
+pl2_files = pl2_files(end) % tmp fix - add option to process specific file here
 
 cd /Users/cnl/Documents/DATA/Nilan/spike_sorting/
 

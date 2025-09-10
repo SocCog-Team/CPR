@@ -1,6 +1,17 @@
 function [gain, raw_minmax, clipping_cnt] = PLX_check_for_clipping(source_dir, pl2_name, dest_dir)
+% This function checks if the raw, wideband Plexon data clipped.
+% It requires 
+%   .PL2 Plexon data file
+%   .PlexonMatlabOfflineFilesSDK library
+%
+% If clipping is detected, remove affected channels in further processing 
+% or skip recording
+%
+% Felix Schneider, CNL
+%
+% Version history
+%   1.0     (fxs 2025-09-05) Initial version.
 
-% addpath('/Users/fschneider/Documents/MATLAB/PlexonMatlabOfflineFilesSDK/');
 addpath('/Users/cnl/Desktop/CPR/PlexonMatlabOfflineFilesSDK/')
 pl2                         = PL2GetFileIndex([source_dir pl2_name]);
 

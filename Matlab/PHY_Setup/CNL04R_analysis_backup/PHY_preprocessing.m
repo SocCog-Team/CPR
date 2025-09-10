@@ -2,7 +2,10 @@ function [out] = PHY_preprocessing(fname,source_dir,dest_dir,cfg_pth,import_flag
 %
 % This function calculates and visualises reaction times
 %
-% Input:        .d              Structure, Contains raw MWorks data
+% Input:        .fname          String, File name
+%               .source_dir     String, Path to dara souce directory
+%               .dest_dir       String, Path to file destination directory
+%               .cfg_pth        String, Path to configuration .cfg file
 %               .import_flag    Logical, Indicates if imported from .mwk2
 % Output:       .out            Structure, Contains information about
 %                               experiment, stimulus, and neural response
@@ -54,12 +57,14 @@ end
 %% Sync MWorks and Plexon files
 
 if isfile([dest_dir 'syncParam_' fname '.mat'])
-    load([dest_dir '/syncParam_' fname]) % Load synchronisation parameter
+    load([dest_dir '/syncParam_' fname]) % Load synchronisation parameters
 else
     [sync_gain, sync_offset] = MW_getSyncParam(mkw2Filename, pl2Filename,'precision',4000, 'syncVarName','IO_syncWord');
     save([dest_dir '/syncParam_' fname],'sync_gain','sync_offset','-v7.3')
 end
 
+sync_gain = (sync_gain);
+sync_offset = double(sync_offset);
 %% Process data
 
 % Initialise variables
@@ -90,8 +95,8 @@ idx.task                    = d.event == 'INFO_task';
 rew_str                     = 'ml';
 
 % Get trial timestamps
-cyc.cOn                     = int64(d.time(idx.cOn));
-cyc.cEnd                    = int64(d.time(idx.cEnd));
+cyc.cOn                     = double(d.time(idx.cOn));
+cyc.cEnd                    = double(d.time(idx.cEnd));
 ccnt                        = 0;
 
 % Experiment information
@@ -128,11 +133,15 @@ for iCyc = 1:length(cyc.cEnd)
         cyc.rdp_dir{ccnt}       = cell2mat(d.value(cycIdx & idx.RDP_dir));
         cyc.rdp_coh{ccnt}       = cell2mat(d.value(cycIdx & idx.RDP_coh));
 
-        cyc.rdp_dir_ts{ccnt}    = int64(d.time(cycIdx & idx.RDP_dir));
-        cyc.rdp_coh_ts{ccnt}    = int64(d.time(cycIdx & idx.RDP_coh));
+        cyc.rdp_dir_ts{ccnt}    = double(d.time(cycIdx & idx.RDP_dir));
+        cyc.rdp_coh_ts{ccnt}    = double(d.time(cycIdx & idx.RDP_coh));
+
+        cyc.js_dir{ccnt}        = cell2mat(d.value(cycIdx & idx.JS_dir));
+        cyc.js_tlt{ccnt}        = cell2mat(d.value(cycIdx & idx.JS_str));
+        cyc.js_ts{ccnt}         = double(d.time(cycIdx & idx.JS_str));
 
         tmp_trg_val             = cell2mat(d.value(cycIdx & idx.trg_on));
-        tmp_trg_ts              = int64(d.time(cycIdx & idx.trg_on));
+        tmp_trg_ts              = double(d.time(cycIdx & idx.trg_on));
         cyc.feedback_ts{ccnt}   = tmp_trg_ts(tmp_trg_val==1);
         cyc.outcome{ccnt}       = d.value(cycIdx & idx.outcome);
         cyc.reward_ind{ccnt}    = cell2mat(d.value(cycIdx & idx.pump));
@@ -144,7 +153,7 @@ end
 %% Import spiking data
 spk_files               = dir([dest_dir 'dataspikes*.mat']); % Get all spike files
 
-for iChan = 1:2%length(spk_files)
+for iChan = 1%length(spk_files)
     clear spks units
     disp(['Processing : '  spk_files(iChan).name])
     chan_info           = split(spk_files(iChan).name,'_');
@@ -155,12 +164,13 @@ for iChan = 1:2%length(spk_files)
 
     % Correkt timestamps
     spks(:,1)           = cluster_class(:,1); % ID
-    spks(:,2)           = int64((cluster_class(:,2).*1e3) .* sync_gain) + sync_offset; % timestamp
-    spks                = int64(spks);
+    spks(:,2)           = double((cluster_class(:,2).*1e3) .* sync_gain) + sync_offset; % timestamp
+    spks                = double(spks);
 
     %%% RF analysis %%%
+    %%% 200ms after trial onset without stimulus! %%%
     clear RF
-    [brain.RF.(chan_str).nSpikes, brain.RF.stim_id, brain.RF.stim_pos, brain.RF.trl_num] = RF_mapping(d,idx,spks);
+    [brain.RF.(chan_str).nSpikes, brain.RF.stim_id, brain.RF.stim_pos, brain.RF.trl_num,brain.RF.raw.(chan_str)] = RF_mapping(d,idx,spks);
 
     %%% CPR analysis %%%
     units               = unique(spks(:,1));
@@ -202,7 +212,7 @@ end
 %% HELPER FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function [nSpikes, stim_id, stim_pos, trl_num] = RF_mapping(d,idx,spks)
+function [nSpikes, stim_id, stim_pos, trl_num,raw] = RF_mapping(d,idx,spks)
 
 idx.task                    = d.event == 'INFO_task';
 idx.tStart                  = d.event == 'TRIAL_start';
@@ -237,6 +247,9 @@ for iTrl = 1:length(trl.start)
     % Trial index
     trlIdx                      = [];
     trlIdx                      = d.time >= trl.start(iTrl) & d.time <= trl.end(iTrl);
+    spks_trlIdx                 = spks(:,2) >= trl.start(iTrl) & spks(:,2) <= trl.end(iTrl);
+    raw.spks_id{iTrl}           = spks(spks_trlIdx,1);
+    raw.spks_ts{iTrl}           = spks(spks_trlIdx,2) - double(trl.start(iTrl));
 
     % Trial outcome
     outcome                     = getTrialData(d.value, trlIdx, idx.outcome);
@@ -267,7 +280,6 @@ for iTrl = 1:length(trl.start)
         sIdx                    = [];
         %%% last stim missing %%%
         sIdx                    = spks(:,2) >= rdp_time(iStim-1)+win_offset(1) & spks(:,2) <= rdp_time(iStim)+win_offset(2);
-
         % Stimulus position
         pos                     = split(ttype{iStim-1},'_');
         rdp_x                   = str2num(pos{1}(2:end));
