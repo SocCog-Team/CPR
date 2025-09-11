@@ -152,7 +152,7 @@ group CTRL {
     var CTRL_nTarget                        = 0
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
-    var CTRL_snr_list                       = [.36,.59,.98,.36,.59,.98]
+    var CTRL_snr_list                       = [0,.36,.59,.98,0,.36,.59,.98]
     var CTRL_directionChange_list           = [45,90,135,180]
     var CTRL_ITI_ms                         = 0
     var CTRL_cpr_treshold                   = 0
@@ -417,7 +417,6 @@ group IO {
     var IO_joystickY2_raw_max               = 1023
     var IO_joystickY2_raw_min               = 0
     var IO_joystickTrigger2                 = false
-    var IO_syncWord                         = 0
     var IO_sync_16bit                       = 0
 
     var IO_spikes                           = (float)(0.0)
@@ -1459,7 +1458,6 @@ protocol 'RF_Mapping' {
                     omniplex            = Omniplex
                     )
 
-                TRIAL_align             = 1
                 TRIAL_reactionTrigger_ts = now()
                 RDP_alpha               = 0
                 INFO_task               = "RF_mapping"
@@ -1512,9 +1510,20 @@ protocol 'RF_Mapping' {
                 RDP_radius              = RDP_radius
                 TRIAL_type              = format("X%d_Y%d", (integer)RDP_x, (integer)RDP_y)
 
+                TRIAL_align             = 1 // Trial align event
                 RDP_alpha               = 1
                 CTRL_RDP_flag           = 1
 
+/*
+               schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+               {
+                    TRIAL_align                 = 1 // Trial align event
+                }   */
+                
                 start_timer (
                     timer               = RDP_Timer
                     duration            = CTRL_RDP_ms
@@ -1820,7 +1829,19 @@ protocol 'RF_Tuning' {
                 RDP_alpha               = 1
                 TRIAL_type              = format("Dir%d", (integer)RDP_direction)
                 CTRL_RDP_flag           = 1
+                TRIAL_align             = 1 // Trial align event
 
+/*
+               schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+               {
+                    TRIAL_align                 = 1 // Trial align event
+                }   */
+                
+                
                 start_timer (
                     timer               = RDP_Timer
                     duration            = CTRL_RDP_ms
@@ -2228,14 +2249,18 @@ protocol 'CPR_solo' {
 
                 update_stimulus_display ()   
 
+                TRIAL_align                 = 1 // Trial align event
+
+/*
                schedule (
                     delay                       = next_frame() - now()
                     duration                    = 0
                     repeats                     = 0
                     )
-                {
+               {
                     TRIAL_align                 = 1 // Trial align event
-                }
+                }   */
+                
 
                 goto ('Reset Flags')
             }
@@ -3465,6 +3490,7 @@ protocol 'CPR_dyatic_computer' {
         live_queue_stimulus (Background)
         update_stimulus_display ()
         
+
         wait (
             duration = 1.0
             duration_units = s
@@ -3733,6 +3759,16 @@ protocol 'CPR_dyatic_computer' {
 
                 live_queue_stimulus (fixationCross)
                 update_stimulus_display ()   
+                TRIAL_align                 = 1 // Trial align event
+
+           /*    schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+                {
+                    TRIAL_align                 = 1 // Trial align event
+                } */
 
                 goto ('Reset Flags')
             }
