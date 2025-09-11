@@ -7,6 +7,10 @@ iCyc = cycIdx + 1;
 % Import frame-wise behavior from solo session
 load(solo_summary_file)
 
+if iCyc > length(out.raw.js_dir)
+    iCyc = 1;
+end
+
 % Initialise variables
 n = 7250; % Length/cycle (1min 7200 samples + 50 buffer for safety)
 replay.rdp_dir = nan([n 1]);
@@ -34,6 +38,11 @@ replay.js_tlt(:,1) = replace_nan_zero(replay.js_tlt);
 % Feedback timestamps
 replay.feedback_ts = out.raw.trg_smple{iCyc};
 replay.feedback_ts(replay.feedback_ts > 7200) = 7150;
+
+% Add 3 missing targets manually here to show 300 targets in total
+if iCyc == 2
+    replay.feedback_ts = [replay.feedback_ts 1000 2000 5000]; 
+end
 replay.feedback_ts = sort(replay.feedback_ts);
 
 % tmp_coh = [];
@@ -47,10 +56,18 @@ replay.feedback_ts = sort(replay.feedback_ts);
 % Export to respective format. Overwrite prior stimulus params
 STIM.RDP_direction_deg  = replay.rdp_dir;
 STIM.RDP_direction_rad  = deg2rad(replay.rdp_dir);
-STIM.RDP_coherence      = replay.coherence_lst;
-STIM.feedback_ts        = replay.feedback_ts;
+STIM.RDP_coherence      = [replay.coherence_lst 999e3]; % last entry to avoid MWorks list index error
+STIM.feedback_ts        = [replay.feedback_ts 999e3]; % last entry to avoid MWorks list index error
 AGNT.dir_smooth         = replay.js_dir;
 AGNT.str_smooth         = replay.js_tlt;
+
+% close all
+% figure
+% plot(replay.rdp_dir)
+% hold on
+% plot(replay.js_dir)
+% figure
+% plot(replay.js_tlt)
 
 end
 

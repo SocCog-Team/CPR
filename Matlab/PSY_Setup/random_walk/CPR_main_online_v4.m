@@ -61,9 +61,8 @@ STIM                            = CPR_create_random_walk_v3(param);        	% Dr
 
 % Prepare agent response
 if param.agent_flag == true
-    if replay_flag == true
-        solo_summary_file           = '/Users/fschneider/Desktop/pilot_tab/20250812_fih_psy4.mat'; % better player
-%         solo_summary_file           = '/Users/fschneider/Desktop/pilot_tab/20250812_fih_psy3.mat'; % worse player
+    if param.replay_flag == true
+        solo_summary_file           = '/Users/cnl/Desktop/Felix/online/random_walk/replay_data/20250812_fih_psy4.mat'; % better player
         [STIM, AGNT]             	= CPR_create_replay_agnt(solo_summary_file, STIM, param.trial);
     else
         AGNT.dir_sigma          	= 15;                                       % Direction sigma [deg]
