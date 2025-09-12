@@ -26,7 +26,7 @@ setup = 'PSY4';
 if strcmp(setup, 'MAC40656')
     pth = '/Users/fschneider/Desktop/';
     addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/PSY_Setup/random_walk
-    addpath /Users/fschneider/ownCloud/Shared/MWorks_MatLab
+    addpath /Users/fschneider/Documents/GitLab/matlab4mworks/code_maybe_needed
     addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
 else
     pth = '/Volumes/CPR/';
