@@ -604,7 +604,7 @@ stimulus/r_d_p RDP (
     speed                                   = RDP_speed
     coherence                               = RDP_coherence
     lifetime                                = RDP_lifetime
-    announce_dots                           = YES
+    announce_dots                           = NO
     autoplay                                = YES
     )
 
@@ -1799,7 +1799,7 @@ protocol 'CPR_solo' {
     INFO_subject                                = "fill_me"
     
     CTRL_reward_cycle_ml                        = .2 // Post-cycle reward
-    CTRL_reward_target_max_ml                   = .5 // Max reward volume
+    CTRL_reward_target_max_ml                   = .75 // Max reward volume
     CTRL_reward_target_min_ml                   = .05 // Min reward volume
     CTRL_reward_power                           = 1 // Exponential scaling
 
@@ -1808,7 +1808,7 @@ protocol 'CPR_solo' {
     CTRL_NoCoherenceStates                      = 5 
     CTRL_state_min_ms                           = 1250 
     CTRL_state_max_ms                           = 2500
-    CTRL_nTarget                                = 299 // 99 = 1%
+    CTRL_nTarget                                = 249 // 99 = 1%
     CTRL_cpr_treshold                           = .2 // Initial threshold to start cycle
     
     CTRL_arc_alpha                              = 1
