@@ -2721,7 +2721,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
     CTRL_reward_target_min_ml                   = .05 // Min reward volume
     CTRL_reward_power                           = 1 // Exponential scaling
 
-    CTRL_NoTargets                              = 500
+    CTRL_NoTargets                              = 1000000
     CTRL_NoStates                               = 15
     CTRL_NoCoherenceStates                      = 5 
     CTRL_state_min_ms                           = 1500 
