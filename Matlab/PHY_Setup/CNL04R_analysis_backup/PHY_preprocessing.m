@@ -59,17 +59,19 @@ end
 if isfile([dest_dir 'syncParam_' fname '.mat'])
     load([dest_dir '/syncParam_' fname]) % Load synchronisation parameters
 else
-    [sync_gain, sync_offset] = MW_getSyncParam(mkw2Filename, pl2Filename,'precision',4000, 'syncVarName','IO_syncWord');
+    % [sync_gain, sync_offset] = MW_getSyncParam(mkw2Filename, pl2Filename,'precision',4000, 'syncVarName','IO_syncWord');
+    [sync_gain, sync_offset] = MW_getSyncParam(mkw2Filename, pl2Filename,'precision',4000, 'syncVarName','IO_sync_16bit');
     save([dest_dir '/syncParam_' fname],'sync_gain','sync_offset','-v7.3')
 end
 
-sync_gain = (sync_gain);
+sync_gain = double(sync_gain);
 sync_offset = double(sync_offset);
+
 %% Process data
 
 % Initialise variables
 idx                         = [];
-cyc                         = [];
+stim                         = [];
 
 % Create variable-specific indices
 idx.cOn                     = d.event == 'TRIAL_start';
@@ -82,6 +84,8 @@ idx.RDP_dot                	= d.event == 'STIM_RDP_dotPositions';
 idx.trg_on                  = d.event == 'STIM_target_onset';
 idx.JS_dir                  = d.event == 'IO_joystickDirection';
 idx.JS_str                  = d.event == 'IO_joystickStrength';
+idx.JS2_dir                 = d.event == 'IO_joystickDirection2';
+idx.JS2_str                 = d.event == 'IO_joystickStrength2';
 idx.fixation              	= d.event == 'IO_fixation_flag';
 idx.ttype                   = d.event == 'TRIAL_type';
 idx.outcome                 = d.event == 'TRIAL_outcome';
@@ -92,11 +96,10 @@ idx.reward                  = d.event == 'INFO_Juice_ml';
 idx.pump                    = d.event == 'IO_rewardA_ml';
 idx.score                   = d.event == 'INFO_score';
 idx.task                    = d.event == 'INFO_task';
-rew_str                     = 'ml';
 
 % Get trial timestamps
-cyc.cOn                     = double(d.time(idx.cOn));
-cyc.cEnd                    = double(d.time(idx.cEnd));
+stim.cOn                    = double(d.time(idx.cOn));
+stim.cEnd                   = double(d.time(idx.cEnd));
 ccnt                        = 0;
 
 % Experiment information
@@ -109,51 +112,56 @@ exp.rec_num = exp_info{6};
 exp.experimenter = exp_info{7};
 
 % Stimulus cycle information
-for iCyc = 1:length(cyc.cEnd)
+for iCyc = 1:length(stim.cEnd)
     disp(['Processing Cycle: '  num2str(iCyc)])
 
     % Trial index
     cycIdx                  = [];
-    cycIdx                  = d.time >= cyc.cOn(iCyc) & d.time <= cyc.cEnd(iCyc);
-    task_str{iCyc}        	= d.value(cycIdx & idx.task);
+    cycIdx                  = d.time >= stim.cOn(iCyc) & d.time <= stim.cEnd(iCyc);
+    stim.task{iCyc}        	= d.value(cycIdx & idx.task);
 
-    if isempty(task_str)
+    if isempty(stim.task)
         continue
     end
 
-    if strcmp(task_str{iCyc}, 'CPR_solo_stepfunction_neutral')
+    if contains(stim.task{iCyc}, 'CPR')
         % Cycle counter
         ccnt                    = ccnt+1;
 
         % Stimulus cycle parameters
         x_pos                   = cell2mat(d.value(cycIdx & d.event == 'STIM_RDP_posX'));
         y_pos                   = cell2mat(d.value(cycIdx & d.event == 'STIM_RDP_posY'));
-        cyc.rdp_center_xy{ccnt} = [x_pos y_pos];
+        stim.rdp_center_xy{ccnt} = [x_pos y_pos];
 
-        cyc.rdp_dir{ccnt}       = cell2mat(d.value(cycIdx & idx.RDP_dir));
-        cyc.rdp_coh{ccnt}       = cell2mat(d.value(cycIdx & idx.RDP_coh));
+        stim.rdp_dir{ccnt}      = cell2mat(d.value(cycIdx & idx.RDP_dir));
+        stim.rdp_coh{ccnt}      = cell2mat(d.value(cycIdx & idx.RDP_coh));
 
-        cyc.rdp_dir_ts{ccnt}    = double(d.time(cycIdx & idx.RDP_dir));
-        cyc.rdp_coh_ts{ccnt}    = double(d.time(cycIdx & idx.RDP_coh));
-
-        cyc.js_dir{ccnt}        = cell2mat(d.value(cycIdx & idx.JS_dir));
-        cyc.js_tlt{ccnt}        = cell2mat(d.value(cycIdx & idx.JS_str));
-        cyc.js_ts{ccnt}         = double(d.time(cycIdx & idx.JS_str));
+        stim.rdp_dir_ts{ccnt}   = double(d.time(cycIdx & idx.RDP_dir));
+        stim.rdp_coh_ts{ccnt}   = double(d.time(cycIdx & idx.RDP_coh));
 
         tmp_trg_val             = cell2mat(d.value(cycIdx & idx.trg_on));
         tmp_trg_ts              = double(d.time(cycIdx & idx.trg_on));
-        cyc.feedback_ts{ccnt}   = tmp_trg_ts(tmp_trg_val==1);
-        cyc.outcome{ccnt}       = d.value(cycIdx & idx.outcome);
-        cyc.reward_ind{ccnt}    = cell2mat(d.value(cycIdx & idx.pump));
-        cyc.reward_cum{ccnt}    = cell2mat(d.value(cycIdx & idx.reward));
-        cyc.score_cum{ccnt}     = cell2mat(d.value(cycIdx & idx.score));
+        stim.feedback_ts{ccnt}  = tmp_trg_ts(tmp_trg_val==1);
+        stim.outcome{ccnt}      = d.value(cycIdx & idx.outcome);
+        stim.reward_ind{ccnt}   = cell2mat(d.value(cycIdx & idx.pump));
+        stim.reward_cum{ccnt}   = cell2mat(d.value(cycIdx & idx.reward));
+        stim.score_cum{ccnt}    = cell2mat(d.value(cycIdx & idx.score));
+
+        % Joystick responses to stimulus
+        joy.js_monk_dir{ccnt}   = cell2mat(d.value(cycIdx & idx.JS_dir));
+        joy.js_monk_tlt{ccnt}   = cell2mat(d.value(cycIdx & idx.JS_str));
+        joy.js_monk_ts{ccnt}    = double(d.time(cycIdx & idx.JS_str));
+
+        joy.js_hum_dir{ccnt}    = cell2mat(d.value(cycIdx & idx.JS2_dir));
+        joy.js_hum_tlt{ccnt}    = cell2mat(d.value(cycIdx & idx.JS2_str));
+        joy.js_hum_ts{ccnt}     = double(d.time(cycIdx & idx.JS2_str));
     end
 end
 
 %% Import spiking data
-spk_files               = dir([dest_dir 'dataspikes*.mat']); % Get all spike files
+spk_files               = dir([dest_dir 'dataspikes*negthr.mat']); % Get all spike files
 
-for iChan = 1%length(spk_files)
+for iChan = 1:length(spk_files)
     clear spks units
     disp(['Processing : '  spk_files(iChan).name])
     chan_info           = split(spk_files(iChan).name,'_');
@@ -173,6 +181,7 @@ for iChan = 1%length(spk_files)
     [brain.RF.(chan_str).nSpikes, brain.RF.stim_id, brain.RF.stim_pos, brain.RF.trl_num,brain.RF.raw.(chan_str)] = RF_mapping(d,idx,spks);
 
     %%% CPR analysis %%%
+    %%% 300ms pre-trial fixation, then trial start with RDP onset
     units               = unique(spks(:,1));
 
     for iUnit = 1:length(units)
@@ -180,30 +189,59 @@ for iChan = 1%length(spk_files)
         unit_str        = ['unit' num2str(units(iUnit))];
 
         ccnt            = 0; % Reset cycle counter
-        for iCyc = 1:length(cyc.cEnd)
-            if strcmp(task_str{iCyc}, 'CPR_solo_stepfunction_neutral')
-                ccnt            = ccnt+1; % stimulus cycle count
+        for iCyc = 1:length(stim.cEnd)
+            if contains(stim.task{iCyc}, 'CPR')
+                ccnt                    = ccnt+1; % stimulus cycle count
 
                 % Cycle-wise spiking for each cluster
-                cyc.cpr_cyle(ccnt,:) = [cyc.cOn(iCyc) cyc.cEnd(iCyc)];
-                offset          = 300e3; 
-                unitIdx         = spks(:,1) == units(iUnit); 
-                blIdx           = spks(:,2) >= cyc.cOn(iCyc)-offset & spks(:,2) < cyc.cOn(iCyc);
-                cycleIdx        = spks(:,2) >= cyc.cOn(iCyc) & spks(:,2) <= cyc.cEnd(iCyc);
-                brain.CPR.spks.cyc.(chan_str).(unit_str){ccnt} = spks(unitIdx & cycleIdx,2);
-                brain.CPR.spks.bl.(chan_str).(unit_str){ccnt} = spks(unitIdx & blIdx,2);
-
-                % Other signals - add later
-                brain.CPR.lfp   = [];
-                brain.CPR.muae  = [];
+                stim.cpr_cyle(ccnt,:)   = [stim.cOn(iCyc) stim.cEnd(iCyc)]; % CPR start/end timestamps
+                offset                  = 300e3; % offset before stimulus onset
+                unitIdx                 = spks(:,1) == units(iUnit); % spike cluster ID
+                cycleIdx                = spks(:,2) >= stim.cOn(iCyc)-offset & spks(:,2) <= stim.cEnd(iCyc); % cycle index
+                brain.CPR.spks.(chan_str).(unit_str){ccnt} = spks(unitIdx & cycleIdx,2) - stim.cOn(iCyc); % corrected for cycle onset
             end
         end
     end
 end
 
+%% Import MUAe here %%%
+%%% this seems buggy, doublecheck sample selection and onset responses 
+
+% filt_files                  = dir([dest_dir 'datafilt2*.mat']); % Get all spike files
+% disp('Load timestamps'); load('timestamps.mat')
+% ts                          = ((timestamps.*1e6) .* sync_gain) + sync_offset;
+% 
+% for iChan = 1:length(filt_files)
+%     chan_info           = split(filt_files(iChan).name,'_');
+%     chan_str            = chan_info{2}(1:end-4);
+% 
+%     load(filt_files(iChan).name)
+%     disp(['Calculate MUAe : '  filt_files(iChan).name])
+%     fs          = 40e3;
+%     lp_cut      = 200;
+%     rect        = abs(data');
+%     [bl,al]     = butter(4, min(lp_cut, fs/2*0.9)/(fs/2), 'low');
+%     env         = filtfilt(bl,al,double(rect));
+% 
+%     disp(['Save MUAe cycles: '  filt_files(iChan).name])
+%     ccnt        = 0;
+%     offset      = 300e3; % pre-fix 300ms
+% 
+%     for iCyc = 1:length(cyc.cEnd)
+%         if contains(cyc.task{iCyc}, 'CPR')
+%             ccnt                    = ccnt+1; % stimulus cycle count
+%             cyc.cpr_cyle(ccnt,:)    = [cyc.cOn(iCyc) cyc.cEnd(iCyc)];
+%             cycleIdx                = ts >= cyc.cOn(iCyc)-offset & ts <= cyc.cEnd(iCyc);
+%             brain.CPR.muae.(chan_str){ccnt} = downsample(env(cycleIdx),40); 
+%             brain.CPR.muae_ts{ccnt} = downsample(ts(cycleIdx),40);
+%         end
+%     end
+% end
+
 %% Format output
 out.exp         = exp;      % Experimental information
-out.cyc         = cyc;      % Stimulus cycle information
+out.stim        = stim;     % Stimulus cycle information
+out.joy         = joy;      % Joystick responses
 out.brain       = brain;    % Neural data
 
 end
@@ -267,7 +305,7 @@ for iTrl = 1:length(trl.start)
         nStim                   = length(ttype);
     end
 
-    % Baseline spiking
+    % Baseline spiking - First 200ms after trial start - no stimulus
     blIdx                     	= [];
     blIdx                       = spks(:,2) >= trl.start(iTrl) & spks(:,2) <= rdp_time(1);
     bl_spike_id                 = spks(blIdx,1);
