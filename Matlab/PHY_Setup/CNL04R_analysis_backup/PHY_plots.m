@@ -7,7 +7,7 @@ load('/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250903_rec050/summary_2025
 tstep               = .001;
 time                = [0:tstep:1];
 figure;hold on
-[all, sdf]          = FR_estimation(phy.brain.RF.raw.ch012_neg.spks_ts, time, true);
+[all, sdf]          = FR_estimation(phy.brain.RF.raw.ch002_neg.spks_ts, time, true);
 
 figure
 plot(mean(sdf))
@@ -16,15 +16,16 @@ plot(mean(sdf))
 plot_RF_map(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch012_neg.nSpikes)
 
 %% RF raster
-plot_RF_raster(phy.brain.RF.raw.ch012_neg.spks_ts,185);
+plot_RF_raster(phy.brain.RF.raw.ch012_neg.spks_ts,100);
 
 %% CPR tuning
 close all
 
-str_chan            = 'ch015_neg';
+str_chan            = 'ch009_neg';
 str_unit            = 'unit2';
-FR                  = state.spk_n.([str_chan '_' str_unit]) ./ state.dur_s;
-stim_dir            = deg2rad(state.rdp_dir);
+incl                = state.include.([str_chan '_' str_unit]);
+FR                  = state.spk_n.([str_chan '_' str_unit])(incl) ./ state.dur_s(incl);
+stim_dir            = deg2rad(state.rdp_dir(incl));
 stim_dir(FR==0)     = [];
 FR(FR==0)           = [];
 
@@ -49,17 +50,22 @@ end
 lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3)},'UniformOutput',false));
 
 %% CPR cycle onset raster.
+
+str_chan            = 'ch009_neg';
+str_unit            = 'unit2';
 cpr_spk_times       = [];
-for iCyc = 1:length(phy.cyc.cpr_cyle)
-    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc} - phy.cyc.cpr_cyle(iCyc,1));% ./1e6;
+for iCyc = 1:length(phy.stim.cpr_cyle)
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});% ./1e6;
     cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
 end
-%%
+
+cycidx = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
+
 f                   = figure;
 ax                  = subplot(3,3,1:6); hold on
 tstep               = .001;
 time                = [0:tstep:1];
-[all, sdf]          = FR_estimation(cpr_spk_times, time, true);
+[all, sdf]          = FR_estimation(cpr_spk_times(cycidx), time, true);
 ax.XLim             = [0 1];
 % ax.XLabel.String    = 'time [s]';
 ax.YLabel.String    = 'CPR cycle [#]';
@@ -80,17 +86,17 @@ ax.FontSize         = 16;
 %% CPR spike - joystick correlation
 addpath /Users/cnl/Desktop/CPR/CircStat2012a
 
-str_chan            = 'ch001_neg';
+str_chan            = 'ch012_neg';
 str_unit            = 'unit2';
 snr                 = unique(state.rdp_coh);
 stim_coh            = state.rdp_coh;
 snr(snr==0)         = [];
 col                 = cool(3);
 FR                  = state.spk_n.([str_chan '_' str_unit]) ./ state.dur_s;
-tlt                 = cellfun(@mean,state.js_tlt);
+tlt                 = cellfun(@mean,state.js_monk_tlt);
 
 for iState = 1:length(state.dur_s)
-    js_dev              = rad2deg(circ_dist(deg2rad(state.js_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
+    js_dev              = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
     state.js_acc{iState}= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
 end
 acc                 = cellfun(@mean,state.js_acc);

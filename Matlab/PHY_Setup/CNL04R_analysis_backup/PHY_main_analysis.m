@@ -19,16 +19,16 @@
 % ---> Check if trial numbers are sufficient after cleanup
 % (5) Outsource plotting routines
 
-clear all
-close all
+% clear all
+% close all
 addpath /Users/cnl/Desktop/CPR/code
 
 cfg_pth         = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
 source_dir      = '/Users/cnl/Documents/DATA/Nilan/';
 % dest_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250807_rec045/'; % Onset transients before 0?
 % fname           = '20250807_nil_CPR_block1_phy4_rec045_ann';
-dest_dir       = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250903_rec050/';
-fname           = '20250903_nil_CPR_block1_phy4_rec050_ann';
+dest_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250925_rec060_block1/';
+fname           = '20250925_nil_CPR_block1_phy4_rec060_fxs';
 import_flag     = false;
 
 % Import stimulus parameters and neural responses for stimulus cycles
@@ -49,34 +49,41 @@ save([dest_dir '/state_responses_' fname '.mat'], 'state', '-v7.3')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 function state = PHY_sort_spikes_by_state(in)
 clear state
-state_cnt = 0;
-cyc = in.cyc;
+state_cnt       = 0;
+stim            = in.stim;
+joy             = in.joy;
 
-for iCyc = 1:length(in.cyc.rdp_dir)
-    for iState = 2:length(cyc.rdp_dir{iCyc}) % discard last direction from previous cycle
+for iCyc = 1:length(stim.rdp_dir)
+    for iState = 2:length(stim.rdp_dir{iCyc}) % discard last direction from previous cycle
         state_cnt                   = state_cnt+1;
 
         % Stimulus
-        state.rdp_dir(state_cnt)    = cyc.rdp_dir{iCyc}(iState);
-        state.rdp_dir_ts(state_cnt) = cyc.rdp_dir_ts{iCyc}(iState);
-        state.rdp_coh(state_cnt)    = cyc.rdp_coh{iCyc}(find(state.rdp_dir_ts(state_cnt) > cyc.rdp_coh_ts{iCyc},1,'last'));
+        state.rdp_dir(state_cnt)    = stim.rdp_dir{iCyc}(iState);
+        state.rdp_dir_ts(state_cnt) = stim.rdp_dir_ts{iCyc}(iState);
+        state.rdp_coh(state_cnt)    = stim.rdp_coh{iCyc}(find(state.rdp_dir_ts(state_cnt) > stim.rdp_coh_ts{iCyc},1,'last'));
 
-        if iState == length(in.cyc.rdp_dir{iCyc})
-            state.dur_s(state_cnt)  = double(cyc.cEnd(iCyc) - cyc.rdp_dir_ts{iCyc}(iState)) / 1e6;
+        if iState == length(stim.rdp_dir{iCyc})
+            state.dur_s(state_cnt)  = double(stim.cEnd(iCyc) - stim.rdp_dir_ts{iCyc}(iState)) / 1e6;
         else
-            state.dur_s(state_cnt)  = double(cyc.rdp_dir_ts{iCyc}(iState+1) - cyc.rdp_dir_ts{iCyc}(iState)) /1e6;
+            state.dur_s(state_cnt)  = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
         end
 
         % Joystick
-        if iState == length(in.cyc.rdp_dir{iCyc})
-            js_idx = cyc.js_ts{iCyc} > cyc.rdp_dir_ts{iCyc}(iState) & cyc.js_ts{iCyc} < double(cyc.cpr_cyle(iCyc,2));
+        if iState == length(stim.rdp_dir{iCyc})
+            js_monk_idx     = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
+            js_hum_idx      = joy.js_hum_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_hum_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
         else
-            js_idx = cyc.js_ts{iCyc} > cyc.rdp_dir_ts{iCyc}(iState) & cyc.js_ts{iCyc} < cyc.rdp_dir_ts{iCyc}(iState+1);
+            js_monk_idx     = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
+            js_hum_idx      = joy.js_hum_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_hum_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
         end
-        state.js_tlt{state_cnt}     = cyc.js_tlt{iCyc}(js_idx);
-        state.js_dir{state_cnt}     = cyc.js_dir{iCyc}(js_idx);
+
+        state.js_monk_tlt{state_cnt}    = joy.js_monk_tlt{iCyc}(js_monk_idx);
+        state.js_monk_dir{state_cnt}    = joy.js_monk_dir{iCyc}(js_monk_idx);
+        state.js_hum_dir{state_cnt}     = joy.js_hum_tlt{iCyc}(js_hum_idx);
+        state.js_hum_tlt{state_cnt}     = joy.js_hum_dir{iCyc}(js_hum_idx);
 
         % Brain
         chan = fieldnames(in.brain.CPR.spks);
@@ -91,18 +98,32 @@ for iCyc = 1:length(in.cyc.rdp_dir)
                     continue
                 end
 
+                % Unit included based on onset response?
+                tmp_id = [chan{iChan} '_' unit_label{iUnit}];
+                unit_idx = in.brain.CPR.spks.include.unit_ID == tmp_id;
+
+                if ~in.brain.CPR.spks.include.inclusion_flag(unit_idx)
+                    continue
+                end
+
                 clear dat
                 dat = in.brain.CPR.spks.(chan{iChan}).(unit_label{iUnit});
 
-                if iState == length(in.cyc.rdp_dir{iCyc})
-                    spk_idx = dat{iCyc} > cyc.rdp_dir_ts{iCyc}(iState) & dat{iCyc} < double(cyc.cpr_cyle(iCyc,2));
+                if iState == length(stim.rdp_dir{iCyc})
+                    spk_idx = dat{iCyc} > stim.rdp_dir_ts{iCyc}(iState)-double(stim.cpr_cyle(iCyc,1)) & dat{iCyc} < double(stim.cpr_cyle(iCyc,2))-double(stim.cpr_cyle(iCyc,1));
                 else
-                    spk_idx = dat{iCyc} > cyc.rdp_dir_ts{iCyc}(iState) & dat{iCyc} < cyc.rdp_dir_ts{iCyc}(iState+1);
+                    spk_idx = dat{iCyc} > stim.rdp_dir_ts{iCyc}(iState)-double(stim.cpr_cyle(iCyc,1)) & dat{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1)-double(stim.cpr_cyle(iCyc,1));
                 end
 
-                unit_id = [chan{iChan} '_' unit_label{iUnit}];
-                state.spk_ts.(unit_id){state_cnt} = dat{iCyc}(spk_idx) - cyc.rdp_dir_ts{iCyc}(iState);
-                state.spk_n.(unit_id)(state_cnt) = length(dat{iCyc}(spk_idx));
+                unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
+                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - stim.rdp_dir_ts{iCyc}(iState);
+                state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx));
+
+                if in.brain.CPR.spks.include.cyc_id{unit_idx}(iCyc) == 0
+                    state.include.(unit_id)(state_cnt)  = false;
+                else
+                    state.include.(unit_id)(state_cnt)  = true;
+                end
             end
         end
     end
@@ -173,10 +194,21 @@ end
 tstep           = .001;
 time            = [-.3:tstep:1];
 [~, sdf]        = FR_estimation(spks_cyc, time, false);
+msdf            = mean(sdf); % Average time course
 
-% Defien time windos of interest
+if isempty(sdf)
+    out.mean_fr = nan;
+    out.lat     = nan;
+    out.p       = nan;
+    out.h       = nan;
+    out.stats.zval = nan;
+    return
+end
+
+% Define time windos of interest
 BLidx           = 1:200;
 STIMidx         = 301:500;
+out.mean_fr     = mean(msdf(STIMidx));
 
 % Test average activity in time windows
 mBL             = mean(sdf(:,BLidx),2);  % Avg response to baseline
@@ -194,7 +226,6 @@ end
 %%% Check SNR threshold and latency %%%
 nStd            = 3;        % No. standard deviations
 nBins           = 9;        % No. bins
-msdf            = mean(sdf);% Average time course
 
 % Define significance threshold based on baseline response
 thresh    	= [mean(msdf(BLidx)) + (std(msdf(BLidx)) * nStd), ...
@@ -220,6 +251,7 @@ function  phy = PHY_quality_assessment(phy)
 % Define table fields
 var     = {'unit_ID','string';          % unit ID
     'n_Cycles', 'double'; ...           % Number of usable CPR cycles
+    'mean_FR', 'double'; ...            % Average firing rate
     'signrank_p', 'double'; ...         % signrank p-value
     'signrank_z', 'double'; ...         % signrank z-value
     'thresh_latency_ms', 'double';...;  % latency of threshold crossing
@@ -233,42 +265,137 @@ t       = table('Size',[1000, size(var,1)],...
 % Reset counter
 cc = 0;
 
-chan_lst = fieldnames(phy.brain.CPR.spks);
-chan_lst(strcmp(chan_lst, 'include')) = [];
+% Define inclusion criteria
+min_num_cycles          = 50;   % Min Number of stimulus cycles
+min_cycle_dur_sec       = 5;    % Min cycle duraction [seconds]
+min_fr                  = 5;    % Min firing rate
+p_thresh                = .05;  % Significance threshold
+min_lat_ms              = 35;   % Min onset response latency
+max_lat_ms              = 200;  % Max onset response latency
+
+chan_lst                                = fieldnames(phy.brain.CPR.spks);
+chan_lst(strcmp(chan_lst, 'include'))   = [];
 
 for iChan = 1:length(chan_lst)
-    unit_lst = fieldnames(phy.brain.CPR.spks.(chan_lst{iChan}));
+    unit_lst            = fieldnames(phy.brain.CPR.spks.(chan_lst{iChan}));
+    
     for iUnit = 1:length(unit_lst)
-        spk_times_cycle = phy.brain.CPR.spks.(chan_lst{iChan}).(unit_lst{iUnit});
+        clear spk_times_cycle spk_times_cycle_filt test_struct cyc_duration_sec avg_fr_cycle
+        spk_times_cycle         = phy.brain.CPR.spks.(chan_lst{iChan}).(unit_lst{iUnit});
         
-        % Remove cells that are empty or cycles shorter than 1 second.
-        % We expect at least 1 spike per second
-        % That way, we also exclude empty trials due to spike sorting
-        cyc_duration_sec = (phy.cyc.cpr_cyle(:,2) - phy.cyc.cpr_cyle(:,1)) ./1e6;
-        spk_times_cycle_filt = spk_times_cycle(~cellfun('isempty', spk_times_cycle)' & cyc_duration_sec > 1);
+        % Remove cycles with a low firing rate and shorter than 1 second.
+        cyc_duration_sec        = (phy.stim.cpr_cyle(:,2) - phy.stim.cpr_cyle(:,1)) ./1e6;
+        avg_fr_cycle            = cellfun(@length, spk_times_cycle)' ./ cyc_duration_sec;
+        cyc_lst                 = avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec;
+        spk_times_cycle_filt    = spk_times_cycle(avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec);
 
-        % Test onset response against baseline activity
+        % Test onset response of units with sufficient repetitions 
         cc                      = cc+1;
-        test_struct             = test_onset_response(spk_times_cycle_filt);
-        
-        % Save results to table
         t.unit_ID(cc)           = [(chan_lst{iChan}) '_' (unit_lst{iUnit})];
-        t.n_Cycles(cc)          =  length(spk_times_cycle_filt);
-        t.signrank_p(cc)        = test_struct.p;
-        t.signrank_z(cc)        = test_struct.stats.zval;
-        t.thresh_latency_ms(cc) = test_struct.lat;
 
-        % Include if reasonable, above threshold response  
-        if (test_struct.lat > 35 && test_struct.lat < 150) && test_struct.p < .05 && length(spk_times_cycle_filt) > 50
-            t.inclusion_flag(cc) = true;
+        if length(spk_times_cycle_filt) >= min_num_cycles
+            % Test onset response against baseline activity
+            test_struct             = test_onset_response(spk_times_cycle_filt);
+    
+            % Save results to table
+            t.n_Cycles(cc)          = length(spk_times_cycle_filt); % Number of remaining stimulus cycles for analysis
+            t.cyc_id{cc}            = cyc_lst; % Cycle numbers
+            t.mean_FR(cc)           = test_struct.mean_fr; % Avg. firing rate
+            t.signrank_p(cc)        = test_struct.p; % P-value baseline vs onset response
+            t.signrank_z(cc)        = test_struct.stats.zval; % Z-value baseline vs onset response
+            t.thresh_latency_ms(cc) = test_struct.lat; % Latency of threshold crossing
+                                    
+            % Include if stable, above threshold response with expected latency
+            if (test_struct.lat > min_lat_ms && test_struct.lat < max_lat_ms) && test_struct.p < p_thresh && test_struct.mean_fr > min_fr && length(spk_times_cycle_filt) > min_num_cycles
+                t.inclusion_flag(cc) = true;
+            else
+                t.inclusion_flag(cc) = false;
+            end
         else
-            t.inclusion_flag(cc) = false;
+            t.n_Cycles(cc)          = nan; 
+            t.cyc_id{cc}            = nan; 
+            t.mean_FR(cc)           = nan; 
+            t.signrank_p(cc)        = nan;
+            t.signrank_z(cc)        = nan;
+            t.thresh_latency_ms(cc) = nan;
+            t.inclusion_flag(cc)    = false;
         end
-
     end
 end
 
 % Crop table
-t(ismissing(t.unit_ID),:)       = [];
-phy.brain.CPR.spks.include      = t;
+t(ismissing(t.unit_ID),:)           = [];
+phy.brain.CPR.spks.include          = t;
+end
+
+function state = PHY_sort_spikes_by_state_wip(in)
+clear state
+state_cnt   = 0;
+stim        = in.stim;
+joy         = in.joy;
+
+for iCyc = 1:length(in.stim.rdp_dir)
+    for iState = 2:length(stim.rdp_dir{iCyc}) % discard last direction from previous cycle
+        state_cnt                       = state_cnt+1;
+
+        % Stimulus
+        state.rdp_dir(state_cnt)        = stim.rdp_dir{iCyc}(iState);
+        state.rdp_dir_ts(state_cnt)     = stim.rdp_dir_ts{iCyc}(iState);
+        state.rdp_coh(state_cnt)        = stim.rdp_coh{iCyc}(find(state.rdp_dir_ts(state_cnt) > stim.rdp_coh_ts{iCyc},1,'last'));
+
+        if iState == length(in.stim.rdp_dir{iCyc})
+            state.dur_s(state_cnt)      = double(stim.cEnd(iCyc) - stim.rdp_dir_ts{iCyc}(iState)) / 1e6;
+        else
+            state.dur_s(state_cnt)      = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
+        end
+
+        % Joystick
+        if iState == length(in.stim.rdp_dir{iCyc})
+            js_idx = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
+        else
+            js_idx = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
+        end
+        state.js_monk_tlt{state_cnt}    = joy.js_monk_tlt{iCyc}(js_idx);
+        state.js_monk_dir{state_cnt}    = joy.js_monk_dir{iCyc}(js_idx);
+
+        % Brain
+        chan = fieldnames(in.brain.CPR.spks);
+        % chan = fieldnames(in.brain.CPR.muae);
+
+        for iChan = 1:length(chan)
+            unit_label = fieldnames(in.brain.CPR.spks.(chan{iChan}));
+            unit_label(strcmp(unit_label, 'include')) = [];
+
+            % dat = in.brain.CPR.muae.(chan{iChan});
+            % dat_ts = in.brain.CPR.muae_ts;
+            %     if iState == length(in.cyc.rdp_dir{iCyc})
+            %         state_idx = dat_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & dat_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
+            %     else
+            %         state_idx = dat_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & dat_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
+            %     end
+
+                % state.muae.(chan{iChan}){state_cnt} = dat{iCyc}(state_idx);
+            
+            for iUnit = 1:length(unit_label)
+                % Skip unsorted spikes
+                if strcmp(unit_label{iUnit}, 'unit0')
+                    continue
+                end
+
+                clear dat
+                dat = in.brain.CPR.spks.(chan{iChan}).(unit_label{iUnit});
+
+                if iState == length(in.stim.rdp_dir{iCyc})
+                    state_idx = dat{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & dat{iCyc} < double(stim.cpr_cyle(iCyc,2));
+                else
+                    state_idx = dat{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & dat{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
+                end
+
+                unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
+                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(state_idx) - stim.rdp_dir_ts{iCyc}(iState);
+                state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(state_idx));
+            end
+        end
+    end
+end
 end
