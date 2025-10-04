@@ -1596,7 +1596,7 @@ protocol 'CPR_solo' {
     ML_sync                                     = 1
     CTRL_NumFeedback                            = 300
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
-    CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
+    CTRL_coh_block_duration_ms                  = (1000/120) * 3600 // 1200 frames - 10000ms
     CTRL_feedback_probability                   = 0.0025
     CTRL_feedback_ITI_ms                        = (1000/120) * 60 // 60 frames - 500ms
     CTRL_cpr_treshold                           = .2
@@ -2111,7 +2111,7 @@ protocol 'CPR_dyadic_agnt' {
     ML_sync                                     = 1
     CTRL_NumFeedback                            = 300
     CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
-    CTRL_coh_block_duration_ms                  = (1000/120) * 1200 // 1200 frames - 10000ms
+    CTRL_coh_block_duration_ms                  = (1000/120) * 3600 // 1200 frames - 10000ms
     CTRL_feedback_probability                   = 0.0025
     CTRL_feedback_ITI_ms                        = (1000/120) * 100 // 100 frames - 833ms
     CTRL_cpr_treshold                           = .2
@@ -2137,7 +2137,7 @@ protocol 'CPR_dyadic_agnt' {
     CTRL_feedback2_bar_height                   = 0
     CTRL_feedback_nBar                          = 3
     CTRL_show_agent                             = true 
-    CTRL_show_replay                            = true 
+    CTRL_show_replay                            = false 
 
     // Check and double-check luminance!
     COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]
