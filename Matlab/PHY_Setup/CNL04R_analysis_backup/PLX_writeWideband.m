@@ -1,19 +1,34 @@
-addpath('/Users/fschneider/Documents/MATLAB/PlexonMatlabOfflineFilesSDK/');
-cd /Volumes/T7_Shield/plexon/Data_Nilan
+% This script writes wideband electrophysiology data from raw Plexon files.
+% It requires 
+%   .PL2 Plexon data file
+%   .PlexonMatlabOfflineFilesSDK library
+%
+% Felix Schneider, CNL
+%
+% Version history
+%   1.0     (fxs 2025-09-05) Initial version.
+
+addpath('/Users/cnl/Desktop/CPR/PlexonMatlabOfflineFilesSDK/');
+cd /Users/cnl/Documents/DATA/Nilan/pl2/
 
 % Compile list of all data files
-pl2_files = dir(fullfile('/Volumes/T7_Shield/plexon/Data_Nilan', '*.pl2'));
-pl2_files = pl2_files(end)
+pl2_files = dir(fullfile('/Users/cnl/Documents/DATA/Nilan/pl2/', '*.pl2'));
+pl2_files = pl2_files(end) % tmp fix - add option to process specific file here
+
+cd /Users/cnl/Documents/DATA/Nilan/spike_sorting/
+
 %%% File-Loop %%%
 for iFile = 1:length(pl2_files)
     disp(['Processing: ' pl2_files(iFile).name])
     [pl2]                       = PL2GetFileIndex([pl2_files(iFile).folder '/' pl2_files(iFile).name]);
     wideband_data               = struct();
     exp_info                    = split(pl2_files(iFile).name,'_');
-    dest_dir                    = [exp_info{1} '_wb_mat'];
+    dest_dir                    = [exp_info{1} '_' exp_info{6}];
     
     if ~isfolder(dest_dir)
         mkdir(dest_dir);
+    else 
+        continue
     end
     
     %%% Channel-Loop %%%
@@ -42,7 +57,7 @@ for iFile = 1:length(pl2_files)
                     ts          = t0 + (0:n_samples-1) / ad.ADFreq;
                     timestamps  = [timestamps, ts];
                 end
-                save(['/Volumes/T7_Shield/plexon/Data_Nilan/' dest_dir '/timestamps.mat'], 'timestamps', '-v7.3');
+                save(['/Users/cnl/Documents/DATA/Nilan/spike_sorting/' dest_dir '/timestamps.mat'], 'timestamps', '-v7.3');
             end
             
             % Save raw signal in structure for each channel
@@ -53,7 +68,7 @@ for iFile = 1:length(pl2_files)
             raw.gain_rec        = pl2.AnalogChannels{iChan}.TotalGain;
             raw.conv_coeff_mv   = pl2.AnalogChannels{iChan}.CoeffToConvertToUnits;
             
-            save(['/Volumes/T7_Shield/plexon/Data_Nilan/' dest_dir '/' raw.fname '.mat'], 'raw', '-v7.3');
+            save(['/Users/cnl/Documents/DATA/Nilan/spike_sorting/' dest_dir '/' raw.fname '.mat'], 'raw', '-v7.3');
         end
     end
 end

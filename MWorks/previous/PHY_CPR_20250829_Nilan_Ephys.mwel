@@ -152,7 +152,7 @@ group CTRL {
     var CTRL_nTarget                        = 0
     var CTRL_state_duration_ms              = 0
     var CTRL_TargetDelay_ms                 = 0
-    var CTRL_snr_list                       = [.36,.59,.98,.36,.59,.98]
+    var CTRL_snr_list                       = [0,.36,.59,.98,0,.36,.59,.98]
     var CTRL_directionChange_list           = [45,90,135,180]
     var CTRL_ITI_ms                         = 0
     var CTRL_cpr_treshold                   = 0
@@ -417,7 +417,6 @@ group IO {
     var IO_joystickY2_raw_max               = 1023
     var IO_joystickY2_raw_min               = 0
     var IO_joystickTrigger2                 = false
-    var IO_syncWord                         = 0
     var IO_sync_16bit                       = 0
 
     var IO_spikes                           = (float)(0.0)
@@ -673,22 +672,24 @@ wav_file Failure_sound ('./sounds/failure2.wav')
 wav_file FixBreak_sound ('./sounds/fixbreak.wav')
 wav_file Reward_sound ('./sounds/reward.wav')
 wav_file End_sound ('./sounds/Defeat Bowser.wav')
-wav_file Reward1R_sound ('./sounds/1R.wav')
+wav_file Reward1R_sound ('./sounds/1R_nse.wav')
 wav_file Reward1L_sound ('./sounds/1L.wav')
-wav_file Reward2R_sound ('./sounds/2R.wav')
+wav_file Reward2R_sound ('./sounds/2R_nse.wav')
 wav_file Reward2L_sound ('./sounds/2L.wav')
-wav_file Reward3R_sound ('./sounds/3R.wav')
+wav_file Reward3R_sound ('./sounds/3R_nse.wav')
 wav_file Reward3L_sound ('./sounds/3L.wav')
-wav_file Reward4R_sound ('./sounds/4R.wav')
+wav_file Reward4R_sound ('./sounds/4R_nse.wav')
 wav_file Reward4L_sound ('./sounds/4L.wav')
-wav_file Reward5R_sound ('./sounds/5R.wav')
+wav_file Reward5R_sound ('./sounds/5R_nse.wav')
 wav_file Reward5L_sound ('./sounds/5L.wav')
-wav_file Reward6R_sound ('./sounds/6R.wav')
+wav_file Reward6R_sound ('./sounds/6R_nse.wav')
 wav_file Reward6L_sound ('./sounds/6L.wav')
-wav_file Reward7R_sound ('./sounds/7R.wav')
+wav_file Reward7R_sound ('./sounds/7R_nse.wav')
 wav_file Reward7L_sound ('./sounds/7L.wav')
-wav_file Reward8R_sound ('./sounds/8R.wav')
+wav_file Reward8R_sound ('./sounds/8R_nse.wav')
 wav_file Reward8L_sound ('./sounds/8L.wav')
+wav_file Failure_R_sound ('./sounds/failure2_R.wav')
+wav_file Failure_L_sound ('./sounds/failure2_L.wav')
 
 //
 // Stimuli
@@ -1359,8 +1360,6 @@ protocol 'RF_Mapping' {
         fname_position_x                = fname_position_x 
         fname_position_y                = fname_position_y
 
-        IO_syncWord = 0
-
         wait (
             duration = 1.0
             duration_units = s
@@ -1391,8 +1390,8 @@ protocol 'RF_Mapping' {
     INFO_task                               = "RF_mapping"
     INFO_date                               = "fill_me"
     INFO_block                              = "fill_me"
-    INFO_setup                              = "fill_me"
-    INFO_subject                            = "fill_me"
+    INFO_setup                              = "phy4"
+    INFO_subject                            = "nil"
 
     CTRL_reward_ml                          = .2
     CTRL_NoStimuli                          = 1800 //10x * 9y * 20reps/pos
@@ -1410,7 +1409,8 @@ protocol 'RF_Mapping' {
 
     TRIAL_start                             = 0
     TRIAL_end                               = 0
-    
+    INFO_Juice_ml                           = 0
+     
     INFO_StateCounter                       = 0
     INFO_HitCounter                         = 0
     INFO_ErrorCounter                       = 0
@@ -1449,7 +1449,6 @@ protocol 'RF_Mapping' {
             }
 
             state 'New trial' {
-                IO_syncWord             = 1
                 ML_sync                 = 1
 
                 action/omniplex_strobe (
@@ -1459,7 +1458,6 @@ protocol 'RF_Mapping' {
                     omniplex            = Omniplex
                     )
 
-                TRIAL_align             = 1
                 TRIAL_reactionTrigger_ts = now()
                 RDP_alpha               = 0
                 INFO_task               = "RF_mapping"
@@ -1512,9 +1510,20 @@ protocol 'RF_Mapping' {
                 RDP_radius              = RDP_radius
                 TRIAL_type              = format("X%d_Y%d", (integer)RDP_x, (integer)RDP_y)
 
+                TRIAL_align             = 1 // Trial align event
                 RDP_alpha               = 1
                 CTRL_RDP_flag           = 1
 
+/*
+               schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+               {
+                    TRIAL_align                 = 1 // Trial align event
+                }   */
+                
                 start_timer (
                     timer               = RDP_Timer
                     duration            = CTRL_RDP_ms
@@ -1612,7 +1621,6 @@ protocol 'RF_Mapping' {
                     )   
 
                 ML_sync                 = 0
-                IO_syncWord             = 0
 
                 start_timer (
                     timer               = ITI_Timer
@@ -1647,7 +1655,6 @@ protocol 'RF_Mapping' {
     }
 
         list 'Stopping procedures' {
-        IO_syncWord = 0
         wait (
             duration = 1.0
             duration_units = s
@@ -1670,8 +1677,6 @@ protocol 'RF_Tuning' {
         
         live_queue_stimulus (Background)
         update_stimulus_display ()
-
-        IO_syncWord = 0
 
         wait (
             duration = 1.0
@@ -1764,7 +1769,6 @@ protocol 'RF_Tuning' {
             }
 
             state 'New trial' {
-                IO_syncWord             = 1
                 ML_sync                 = 1
 
                 action/omniplex_strobe (
@@ -1825,7 +1829,19 @@ protocol 'RF_Tuning' {
                 RDP_alpha               = 1
                 TRIAL_type              = format("Dir%d", (integer)RDP_direction)
                 CTRL_RDP_flag           = 1
+                TRIAL_align             = 1 // Trial align event
 
+/*
+               schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+               {
+                    TRIAL_align                 = 1 // Trial align event
+                }   */
+                
+                
                 start_timer (
                     timer               = RDP_Timer
                     duration            = CTRL_RDP_ms
@@ -1921,7 +1937,6 @@ protocol 'RF_Tuning' {
                     )   
 
                 ML_sync                 = 0
-                IO_syncWord             = 0
 
                 start_timer (
                     timer               = ITI_Timer
@@ -1955,7 +1970,6 @@ protocol 'RF_Tuning' {
         }
     }
         list 'Stopping procedures' {
-        IO_syncWord = 0
         wait (
             duration = 1.0
             duration_units = s
@@ -1986,8 +2000,6 @@ protocol 'CPR_solo' {
         live_queue_stimulus (Background)
         update_stimulus_display ()
         
-        IO_syncWord = 0
-
         wait (
             duration = 1.0
             duration_units = s
@@ -2193,7 +2205,6 @@ protocol 'CPR_solo' {
 
             state 'New Trial' {      
                 CTRL_fixationWidth_dva          = TMP_dva_trial
-                IO_syncWord                     = 1
                 ML_sync                         = 1 // Matlab sync event
 
                 action/omniplex_strobe (
@@ -2203,7 +2214,6 @@ protocol 'CPR_solo' {
                     omniplex                    = Omniplex
                     )
 
-                TRIAL_align                     = 1 // Trial align event
                 INFO_task                       = "CPR_solo_stepfunction_neutral"
                 
                 // Reset variables
@@ -2238,6 +2248,19 @@ protocol 'CPR_solo' {
                 live_queue_stimulus (fixationCross)
 
                 update_stimulus_display ()   
+
+                TRIAL_align                 = 1 // Trial align event
+
+/*
+               schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+               {
+                    TRIAL_align                 = 1 // Trial align event
+                }   */
+                
 
                 goto ('Reset Flags')
             }
@@ -2425,42 +2448,42 @@ protocol 'CPR_solo' {
                 // Auditory feedback
                 // PRESENT BOTH SPEAKERS - SETUP INDEPENDENT
                 if (IO_joystickStrength > .875) {
-                    play_sound (Reward8R_sound)
+                    //play_sound (Reward8R_sound)
                     play_sound (Reward8L_sound)
                 }
 
                 if (IO_joystickStrength > .75 && IO_joystickStrength <= .875) {
-                    play_sound (Reward7R_sound)
+                    //play_sound (Reward7R_sound)
                     play_sound (Reward7L_sound)
                 }
 
                 if (IO_joystickStrength > .625 && IO_joystickStrength <= .75) {
-                    play_sound (Reward6R_sound)
+                    //play_sound (Reward6R_sound)
                     play_sound (Reward6L_sound)
                 }
 
                 if (IO_joystickStrength > .5 && IO_joystickStrength <= .625) {
-                    play_sound (Reward5R_sound)
+                    //play_sound (Reward5R_sound)
                     play_sound (Reward5L_sound)
                 }
 
                 if (IO_joystickStrength > .375 && IO_joystickStrength <= .5) {
-                    play_sound (Reward4R_sound)
+                    //play_sound (Reward4R_sound)
                     play_sound (Reward4L_sound)
                 }
 
                 if (IO_joystickStrength > .25 && IO_joystickStrength <= .375) {
-                    play_sound (Reward3R_sound)
+                    //play_sound (Reward3R_sound)
                     play_sound (Reward3L_sound)
                 }
 
                 if (IO_joystickStrength > .125 && IO_joystickStrength <= .25) {
-                    play_sound (Reward2R_sound)
+                    //play_sound (Reward2R_sound)
                     play_sound (Reward2L_sound)
                 }
 
                 if (IO_joystickStrength <= .125) {
-                    play_sound (Reward1R_sound)
+                    //play_sound (Reward1R_sound)
                     play_sound (Reward1L_sound)
                 }
 
@@ -2472,7 +2495,7 @@ protocol 'CPR_solo' {
             }
     
             state 'Miss' {
-                play_sound (Failure_sound)
+                play_sound (Failure_L_sound)
 
                 // Set flags and add to counters
                 TRIAL_outcome                   = "miss"
@@ -2514,7 +2537,6 @@ protocol 'CPR_solo' {
                     )
 
                 TRIAL_align                     = 0
-                IO_syncWord                     = 0
 
                 update_stimulus_display ()
                 report ('===== TRIAL $TRIAL_end ENDS =====')
@@ -2594,7 +2616,6 @@ protocol 'CPR_solo' {
     }
     
     list 'Stopping procedures' {
-        IO_syncWord = 0
         wait (
             duration = 1.0
             duration_units = s
@@ -2619,8 +2640,6 @@ protocol 'CPR_dyadic' {
         live_queue_stimulus (Background)
         update_stimulus_display ()
         
-        IO_syncWord = 0
-
         wait (
             duration = 1.0
             duration_units = s
@@ -2835,7 +2854,6 @@ protocol 'CPR_dyadic' {
 
             state 'New Trial' {      
                 CTRL_fixationWidth_dva          = TMP_dva_trial
-                IO_syncWord                     = 1
                 ML_sync                         = 1 // Matlab sync event
 
                 action/omniplex_strobe (
@@ -3235,6 +3253,8 @@ protocol 'CPR_dyadic' {
                 CTRL_reward2_target_ml          = 0
                 INFO_Juice2_ml                  += CTRL_reward2_target_ml
                 INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                
+                play_sound (Failure_R_sound)
 
                 //Visual feedback
                 live_queue_stimulus (fixationCross)
@@ -3254,6 +3274,8 @@ protocol 'CPR_dyadic' {
                 CTRL_reward_target_ml           = 0
                 INFO_Juice_ml                  += CTRL_reward_target_ml
                 INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                
+                play_sound (Failure_L_sound)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
@@ -3311,7 +3333,8 @@ protocol 'CPR_dyadic' {
             }
             
             state 'DoubleMiss' {
-                //play_sound (Failure_sound)
+                play_sound (Failure_L_sound)
+                play_sound (Failure_R_sound)
 
                 // Set flags
                 TRIAL_outcome                   = "miss"
@@ -3360,7 +3383,6 @@ protocol 'CPR_dyadic' {
                     )
 
                 TRIAL_align                     = 0
-                IO_syncWord                     = 0
 
                 update_stimulus_display ()
                 report ('===== TRIAL $TRIAL_end ENDS =====')
@@ -3445,7 +3467,6 @@ protocol 'CPR_dyadic' {
     }
     
     list 'Stopping procedures' {
-        IO_syncWord = 0
         wait (
             duration = 1.0
             duration_units = s
@@ -3469,7 +3490,6 @@ protocol 'CPR_dyatic_computer' {
         live_queue_stimulus (Background)
         update_stimulus_display ()
         
-        IO_syncWord = 0
 
         wait (
             duration = 1.0
@@ -3686,7 +3706,6 @@ protocol 'CPR_dyatic_computer' {
 
             state 'New Trial' {      
                 CTRL_fixationWidth_dva          = TMP_dva_trial
-                IO_syncWord                     = 1
                 ML_sync                         = 1 // Matlab sync event
 
                 action/omniplex_strobe (
@@ -3740,6 +3759,16 @@ protocol 'CPR_dyatic_computer' {
 
                 live_queue_stimulus (fixationCross)
                 update_stimulus_display ()   
+                TRIAL_align                 = 1 // Trial align event
+
+           /*    schedule (
+                    delay                       = next_frame() - now()
+                    duration                    = 0
+                    repeats                     = 0
+                    )
+                {
+                    TRIAL_align                 = 1 // Trial align event
+                } */
 
                 goto ('Reset Flags')
             }
@@ -4083,6 +4112,8 @@ protocol 'CPR_dyatic_computer' {
                 INFO_Juice2_ml                  += CTRL_reward2_target_ml
                 INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
 
+                play_sound (Failure_R_sound)
+
                 //Visual feedback
                 live_queue_stimulus (fixationCross)
                 update_stimulus_display ()
@@ -4101,6 +4132,8 @@ protocol 'CPR_dyatic_computer' {
                 CTRL_reward_target_ml           = 0
                 INFO_Juice_ml                  += CTRL_reward_target_ml
                 INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                
+                play_sound (Failure_L_sound)
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
@@ -4157,7 +4190,8 @@ protocol 'CPR_dyatic_computer' {
             }
             
             state 'DoubleMiss' {
-                //play_sound (Failure_sound)
+                play_sound (Failure_L_sound)
+                play_sound (Failure_R_sound)
 
                 // Set flags
                 TRIAL_outcome                   = "miss"
@@ -4206,7 +4240,6 @@ protocol 'CPR_dyatic_computer' {
                     )
 
                 TRIAL_align                     = 0
-                IO_syncWord                     = 0
 
                 update_stimulus_display ()
                 report ('===== TRIAL $TRIAL_end ENDS =====')
@@ -4293,7 +4326,6 @@ protocol 'CPR_dyatic_computer' {
     }
     
     list 'Stopping procedures' {
-        IO_syncWord = 0
         wait (
             duration = 1.0
             duration_units = s
