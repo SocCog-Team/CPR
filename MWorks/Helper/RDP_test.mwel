@@ -72,14 +72,14 @@ stimulus/r_d_p RDP (
 protocol 'Test RDP' {
 
     report ('Hello human! Starting Experiment...')
-    
+
     live_queue_stimulus (Background)
 
     trial 'Trial Structure' (interruptible = YES) {
         task LOOP {
            
             
-            state 'Start Trial' (interruptible = YES)  {
+            state 'Start Trial' (interruptible = NO)  {
 			    TRIAL_start     				+= 1
 			    live_queue_stimulus (RDP)
 			    update_stimulus_display ()
@@ -106,7 +106,7 @@ protocol 'Test RDP' {
             }
 
 
-            state 'Change direction' {
+            state 'Change direction' (interruptible = NO) {
                 CTRL_index           		= disc_rand(0,size(CTRL_direction_lst)-1)
                 RDP_direction               = CTRL_direction_lst[CTRL_index] 
 
@@ -120,7 +120,7 @@ protocol 'Test RDP' {
             }
 
 
-            state 'Change coherence' {
+            state 'Change coherence' (interruptible = NO)  {
                 CTRL_index           		= disc_rand(0,size(CTRL_coherence_lst)-1)
                 RDP_coherence               = CTRL_coherence_lst[CTRL_index] 
 
@@ -134,7 +134,7 @@ protocol 'Test RDP' {
             }
 
 
-            state 'Update stimulus' (interruptible = NO) {
+            state 'Update stimulus' (interruptible = YES) {
                 goto (
                     target                      = 'End Trial'
                     when                        = timer_expired(TrialTimer)
