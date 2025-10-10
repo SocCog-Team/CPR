@@ -6,11 +6,11 @@ group CTRL {
 	var CTRL_index 							= 0
 	var CTRL_direction_lst 					= [0, 45, 90, 135, 180, 225, 270, 315, 345]
 	var CTRL_coherence_lst 					= [0, .25, .5, .75, .99]
-	var CTRL_trial_duration_ms 				= 20000
+	var CTRL_trial_duration_ms 				= 20000 //ms
 	var CTRL_coherence_duration_ms 			= 5000
 	var CTRL_direction_duration_ms 			= 2500
 	var CTRL_ITI_ms 						= 1000
-	var CTRL_cancel_action_flag 			= true
+	//var CTRL_cancel_action_flag 			= true
 }
 
 group TRIAL {
@@ -23,11 +23,11 @@ group RDP {
     var RDP_radius                          = 8 // degree visual angle (dva)
     var RDP_y                               = 0 // screen coordinates - [0x 0y] is center
     var RDP_x                               = 0
-    var RDP_density                         = 2.5 // dots per dva
-    var RDP_dotsize                         = .1 // dva
+    var RDP_density                         = 1.5 // dots per dva
+    var RDP_dotsize                         = .2 // dva
     var RDP_speed                           = 8 // dva per second
-    var RDP_coherence                       = 1 // noise
-    var RDP_lifetime                        = (1/120) * 30 * 1000 // 30 frames - 250ms
+    var RDP_coherence                       = 0 // 0 = pure noise, no signal
+    var RDP_lifetime                        = (1/120) * 30 * 1000 // 30 frames - 250ms per dot
     var RDP_alpha                        	= 1 // transparency
     var RDP_seed                            = 1
 }
@@ -61,7 +61,7 @@ stimulus/r_d_p RDP (
     speed                       			= RDP_speed 
     coherence                   			= RDP_coherence
     lifetime                    			= RDP_lifetime
-    announce_dots               			= YES // YES to store dot position
+    announce_dots               			= YES // YES to save individual dot position for each frame
     autoplay                    			= YES
     )
 
@@ -75,8 +75,7 @@ protocol 'Test RDP' {
     report ('Hello human! Starting Experiment...')
     
     live_queue_stimulus (Background)
-    CTRL_cancel_action_flag         			= true
-
+    //CTRL_cancel_action_flag         			= true
 
     trial 'Trial Structure' (interruptible = YES) {
         task LOOP {
@@ -157,7 +156,7 @@ protocol 'Test RDP' {
 
             state 'End Trial' (interruptible = NO) {
 			    TRIAL_end     					= TRIAL_start
-                CTRL_cancel_action_flag         = true
+                //CTRL_cancel_action_flag         = true
 
                 //Remove RDP from screen
                 dequeue_stimulus (RDP)
