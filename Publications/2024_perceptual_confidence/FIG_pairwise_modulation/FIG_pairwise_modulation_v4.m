@@ -84,10 +84,10 @@ print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dpng', '-painters
 
 n                       = 50;
 subsets                 = nan(n,1);
-subsets((raw.ecc1 - raw.decc1) < 0 & (raw.ecc2 - raw.decc2) < 0) = 1;
-subsets((raw.ecc1 - raw.decc1) > 0 & (raw.ecc2 - raw.decc2) > 0) = 2;
-subsets((raw.ecc1 - raw.decc1) > 0 & (raw.ecc2 - raw.decc2) < 0) = 3;
-subsets((raw.ecc1 - raw.decc1) < 0 & (raw.ecc2 - raw.decc2) > 0) = 3;
+subsets((raw.ecc1 < raw.decc1) & (raw.ecc2 < raw.decc2)) = 1;
+subsets((raw.ecc1 > raw.decc1) & (raw.ecc2 > raw.decc2)) = 2;
+subsets((raw.ecc1 > raw.decc1) & (raw.ecc2 < raw.decc2)) = 3;
+subsets((raw.ecc1 < raw.decc1) & (raw.ecc2 > raw.decc2)) = 3;
 cval={'both better' 'both worse' 'mixed'};
 cmap                    = [42 182 115;...
                             190 30 45;...
@@ -164,11 +164,10 @@ conv                    = abs(acc_solo_dff) > abs(acc_dyad_dff);
 % sc2.MarkerFaceAlpha  = .75;
 % legend([sc1, sc2],'convergence','divergence','Location', 'south')
 
-
-subsets((raw.acc1 - raw.dacc1) < 0 & (raw.acc2 - raw.dacc2) < 0) = 1;
-subsets((raw.acc1 - raw.dacc1) > 0 & (raw.acc2 - raw.dacc2) > 0) = 2;
-subsets((raw.acc1 - raw.dacc1) > 0 & (raw.acc2 - raw.dacc2) < 0) = 3;
-subsets((raw.acc1 - raw.dacc1) < 0 & (raw.acc2 - raw.dacc2) > 0) = 3;
+subsets((raw.acc1 < raw.dacc1) & (raw.acc2 < raw.dacc2)) = 1;
+subsets((raw.acc1 > raw.dacc1) & (raw.acc2 > raw.dacc2)) = 2;
+subsets((raw.acc1 > raw.dacc1) & (raw.acc2 < raw.dacc2)) = 3;
+subsets((raw.acc1 < raw.dacc1) & (raw.acc2 > raw.dacc2)) = 3;
 cval={'both better' 'both worse' 'mixed'};
 subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
 c                       = cval(subsets_remap);
