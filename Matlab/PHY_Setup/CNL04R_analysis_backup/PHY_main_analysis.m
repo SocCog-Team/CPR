@@ -173,13 +173,42 @@ for iTrial = 1:length(spike_times)
     if isempty(spks)
     else
 
-        % Fit gaussian to spikes
-        gauss           = fit_gaussian(spks, time);
+        % Fit function to spikes
+        % gauss_kern    = fit_gaussian(spks, time); % problem --> backward smearing
+        alpha_kern      = fit_alpha(spks, time);
 
         % Sum over all distributions to get spike density function
-        sdf(iTrial,:)	= sum(gauss,1);
+        % sdf(iTrial,:)	= sum(gauss_kern,1);
+        sdf(iTrial,:)	= sum(alpha_kern,1);
     end
 
+end
+end
+
+function alpha_kern = fit_alpha(spks, time)
+% FIT_ALPHA creates causal alpha kernels for each spike time
+%
+%   alpha_kern = fit_alpha(spks, time)
+%
+%   spks : vector of spike times [s]
+%   time : time vector [s]
+%
+%   Output:
+%       alpha_kern : matrix (nSpikes x nTimePoints)
+%                     each row is an alpha kernel centered at one spike
+
+tau = 0.005; % time constant [s]
+
+nSpks = length(spks);
+nTime = length(time);
+alpha_kern = zeros(nSpks, nTime);
+
+for iSpk = 1:nSpks
+    t_rel = time - spks(iSpk); % time relative to spike
+    % Alpha function (only forward in time, no backward smearing)
+    k = (t_rel ./ tau) .* exp(1 - t_rel ./ tau);
+    k(t_rel < 0) = 0; % zero before spike
+    alpha_kern(iSpk, :) = k;
 end
 end
 
