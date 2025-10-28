@@ -2192,13 +2192,13 @@ protocol 'CPR_dyadic_agnt' {
     TMP_show_replay                             = CTRL_show_replay
     ML_sync                                     = 0
 
-    tmp_trial                       = disc_rand(0,3333)            
-    fname_rdp_dir                   = '/Users/cnl/Desktop/Felix/CPR/RDP_direction_deg_Trial $tmp_trial .txt'
-    fname_rdp_coh                   = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_Trial $tmp_trial .txt'
-    fname_feedback_ts               = '/Users/cnl/Desktop/Felix/CPR/feedback_ts_Trial $tmp_trial .txt'
-    fname_agnt_direction            = '/Users/cnl/Desktop/Felix/CPR/AGNT_direction_Trial $tmp_trial.txt'
-    fname_agnt_strength             = '/Users/cnl/Desktop/Felix/CPR/AGNT_strength_Trial $tmp_trial.txt'
 
+    tmp_trial                      =  (string) disc_rand(0,3333)            
+    fname_rdp_dir                   = '/Users/cnl/Desktop/Felix/CPR/RDP_direction_deg_Trial$tmp_trial.txt'
+    fname_rdp_coh                   = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_Trial$tmp_trial.txt'
+    fname_feedback_ts               = '/Users/cnl/Desktop/Felix/CPR/feedback_ts_Trial$tmp_trial.txt'
+    fname_agnt_direction            = '/Users/cnl/Desktop/Felix/CPR/AGNT_direction_Trial$tmp_trial.txt'
+    fname_agnt_strength             = '/Users/cnl/Desktop/Felix/CPR/AGNT_strength_Trial$tmp_trial.txt'
         
     // Update trial parameters
     fname_rdp_dir                           = fname_rdp_dir 
@@ -2888,12 +2888,12 @@ protocol 'CPR_dyadic_agnt' {
                 live_queue_stimulus (cum_feedback_counter)
                 update_stimulus_display ()  
 
-                tmp_trial                      = disc_rand(0,3333)            
-                fname_rdp_dir                   = '/Users/cnl/Desktop/Felix/CPR/RDP_direction_deg_Trial $tmp_trial .txt'
-                fname_rdp_coh                   = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_Trial $tmp_trial .txt'
-                fname_feedback_ts               = '/Users/cnl/Desktop/Felix/CPR/feedback_ts_Trial $tmp_trial .txt'
-                fname_agnt_direction            = '/Users/cnl/Desktop/Felix/CPR/AGNT_direction_Trial $tmp_trial.txt'
-                fname_agnt_strength             = '/Users/cnl/Desktop/Felix/CPR/AGNT_strength_Trial $tmp_trial.txt'
+                tmp_trial                      =  (string) disc_rand(0,3333)            
+                fname_rdp_dir                   = '/Users/cnl/Desktop/Felix/CPR/RDP_direction_deg_Trial$tmp_trial.txt'
+                fname_rdp_coh                   = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_Trial$tmp_trial.txt'
+                fname_feedback_ts               = '/Users/cnl/Desktop/Felix/CPR/feedback_ts_Trial$tmp_trial.txt'
+                fname_agnt_direction            = '/Users/cnl/Desktop/Felix/CPR/AGNT_direction_Trial$tmp_trial.txt'
+                fname_agnt_strength             = '/Users/cnl/Desktop/Felix/CPR/AGNT_strength_Trial$tmp_trial.txt'
 
                 // Update trial parameters
                 fname_rdp_dir                           = fname_rdp_dir 
