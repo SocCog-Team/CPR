@@ -216,6 +216,7 @@ group CTRL {
     var CTRL_Ymax                           = 11.4018
     var CTRL_cents_per_feedback             = 2 // cents
     var CTRL_cancel_action_flag             = (bool) false
+    var CTRL_trial_index                    = 0
 
     var CTRL_arc_alpha                      = 0
     var CTRL_arc_flag                       = (bool) false
@@ -1654,19 +1655,10 @@ protocol 'CPR_solo' {
     TMP_snr_list                                = CTRL_snr_list
     ML_sync                                     = 0
 
-    // Wait for update to be finished                
-    while (CTRL_counter[0] != TRIAL_start) {
-        wait (
-            duration                            = 100
-            duration_units                      = ms
-            )
-        
-        // Update trial parameters
-        fname_rdp_dir                           = fname_rdp_dir 
-        fname_rdp_coh                           = fname_rdp_coh
-        fname_feedback_ts                       = fname_feedback_ts
-        fname_counter                           = fname_counter
-        }
+    CTRL_trial_index                            =  (string) disc_rand(0,3333)            
+    fname_rdp_dir                               = 'smb://172.17.10.30/cnl/Desktop/Bastian/RDP_direction_deg_Trial$CTRL_trial_index.txt'
+    fname_rdp_coh                               = 'smb://172.17.10.30/cnl/Desktop/Bastian/RDP_coherence_Trial$CTRL_trial_index.txt'
+    fname_feedback_ts                           = 'smb://172.17.10.30/cnl/Desktop/Bastian/Feedback_ts_Trial$CTRL_trial_index.txt'                  
 
     // Initialise timer
     start_timer (
@@ -2063,20 +2055,11 @@ protocol 'CPR_solo' {
                 live_queue_stimulus (cum_feedback_counter_solo)
                 update_stimulus_display ()   
 
-                // Wait for update to be finished                
-                while (CTRL_counter[0] != TRIAL_start) {
-                    wait (
-                        duration                = 100
-                        duration_units          = ms
-                        )
-                    
-                    // Update trial parameters
-                    fname_rdp_dir                           = fname_rdp_dir 
-                    fname_rdp_coh                           = fname_rdp_coh
-                    fname_feedback_ts                       = fname_feedback_ts
-                    fname_counter                           = fname_counter
-                    }
-
+                CTRL_trial_index                            =  (string) disc_rand(0,3333)            
+                fname_rdp_dir                               = 'smb://172.17.10.30/cnl/Desktop/Bastian/RDP_direction_deg_Trial$CTRL_trial_index.txt'
+                fname_rdp_coh                               = 'smb://172.17.10.30/cnl/Desktop/Bastian/RDP_coherence_Trial$CTRL_trial_index.txt'
+                fname_feedback_ts                           = 'smb://172.17.10.30/cnl/Desktop/Bastian/Feedback_ts_Trial$CTRL_trial_index.txt'  
+    
                 goto (
                     target                      = 'End paradigm'
                     when                        = INFO_FeedbackCounter >= CTRL_NumFeedback && timer_expired(ITI_Timer)
@@ -2193,20 +2176,12 @@ protocol 'CPR_dyadic_agnt' {
     ML_sync                                     = 0
 
 
-    tmp_trial                      =  (string) disc_rand(0,3333)            
-    fname_rdp_dir                   = '/Users/cnl/Desktop/Felix/CPR/RDP_direction_deg_Trial$tmp_trial.txt'
-    fname_rdp_coh                   = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_Trial$tmp_trial.txt'
-    fname_feedback_ts               = '/Users/cnl/Desktop/Felix/CPR/feedback_ts_Trial$tmp_trial.txt'
-    fname_agnt_direction            = '/Users/cnl/Desktop/Felix/CPR/AGNT_direction_Trial$tmp_trial.txt'
-    fname_agnt_strength             = '/Users/cnl/Desktop/Felix/CPR/AGNT_strength_Trial$tmp_trial.txt'
-        
-    // Update trial parameters
-    fname_rdp_dir                           = fname_rdp_dir 
-    fname_rdp_coh                           = fname_rdp_coh
-    fname_feedback_ts                       = fname_feedback_ts
-    fname_counter                           = fname_counter
-    fname_agnt_direction                    = fname_agnt_direction
-    fname_agnt_strength                     = fname_agnt_strength
+    CTRL_trial_index                =  (string) disc_rand(0,3333)            
+    fname_rdp_dir                   = '/Users/fschneider/Desktop/Bastian/RDP_direction_deg_Trial$CTRL_trial_index.txt'
+    fname_rdp_coh                   = '/Users/fschneider/Desktop/Bastian/RDP_coherence_Trial$CTRL_trial_index.txt'
+    fname_feedback_ts               = '/Users/fschneider/Desktop/Bastian/Feedback_ts_Trial$CTRL_trial_index.txt'
+    fname_agnt_direction            = '/Users/fschneider/Desktop/Bastian/AGNT_direction_Trial$CTRL_trial_index.txt'
+    fname_agnt_strength             = '/Users/fschneider/Desktop/Bastian/AGNT_strength_Trial$CTRL_trial_index.txt'
 
     // Initialise timer
     start_timer (
@@ -2888,19 +2863,12 @@ protocol 'CPR_dyadic_agnt' {
                 live_queue_stimulus (cum_feedback_counter)
                 update_stimulus_display ()  
 
-                tmp_trial                      =  (string) disc_rand(0,3333)            
-                fname_rdp_dir                   = '/Users/cnl/Desktop/Felix/CPR/RDP_direction_deg_Trial$tmp_trial.txt'
-                fname_rdp_coh                   = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence_Trial$tmp_trial.txt'
-                fname_feedback_ts               = '/Users/cnl/Desktop/Felix/CPR/feedback_ts_Trial$tmp_trial.txt'
-                fname_agnt_direction            = '/Users/cnl/Desktop/Felix/CPR/AGNT_direction_Trial$tmp_trial.txt'
-                fname_agnt_strength             = '/Users/cnl/Desktop/Felix/CPR/AGNT_strength_Trial$tmp_trial.txt'
-
-                // Update trial parameters
-                fname_rdp_dir                           = fname_rdp_dir 
-                fname_rdp_coh                           = fname_rdp_coh
-                fname_feedback_ts                       = fname_feedback_ts
-                fname_agnt_direction                    = fname_agnt_direction
-                fname_agnt_strength                     = fname_agnt_strength
+                CTRL_trial_index                =  (string) disc_rand(0,3333)            
+                fname_rdp_dir                   = '/Users/fschneider/Desktop/Bastian/RDP_direction_deg_Trial$CTRL_trial_index.txt'
+                fname_rdp_coh                   = '/Users/fschneider/Desktop/Bastian/RDP_coherence_Trial$CTRL_trial_index.txt'
+                fname_feedback_ts               = '/Users/fschneider/Desktop/Bastian/Feedback_ts_Trial$CTRL_trial_index.txt'
+                fname_agnt_direction            = '/Users/fschneider/Desktop/Bastian/AGNT_direction_Trial$CTRL_trial_index.txt'
+                fname_agnt_strength             = '/Users/fschneider/Desktop/Bastian/AGNT_strength_Trial$CTRL_trial_index.txt'
 
                 wait (
                     duration                = 100
