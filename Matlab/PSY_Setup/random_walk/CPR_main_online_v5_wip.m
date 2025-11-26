@@ -25,8 +25,8 @@ setup = 'MAC40656';
 
 if strcmp(setup, 'MAC40656')
     pth = '/Volumes/cnl/Desktop/Felix/CPR/';
-    addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/PSY_Setup/random_walk
-    addpath /Users/fschneider/Documents/MATLAB/CircStat2012a
+    addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/PSY_Setup/random_walk/
+    addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
     addpath(genpath('/Users/fschneider/Documents/GitLab/matlab4mworks/'));
 
 else
@@ -73,12 +73,12 @@ if param.agent_flag == true
         %         AGNT.smooth_kernel        	= 'gaussian';                               % Smoothing kernel [samples]
         %         AGNT                        = CPR_create_agent_random_walk(STIM,AGNT);
         
-        onnx_path = '/Volumes/cnl/Desktop/Felix/online/Bastian';
-        coherence = repmat(.8, length(STIM.RDP_direction_deg),1);
-        acc_mean = .5;
-        tlt_mean = .5;
-        noise = 0;
-        use_ts = false;
+        onnx_path               = '/Users/fschneider/Documents/GitHub/CPR/Matlab/PSY_Setup/random_walk/lstm_player.onnx';
+        coherence               = repmat(.8, length(STIM.RDP_direction_deg),1);
+        acc_mean                = .5;
+        tlt_mean                = .5;
+        noise                   = 0;
+        use_ts                  = false;
         [AGNT.dir_smooth,  AGNT.str_smooth] = pred_player(onnx_path, STIM.RDP_direction_deg, coherence, acc_mean, tlt_mean, noise, use_ts);
         AGNT
     end

@@ -9,7 +9,7 @@ source_pth = '/Users/fschneider/Documents/GitHub/CPR/Publications/2024_perceptua
 load([source_pth '/solo_correlation.mat'])
 load([source_pth '/solo_performance.mat'])
 load([source_pth '/hh_dyad_pairwise_correlation.mat'])
-load([source_pth 'hh_dyad_pairwise_performance.mat'])
+load([source_pth '/hh_dyad_pairwise_performance.mat'])
 load([source_pth '/hc_dyad_pairwise_correlation.mat'])
 load([source_pth '/hc_dyad_pairwise_performance.mat'])
 load([source_pth '/hh_dyad_performance.mat'])
@@ -45,7 +45,7 @@ ecc_dyad_dff            = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2
 [p_ecc,h_ecc, stats_ecc]= signrank(abs(ecc_df.solo),abs(ecc_df.dyad));
 g(1,1)                  = gramm('x',abs(ecc_solo_dff)','y',abs(ecc_dyad_dff)');
 
-sum(ecc_solo_dff > ecc_dyad_dff)
+sum(abs(ecc_solo_dff) > abs(ecc_dyad_dff))
 
 g(1,1).geom_point();
 g(1,1).stat_cornerhist('edges',-.3:0.015:.3,'aspect',.3,'fill','face');
@@ -61,7 +61,7 @@ acc_dyad_dff            = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2
 [p_acc,h_acc, stats_acc]= signrank(abs(acc_df.solo),abs(acc_df.dyad));
 g(1,2)                  = gramm('x',abs(acc_solo_dff),'y',abs(acc_dyad_dff));
 
-sum(acc_solo_dff > acc_dyad_dff)
+sum(abs(acc_solo_dff) > abs(acc_dyad_dff))
 
 g(1,2).geom_point();
 g(1,2).stat_cornerhist('edges',-.1:0.005:.1,'aspect',.3,'fill','face');
@@ -77,6 +77,126 @@ axis square
 
 print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dsvg', '-painters');
 print(gcf, [dest_dir '/FIG_js_dff_' alignment_str], '-r500', '-dpng', '-painters');
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% FIGURE: Difference (between players) of the raw joystick difference (between conditions)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+n                       = 50;
+subsets                 = nan(n,1);
+subsets((raw.ecc1 < raw.decc1) & (raw.ecc2 < raw.decc2)) = 1;
+subsets((raw.ecc1 > raw.decc1) & (raw.ecc2 > raw.decc2)) = 2;
+subsets((raw.ecc1 > raw.decc1) & (raw.ecc2 < raw.decc2)) = 3;
+subsets((raw.ecc1 < raw.decc1) & (raw.ecc2 > raw.decc2)) = 3;
+cval={'both better' 'both worse' 'mixed'};
+cmap                    = [42 182 115;...
+                            190 30 45;...
+                            247 147 29]./255;
+
+f                       = figure;
+ax                      = subplot(2,2,1);hold on
+x                       = 0:.05:.35;
+ln                      = line([0 x(end)],[0 0], 'LineStyle', ':', 'LineWidth',1.5,'Color', [0 0 0]);
+
+p1_better               = raw.ecc1 > raw.ecc2; % Solo
+ecc_solo_dff            = [raw.ecc1(p1_better) - raw.ecc2(p1_better) raw.ecc2(~p1_better) - raw.ecc1(~p1_better)];
+ecc_dyad_dff            = [raw.decc1(p1_better) - raw.decc2(p1_better) raw.decc2(~p1_better) - raw.decc1(~p1_better)];
+conv                    = abs(ecc_solo_dff) > abs(ecc_dyad_dff);
+better_dyad_minus_solo  = [raw.decc1(p1_better) - raw.ecc1(p1_better) raw.decc2(~p1_better) - raw.ecc2(~p1_better)];
+worse_dyad_minus_solo   = [raw.decc2(p1_better) - raw.ecc2(p1_better) raw.decc1(~p1_better) - raw.ecc1(~p1_better)];
+
+%%% Color-code convergence and divergence %%%
+% sc1                  = scatter((ecc_solo_dff(conv)), better_dyad_minus_solo(conv)-worse_dyad_minus_solo(conv));
+% sc1.MarkerFaceColor  = [.2 .2 .2];
+% sc1.MarkerEdgeColor  = 'none';
+% sc1.MarkerFaceAlpha  = .75;
+% 
+% sc2                  = scatter((ecc_solo_dff(~conv)), better_dyad_minus_solo(~conv)-worse_dyad_minus_solo(~conv));
+% sc2.MarkerFaceColor  = [.5 .2 .2];
+% sc2.MarkerEdgeColor  = 'none';
+% sc2.MarkerFaceAlpha  = .75;
+
+%%% Color-code improvements %%%
+subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
+for i=1:3
+    sc                  = scatter(abs(ecc_solo_dff(subsets_remap==i)), better_dyad_minus_solo(subsets_remap==i)-worse_dyad_minus_solo(subsets_remap==i));
+    sc.MarkerFaceColor  = cmap(i,:);
+    sc.MarkerEdgeColor  = 'none';
+    sc.MarkerFaceAlpha  = .75;
+    text(.1,i/20,cval{i}, 'Color', cmap(i,:))
+end
+
+fit_ecc                 = polyfit(abs(ecc_solo_dff),better_dyad_minus_solo-worse_dyad_minus_solo,1);
+pl                      = plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2]);
+[r_ecc,pv_ecc]          = corrcoef(abs(ecc_solo_dff),better_dyad_minus_solo-worse_dyad_minus_solo);
+[r_ecc_conv,pv_ecc_conv] = corrcoef(abs(ecc_solo_dff(conv)),better_dyad_minus_solo(conv)-worse_dyad_minus_solo(conv));
+ax.YTick                = [-.2 -.1 0  .1 .2];
+ax.XLabel.String        = {'Solo interplayer distance'; 'Tilt.better - Tilt.worse'};
+ax.YLabel.String        = {'Social modulation difference';'TiltDff.better - TiltDff.worse'};
+ax.FontSize             = lb_fs;
+ax.XLim                 = [0 .35];
+ax.YLim                 = [-.2 .2];
+
+text(.2,-.05,['All: r=' num2str(round(r_ecc(2),3)) ' p=' num2str(pv_ecc(2))])
+text(.2,-.1,['Conv: r=' num2str(round(r_ecc_conv(2),3)) ' p=' num2str(pv_ecc_conv(2))])
+axis square
+
+%%% Accuracy %%%
+ax                      = subplot(2,2,2);hold on
+x                       = 0:.05:.15;
+ln                      = line([0 x(end)],[0 0], 'LineStyle', ':', 'LineWidth',1.5,'Color', [0 0 0]);
+
+p1_better               = raw.acc1 > raw.acc2; % Solo
+acc_solo_dff            = [raw.acc1(p1_better) - raw.acc2(p1_better) raw.acc2(~p1_better) - raw.acc1(~p1_better)];
+acc_dyad_dff            = [raw.dacc1(p1_better) - raw.dacc2(p1_better) raw.dacc2(~p1_better) - raw.dacc1(~p1_better)];
+better_dyad_minus_solo  = [raw.dacc1(p1_better) - raw.acc1(p1_better) raw.dacc2(~p1_better) - raw.acc2(~p1_better)];
+worse_dyad_minus_solo   = [raw.dacc2(p1_better) - raw.acc2(p1_better) raw.dacc1(~p1_better) - raw.acc1(~p1_better)];
+conv                    = abs(acc_solo_dff) > abs(acc_dyad_dff);
+
+% sc1                  = scatter((acc_solo_dff(conv)), better_dyad_minus_solo(conv)-worse_dyad_minus_solo(conv));
+% sc1.MarkerFaceColor  = [.2 .2 .2];
+% sc1.MarkerEdgeColor  = 'none';
+% sc1.MarkerFaceAlpha  = .75;
+% 
+% sc2                  = scatter((acc_solo_dff(~conv)), better_dyad_minus_solo(~conv)-worse_dyad_minus_solo(~conv));
+% sc2.MarkerFaceColor  = [.5 .2 .2];
+% sc2.MarkerEdgeColor  = 'none';
+% sc2.MarkerFaceAlpha  = .75;
+% legend([sc1, sc2],'convergence','divergence','Location', 'south')
+
+subsets((raw.acc1 < raw.dacc1) & (raw.acc2 < raw.dacc2)) = 1;
+subsets((raw.acc1 > raw.dacc1) & (raw.acc2 > raw.dacc2)) = 2;
+subsets((raw.acc1 > raw.dacc1) & (raw.acc2 < raw.dacc2)) = 3;
+subsets((raw.acc1 < raw.dacc1) & (raw.acc2 > raw.dacc2)) = 3;
+cval={'both better' 'both worse' 'mixed'};
+subsets_remap           = [subsets(p1_better); subsets(~p1_better)];
+c                       = cval(subsets_remap);
+
+for i=1:3
+    sc                  = scatter(abs(acc_solo_dff(subsets_remap==i)), better_dyad_minus_solo(subsets_remap==i)-worse_dyad_minus_solo(subsets_remap==i));
+    sc.MarkerFaceColor  = cmap(i,:);
+    sc.MarkerEdgeColor  = 'none';
+    sc.MarkerFaceAlpha  = .75;
+end
+
+fit_ecc                 = polyfit(abs(acc_solo_dff),better_dyad_minus_solo-worse_dyad_minus_solo,1);
+pl                      = plot(x,polyval(fit_ecc, x),'LineWidth',1.5, 'Color',[.2 .2 .2]);
+[r_acc,pv_acc]          = corrcoef(abs(acc_solo_dff),better_dyad_minus_solo-worse_dyad_minus_solo);
+[r_acc_conv,pv_acc_conv] = corrcoef(abs(acc_solo_dff(conv)),better_dyad_minus_solo(conv)-worse_dyad_minus_solo(conv));
+ax.XLim                 = [0 .15];
+ax.YLim                 = [-.075 .075];
+ax.YTick                = [ -.1 -.05 0 .05 .1];
+ax.XLabel.String        = {'Solo interplayer distance'; 'Accuracy.better - Accuracy.worse'};
+ax.YLabel.String        = {'Social modulation difference';'AccDff.better - AccDff.worse'};
+ax.FontSize             = lb_fs;
+
+text(.05,.05,['All: r=' num2str(round(r_acc(2),3)) ' p=' num2str(pv_acc(2))])
+text(.05,.03,['Conv: r=' num2str(round(r_acc_conv(2),3)) ' p=' num2str(pv_acc_conv(2))])
+axis square
+
+print(f, [dest_dir '/FIG_raw_dff_vs_solo_' alignment_str], '-r500', '-dsvg', '-painters');
+print(f, [dest_dir '/FIG_raw_dff_vs_solo_' alignment_str], '-r500', '-dpng', '-painters');
+print(f, [dest_dir '/FIG_raw_dff_vs_solo_' alignment_str], '-r500', '-dpdf', '-painters');
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FIGURE: P_better minus P-worse AUC difference
@@ -178,8 +298,10 @@ print(f, [dest_dir '/FIG_auc_dff_vs_solo_' alignment_str], '-r500', '-dpng', '-p
 f                       = figure('units','centimeters','position',[0 0 25 10]);hold on
 ax1                     = subplot(1,2,1);
 [ax1,p1_better_conf]    = modulation_violin(ax1,raw.ecc1,raw.ecc2,auc.ecc1,auc.ecc2);
+% [ax1,p1_better_conf]    = modulation_violin(ax1,raw.ecc1,raw.ecc2,raw.decc1-raw.ecc1,raw.decc2-raw.ecc2);
 ax2                     = subplot(1,2,2);
 [ax2,p1_better_acc]     = modulation_violin(ax2,raw.acc1,raw.acc2,auc.acc1,auc.acc2);
+% [ax2,p1_better_acc]    = modulation_violin(ax1,raw.acc1,raw.acc2,raw.dacc1-raw.acc1,raw.dacc2-raw.acc2);
 
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dsvg', '-painters');
 print(f, [dest_dir '/FIG_better_worse_modulation_' alignment_str], '-r500', '-dpng', '-painters');
