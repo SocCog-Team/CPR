@@ -118,6 +118,7 @@ for iCyc = 1:length(stim.rdp_dir)
                 unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
                 state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - stim.rdp_dir_ts{iCyc}(iState);
                 state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx));
+                % add baseline spikes
 
                 if in.brain.CPR.spks.include.cyc_id{unit_idx}(iCyc) == 0
                     state.include.(unit_id)(state_cnt)  = false;
