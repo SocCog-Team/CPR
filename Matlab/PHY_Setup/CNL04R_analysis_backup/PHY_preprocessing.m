@@ -71,7 +71,7 @@ sync_offset = double(sync_offset);
 
 % Initialise variables
 idx                         = [];
-stim                         = [];
+stim                        = [];
 
 % Create variable-specific indices
 idx.cOn                     = d.event == 'TRIAL_start';
@@ -159,7 +159,7 @@ for iCyc = 1:length(stim.cEnd)
 end
 
 %% Import spiking data
-spk_files               = dir([dest_dir 'dataspikes*negthr.mat']); % Get all spike files
+spk_files               = dir([dest_dir 'dataspikes*negthr.mat']); % Get all spike files - neg threshold only
 
 for iChan = 1:length(spk_files)
     clear spks units

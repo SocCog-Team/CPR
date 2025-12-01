@@ -19,16 +19,17 @@
 % ---> Check if trial numbers are sufficient after cleanup
 % (5) Outsource plotting routines
 
-% clear all
-% close all
+clear all
+close all
+
 addpath /Users/cnl/Desktop/CPR/code
 
 cfg_pth         = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
 source_dir      = '/Users/cnl/Documents/DATA/Nilan/';
 % dest_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250807_rec045/'; % Onset transients before 0?
 % fname           = '20250807_nil_CPR_block1_phy4_rec045_ann';
-dest_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250925_rec060_block1/';
-fname           = '20250925_nil_CPR_block1_phy4_rec060_fxs';
+dest_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250924_rec059_block1/';
+fname           = '20250924_nil_CPR_block1_phy4_rec059_fxs';
 import_flag     = false;
 
 % Import stimulus parameters and neural responses for stimulus cycles
@@ -116,9 +117,10 @@ for iCyc = 1:length(stim.rdp_dir)
                 end
 
                 unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
-                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - stim.rdp_dir_ts{iCyc}(iState);
+                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - (stim.rdp_dir_ts{iCyc}(iState) - double(stim.cpr_cyle(iCyc,1)));
                 state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx));
-                % add baseline spikes
+                state.cIdx(state_cnt) = iCyc;
+                % add baseline
 
                 if in.brain.CPR.spks.include.cyc_id{unit_idx}(iCyc) == 0
                     state.include.(unit_id)(state_cnt)  = false;
@@ -175,12 +177,12 @@ for iTrial = 1:length(spike_times)
     else
 
         % Fit function to spikes
-        % gauss_kern    = fit_gaussian(spks, time); % problem --> backward smearing
-        alpha_kern      = fit_alpha(spks, time);
+        gauss_kern    = fit_gaussian(spks, time); % problem --> backward smearing
+        % alpha_kern      = fit_alpha(spks, time); % problem: values too small - fix bug!
 
         % Sum over all distributions to get spike density function
-        % sdf(iTrial,:)	= sum(gauss_kern,1);
-        sdf(iTrial,:)	= sum(alpha_kern,1);
+        sdf(iTrial,:)	= sum(gauss_kern,1);
+        % sdf(iTrial,:)	= sum(alpha_kern,1);
     end
 
 end
@@ -223,6 +225,7 @@ end
 % Calculate spike density function
 tstep           = .001;
 time            = [-.3:tstep:1];
+% figure;hold on
 [~, sdf]        = FR_estimation(spks_cyc, time, false);
 msdf            = mean(sdf); % Average time course
 
@@ -239,6 +242,9 @@ end
 BLidx           = 1:200;
 STIMidx         = 301:500;
 out.mean_fr     = mean(msdf(STIMidx));
+
+% figure
+% plot(msdf)
 
 % Test average activity in time windows
 mBL             = mean(sdf(:,BLidx),2);  % Avg response to baseline
@@ -296,9 +302,9 @@ t       = table('Size',[1000, size(var,1)],...
 cc = 0;
 
 % Define inclusion criteria
-min_num_cycles          = 50;   % Min Number of stimulus cycles
+min_num_cycles          = 30;   % Min Number of stimulus cycles
 min_cycle_dur_sec       = 5;    % Min cycle duraction [seconds]
-min_fr                  = 5;    % Min firing rate
+min_fr                  = 1;    % Min firing rate
 p_thresh                = .05;  % Significance threshold
 min_lat_ms              = 35;   % Min onset response latency
 max_lat_ms              = 200;  % Max onset response latency
@@ -317,7 +323,7 @@ for iChan = 1:length(chan_lst)
         cyc_duration_sec        = (phy.stim.cpr_cyle(:,2) - phy.stim.cpr_cyle(:,1)) ./1e6;
         avg_fr_cycle            = cellfun(@length, spk_times_cycle)' ./ cyc_duration_sec;
         cyc_lst                 = avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec;
-        spk_times_cycle_filt    = spk_times_cycle(avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec);
+        spk_times_cycle_filt    = spk_times_cycle(avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec)
 
         % Test onset response of units with sufficient repetitions 
         cc                      = cc+1;
@@ -422,7 +428,7 @@ for iCyc = 1:length(in.stim.rdp_dir)
                 end
 
                 unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
-                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(state_idx) - stim.rdp_dir_ts{iCyc}(iState);
+                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(state_idx)  - (stim.rdp_dir_ts{iCyc}(iState) + double(stim.cpr_cyle(iCyc,1)));
                 state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(state_idx));
             end
         end
