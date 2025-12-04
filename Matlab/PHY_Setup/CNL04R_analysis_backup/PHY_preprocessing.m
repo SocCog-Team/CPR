@@ -127,6 +127,9 @@ for iCyc = 1:length(stim.cEnd)
     if contains(stim.task{iCyc}, 'CPR')
         % Cycle counter
         ccnt                    = ccnt+1;
+    
+        stim.cpr_solo{ccnt}     = contains(stim.task{iCyc},'solo');
+        stim.cpr_dyad{ccnt}     = contains(stim.task{iCyc},'dyad');
 
         % Stimulus cycle parameters
         x_pos                   = cell2mat(d.value(cycIdx & d.event == 'STIM_RDP_posX'));
