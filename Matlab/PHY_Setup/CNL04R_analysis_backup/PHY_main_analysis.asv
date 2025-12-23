@@ -84,11 +84,12 @@ for iCyc = 1:length(stim.rdp_dir)
             trg_idx         = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
         end
         
-        state.feedback_state_smple{state_cnt}	= ceil( ((stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState)) ./1e3) ./ (1000/120)); % Target sample in state
-        state.outcome{state_cnt}                = stim.outcome{iCyc}(trg_idx);
-        state.reward_cum{state_cnt}             = stim.reward_cum{iCyc}(trg_idx);
-        %         state.reward_ind      = stim.reward_ind{iCyc}(trg_idx); % no entries here?!
-
+        state.feedback_ts 	= stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState); % trg sample
+        state.outcome     	= stim.outcome{iCyc}(trg_idx);
+        
+%         state.reward_ind      = stim.reward_ind{iCyc}(trg_idx); % only hit entries here
+%         state.reward_cum      = stim.reward_cum{iCyc}(trg_idx);
+        
         % Joystick
         if iState == length(stim.rdp_dir{iCyc})
             js_monk_idx     = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
