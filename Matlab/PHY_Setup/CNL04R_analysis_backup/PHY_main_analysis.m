@@ -76,6 +76,8 @@ for iCyc = 1:length(stim.rdp_dir)
         else
             state.dur_s(state_cnt)  = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
         end
+        
+        %%% Extract target sample ID and outcome here %%%
 
         % Joystick
         if iState == length(stim.rdp_dir{iCyc})
