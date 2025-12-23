@@ -75,10 +75,8 @@ for iCyc = 1:length(stim.rdp_dir)
             state.dur_s(state_cnt)  = double(stim.cpr_cyle(iCyc,2) - stim.rdp_dir_ts{iCyc}(iState)) / 1e6;
         else
             state.dur_s(state_cnt)  = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
-        end
+        end  
         
-        %%% Extract target sample ID and outcome here %%%
-
         % Joystick
         if iState == length(stim.rdp_dir{iCyc})
             js_monk_idx     = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
@@ -92,6 +90,17 @@ for iCyc = 1:length(stim.rdp_dir)
         state.js_monk_dir{state_cnt}    = joy.js_monk_dir{iCyc}(js_monk_idx);
         state.js_hum_dir{state_cnt}     = joy.js_hum_tlt{iCyc}(js_hum_idx);
         state.js_hum_tlt{state_cnt}     = joy.js_hum_dir{iCyc}(js_hum_idx);
+        
+        %%% Extract target sample ID and outcome here %%%
+%         if iState == length(stim.rdp_dir{iCyc})
+%             trg_idx     = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
+%         else
+%             trg_idx     = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
+%         end
+        %         stim.feedback_ts{ccnt}
+        %         stim.outcome{ccnt}
+        %         stim.reward_ind{ccnt}
+        %         stim.reward_cum{ccnt}
 
         % Brain
         chan = fieldnames(in.brain.CPR.spks);
