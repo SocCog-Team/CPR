@@ -67,9 +67,10 @@ lw                          = 3;
 fs                          = 20;
 alph                        = 1;
 sz                          = 75;
+nstep                       = 20;
 
-idx                         = [3500:4500];
-idx_loop                    = [3500:5:4500];
+idx                         = [3000:4500];
+idx_loop                    = [3000:nstep:4500];
 % Plot stimulus history up to the current frame
 cmap  = cool(numel(idx));
 cmap_p1  = cool(numel(idx));
