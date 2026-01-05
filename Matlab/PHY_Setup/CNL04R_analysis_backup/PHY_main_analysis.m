@@ -10,9 +10,9 @@
 %   1.0     (fxs 2025-09-05) Initial version.
 
 % TO DO:
-% (1) Implement automised loop over sorted recordings
-% (2) Add a quality label if channel is worth processing further:
+% (1) Add a quality label if channel is worth processing further:
 % ---> Add Drift analysis to check is FR remains stable over time
+% (2) Add optional spike readout, otherwise behavior only
 
 clear all
 close all
