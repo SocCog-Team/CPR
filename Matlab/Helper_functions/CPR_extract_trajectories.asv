@@ -30,8 +30,7 @@ stim              	= [];
 stim.cOn          	= double(d.time(d.event == 'TRIAL_start'));
 stim.cEnd         	= double(d.time(d.event == 'TRIAL_end'));
 
-% iCyc                = 5;%7;
-iCyc                = 2;
+iCyc                = 5;
 cycIdx            	= [];
 cycIdx          	= d.time >= stim.cOn(iCyc) & d.time <= stim.cEnd(iCyc);
 
@@ -66,7 +65,7 @@ close all
 % Create the data
 lw                          = 3;
 fs                          = 20;
-alph                        = .75;
+alph                        = .5;
 sz                          = 75;
 nstep                       = 10;
 
@@ -75,8 +74,8 @@ idx_loop                    = [3000:nstep:4500];
 n                           = length(idx);
 % Plot stimulus history up to the current frame
 cmap_stim = repmat(linspace(225,20,n)',1,3) ./ 256; 
-cmap_p1  = [linspace(200,175,n)' linspace(200,0,n)' linspace(255,175,n)'] ./ 256;
-cmap_p2  = [linspace(200,0,n)' linspace(255,175,n)' linspace(200,175,n)'] ./ 256;
+cmap_p1  = [linspace(200,150,n)' linspace(200,50,n)' linspace(255,180,n)'] ./ 256;
+cmap_p2  = [linspace(200,50,n)' linspace(255,180,n)' linspace(200,50,n)'] ./ 256;
 
 % polarplot(deg2rad(tmp_dir), tmp_len, 'k'); % Plot the entire curve
 for i = idx_loop

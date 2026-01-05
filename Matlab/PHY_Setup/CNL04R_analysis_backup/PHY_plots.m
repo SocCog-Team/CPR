@@ -132,13 +132,13 @@ else
 end
 
 % Exclude cycle onset states
-excl_cycOn = [1 (find(diff(state.cIdx)))+1];
-state_idx(excl_cycOn) = 0;
-solo_idx(excl_cycOn) = 0;
+excl_cycOn              = [1 (find(diff(state.cIdx)))+1];
+state_idx(excl_cycOn)   = 0;
+solo_idx(excl_cycOn)    = 0;
 % Exclude short states
-excl_dur = state.dur_s < 1.5;
-state_idx(excl_dur) = 0;
-solo_idx(excl_dur) = 0;
+excl_dur                = state.dur_s < 1.5;
+state_idx(excl_dur)     = 0;
+solo_idx(excl_dur)      = 0;
 
 tstep               = .001;
 time                = [0:tstep:1.5];
