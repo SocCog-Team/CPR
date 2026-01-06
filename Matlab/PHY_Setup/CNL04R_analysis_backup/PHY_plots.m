@@ -21,8 +21,8 @@ plot_RF_raster(phy.brain.RF.raw.ch012_neg.spks_ts,100);
 %% CPR tuning
 close all
 
-str_chan            = 'ch009_neg';
-str_unit            = 'unit2';
+str_chan            = 'ch012_neg';
+str_unit            = 'unit1';
 incl                = state.include.([str_chan '_' str_unit]);
 FR                  = state.spk_n.([str_chan '_' str_unit])(incl) ./ state.dur_s(incl);
 stim_dir            = deg2rad(state.rdp_dir(incl));
@@ -51,8 +51,8 @@ lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3)},'UniformOutput',false));
 
 %% CPR cycle onset raster.
 
-str_chan            = 'ch009_neg';
-str_unit            = 'unit2';
+str_chan            = 'ch012_neg';
+str_unit            = 'unit1';
 cpr_spk_times       = [];
 for iCyc = 1:length(phy.stim.cpr_cyle)
     cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});% ./1e6;
@@ -83,52 +83,129 @@ ax.FontSize         = 16;
 % f                   = figure;hold on
 % [all, sdf]          = FR_estimation(state.spk_ts.([str_chan '_' str_unit]), time, true);
 
-%% CPR spike - joystick correlation
-addpath /Users/cnl/Desktop/CPR/CircStat2012a
+%% Solo vs dyadic SDF - cycle onset
+phy.brain.CPR.spks.include(phy.brain.CPR.spks.include.inclusion_flag,:)
 
-str_chan            = 'ch012_neg';
-str_unit            = 'unit2';
-snr                 = unique(state.rdp_coh);
-stim_coh            = state.rdp_coh;
-snr(snr==0)         = [];
-col                 = cool(3);
-FR                  = state.spk_n.([str_chan '_' str_unit]) ./ state.dur_s;
-tlt                 = cellfun(@mean,state.js_monk_tlt);
-
-for iState = 1:length(state.dur_s)
-    js_dev              = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
-    state.js_acc{iState}= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
+str_chan            = 'ch043_neg';
+str_unit            = 'unit3';
+cpr_spk_times       = [];
+for iCyc = 1:length(phy.stim.cpr_cyle)
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});% ./1e6;
+    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
 end
-acc                 = cellfun(@mean,state.js_acc);
+
+cyc_idx             = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
+solo_idx            = cell2mat(phy.stim.cpr_solo);
+tstep               = .001;
+time                = [0:tstep:1];
+[~, sdf_solo]       = FR_estimation(cpr_spk_times(cyc_idx' & solo_idx), time, false);
+[~, sdf_dyad]       = FR_estimation(cpr_spk_times(cyc_idx' & ~solo_idx), time, false);
+
+f                   = figure; hold on
+pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
+pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
+ax                	= gca;
+ax.XLim             = [0 1000];
+ax.XLabel.String    = 'time [ms]';
+ax.YLabel.String    = 'FR [Hz]';
+ax.Box              = 'off';
+ax.FontSize         = 16;
+ax.Title.String     = 'Example unit: Cycle onset';
+lg                  = legend([pls pld], 'solo', 'dyad');
+
+%% Solo vs dyadic SDF - state onset
+close all
+str_chan            = 'ch015_neg';
+str_unit            = 'unit2';
+
+state_idx           = state.include.([str_chan '_' str_unit]);
+solo_idx            = state.cpr_solo;
+
+bin_width           = 90;
+[PD, ~,VS]          = preferredDirection(state.rdp_dir(state_idx), FR(state_idx));
+roi                 = mod([PD-(bin_width/2) PD+(bin_width/2)],360);
+
+if roi(1) > roi(2)
+    PD_bin          = state.rdp_dir > roi(1) | state.rdp_dir < roi(2);
+else
+    PD_bin          = state.rdp_dir > roi(1) & state.rdp_dir < roi(2);
+end
+
+% Exclude cycle onset states
+excl_cycOn              = [1 (find(diff(state.cIdx)))+1];
+state_idx(excl_cycOn)   = 0;
+solo_idx(excl_cycOn)    = 0;
+% Exclude short states
+excl_dur                = state.dur_s < 1.5;
+state_idx(excl_dur)     = 0;
+solo_idx(excl_dur)      = 0;
+
+tstep               = .001;
+time                = [0:tstep:1.5];
 
 figure; hold on
-sc = scatter(tlt(FR~=0),FR(FR~=0),'k.');
-% sc = scatter(acc(FR~=0),FR(FR~=0),'k.');
-sc.SizeData = 50;
-[r,p] = corrcoef(tlt(FR~=0),FR(FR~=0))
-% [r,p] = corrcoef(acc(FR~=0),FR(FR~=0))
-lsl = lsline;
-lsl.Color = 'r';
-lsl.LineWidth = 2;
+[~, sdf_solo]       = FR_estimation(state.spk_ts.([str_chan '_' str_unit])(state_idx & solo_idx & PD_bin), time, true);
+figure; hold on
+[~, sdf_dyad]       = FR_estimation(state.spk_ts.([str_chan '_' str_unit])(state_idx & ~solo_idx & PD_bin), time, true);
 
-% for iCoh = 1:length(snr)
-%     coh_idx         = stim_coh == snr(iCoh);
-%     sc = scatter(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0));
-%     sc.Marker = '.';
-%     sc.SizeData = 50;
-%     sc.MarkerEdgeColor = col(iCoh,:);
-%     [r,p] = corrcoef(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0))
-%     lsl = lsline;
-% end
-%
-% for iCoh = 1:length(snr)
-%     lsl(iCoh).Color = col(iCoh,:);
-%     lsl(iCoh).LineWidth = 2;
-% end
+f                   = figure; hold on
+pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
+pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
+ax                	= gca;
+ax.XLim             = [0 1500];
+ax.XLabel.String    = 'time [ms]';
+ax.YLabel.String    = 'FR [Hz]';
+ax.Box              = 'off';
+ax.FontSize         = 16;
+ax.Title.String     = 'Example unit: State onset';
+lg                  = legend([pls pld], 'solo', 'dyad');
 
-xlabel('JS tilt [norm]')
-ylabel('FR [Hz]')
-title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+%% CPR spike - joystick correlation
+% addpath /Users/cnl/Desktop/CPR/CircStat2012a
+% 
+% str_chan            = 'ch012_neg';
+% str_unit            = 'unit2';
+% snr                 = unique(state.rdp_coh);
+% stim_coh            = state.rdp_coh;
+% snr(snr==0)         = [];
+% col                 = cool(3);
+% FR                  = state.spk_n.([str_chan '_' str_unit]) ./ state.dur_s;
+% tlt                 = cellfun(@mean,state.js_monk_tlt);
+% 
+% for iState = 1:length(state.dur_s)
+%     js_dev              = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
+%     state.js_acc{iState}= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
+% end
+% acc                 = cellfun(@mean,state.js_acc);
+% 
+% figure; hold on
+% sc = scatter(tlt(FR~=0),FR(FR~=0),'k.');
+% % sc = scatter(acc(FR~=0),FR(FR~=0),'k.');
+% sc.SizeData = 50;
+% [r,p] = corrcoef(tlt(FR~=0),FR(FR~=0))
+% % [r,p] = corrcoef(acc(FR~=0),FR(FR~=0))
+% lsl = lsline;
+% lsl.Color = 'r';
+% lsl.LineWidth = 2;
+% 
+% % for iCoh = 1:length(snr)
+% %     coh_idx         = stim_coh == snr(iCoh);
+% %     sc = scatter(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0));
+% %     sc.Marker = '.';
+% %     sc.SizeData = 50;
+% %     sc.MarkerEdgeColor = col(iCoh,:);
+% %     [r,p] = corrcoef(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0))
+% %     lsl = lsline;
+% % end
+% %
+% % for iCoh = 1:length(snr)
+% %     lsl(iCoh).Color = col(iCoh,:);
+% %     lsl(iCoh).LineWidth = 2;
+% % end
+% 
+% xlabel('JS tilt [norm]')
+% ylabel('FR [Hz]')
+% title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -281,4 +358,59 @@ else
 end
 
 set(gca, 'FontSize', 16)
+end
+
+function [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
+% preferredDirection computes the resultant vector and tuning strength from polar data.
+%
+%   [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
+%
+%   INPUTS:
+%       angles - vector of stimulus directions (in degrees or radians)
+%       rates  - vector of corresponding firing rates
+%
+%   OUTPUTS:
+%       prefDir     - preferred direction (same unit as input angle)
+%       prefMag     - magnitude of the resultant vector
+%       vecStrength - normalized vector magnitude (0–1), i.e. direction selectivity
+%
+%   Example:
+%       angles = 0:45:315;
+%       rates  = [5 8 12 9 4 3 2 6];
+%       [dir, mag, vs] = preferredDirection(angles, rates)
+%
+%   See also: atan2, deg2rad, rad2deg
+
+% Check input size
+if numel(angles) ~= numel(rates)
+    error('angles and rates must have the same length.');
+end
+
+% Detect whether angles are in degrees or radians
+if max(abs(angles)) > 2*pi
+    angRad = deg2rad(angles);
+    useDegrees = true;
+else
+    angRad = angles;
+    useDegrees = false;
+end
+
+% Compute resultant vector components
+x = sum(rates .* cos(angRad));
+y = sum(rates .* sin(angRad));
+
+% Resultant vector magnitude
+prefMag = sqrt(x^2 + y^2);
+
+% Preferred direction (angle of resultant)
+prefDir = atan2(y, x);
+
+% Convert to degrees if needed
+if useDegrees
+    prefDir = rad2deg(prefDir);
+    prefDir = mod(prefDir, 360);
+end
+
+% Normalized vector strength (0–1)
+vecStrength = prefMag / sum(rates);
 end

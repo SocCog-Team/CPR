@@ -10,25 +10,25 @@
 %   1.0     (fxs 2025-09-05) Initial version.
 
 % TO DO:
-% (1) Implement automised loop over sorted recordings
-% (2) Add a quality label if channel is worth processing further:
+% (1) Add a quality label if channel is worth processing further:
 % ---> Add Drift analysis to check is FR remains stable over time
+% (2) Add optional spike readout, otherwise behavior only
 
 clear all
 close all
 
 addpath /Users/cnl/Desktop/CPR/code
 
-cfg_pth         = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
-source_dir      = '/Users/cnl/Documents/DATA/Nilan/';
-import_flag     = false;
+cfg_pth             = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
+source_dir          = '/Users/cnl/Documents/DATA/Nilan/';
+import_flag         = false;
 
-rec_lst           = {%'20250807_nil_CPR_block1_phy4_rec045_ann';  % Onset transients before 0?
+rec_lst             = {%'20250807_nil_CPR_block1_phy4_rec045_ann';  % Onset transients before 0?
                     '20250924_nil_CPR_block1_phy4_rec059_fxs',...
                     '20250925_nil_CPR_block1_phy4_rec060_fxs',...
                     '20250926_nil_CPR_block1_phy4_rec061_fxs'};
 
-for iRec = 1%:length(rec_lst)
+for iRec = 1:length(rec_lst)
 
     rec_info        = split(rec_lst{iRec},'_');
     dest_dir        = ['/Users/cnl/Documents/DATA/Nilan/spike_sorting/' rec_info{1} '_'  rec_info{6} '_'  rec_info{4} '/'];
@@ -55,13 +55,13 @@ end
 
 function state = PHY_sort_spikes_by_state(in)
 clear state
-state_cnt       = 0;
-stim            = in.stim;
-joy             = in.joy;
+state_cnt           = 0;
+stim              	= in.stim;
+joy                 = in.joy;
 
 for iCyc = 1:length(stim.rdp_dir)
     for iState = 2:length(stim.rdp_dir{iCyc}) % discard last direction from previous cycle
-        state_cnt = state_cnt +1;
+        state_cnt 	= state_cnt +1;
 
         % Task
         state.cpr_solo(state_cnt)   = stim.cpr_solo{iCyc};
@@ -75,7 +75,19 @@ for iCyc = 1:length(stim.rdp_dir)
             state.dur_s(state_cnt)  = double(stim.cpr_cyle(iCyc,2) - stim.rdp_dir_ts{iCyc}(iState)) / 1e6;
         else
             state.dur_s(state_cnt)  = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
+        end  
+        
+        %%% Extract target sample ID and outcome here %%%
+        if iState == length(stim.rdp_dir{iCyc})
+            trg_idx         = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
+        else
+            trg_idx         = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
         end
+        
+        state.feedback_state_smple{state_cnt}	= ceil( ((stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState)) ./1e3) ./ (1000/120)); % Target sample in state
+        state.outcome{state_cnt}                = stim.outcome{iCyc}(trg_idx);
+        state.reward_cum{state_cnt}             = stim.reward_cum{iCyc}(trg_idx);
+        %         state.reward_ind      = stim.reward_ind{iCyc}(trg_idx); % no entries here?!
 
         % Joystick
         if iState == length(stim.rdp_dir{iCyc})
@@ -86,7 +98,7 @@ for iCyc = 1:length(stim.rdp_dir)
             js_hum_idx      = joy.js_hum_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_hum_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
         end
 
-        state.js_monk_tlt{state_cnt}    = joy.js_monk_tlt{iCyc}(js_monk_idx);
+        state.js_monk_tlt{state_cnt}	= joy.js_monk_tlt{iCyc}(js_monk_idx);
         state.js_monk_dir{state_cnt}    = joy.js_monk_dir{iCyc}(js_monk_idx);
         state.js_hum_dir{state_cnt}     = joy.js_hum_tlt{iCyc}(js_hum_idx);
         state.js_hum_tlt{state_cnt}     = joy.js_hum_dir{iCyc}(js_hum_idx);
@@ -124,7 +136,7 @@ for iCyc = 1:length(stim.rdp_dir)
                 unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
                 state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - (stim.rdp_dir_ts{iCyc}(iState) - double(stim.cpr_cyle(iCyc,1)));
                 state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx));
-                state.cIdx(state_cnt) = iCyc;
+                state.cIdx(state_cnt)               = iCyc;
                 % add baseline
 
                 if in.brain.CPR.spks.include.cyc_id{unit_idx}(iCyc) == 0
@@ -153,6 +165,29 @@ for iSpk = 1:length(spks)
     p2              = (sigma * sqrt(2*pi));
     gauss(iSpk,:)   = exp(p1) ./ p2;
 end
+end
+
+function alpha = fit_alpha(spks, time)
+    tau = 0.005; % [s]
+
+    nSpks = length(spks);
+    nTime = length(time);
+    alpha = zeros(nSpks, nTime);
+
+    for iSpk = 1:nSpks
+        t_rel = time - spks(iSpk); % time relative to spike
+
+        % Only consider t >= 0 (causal)
+        k = zeros(1, nTime);
+        idx = t_rel >= 0;
+
+        k(idx) = (t_rel(idx) ./ tau) .* exp(1 - t_rel(idx) ./ tau);
+
+        % Normalize to unit area (like Gaussian)
+        k = k / (exp(1) * tau);
+
+        alpha(iSpk, :) = k;
+    end
 end
 
 function [all, sdf_g, sdf_a] = FR_estimation(spike_times, time, plot_flag)
@@ -191,29 +226,6 @@ for iTrial = 1:length(spike_times)
     end
 
 end
-end
-
-function alpha_kern = fit_alpha(spks, time)
-    tau = 0.005; % [s]
-
-    nSpks = length(spks);
-    nTime = length(time);
-    alpha_kern = zeros(nSpks, nTime);
-
-    for iSpk = 1:nSpks
-        t_rel = time - spks(iSpk); % time relative to spike
-
-        % Only consider t >= 0 (causal)
-        k = zeros(1, nTime);
-        idx = t_rel >= 0;
-
-        k(idx) = (t_rel(idx) ./ tau) .* exp(1 - t_rel(idx) ./ tau);
-
-        % Normalize to unit area (like Gaussian)
-        k = k / (exp(1) * tau);
-
-        alpha_kern(iSpk, :) = k;
-    end
 end
 
 function out = test_onset_response(spks_cyc)
