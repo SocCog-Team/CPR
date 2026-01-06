@@ -1,0 +1,1194 @@
+clear all
+close all
+
+%%% Behavior solo vs dyadic %%%
+cd /Users/fschneider/Desktop/sfn_h5/
+addpath /Users/fschneider/Documents/GitLab/matlab4mworks/
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions
+addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
+addpath /Users/fschneider/Documents/MATLAB/Violinplot-Matlab/
+addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab/
+
+% List relevant sessions with interleaved trials
+file_lst = {
+    '20250923_nil_CPR_block1_phy4_rec058_fxs.h5';...
+    '20250924_nil_CPR_block1_phy4_rec059_fxs.h5';...
+    '20250925_nil_CPR_block1_phy4_rec060_fxs.h5';...
+    '20250926_nil_CPR_block1_phy4_rec061_fxs.h5';...
+    '20250930_nil_CPR_block1_phy4_rec062_ann.h5';...
+    '20251001_nil_CPR_block1_phy4_rec063_ann.h5';...
+    '20251002_nil_CPR_block1_phy4_rec064_ann.h5'};
+%     '20251023_nil_CPR_block1_phy4_rec065_ann.h5';...
+%     '20251024_nil_CPR_block1_phy4_rec066_ann.h5'};
+
+% Define relevant variables
+var_lst = {
+    'INFO_', ...
+    'IO_joystickDirection', ...
+    'IO_joystickStrength',...
+    'IO_joystickDirection2', ...
+    'IO_joystickStrength2',...
+    'STIM',...
+    'TRIAL_',...
+    '#stimDisplay'};
+
+nSamples                    = 59;
+cnt                         = 0;
+
+% Load file
+for iFile = 1:length(file_lst)
+    d = MW_readData(file_lst{iFile}, 'include', var_lst, '~typeOutcomeCheck');
+
+    % Index variables of interest
+    idx                         = [];
+    idx.cOn                     = d.event == 'TRIAL_start';
+    idx.cEnd                    = d.event == 'TRIAL_end';
+    idx.frame                   = d.event == 'STIM_displayUpdate';
+    idx.RDP_dir                 = d.event == 'STIM_RDP_direction';
+    idx.RDP_coh                 = d.event == 'STIM_RDP_coherence';
+    idx.TRG_on                  = d.event == 'STIM_target_onset';
+    idx.JS_dir                  = d.event == 'IO_joystickDirection';
+    idx.JS_str                  = d.event == 'IO_joystickStrength';
+    idx.JS2_dir                 = d.event == 'IO_joystickDirection2';
+    idx.JS2_str                 = d.event == 'IO_joystickStrength2';
+    idx.outcome                 = d.event == 'TRIAL_outcome';
+    idx.outcome2                = d.event == 'TRIAL_outcome2';
+    idx.trg                     = d.event == 'TRIAL_reactionTrigger';
+    idx.cum_score            	= d.event == 'INFO_Score';
+    idx.cum_score2              = d.event == 'INFO_Score2';
+    idx.trg_score              	= d.event == 'INFO_TargetScore';
+    idx.trg_score2           	= d.event == 'INFO_TargetScore2';
+    idx.performance             = d.event == 'INFO_performance_percent';
+    idx.performance2            = d.event == 'INFO_performance_percent2';
+    idx.task                    = d.event == 'INFO_task';
+    idx.juice_ml                = d.event == 'INFO_Juice_ml';
+
+    cyc                         = [];
+    cyc.cOn                     = d.time(idx.cOn);
+    cyc.cEnd                    = d.time(idx.cEnd);
+
+    % Calculate performance
+    ply2_fxs(iFile)             = contains(file_lst{iFile}, 'fxs');
+    perf{iFile}                 = response_readout(d, idx, cyc);
+
+    % Juice payoff
+    [HI_juice_solo(iFile), HI_juice_dyad(iFile)] = calc_juice(perf{iFile});
+
+    % Sort coherence blocks
+    perf{iFile}.coh_sorted        	= sort_coherence(perf{iFile});
+
+    snr = unique(perf{iFile}.coh_sorted.coh);
+
+    %%% State wise data %%%
+    cpr_cycles                  = find(perf{iFile}.raw.solo_flag ~= 999);
+    for iCyc = cpr_cycles
+        clear dir_dff
+        dir_dff                 = find(diff(perf{iFile}.raw.rdp_dir{iCyc}));
+
+        dir_dff(dir_dff <= 120)   = [];
+        % dir_dff(1)              = [];
+
+        if length(dir_dff) < 3 % min 3 states
+            continue
+        end
+
+        dir_dff                 = [dir_dff length(perf{iFile}.raw.rdp_dir{iCyc})];
+        trgStateIdx             = discretize(perf{iFile}.raw.trg_on_smpl{iCyc}, dir_dff);
+        hitIdx                  = perf{iFile}.raw.trg_on_smpl{iCyc}(strcmp(perf{iFile}.raw.outcome{iCyc},'hit'));
+        rewStateIdx             = discretize(hitIdx, dir_dff);
+
+        if dir_dff(end) - dir_dff(end-1) < nSamples
+            dir_dff(end) = [];
+        end
+        
+        %%% Time-window avergages for each state (last samples beforedirection change)
+        for iState = 1:length(dir_dff)
+            cnt                 = cnt + 1;
+            state.session(cnt)  = iFile;
+            state.cycle(cnt)    = iCyc;
+            state.merr_monk(cnt)= mean(perf{iFile}.raw.js_err{iCyc}(dir_dff(iState)-nSamples:dir_dff(iState)));
+            state.merr_hum(cnt) = mean(perf{iFile}.raw.js2_err{iCyc}(dir_dff(iState)-nSamples:dir_dff(iState)));
+            state.mtlt_monk(cnt)= mean(perf{iFile}.raw.js_tlt{iCyc}(dir_dff(iState)-nSamples:dir_dff(iState)));
+            state.mtlt_hum(cnt) = mean(perf{iFile}.raw.js2_tlt{iCyc}(dir_dff(iState)-nSamples:dir_dff(iState)));
+            state.coh(cnt)      = unique(perf{iFile}.raw.rdp_coh{iCyc}(dir_dff(iState)-nSamples:dir_dff(iState)));
+            state.solo(cnt)     = perf{iFile}.raw.solo_flag(iCyc);
+            state.trg_shown(cnt)= false;
+            state.reward(cnt)   = false;
+
+            if sum(iState == trgStateIdx) > 0
+                state.trg_shown(cnt) = true;
+                if sum(iState == rewStateIdx) > 0
+                    state.reward(cnt)   = true;
+                end
+            end
+        end
+    end
+
+    %%% Average per session per coherence %%%
+    for iCoh = 1:length(snr)
+        %%% Joystick response - state-wise %%% 
+        TLT_monk_solo(iFile, iCoh)  = mean(state.mtlt_monk(state.coh == snr(iCoh) & state.solo));
+        TLT_monk_dyad(iFile, iCoh)  = mean(state.mtlt_monk(state.coh == snr(iCoh) & ~state.solo));
+        TLT_hum_dyad(iFile, iCoh)   = mean(state.mtlt_hum(state.coh == snr(iCoh) & ~state.solo));
+
+        ERR_monk_solo(iFile, iCoh)  = mean(state.merr_monk(state.coh == snr(iCoh) & state.solo));
+        ERR_monk_dyad(iFile, iCoh)  = mean(state.merr_monk(state.coh == snr(iCoh) & ~state.solo));
+        ERR_hum_dyad(iFile, iCoh)   = mean(state.merr_hum(state.coh == snr(iCoh) & ~state.solo));
+
+        %%% Joystick response - average coherence-block %%%
+        % TLT_monk_solo(iFile, iCoh)  = mean(perf{iFile}.coh_sorted.tlt_monk(cIdx & sIdx));
+        % TLT_monk_dyad(iFile, iCoh)  = mean(perf{iFile}.coh_sorted.tlt_monk(cIdx & ~sIdx));
+        % TLT_hum_dyad(iFile, iCoh)   = mean(perf{iFile}.coh_sorted.tlt_hum(cIdx & ~sIdx));
+        % 
+        % ERR_monk_solo(iFile, iCoh)  = mean(perf{iFile}.coh_sorted.err_monk(cIdx & sIdx));
+        % ERR_monk_dyad(iFile, iCoh) = mean(perf{iFile}.coh_sorted.err_monk(cIdx & ~sIdx));
+        % ERR_hum_dyad(iFile, iCoh)   = mean(perf{iFile}.coh_sorted.err_hum(cIdx & ~sIdx));
+
+        %%% Social modulation %%%
+        AUC_tlt(iFile, iCoh)        = calc_AUROC(state.mtlt_monk(state.coh == snr(iCoh) & state.solo),state.mtlt_monk(state.coh == snr(iCoh) & ~state.solo));
+        AUC_err(iFile, iCoh)        = calc_AUROC(state.merr_monk(state.coh == snr(iCoh) & state.solo),state.merr_monk(state.coh == snr(iCoh) & ~state.solo));
+        
+        %%% Performance and payoff %%%
+        %%% Different indexing due to target wise data extraction %%%
+        trg_coh_idx = perf{iFile}.coh_sorted.trg_coh == snr(iCoh);
+        trg_solo_idx = perf{iFile}.coh_sorted.trg_solo;
+        
+        % Hit rate
+        HIr_monk_solo(iFile, iCoh)  = sum(perf{iFile}.coh_sorted.hi_monk(trg_coh_idx & trg_solo_idx)) / length(perf{iFile}.coh_sorted.trg_coh(trg_coh_idx & trg_solo_idx));
+        HIr_monk_dyad(iFile, iCoh)  = sum(perf{iFile}.coh_sorted.hi_monk(trg_coh_idx & ~trg_solo_idx)) / length(perf{iFile}.coh_sorted.trg_coh(trg_coh_idx & ~trg_solo_idx));
+        HIr_hum_dyad(iFile, iCoh)  = sum(perf{iFile}.coh_sorted.hi_hum(trg_coh_idx & ~trg_solo_idx)) / length(perf{iFile}.coh_sorted.trg_coh(trg_coh_idx & ~trg_solo_idx));
+
+        % Juice reward
+        REW_monk_solo(iFile, iCoh)  = nanmean(perf{iFile}.coh_sorted.rew_monk(trg_coh_idx & trg_solo_idx));
+        REW_monk_dyad(iFile, iCoh)  = nanmean(perf{iFile}.coh_sorted.rew_monk(trg_coh_idx & ~trg_solo_idx));
+        % REW_hum_dyad(iFile, iCoh)  = mean(perf{iFile}.coh_sorted.hi_hum(trg_coh_idx & ~trg_solo_idx));
+
+        %%% Response lag - measured in coherence blocks %%%
+        cIdx                        = perf{iFile}.coh_sorted.coh == snr(iCoh); % coherence index
+        sIdx                        = perf{iFile}.coh_sorted.solo; % solo index
+        mscx_solo                   = mean(perf{iFile}.coh_sorted.scx_monk(cIdx & sIdx,:));
+        mscx_dyad                   = mean(perf{iFile}.coh_sorted.scx_monk(cIdx & ~sIdx,:));
+        mscx_dyad_hum               = mean(perf{iFile}.coh_sorted.scx_hum(cIdx & ~sIdx,:));
+        LAG_monk_solo(iFile, iCoh)  = find(mscx_solo==(max(mscx_solo(151:end))));
+        LAG_monk_dyad(iFile, iCoh)  = find(mscx_dyad==(max(mscx_dyad(151:end))));
+        LAG_hum_dyad(iFile, iCoh)   = find(mscx_dyad_hum==(max(mscx_dyad_hum(151:end))));
+
+        %%% Within-joystick correlations for different social context %%%
+        [tmp_r, tmp_p]            	= corrcoef(perf{iFile}.coh_sorted.err_monk(cIdx & sIdx),perf{iFile}.coh_sorted.tlt_monk(cIdx & sIdx));
+        js_corr_r_solo(iFile,iCoh)  = tmp_r(2);
+        js_corr_p_solo(iFile,iCoh)  = tmp_p(2);
+
+        [tmp_r, tmp_p]            	= corrcoef(perf{iFile}.coh_sorted.err_monk(cIdx & ~sIdx),perf{iFile}.coh_sorted.tlt_monk(cIdx & ~sIdx));
+        js_corr_r_dyad(iFile,iCoh)  = tmp_r(2);
+        js_corr_p_dayd(iFile,iCoh)  = tmp_p(2);
+    end
+end
+
+%% Plot average behaviour
+close all
+plot_averages(HIr_monk_solo, HIr_monk_dyad, HIr_hum_dyad, ply2_fxs,snr.*100,'hit rate [%]','hir',[])
+plot_averages(TLT_monk_solo, TLT_monk_dyad, TLT_hum_dyad, ply2_fxs,snr.*100,'joystick tilt [norm]','tlt',[])
+plot_averages(ERR_monk_solo, ERR_monk_dyad, ERR_hum_dyad, ply2_fxs,snr.*100,'joystick error [deg]','err',[])
+plot_averages(REW_monk_solo, REW_monk_dyad, [], ply2_fxs,snr.*100,'avg. juice/target [ml]','rew',[])
+
+%% Social modulation - AUC
+plot_averages(AUC_tlt, AUC_err, [], ply2_fxs,snr.*100,'Social modulation [AUC]','auc',[.1 .6 .6; 0 0 0])
+ln = line([0 98],[.5 .5],'LineWidth',2,'LineStyle','--','Color',[0 0 0]);
+lg = legend('tilt', '','accuracy','','solo perf.');
+lg.Box = 'off';
+xlim([0 98])
+
+%% Plot and test juice payoff
+plot_juice_comparison(HI_juice_solo,HI_juice_dyad,ply2_fxs)
+[h,p] = ttest(HI_juice_solo,HI_juice_dyad)
+
+%% Plot average response lag 
+plot_averages((LAG_monk_solo-150).*(1000/120), (LAG_monk_dyad-150).*(1000/120), (LAG_hum_dyad-150).*(1000/120), ply2_fxs,snr.*100,'lag [ms]','lag',[])
+
+%% JS correlation between tilt and accuracy
+
+close all
+mat         = [];
+col         = cool(4);
+cmap        = [];
+cat         = [];
+for iCoh = 1:4
+    cat     = [cat repmat(iCoh, length(js_corr_r_solo(:,iCoh)),2)];
+    mat     = [mat js_corr_r_solo(:,iCoh) js_corr_r_dyad(:,iCoh)];
+    cmap    = [cmap; col(iCoh,:); col(iCoh,:)./1];
+end
+
+plot_js_correlation(mat,snr,'js_corr_combined',cmap)
+
+%% Wagering? Smaller joystick error with higher tilt
+plot_js_wagering(perf,snr)
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Neuronal tuning %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% different 'state' variable used here - see preprocessing %%%%%%%%%%%%%%
+
+rec_lst = {'20250924_nil_CPR_block1_phy4_rec059_fxs',...
+    '20250925_nil_CPR_block1_phy4_rec060_fxs',...
+    '20250926_nil_CPR_block1_phy4_rec061_fxs'};
+
+cnt                 = 0;
+bin_width           = 90;
+
+for iRec = 1:length(rec_lst)
+    clear phy lst state solo_idx FR
+
+    load(['/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/data/summary_' rec_lst{iRec} '.mat'])
+    load(['/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/data/state_responses_' rec_lst{iRec} '.mat'])
+
+    lst                 = phy.brain.CPR.spks.include.unit_ID(phy.brain.CPR.spks.include.inclusion_flag);
+    lst(contains(lst, 'unit0')) = [];
+
+    for iUnit = 1:length(lst)
+
+        cnt                 = cnt+1;
+        solo_idx            = state.cpr_solo;
+        trg_idx             = state.trg_shown;
+        incl                = state.include.(lst(iUnit));
+        unit_id{cnt}        = lst(iUnit);
+        chan_num(cnt)       = str2double(regexp(lst(iUnit), '\d+', 'match', 'once'));
+        FR                  = state.spk_n.(lst(iUnit)) ./ state.dur_s; % entire state duration!
+
+        [PD(cnt),~,VS(cnt)] = preferredDirection(state.rdp_dir, FR);
+        roi                 = mod([PD(cnt)-(bin_width/2) PD(cnt)+(bin_width/2)],360);
+
+        if roi(1) > roi(2)
+            PD_bin          = state.rdp_dir > roi(1) | state.rdp_dir < roi(2);
+        else
+            PD_bin          = state.rdp_dir > roi(1) & state.rdp_dir < roi(2);
+        end
+
+        %%% Plot cycle onset
+        plot_solo_vs_dyad_cycle_onset(phy, unit_id{cnt})
+
+        %%% Plot state-onset
+        plot_solo_vs_dyad_state_onset(state, unit_id{cnt}, PD_bin)
+
+        %%% Plot state-end
+        % state duration minus time window
+
+        %%% Test difference between social condition %%%
+        [p(cnt),~,stats] = ranksum(FR(PD_bin & solo_idx & ~trg_idx & incl), FR(PD_bin & ~solo_idx & ~trg_idx & incl));  % Mann–Whitney–U-Test (nichtparametrisch)
+        z(cnt) = stats.zval;
+
+        %%% Joy-Spk correlation %%%
+        out = calc_spkjoy_correlation(state,lst(iUnit));
+        r_corr(cnt,:,1) = out.r_tlt;
+        r_corr(cnt,:,2) = out.r_acc;
+        p_corr(cnt,:,1) = out.p_tlt;
+        p_corr(cnt,:,2) = out.p_acc;
+
+    end
+end
+
+% Fraction tuning differences MT + LIP
+mt_modulated_percent    = length(chan_num(p<.05 & chan_num < 33)) / sum(chan_num < 33); % MT units
+lip_modulated_percent   = length(chan_num(p<.05 & chan_num >= 33)) / sum(chan_num >= 33); % LIP units
+
+mt_modulated_z          = z(p<.05 & chan_num < 33);
+lip_modulated_z         = z(p<.05 & chan_num >= 33);
+
+%% Tuning plot MT
+load(['/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/data/summary_' rec_lst{1} '.mat'])
+load(['/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/data/state_responses_' rec_lst{1} '.mat'])
+dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/figures/';
+plot_cpr_tuning(state, 'ch016_neg_unit1',dest_dir)
+
+%% CPR tuning curve based on state-wise firing rate
+
+incl                = state.include.('ch016_neg_unit3');
+% FR                  = state.spk_n.('ch016_neg_unit3') ./ state.dur_s;
+nSpks               = cellfun(@(x) x< 1e6, state.spk_ts.('ch016_neg_unit3'), 'UniformOutput', false);
+FR                  = cellfun(@sum,nSpks);
+stim_dir            = deg2rad(state.rdp_dir);
+f = figure;
+h = polaraxes; hold on
+plot_CPRtuning(h,FR(incl),stim_dir(incl), true,[0 0 0])
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+function out = response_readout(d, idx, cyc)
+
+last_entry = 0;
+last_rew = 0;
+
+for iCyc = 1:length(cyc.cEnd)
+    % Trial index
+    cycIdx                  = [];
+    cycIdx                  = d.time >= cyc.cOn(iCyc) & d.time <= cyc.cEnd(iCyc);
+
+    % Task info
+    task                    =  getTrialData(d.value, cycIdx, idx.task);
+
+    % Trial flag
+    if contains(task, 'CPR_solo')
+        out.raw.solo_flag(iCyc) = true;
+    elseif contains(task, 'CPR_dyadic')
+        out.raw.solo_flag(iCyc) = false;
+    else
+        out.raw.solo_flag(iCyc) = 999;
+        continue
+    end
+
+    % Extract frame times
+    frame_ts             	= getTrialData(d.time, cycIdx, idx.frame);                      % Frame timestamps
+
+    % Extract coherence blocks
+    tmp_rdp_coh             = getTrialData(d.value, cycIdx, idx.RDP_coh);                   % RDP coherence
+    tmp_rdp_coh_ts          = getTrialData(d.time, cycIdx, idx.RDP_coh);                    % RDP coherence timestamps
+
+    % Extract stimulus direction
+    tmp_rdp_dir            	= getTrialData(d.value, cycIdx, idx.RDP_dir);                   % RDP_direction
+    tmp_rdp_dir_ts        	= getTrialData(d.time, cycIdx, idx.RDP_dir);                    % RDP_direction timestamps
+
+    % Joystick data
+    tmp_js_dir_ts        	= getTrialData(d.time, cycIdx, idx.JS_dir);                     % JS player1
+    tmp_js_dir            	= getTrialData(d.value, cycIdx, idx.JS_dir);
+    tmp_js_tlt           	= getTrialData(d.value, cycIdx, idx.JS_str);
+    tmp_js2_dir_ts        	= getTrialData(d.time, cycIdx, idx.JS2_dir);                    % JS player2
+    tmp_js2_dir            	= getTrialData(d.value, cycIdx, idx.JS2_dir);
+    tmp_js2_tlt           	= getTrialData(d.value, cycIdx, idx.JS2_str);
+
+    % Target onset
+    clear tmp_trg_ts tmp_trg_val trg_on outcome outcome2 outcome_ts outcome2_ts
+    tmp_trg_ts              = getTrialData(d.time, cycIdx, idx.TRG_on);
+    tmp_trg_val             = getTrialData(d.value, cycIdx, idx.TRG_on);
+
+    if ~isnan(tmp_trg_val)
+        trg_on                  = tmp_trg_ts(logical(tmp_trg_val));
+        outcome                 = getTrialData(d.value, cycIdx, idx.outcome);
+        outcome2                = getTrialData(d.value, cycIdx, idx.outcome2);
+        outcome_ts              = getTrialData(d.time, cycIdx, idx.outcome);
+        outcome2_ts             = getTrialData(d.time, cycIdx, idx.outcome2);
+        rew_ts                = getTrialData(d.time, cycIdx, idx.juice_ml);
+        rew_val               = getTrialData(d.value, cycIdx, idx.juice_ml);
+
+        if length(trg_on) ~= length(outcome) && ~strcmp(outcome{end},'FixationBreak')
+            warning(['Cyc:' num2str(iCyc) '| nTrg ~= nOutcome'])
+        end
+
+        %         outcome(outcome_ts < trg_on(1))     = [];
+        %         outcome2(outcome2_ts < trg_on(1))   = [];
+        %
+        %         if isempty(outcome)
+        %             trg_on            	= [];
+        %         end
+
+    else
+        trg_on                  = [];
+        outcome                 = [];
+        outcome2                = [];
+    end
+
+    %%%% NEW %%%
+    if ~isempty(outcome)
+        if strcmp(outcome{end},'FixationBreak')
+            outcome(end) = [];
+        end
+    end
+    
+    if strcmp(class(outcome2),'cell')
+        if ~isempty(outcome2)
+            if strcmp(outcome2{end},'FixationBreak')
+                outcome2(end) = [];
+            end
+        end
+    end
+               
+    % Target-wise data
+    trg_solo=[]; trg_coh=[]; trg_hi_monk=[]; trg_hi_hum=[]; trg_rew_monk=[];
+    tcnt = 0;
+    for iTarget = 1:length(outcome)
+        tcnt                      = tcnt+1;
+        trg_solo(tcnt)            = contains(task,'CPR_solo');
+        trg_coh(tcnt)             = tmp_rdp_coh(find(tmp_rdp_coh_ts < trg_on(iTarget),1,'last'));
+        trg_hi_monk(tcnt)         = strcmp(outcome{iTarget},'hit');
+
+        if strcmp(outcome{iTarget},'hit')
+            rIdx = find(rew_ts < outcome_ts(iTarget) + 200e3,1,'last');
+            trg_rew_monk(tcnt)      = rew_val(rIdx) - last_rew;
+            last_rew                = rew_val(rIdx);
+        else
+            trg_rew_monk(tcnt)      = 0;
+        end
+
+        if strcmp(class(outcome2),'cell')
+            trg_hi_hum(tcnt)      = strcmp(outcome2{iTarget},'hit');
+        else
+            trg_hi_hum(tcnt)      = 0;
+        end
+    end
+    
+    %%%%%%%%%%%%%%
+    
+    clear juice_ml trg_juice
+    juice_ml                    = getTrialData(d.value, cycIdx, idx.juice_ml);
+    if ~isnan(juice_ml)
+        trg_juice                   = diff([last_entry juice_ml]);
+
+        if strcmp(outcome{end}, 'FixationBreak')
+            last_entry                  = juice_ml(end); % no fixation reward
+        else
+            last_entry                  = juice_ml(end) +.2; % plus fixation reward
+        end
+    else
+        trg_juice = [];
+    end
+
+    % Initialise variables
+    clear rdp_dir js_dir js2_dir js_err js2_err js_tlt js2_tlt js_acc js2_acc js_dff rdp_dff
+    rdp_dir                 = nan(1,length(frame_ts));
+    rdp_coh                 = nan(1,length(frame_ts));
+    js_dir                  = nan(1,length(frame_ts));
+    js_tlt                  = nan(1,length(frame_ts));
+
+    % Create frame-wise data
+    for iFrame = 1:length(frame_ts)
+        if sum(tmp_rdp_dir_ts < frame_ts(iFrame)) ~=0
+            rdp_dir(iFrame) = tmp_rdp_dir(find(tmp_rdp_dir_ts < frame_ts(iFrame),1,'last'));
+            rdp_coh(iFrame) = tmp_rdp_coh(find(tmp_rdp_coh_ts < frame_ts(iFrame),1,'last'));
+            js_dir(iFrame)  = tmp_js_dir(find(tmp_js_dir_ts < frame_ts(iFrame),1,'last'));
+            js_tlt(iFrame)  = tmp_js_tlt(find(tmp_js_dir_ts < frame_ts(iFrame),1,'last'));
+            js2_dir(iFrame)  = tmp_js2_dir(find(tmp_js2_dir_ts < frame_ts(iFrame),1,'last'));
+            js2_tlt(iFrame)  = tmp_js2_tlt(find(tmp_js2_dir_ts < frame_ts(iFrame),1,'last'));
+        end
+    end
+
+    % Calculate accuracy
+    js_err                  = rad2deg(circ_dist(deg2rad(js_dir),deg2rad(rdp_dir)));         % Get circular distance to RDP direction
+    js_acc                	= abs(1 - abs(js_err / 180));                                   % Calculate accuracy
+
+    js2_err                 = rad2deg(circ_dist(deg2rad(js2_dir),deg2rad(rdp_dir)));         % Get circular distance to RDP direction
+    js2_acc                	= abs(1 - abs(js2_err / 180));                                   % Calculate accuracy
+
+    % Sample-by-sample difference (Derivative)
+    js_dff                  = [0 rad2deg(circ_dist(deg2rad(js_dir(1:end-1)),deg2rad(js_dir(2:end))))];
+    js2_dff                 = [0 rad2deg(circ_dist(deg2rad(js2_dir(1:end-1)),deg2rad(js2_dir(2:end))))];
+    rdp_dff                 = [0 rad2deg(circ_dist(deg2rad(rdp_dir(1:end-1)),deg2rad(rdp_dir(2:end))))];
+    
+    ex                    	= isnan(js_dff) | isnan(rdp_dff);
+    js_dff(ex)            	= 0;
+    rdp_dff(ex)            	= 0;
+
+    % Save raw signals
+    out.raw.ts{iCyc}     	= frame_ts;
+    out.raw.rdp_dir{iCyc} 	= rdp_dir;
+    out.raw.rdp_coh{iCyc} 	= rdp_coh;
+    out.raw.rdp_dff{iCyc} 	= rdp_dff;
+    out.raw.js_dff{iCyc}  	= js_dff;
+    out.raw.js2_dff{iCyc}  	= js2_dff;
+    out.raw.js_err{iCyc}   	= abs(js_err);
+    out.raw.js_acc{iCyc}   	= js_acc;
+    out.raw.js_tlt{iCyc}   	= js_tlt;
+    out.raw.js2_dir{iCyc}  	= js2_dir;
+    out.raw.js2_err{iCyc}  	= abs(js2_err);
+    out.raw.js2_acc{iCyc} 	= js2_acc;
+    out.raw.js2_tlt{iCyc}  	= js2_tlt;
+    out.raw.trg_on_ts{iCyc} = trg_on;
+    if ~isempty(trg_on)
+        out.raw.trg_on_smpl{iCyc} = ceil((double(trg_on - cyc.cOn(iCyc)) ./1e3) ./ (1000/120)); %subtract cycleOn, convert to ms, divide by ms/frame, round up
+    else
+        out.raw.trg_on_smpl{iCyc} = [];
+    end
+    out.raw.outcome{iCyc}   = outcome;
+    out.raw.outcome2{iCyc}  = outcome2;
+    out.raw.juice_ml{iCyc}  = trg_juice;
+    
+    if sum(trg_rew_monk < 0) > 0
+        trg_rew_monk(trg_rew_monk < 0) = nan;
+    end
+
+    out.raw.trg_hi_monk{iCyc}  = trg_hi_monk;
+    out.raw.trg_rew_monk{iCyc} = trg_rew_monk;
+    out.raw.trg_hi_hum{iCyc}  = trg_hi_hum;
+    out.raw.trg_solo{iCyc}  = trg_solo;
+    out.raw.trg_coh{iCyc}  = trg_coh;
+
+end
+end
+
+function coh_sorted = sort_coherence(in)
+cnt = 0;
+
+for iCyc = 1:length(in.raw.solo_flag)
+    if in.raw.solo_flag(iCyc) == 999
+        continue
+    end
+
+    coh_vec = in.raw.rdp_coh{iCyc};
+    coh_vec(1:20)       = coh_vec(21); % overwrite mess of nans and zeros for first samples
+    coh_dff             = find(diff(coh_vec) ~= 0);
+    coh_boundaries      = [1  coh_dff length(in.raw.rdp_coh{iCyc})];
+
+    for iBlock = 2:length(coh_boundaries)
+        samples                         = coh_boundaries(iBlock-1)+1:coh_boundaries(iBlock);
+        cnt                             = cnt+1;
+        coh_sorted.block(cnt)           = cnt;
+        coh_sorted.solo(cnt)            = logical(in.raw.solo_flag(iCyc));
+        coh_sorted.coh(cnt)             = unique(coh_vec(samples));
+        coh_sorted.tlt_monk(cnt)        = nanmean(in.raw.js_tlt{iCyc}(samples));
+        coh_sorted.err_monk(cnt)        = nanmean(abs(in.raw.js_err{iCyc}(samples)));
+%         coh_sorted.hi_monk(cnt)         = sum(strcmp(in.raw.outcome{iCyc},'hit'));
+        coh_sorted.tlt_hum(cnt)         = nanmean(in.raw.js2_tlt{iCyc}(samples));
+        coh_sorted.err_hum(cnt)         = nanmean(abs(in.raw.js2_err{iCyc}(samples)));
+%         coh_sorted.hi_hum(cnt)          = sum(strcmp(in.raw.outcome2{iCyc},'hit'));
+%         coh_sorted.ntrg(cnt)            = length(in.raw.outcome{iCyc});
+         
+        xcm                             = xcorr(abs(in.raw.js_dff{iCyc}(samples)),abs(in.raw.rdp_dff{iCyc}(samples)),150,'normalized'); % Cross-correlation
+        coh_sorted.scx_monk(cnt,:)     	= smoothdata(xcm,'gaussian',20); % Smooth correlation output with gaussian kernel
+        
+        xch                             = xcorr(abs(in.raw.js2_dff{iCyc}(samples)),abs(in.raw.rdp_dff{iCyc}(samples)),150,'normalized'); % Cross-correlation
+        coh_sorted.scx_hum(cnt,:)    	= smoothdata(xch,'gaussian',20); % Smooth correlation output with gaussian kernel
+    end
+    
+    tcnt = 0;
+    for iBlock = 1:length(in.raw.trg_hi_monk)
+        if isempty(in.raw.trg_hi_monk{iBlock})
+            continue
+        end
+        
+        for iTrg = 1:length(in.raw.trg_hi_monk{iBlock})
+            tcnt                        = tcnt+1;
+            coh_sorted.hi_monk(tcnt)    = in.raw.trg_hi_monk{iBlock}(iTrg);
+            coh_sorted.rew_monk(tcnt)   = in.raw.trg_rew_monk{iBlock}(iTrg);
+            coh_sorted.hi_hum(tcnt)     = in.raw.trg_hi_hum{iBlock}(iTrg);
+            coh_sorted.trg_coh(tcnt)    = in.raw.trg_coh{iBlock}(iTrg);
+            coh_sorted.trg_solo(tcnt)   = in.raw.trg_solo{iBlock}(iTrg);
+        end
+    end
+end
+end
+
+function [juice_solo, juice_dyad] = calc_juice(in)
+juice_cell = in.raw.juice_ml(in.raw.solo_flag ~= 999);
+trl_idx = in.raw.solo_flag(in.raw.solo_flag ~= 999);
+
+juice_vec = [];
+juice_label = [];
+for iCyc = 1:length(juice_cell)
+    juice_vec = [juice_vec juice_cell{iCyc}];
+    juice_label = [juice_label repmat(trl_idx(iCyc),1,length(juice_cell{iCyc}))];
+end
+
+juice_solo = nanmedian(juice_vec(juice_label == 1 & juice_vec > 0));
+juice_dyad = nanmedian(juice_vec(juice_label == 0 & juice_vec > 0));
+end
+
+function [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
+% preferredDirection computes the resultant vector and tuning strength from polar data.
+%
+%   [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
+%
+%   INPUTS:
+%       angles - vector of stimulus directions (in degrees or radians)
+%       rates  - vector of corresponding firing rates
+%
+%   OUTPUTS:
+%       prefDir     - preferred direction (same unit as input angle)
+%       prefMag     - magnitude of the resultant vector
+%       vecStrength - normalized vector magnitude (0–1), i.e. direction selectivity
+%
+%   Example:
+%       angles = 0:45:315;
+%       rates  = [5 8 12 9 4 3 2 6];
+%       [dir, mag, vs] = preferredDirection(angles, rates)
+%
+%   See also: atan2, deg2rad, rad2deg
+
+% Check input size
+if numel(angles) ~= numel(rates)
+    error('angles and rates must have the same length.');
+end
+
+% Detect whether angles are in degrees or radians
+if max(abs(angles)) > 2*pi
+    angRad = deg2rad(angles);
+    useDegrees = true;
+else
+    angRad = angles;
+    useDegrees = false;
+end
+
+% Compute resultant vector components
+x = sum(rates .* cos(angRad));
+y = sum(rates .* sin(angRad));
+
+% Resultant vector magnitude
+prefMag = sqrt(x^2 + y^2);
+
+% Preferred direction (angle of resultant)
+prefDir = atan2(y, x);
+
+% Convert to degrees if needed
+if useDegrees
+    prefDir = rad2deg(prefDir);
+    prefDir = mod(prefDir, 360);
+end
+
+% Normalized vector strength (0–1)
+vecStrength = prefMag / sum(rates);
+end
+
+function out = calc_spkjoy_correlation(state,unit_id)
+FR                  = state.spk_n.(unit_id) ./ state.dur_s;
+snr                 = unique(state.rdp_coh);
+
+%%% Indices %%%
+bin_width           = 90;
+[PD,~,VS]           = preferredDirection(state.rdp_dir, FR);
+roi                 = mod([PD-(bin_width/2) PD+(bin_width/2)],360);
+if roi(1) > roi(2)
+    PD_bin          = state.rdp_dir > roi(1) | state.rdp_dir < roi(2);
+else
+    PD_bin          = state.rdp_dir > roi(1) & state.rdp_dir < roi(2);
+end
+
+solo_idx            = state.cpr_solo;
+trg_idx             = state.trg_shown;
+incl                = state.include.(unit_id);
+
+%%% time window average %%%
+nSamples            = 59;
+for iState = 1:length(state.dur_s)
+    if length(state.js_monk_dir{iState}) < 100
+        js_acc{iState}  = single(nan);
+        js_tilt{iState} = single(nan);
+    else
+        js_dev          = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}(end-nSamples:end)),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
+        js_acc{iState}  = abs(1 - abs(js_dev / 180));                               % Calculate accuracy
+        js_tilt{iState} = state.js_monk_tlt{iState}(end-nSamples:end);
+    end
+end
+
+acc                 = cell2mat(cellfun(@nanmean,js_acc,'UniformOutput', false));
+tlt                 = cell2mat(cellfun(@nanmean,js_tilt,'UniformOutput', false));
+
+for iCoh = 1:length(snr)
+    coh_idx = state.rdp_coh == snr(iCoh);
+    all_idx = coh_idx & ~trg_idx & incl & PD_bin;
+    % all_idx = coh_idx & solo_idx & ~trg_idx & incl & PD_bin;
+
+    [r,p] = corrcoef(tlt(all_idx),FR(all_idx));
+    out.r_tlt(iCoh) = r(2);
+    out.p_tlt(iCoh) = p(2);
+
+    [r,p] = corrcoef(acc(all_idx),FR(all_idx));
+    out.r_acc(iCoh) = r(2);
+    out.p_acc(iCoh) = p(2);
+end
+end
+
+function [out] = calc_AUROC(in1, in2)
+
+if size(in1,1) == 1
+    in1             = in1';
+    in2             = in2';
+end
+
+lab                 = [zeros(length(in1),1); ones(length(in2),1)];
+[~,~,~,out]         = perfcurve(lab,[in1; in2],1);
+
+% figure
+% histogram(in1,20)
+% hold on
+% histogram(in2,20)
+% title([median(in1) median(in2) out])
+
+end
+
+function [all, sdf_g, sdf_a] = FR_estimation(spike_times, time, plot_flag)
+
+sdf                 = [];
+all                 = [];
+
+for iTrial = 1:length(spike_times)
+
+    spks            = double(spike_times{iTrial}') ./1e6;  	% Get all spikes of respective trial
+
+    all             = [all spks];                   % Concatenate spikes of all trials
+    xspikes         = repmat(spks,3,1);             % Replicate array
+    yspikes      	= nan(size(xspikes));           % NaN array
+
+    if ~isempty(yspikes)
+        yspikes(1,:) = iTrial-1;                   	% Y-offset for raster plot
+        yspikes(2,:) = iTrial;
+    end
+
+    % Plot trial raster
+    if plot_flag
+        pl           = plot(xspikes, yspikes, 'Color', 'k', 'LineWidth',1.25);
+    end
+    % Spike density function
+    if isempty(spks)
+    else
+
+        % Fit function to spikes
+        gauss_kern      = fit_gaussian(spks, time); % problem --> backward smearing
+        alpha_kern      = fit_alpha(spks, time); % problem: values too small - fix bug!
+
+        % Sum over all distributions to get spike density function
+        sdf_g(iTrial,:)	= sum(gauss_kern,1);
+        sdf_a(iTrial,:)	= sum(alpha_kern,1);
+    end
+
+end
+end
+
+function gauss = fit_gaussian(spks, time)
+
+sigma               = .005;                     % Width of gaussian/window [s]
+
+% For every spike
+for iSpk = 1:length(spks)
+
+    % Center gaussian at spike time
+    mu              = spks(iSpk);
+
+    % Calculate gaussian
+    p1              = -.5 * ((time - mu)/sigma) .^ 2;
+    p2              = (sigma * sqrt(2*pi));
+    gauss(iSpk,:)   = exp(p1) ./ p2;
+end
+end
+
+function alpha = fit_alpha(spks, time)
+    tau = 0.005; % [s]
+
+    nSpks = length(spks);
+    nTime = length(time);
+    alpha = zeros(nSpks, nTime);
+
+    for iSpk = 1:nSpks
+        t_rel = time - spks(iSpk); % time relative to spike
+
+        % Only consider t >= 0 (causal)
+        k = zeros(1, nTime);
+        idx = t_rel >= 0;
+
+        k(idx) = (t_rel(idx) ./ tau) .* exp(1 - t_rel(idx) ./ tau);
+
+        % Normalize to unit area (like Gaussian)
+        k = k / (exp(1) * tau);
+
+        alpha(iSpk, :) = k;
+    end
+end
+
+function plot_averages(monk_solo, monk_dyad, hum_dyad, ply2_fxs, snr,ystr,fstr, col)
+
+if isempty(col)
+    col = ([.5 .1 .1;.9 .3 .3;.1 .1 .1]);
+end
+
+lw = 4;
+fs = 24;
+alp = .3;
+f = figure; hold on
+
+p1 = plot(snr,mean(monk_solo), 'LineWidth',lw, 'Color',col(1,:));
+plot_conf_intervals(monk_solo, col(1,:), alp,snr)
+
+p2 = plot(snr,mean(monk_dyad), 'LineWidth',lw, 'Color',col(2,:));
+plot_conf_intervals(monk_dyad, col(2,:), alp,snr)
+
+if ~isempty(hum_dyad)
+    p3 = plot(snr,mean(hum_dyad), 'LineWidth',lw, 'Color',col(3,:));
+    plot_conf_intervals(hum_dyad, col(3,:), alp,snr)
+    lg = legend([p1 p2 p3], 'monkey.solo', 'monkey.dyad', 'human partner');
+else 
+    p3 = [];
+    lg = legend([p1 p2], 'monkey.solo', 'monkey.dyad');
+end
+
+% p3 = plot(snr,mean(hum_dyad(ply2_fxs,:)), 'LineWidth',lw, 'Color',[.1 .1 .1]);
+% plot_conf_intervals([hum_dyad(ply2_fxs,:); hum_dyad(ply2_fxs,:)], [.1 .1 .1], alp,snr)
+% p4 = plot(snr,mean(hum_dyad(~ply2_fxs,:)), 'LineWidth',lw, 'Color',[.6 .6 .6]);
+% plot_conf_intervals([hum_dyad(~ply2_fxs,:); hum_dyad(~ply2_fxs,:)], [.6 .6 .6], alp,snr)
+
+lg.FontSize = 16;
+
+ax = gca;
+ax.XTick = round(snr,2);
+ax.FontSize = fs;
+ax.XLabel.String = 'Coherence [%]';
+ax.YLabel.String = ystr;
+
+dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/figures/';
+print(f, [dest_dir fstr], '-r500', '-dsvg', '-painters');
+end
+
+function plot_conf_intervals(dat, col, alp, snr)
+% Boostrap confidence intervals
+nRep        	= 1000;
+[CI,~]        	= bootci(nRep,{@mean,dat},'Alpha',0.05);
+
+% Prepare filled area
+x_spacing     	= [snr fliplr(snr)];
+ci            	= [CI(1,:) fliplr(CI(2,:))];
+
+% Overlay confidence intervals
+fl           	= fill(x_spacing,ci,col,'EdgeColor','none', 'FaceAlpha', alp);
+
+end
+
+function plot_juice_comparison(HI_juice_solo,HI_juice_dyad,ply2_fxs)
+
+f = figure;hold on
+f.Position(3) = 300;
+vl = violinplot([HI_juice_solo' HI_juice_dyad']);
+col_map = [.5 .1 .1; .9 .3 .3];
+
+% for iL = 1:length(HI_juice_dyad)
+%     ln = line([1 2],[HI_juice_solo(iL) HI_juice_dyad(iL)],'Color', [0 0 0])
+% 
+%     if ply2_fxs(iL)
+%         ln.LineStyle =  ':';
+%     end
+% end
+
+for iV=1:length(vl)
+    vl(iV).BoxWidth                     = .025;
+    vl(iV).ViolinColor{1}               = col_map(iV,:);
+    vl(iV).ViolinAlpha{1}               = .3;
+    vl(iV).ScatterPlot.MarkerFaceColor  = [.25 .25 .25];
+    vl(iV).ScatterPlot.MarkerEdgeColor  = 'none';
+    vl(iV).ScatterPlot.SizeData         = 100;
+end
+
+set(gca, 'FontSize', 20)
+set(gca, 'XTickLabel', {'solo','dyad'})
+ylabel('Avg. juice/hit [ml]')
+
+dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/figures/';
+print(f, [dest_dir '/juice'], '-r500', '-dsvg', '-painters');
+
+end
+
+function plot_cpr_tuning(state, unit_id, dest_dir)
+
+
+solo_idx            = state.cpr_solo;
+incl                = state.include.(unit_id);
+
+%%% full state %%%
+FR                  = state.spk_n.(unit_id) ./ state.dur_s;
+%%% first 500 ms %%%
+% nSpks               = cellfun(@(x) x<500e3, state.spk_ts.(unit_id), 'UniformOutput', false);
+% FR                  = cellfun(@sum,nSpks)./0.5;
+
+%%% last 500ms %%%
+% thresh = (state.dur_s-0.5).*1e6;
+% for iS = 1:length(state.spk_ts.(unit_id))
+%     if isempty(state.spk_ts.(unit_id){iS})
+%         nSpikes(iS) = 0;
+%     else
+%         nSpks(iS) = sum(state.spk_ts.(unit_id){iS} > thresh(iS));
+%     end
+% end
+% FR                  = nSpks./0.5;
+
+snr                 = unique(state.rdp_coh);
+stim_coh            = state.rdp_coh;
+stim_dir            = deg2rad(state.rdp_dir);
+col                 = cool(length(snr));
+
+f1 = figure;
+h = polaraxes; hold on
+plot_CPRtuning(h,FR(solo_idx & incl),stim_dir(solo_idx & incl), false,[1 0 0])
+plot_CPRtuning(h,FR(~solo_idx & incl),stim_dir(~solo_idx & incl), false,[0 0 1])
+legend('solo','dyad')
+print([dest_dir '/cpr_tuning_' unit_id],'-dsvg')
+
+% Coherence-based tuning
+f2                  = figure('Units','normalized','Position',[.2 .2 .6 .6]);
+nrows = 2;
+ncols = 2;
+for iCoh = 1:length(snr)
+    [row,clm] = ind2sub([nrows,ncols], iCoh);
+    left = (clm-1)/ncols + 0.08;
+    bottom = 1 - row/nrows + 0.05;
+    w = 0.4; h = 0.4;
+    pax = polaraxes('Position',[left bottom w h]);
+
+    coh_idx         = stim_coh == snr(iCoh);
+    plot_CPRtuning(pax,FR(coh_idx & solo_idx & incl),stim_dir(coh_idx & solo_idx & incl),true,col(iCoh,:));
+    plot_CPRtuning(pax,FR(coh_idx & ~solo_idx & incl),stim_dir(coh_idx & ~solo_idx & incl),true,col(iCoh,:)./2);
+    lg = legend('','solo','','dyad');
+
+end
+% lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3) snr(4)},'UniformOutput',false));
+
+print([dest_dir '/cpr_coh_tuning_' unit_id],'-dsvg')
+
+f3                  = figure('Units','normalized','Position',[.2 .2 .6 .6]);
+h = polaraxes; hold on
+for iCoh = 1:length(snr)
+    coh_idx         = stim_coh == snr(iCoh);
+    plot_CPRtuning(gca,FR(coh_idx & incl),stim_dir(coh_idx & incl),false,col(iCoh,:));
+end
+print([dest_dir '/cpr_coh_tuning__comb' unit_id],'-dsvg')
+
+end
+
+function plot_CPRtuning(ax,r, theta, data_flag, col)
+hold on
+if data_flag
+    ps = polarscatter(ax,theta,r);
+    ps.Marker = '.';
+    ps.SizeData = 50;
+    ps.MarkerFaceAlpha = .5;
+    ps.MarkerEdgeColor = col;
+end
+ax.ThetaZeroLocation = 'top';
+ax.ThetaDir = 'clockwise';
+
+nbins = 360/20;
+edges = linspace(0, 2*pi, nbins+1);
+r_mean_bin = zeros(1, nbins);
+theta_bin = zeros(1, nbins);
+
+for i = 1:nbins
+    idx = theta >= edges(i) & theta < edges(i+1);
+    r_mean_bin(i) = mean(r(idx));
+    theta_bin(i) = (edges(i)+edges(i+1))/2;
+end
+
+r_mean_bin = smoothdata(r_mean_bin, 'gaussian', 5);
+
+if isempty(col)
+    polarplot(ax, [theta_bin theta_bin(1)], [r_mean_bin r_mean_bin(1)], 'r-', 'LineWidth', 2)
+else
+    polarplot(ax, [theta_bin theta_bin(1)], [r_mean_bin r_mean_bin(1)], 'LineStyle','-', 'LineWidth', 2, 'Color', col)
+end
+
+set(gca, 'FontSize', 16)
+set(gca, 'GridAlpha', .2)
+end
+
+function plot_spkjoy_correlation(state,unit_id,dest_dir)
+
+FR                  = state.spk_n.(unit_id) ./ state.dur_s;
+tlt                 = cellfun(@mean,state.js_monk_tlt);
+snr                 = unique(state.rdp_coh);
+col                 = cool(length(snr));
+
+%%% Indices %%%
+bin_width           = 90;
+[PD,~,VS]           = preferredDirection(state.rdp_dir, FR);
+roi                 = mod([PD-(bin_width/2) PD+(bin_width/2)],360);
+
+if roi(1) > roi(2)
+    PD_bin          = state.rdp_dir > roi(1) | state.rdp_dir < roi(2);
+else
+    PD_bin          = state.rdp_dir > roi(1) & state.rdp_dir < roi(2);
+end
+
+solo_idx            = state.cpr_solo;
+trg_idx             = state.trg_shown;
+incl                = state.include.(unit_id);
+
+%%% Acc calculation %%%
+for iState = 1:length(state.dur_s)
+    js_dev              = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
+    state.js_acc{iState}= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
+end
+acc                 = cellfun(@mean,state.js_acc);
+
+figure; hold on
+% sc = scatter(tlt(FR~=0),FR(FR~=0),'k.');
+for iCoh = 1:length(snr)
+    subplot(2,2,iCoh); hold on
+
+    coh_idx = state.rdp_coh == snr(iCoh);
+    all_idx = coh_idx & ~trg_idx & incl & PD_bin;
+    % all_idx = coh_idx & solo_idx & ~trg_idx & incl & PD_bin;
+    sc = scatter(tlt(all_idx),FR(all_idx));
+    sc.Marker = '.';
+    sc.SizeData = 50;
+    sc.MarkerEdgeColor = col(iCoh,:);
+    sc.SizeData = 50;
+
+    [pfit] = polyfit(tlt(all_idx),FR(all_idx),1);
+    yfit = polyval(pfit,[0:.1:1]);
+    plot([0:.1:1],yfit,'Color', col(iCoh,:),'LineWidth',2);
+    [r,p] = corrcoef(tlt(all_idx),FR(all_idx));
+    title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+    out.r_tlt(iCoh) = r(2);
+    out.p_tlt(iCoh) = p(2);
+    set(gca,'fontsize',20)
+    xlabel('JS tilt [norm]')
+    ylabel('FR [Hz]')
+    axis square
+end
+
+% [r,p] = corrcoef(tlt(FR~=0),FR(FR~=0));
+% xlabel('JS tilt [norm]')
+% ylabel('FR [Hz]')
+% title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+% set(gca,'fontsize',20)
+print([dest_dir '/corr_spk_joy_tlt_' char(unit_id)],'-dsvg')
+
+figure; hold on
+
+% subplot(2,1,2); hold on
+% sc = scatter(acc(FR~=0),FR(FR~=0),'k.');
+for iCoh = 1:length(snr)
+    subplot(2,2,iCoh); hold on
+    coh_idx =  state.rdp_coh == snr(iCoh);
+    sc = scatter(acc(all_idx),FR(all_idx));
+    sc.Marker = '.';
+    sc.SizeData = 50;
+    sc.MarkerEdgeColor = col(iCoh,:);
+    sc.SizeData = 50;
+    [pfit] = polyfit(acc(all_idx),FR(all_idx),1);
+    yfit = polyval(pfit,[0:.1:1]);
+    plot([0:.1:1],yfit,'Color', col(iCoh,:),'LineWidth',2);
+    [r,p] = corrcoef(acc(all_idx),FR(all_idx));
+    title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+
+    out.r_acc(iCoh) = r(2);
+    out.p_acc(iCoh) = p(2);
+
+    xlabel('JS accuracy [norm]')
+    ylabel('FR [Hz]')
+    set(gca,'fontsize',20)
+    axis square
+end
+
+% [r,p] = corrcoef(acc(FR~=0),FR(FR~=0));
+% xlabel('JS accuracy [norm]')
+% ylabel('FR [Hz]')
+% title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+% set(gca,'fontsize',20)
+% axis square
+
+% for iCoh = 1:length(snr)
+%     lsl(iCoh).Color = col(iCoh,:);
+%     lsl(iCoh).LineWidth = 2;
+% end
+
+print([dest_dir '/corr_spk_joy_acc_' char(unit_id)],'-dsvg')
+end
+
+function plot_js_correlation(in,snr,str,col)
+f = figure; hold on
+vl = violinplot(in);
+for iCoh = 1:length(vl)
+    vl(iCoh).ViolinColor{1} = col(iCoh,:);
+    vl(iCoh).ScatterPlot.MarkerFaceColor = [.2 .2 .2];
+    vl(iCoh).ScatterPlot.SizeData = 100;
+end
+
+% set(gca,'XTickLabel', {snr})
+set(gca,'FontSize', 24)
+set(gca,'XLim', [.5 8.5])
+set(gca,'YLim', [-.8 .65])
+line([.5 8.5],[0 0], 'Color',[0 0 0], 'LineStyle', '--', "LineWidth",2)
+
+axis square
+dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/figures/';
+print(f, [dest_dir '/' str], '-r500', '-dsvg');
+end
+
+function plot_js_wagering(perf,snr)
+col = cool(4);
+f = figure; hold on
+for iCoh = 1:4
+    cIdx = perf{3}.coh_sorted.coh == snr(iCoh); % coherence index
+    sc = scatter(perf{3}.coh_sorted.tlt_monk(cIdx),perf{3}.coh_sorted.err_monk(cIdx), 'MarkerFaceColor', col(iCoh,:), 'MarkerEdgeColor', 'none');
+    [pfit] = polyfit(perf{3}.coh_sorted.tlt_monk(cIdx),perf{3}.coh_sorted.err_monk(cIdx),1);
+    yfit = polyval(pfit,[0:.1:1]);
+    plot([0:.1:1],yfit,'Color', col(iCoh,:),'LineWidth',2);
+end
+
+ylabel('joystick error [deg]')
+xlabel('joystick tilt [norm]')
+xlim([.3 1])
+set(gca,'FontSize',24)
+
+axis square
+dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/figures/';
+print(f, [dest_dir 'js_wager'], '-r500', '-dsvg', '-painters');
+
+end
+
+function plot_solo_vs_dyad_cycle_onset(phy,unit_id)
+
+tmp = split(unit_id, '_');
+str_chan = [tmp{1} '_' tmp{2}];
+str_unit = tmp{3};
+
+% Extract 1st second of cycle
+cpr_spk_times       = [];
+for iCyc = 1:length(phy.stim.cpr_cyle)
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});
+    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
+end
+
+% Indizes
+cyc_idx             = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
+solo_idx            = cell2mat(phy.stim.cpr_solo);
+
+% Response stimation
+tstep               = .001;
+time                = [0:tstep:1];
+[~,~,sdf_solo]       = FR_estimation(cpr_spk_times(cyc_idx' & solo_idx), time, false);
+[~,~,sdf_dyad]       = FR_estimation(cpr_spk_times(cyc_idx' & ~solo_idx), time, false);
+
+% Plot
+f                   = figure; hold on
+pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
+pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
+ax                	= gca;
+ax.XLim             = [0 1000];
+ax.XLabel.String    = 'time [ms]';
+ax.YLabel.String    = 'FR [Hz]';
+ax.Box              = 'off';
+ax.FontSize         = 16;
+ax.Title.String     = ['Cycle onset. Example unit: ' strrep(unit_id, '_', '.')];
+lg                  = legend([pls pld], 'solo', 'dyad');
+end
+
+function plot_solo_vs_dyad_state_onset(state, unit_id, PD_bin)
+% Indizes
+state_idx           = state.include.(unit_id);
+solo_idx            = state.cpr_solo;
+
+% Exclude cycle onset states
+excl_cycOn              = [1 (find(diff(state.cIdx)))+1];
+state_idx(excl_cycOn)   = 0;
+solo_idx(excl_cycOn)    = 0;
+
+% Exclude short states
+excl_dur                = state.dur_s < 1;
+state_idx(excl_dur)     = 0;
+solo_idx(excl_dur)      = 0;
+
+tstep               = .001;
+time                = [0:tstep:1];
+
+% Firing rate estimation
+figure; hold on
+[~,~,sdf_solo]       = FR_estimation(state.spk_ts.(unit_id)(state_idx & solo_idx & PD_bin), time, true);
+figure; hold on
+[~,~,sdf_dyad]       = FR_estimation(state.spk_ts.(unit_id)(state_idx & ~solo_idx & PD_bin), time, true);
+
+% Plot
+f                   = figure; hold on
+pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
+pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
+ax                	= gca;
+ax.XLim             = [0 1000];
+ax.XLabel.String    = 'time [ms]';
+ax.YLabel.String    = 'FR [Hz]';
+ax.Box              = 'off';
+ax.FontSize         = 16;
+ax.Title.String     = 'Example unit: State onset';
+lg                  = legend([pls pld], 'solo', 'dyad');
+end

@@ -49,7 +49,7 @@ for iRec = 1:length(rec_lst)
     save([dest_dir '/state_responses_' rec_lst{iRec} '.mat'], 'state', '-v7.3')
 
     %% Convert to data table
-    T = convert2table(state);
+    T = state2table(state)
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -381,7 +381,7 @@ t(ismissing(t.unit_ID),:)           = [];
 phy.brain.CPR.spks.include          = t;
 end
 
-function T = convert2table(state, varargin)
+function T = state2table(state, varargin)
 % Converts a 'state' struct into a table with spike times at the end.
 % Applies inclusion masks: excluded trials become empty cells {}.
 
@@ -417,10 +417,9 @@ end
 
 desiredOrder = { ...
     'cIdx', 'cpr_solo', 'dur_s', 'feedback_state_smple', ...
-    'outcome', 'reward_cum', 'rdp_coh', 'rdp_dir','rdp_dir_ts',...
-    'js_hum_dir', 'js_hum_tlt', 'js_monk_dir','js_monk_tlt',};                       
-
-T = T(:, desiredOrder);
+    'feedback_ts', 'js_hum_dir', 'js_hum_tlt', 'js_monk_dir', ...
+    'js_monk_tlt', 'outcome', 'rdp_coh', 'rdp_dir', ...    % joint/stimulus
+    'rdp_dir_ts', 'reward_cum'};                           % stimulus/outcome
 
 % -------------------- 3. Add spike times --------------------
 if isfield(state,'spk_ts')

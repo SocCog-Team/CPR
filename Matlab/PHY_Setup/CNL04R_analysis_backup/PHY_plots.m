@@ -49,6 +49,20 @@ for iCoh = 1:length(snr)
 end
 lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3)},'UniformOutput',false));
 
+%% CPR tuning curve based on state-wise firing rate
+
+incl                = state.include.('ch012_neg_unit2');
+nSpks               = cellfun(@(x) x< 1e6, state.spk_ts.('ch012_neg_unit2'), 'UniformOutput', false);
+FR                  = cellfun(@sum,nSpks);
+stim_dir            = deg2rad(state.rdp_dir);
+
+f = figure;
+h = polaraxes; hold on
+plot_CPRtuning(h,FR(incl),stim_dir(incl), true,[0 0 0])
+
+%% CPR tuning: coherence-wise and context-wise
+plot_cpr_tuning(state, 'ch012_neg_unit2', [])
+
 %% CPR cycle onset raster.
 
 str_chan            = 'ch012_neg';
@@ -329,37 +343,6 @@ ln                  = line([200 200],[0 ceil(max(mean(sdf)))],'LineStyle',':','C
 
 end
 
-function plot_CPRtuning(ax,r, theta, data_flag, col)
-hold on
-if data_flag
-    ps = polarscatter(ax,theta,r);
-    ps.Marker = '.';
-    ps.SizeData = 50;
-    ps.MarkerEdgeColor = 'k';
-end
-ax.ThetaZeroLocation = 'top';
-ax.ThetaDir = 'clockwise';
-
-nbins = 360/30;
-edges = linspace(0, 2*pi, nbins+1);
-r_mean_bin = zeros(1, nbins);
-theta_bin = zeros(1, nbins);
-
-for i = 1:nbins
-    idx = theta >= edges(i) & theta < edges(i+1);
-    r_mean_bin(i) = mean(r(idx));
-    theta_bin(i) = (edges(i)+edges(i+1))/2;
-end
-
-if isempty(col)
-    polarplot(ax, theta_bin, r_mean_bin, 'r-', 'LineWidth', 2)
-else
-    polarplot(ax, theta_bin, r_mean_bin, 'LineStyle','-', 'LineWidth', 2, 'Color', col)
-end
-
-set(gca, 'FontSize', 16)
-end
-
 function [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
 % preferredDirection computes the resultant vector and tuning strength from polar data.
 %
@@ -413,4 +396,103 @@ end
 
 % Normalized vector strength (0–1)
 vecStrength = prefMag / sum(rates);
+end
+
+function plot_CPRtuning(ax,r, theta, data_flag, col)
+hold on
+if data_flag
+    ps = polarscatter(ax,theta,r);
+    ps.Marker = '.';
+    ps.SizeData = 50;
+    ps.MarkerFaceAlpha = .5;
+    ps.MarkerEdgeColor = col;
+end
+ax.ThetaZeroLocation = 'top';
+ax.ThetaDir = 'clockwise';
+
+nbins = 360/20;
+edges = linspace(0, 2*pi, nbins+1);
+r_mean_bin = zeros(1, nbins);
+theta_bin = zeros(1, nbins);
+
+for i = 1:nbins
+    idx = theta >= edges(i) & theta < edges(i+1);
+    r_mean_bin(i) = mean(r(idx));
+    theta_bin(i) = (edges(i)+edges(i+1))/2;
+end
+
+r_mean_bin = smoothdata(r_mean_bin, 'gaussian', 5);
+
+if isempty(col)
+    polarplot(ax, [theta_bin theta_bin(1)], [r_mean_bin r_mean_bin(1)], 'r-', 'LineWidth', 2)
+else
+    polarplot(ax, [theta_bin theta_bin(1)], [r_mean_bin r_mean_bin(1)], 'LineStyle','-', 'LineWidth', 2, 'Color', col)
+end
+
+set(gca, 'FontSize', 16)
+set(gca, 'GridAlpha', .2)
+end
+
+function plot_cpr_tuning(state, unit_id, dest_dir)
+
+solo_idx            = state.cpr_solo;
+incl                = state.include.(unit_id);
+
+%%% full state %%%
+FR                  = state.spk_n.(unit_id) ./ state.dur_s;
+%%% first 500 ms %%%
+% nSpks               = cellfun(@(x) x<500e3, state.spk_ts.(unit_id), 'UniformOutput', false);
+% FR                  = cellfun(@sum,nSpks)./0.5;
+
+%%% last 500ms %%%
+% thresh = (state.dur_s-0.5).*1e6;
+% for iS = 1:length(state.spk_ts.(unit_id))
+%     if isempty(state.spk_ts.(unit_id){iS})
+%         nSpikes(iS) = 0;
+%     else
+%         nSpks(iS) = sum(state.spk_ts.(unit_id){iS} > thresh(iS));
+%     end
+% end
+% FR                  = nSpks./0.5;
+
+snr                 = unique(state.rdp_coh);
+stim_coh            = state.rdp_coh;
+stim_dir            = deg2rad(state.rdp_dir);
+col                 = cool(length(snr));
+
+f1 = figure;
+h = polaraxes; hold on
+plot_CPRtuning(h,FR(solo_idx & incl),stim_dir(solo_idx & incl), false,[1 0 0])
+plot_CPRtuning(h,FR(~solo_idx & incl),stim_dir(~solo_idx & incl), false,[0 0 1])
+legend('solo','dyad')
+% print([dest_dir '/cpr_tuning_' unit_id],'-dsvg')
+
+% Coherence-based tuning
+f2                  = figure('Units','normalized','Position',[.2 .2 .6 .6]);
+nrows = 2;
+ncols = 2;
+for iCoh = 1:length(snr)
+    [row,clm] = ind2sub([nrows,ncols], iCoh);
+    left = (clm-1)/ncols + 0.08;
+    bottom = 1 - row/nrows + 0.05;
+    w = 0.4; h = 0.4;
+    pax = polaraxes('Position',[left bottom w h]);
+
+    coh_idx         = stim_coh == snr(iCoh);
+    plot_CPRtuning(pax,FR(coh_idx & solo_idx & incl),stim_dir(coh_idx & solo_idx & incl),true,col(iCoh,:));
+    plot_CPRtuning(pax,FR(coh_idx & ~solo_idx & incl),stim_dir(coh_idx & ~solo_idx & incl),true,col(iCoh,:)./2);
+    lg = legend('','solo','','dyad');
+
+end
+lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3) snr(4)},'UniformOutput',false));
+% print([dest_dir '/cpr_coh_tuning_' unit_id],'-dsvg')
+
+f3                  = figure('Units','normalized','Position',[.2 .2 .6 .6]);
+h = polaraxes; hold on
+for iCoh = 1:length(snr)
+    coh_idx         = stim_coh == snr(iCoh);
+    plot_CPRtuning(gca,FR(coh_idx & incl),stim_dir(coh_idx & incl),false,col(iCoh,:));
+end
+% print([dest_dir '/cpr_coh_tuning__comb' unit_id],'-dsvg')
+
 end
