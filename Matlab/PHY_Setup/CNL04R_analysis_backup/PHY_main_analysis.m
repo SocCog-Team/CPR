@@ -75,10 +75,12 @@ for iCyc = 1:length(stim.rdp_dir)
         state.rdp_coh(state_cnt)    = stim.rdp_coh{iCyc}(find(state.rdp_dir_ts(state_cnt) > stim.rdp_coh_ts{iCyc},1,'last'));
 
         if iState == length(stim.rdp_dir{iCyc})
-            state.dur_s(state_cnt)  = double(stim.cpr_cyle(iCyc,2) - stim.rdp_dir_ts{iCyc}(iState)) / 1e6;
+            state.boundaries(state_cnt,:)   = [stim.rdp_dir{iCyc}(iState) stim.cpr_cyle(iCyc,2)];
+            state.dur_s(state_cnt)          = double(stim.cpr_cyle(iCyc,2) - stim.rdp_dir_ts{iCyc}(iState)) / 1e6;
         else
-            state.dur_s(state_cnt)  = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
-        end  
+            state.boundaries(state_cnt,:)   = [stim.rdp_dir{iCyc}(iState) stim.rdp_dir_ts{iCyc}(iState+1)];
+            state.dur_s(state_cnt)          = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
+        end
         
         %%% Extract target sample ID and outcome here %%%
         if iState == length(stim.rdp_dir{iCyc})
@@ -87,6 +89,7 @@ for iCyc = 1:length(stim.rdp_dir)
             trg_idx         = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1);
         end
         
+        state.feedback_state_ts_raw{state_cnt}  = stim.feedback_ts{iCyc}(trg_idx);
         state.feedback_state_smple{state_cnt}	= ceil( ((stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState)) ./1e3) ./ (1000/120)); % Target sample in state
         state.outcome{state_cnt}                = stim.outcome{iCyc}(trg_idx);
         state.reward_cum{state_cnt}             = stim.reward_cum{iCyc}(trg_idx);

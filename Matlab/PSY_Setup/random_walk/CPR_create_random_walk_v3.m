@@ -10,14 +10,22 @@ if nargin < 1
     param.feedback_probability    	= 0.0035;                                % Probability of reward
     param.min_feedback_interval_ms  = param.Fs * 100;                       % Min interval between reward administration
 end
-
+ 
 % Prepare calculations and output
 nSamples                            = round(param.cycle_duration_ms / param.Fs);        % Number of samples for random walk (7200 frames, 1min)
 nCohSamples                         = param.coh_duration_ms / param.Fs;                 % Number of samples for coherence block
 nCohBlocks                          = param.cycle_duration_ms/param.coh_duration_ms;    % Number of coherence block in stimulus cycle
-out.RDP_coherence                   = [];                                               % Initialise variable
-out.RDP_coherence_ts                = [0 nCohSamples.*(1:nCohBlocks-1)] .* param.Fs;    % Timstamps of coherence change [ms]
-out.RDP_coherence_smple             = [0 nCohSamples.*(1:nCohBlocks-1)] ;               % Samples of coherence change [#]
+
+if nCohBlocks <= 1
+    out.RDP_coherence                   = [];                                               % Initialise variable
+    out.RDP_coherence_ts                = [0 nCohSamples] .* param.Fs;   % Timstamps of coherence change [ms]
+    out.RDP_coherence_smple             = [0 nCohSamples] ;               % Samples of coherence change [#]
+else
+    out.RDP_coherence                   = [];                                               % Initialise variable
+    out.RDP_coherence_ts                = [0 nCohSamples.*(1:nCohBlocks-1)] .* param.Fs;   % Timstamps of coherence change [ms]
+    out.RDP_coherence_smple             = [0 nCohSamples.*(1:nCohBlocks-1)] ;               % Samples of coherence change [#]
+end
+
 out.feedback_ts                     = 1;                                                % Initialise variable
 out.trial                           = param.trial;                                      % Trial number
 cnt_fb                              = 0;
@@ -38,7 +46,7 @@ angle                               = zeros(1, nSamples);                 	% Arr
 
 % Initial seed
 omega(1)                            = 0;                % Initial random angular velocity
-% omega(1)                            = 2 * pi * (rand - 0.5);              % Initial random angular velocity
+% omega(1)                            = 2 * pi * (rand - 0.5);                % Initial random angular velocity
 angle(1)                            = 2 * pi * rand;                        % Initial random angle between 0 and 2*pi
 
 %%%% NOTES %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

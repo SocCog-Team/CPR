@@ -146,7 +146,7 @@ for iFile = 1:length(file_lst)
 
         %%% Social modulation %%%
         AUC_tlt(iFile, iCoh)        = calc_AUROC(state.mtlt_monk(state.coh == snr(iCoh) & state.solo),state.mtlt_monk(state.coh == snr(iCoh) & ~state.solo));
-        AUC_err(iFile, iCoh)        = calc_AUROC(state.merr_monk(state.coh == snr(iCoh) & state.solo),state.merr_monk(state.coh == snr(iCoh) & ~state.solo));
+        AUC_err(iFile, iCoh)        = calc_AUROC(state.merr_monk(state.coh == snr(iCoh) & ~state.solo),state.merr_monk(state.coh == snr(iCoh) & state.solo)); % turn input around so that improvements (smaller error) results in AUC >.5
         
         %%% Performance and payoff %%%
         %%% Different indexing due to target wise data extraction %%%
@@ -194,7 +194,7 @@ plot_averages(REW_monk_solo, REW_monk_dyad, [], ply2_fxs,snr.*100,'avg. juice/ta
 %% Social modulation - AUC
 plot_averages(AUC_tlt, AUC_err, [], ply2_fxs,snr.*100,'Social modulation [AUC]','auc',[.1 .6 .6; 0 0 0])
 ln = line([0 98],[.5 .5],'LineWidth',2,'LineStyle','--','Color',[0 0 0]);
-lg = legend('tilt', '','accuracy','','solo perf.');
+lg = legend('tilt', '','error','','solo perf.');
 lg.Box = 'off';
 xlim([0 98])
 
@@ -251,7 +251,18 @@ for iRec = 1:length(rec_lst)
         incl                = state.include.(lst(iUnit));
         unit_id{cnt}        = lst(iUnit);
         chan_num(cnt)       = str2double(regexp(lst(iUnit), '\d+', 'match', 'once'));
+        
+        %%% Firing rate estimation %%%
+        % Full state
         FR                  = state.spk_n.(lst(iUnit)) ./ state.dur_s; % entire state duration!
+        
+        % First second
+        % tmp_spk_tw          = cellfun(@(x) x<1e6, state.spk_ts.(lst(iUnit)), 'UniformOutput', false); % FIRST SECOND
+        % FR                  = cellfun(@sum,tmp_spk_tw);
+        % End of state
+        % for iState = 1:length(state.dur_s)
+        %     FR(iState)      = sum(state.spk_ts.(lst(iUnit)){iState} >(state.dur_s(iState)-1).*1e6); % LAST SECOND
+        % end
 
         [PD(cnt),~,VS(cnt)] = preferredDirection(state.rdp_dir, FR);
         roi                 = mod([PD(cnt)-(bin_width/2) PD(cnt)+(bin_width/2)],360);
@@ -263,10 +274,10 @@ for iRec = 1:length(rec_lst)
         end
 
         %%% Plot cycle onset
-        plot_solo_vs_dyad_cycle_onset(phy, unit_id{cnt})
-
-        %%% Plot state-onset
-        plot_solo_vs_dyad_state_onset(state, unit_id{cnt}, PD_bin)
+        % plot_solo_vs_dyad_cycle_onset(phy, unit_id{cnt})
+        % 
+        % %%% Plot state-onset
+        % plot_solo_vs_dyad_state_onset(state, unit_id{cnt}, PD_bin)
 
         %%% Plot state-end
         % state duration minus time window
@@ -674,11 +685,11 @@ for iCoh = 1:length(snr)
     all_idx = coh_idx & ~trg_idx & incl & PD_bin;
     % all_idx = coh_idx & solo_idx & ~trg_idx & incl & PD_bin;
 
-    [r,p] = corrcoef(tlt(all_idx),FR(all_idx));
+    [r,p] = corrcoef(tlt(all_idx & ~isnan(tlt)),FR(all_idx & ~isnan(tlt)));
     out.r_tlt(iCoh) = r(2);
     out.p_tlt(iCoh) = p(2);
 
-    [r,p] = corrcoef(acc(all_idx),FR(all_idx));
+    [r,p] = corrcoef(acc(all_idx & ~isnan(acc)),FR(all_idx & ~isnan(acc)));
     out.r_acc(iCoh) = r(2);
     out.p_acc(iCoh) = p(2);
 end
