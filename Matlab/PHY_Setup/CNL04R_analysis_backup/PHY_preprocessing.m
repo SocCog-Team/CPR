@@ -40,7 +40,7 @@ var_import  = {
     'IO_fixation_flag',...
     'IO_sync_16bit',...
     'IO_syncWord',...
-    'IO_rewardA_ml',...
+    'IO_rewardA',...
     'EYE_x_dva',...
     'EYE_y_dva',...
     '#stimDisplayUpdate'};
@@ -93,7 +93,7 @@ idx.trg                     = d.event == 'TRIAL_reactionTrigger';
 idx.eye_x_dva              	= d.event == 'EYE_x_dva';
 idx.eye_y_dva             	= d.event == 'EYE_y_dva';
 idx.reward                  = d.event == 'INFO_Juice_ml';
-idx.pump                    = d.event == 'IO_rewardA_ml';
+idx.pump                    = d.event == 'IO_rewardA';
 idx.score                   = d.event == 'INFO_score';
 idx.task                    = d.event == 'INFO_task';
 
@@ -139,6 +139,7 @@ for iCyc = 1:length(stim.cEnd)
         stim.rdp_dir{ccnt}      = cell2mat(d.value(cycIdx & idx.RDP_dir));
         stim.rdp_coh{ccnt}      = cell2mat(d.value(cycIdx & idx.RDP_coh));
 
+        stim.frme_ts{ccnt}      = double(d.time(cycIdx & idx.frame));
         stim.rdp_dir_ts{ccnt}   = double(d.time(cycIdx & idx.RDP_dir));
         stim.rdp_coh_ts{ccnt}   = double(d.time(cycIdx & idx.RDP_coh));
 
@@ -147,7 +148,7 @@ for iCyc = 1:length(stim.cEnd)
         stim.feedback_ts{ccnt}  = tmp_trg_ts(tmp_trg_val==1);
         stim.outcome{ccnt}      = d.value(cycIdx & idx.outcome);
         stim.reward_ind{ccnt}   = cell2mat(d.value(cycIdx & idx.pump));
-        stim.reward_cum{ccnt}   = cell2mat(d.value(cycIdx & idx.reward));
+        stim.reward_cum{ccnt}   = cellfun(@double,d.value(cycIdx & idx.reward));
         stim.score_cum{ccnt}    = cell2mat(d.value(cycIdx & idx.score));
 
         % Joystick responses to stimulus

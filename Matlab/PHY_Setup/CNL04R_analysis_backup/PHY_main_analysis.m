@@ -21,7 +21,7 @@ addpath /Users/cnl/Desktop/CPR/code
 
 cfg_pth             = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
 source_dir          = '/Users/cnl/Documents/DATA/Nilan/';
-import_flag         = false;
+import_flag         = true;
 
 rec_lst             = {%'20250807_nil_CPR_block1_phy4_rec045_ann';  % Onset transients before 0?
                     '20250924_nil_CPR_block1_phy4_rec059_fxs',...
@@ -47,9 +47,16 @@ for iRec = 1:length(rec_lst)
 
     % Save summary file
     save([dest_dir '/state_responses_' rec_lst{iRec} '.mat'], 'state', '-v7.3')
+   
+    %% WIP - Sort by coherence blocks
+    % coh_block           = PHY_sort_spikes_by_coherence(state);
 
-    %% Convert to data table
-    T = convert2table(state);
+    % save([dest_dir '/coh_block_' rec_lst{iRec} '.mat'], 'coh_block', '-v7.3')
+
+    %% WIP - Convert to data table
+    % T = convert2table(state);
+
+    % save([dest_dir '/data_table_' rec_lst{iRec} '.mat'], 'coh_block', '-v7.3')
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -72,7 +79,10 @@ for iCyc = 1:length(stim.rdp_dir)
         % Stimulus
         state.rdp_dir(state_cnt)    = stim.rdp_dir{iCyc}(iState);
         state.rdp_dir_ts(state_cnt) = stim.rdp_dir_ts{iCyc}(iState);
-        state.rdp_coh(state_cnt)    = stim.rdp_coh{iCyc}(find(state.rdp_dir_ts(state_cnt) > stim.rdp_coh_ts{iCyc},1,'last'));
+        state.rdp_coh(state_cnt)    = stim.rdp_coh{iCyc}(find(state.rdp_dir_ts(state_cnt) >= stim.rdp_coh_ts{iCyc},1,'last'));
+
+        %%% To do: Integrate dots to resultant vector here %%%
+        %%% To do: Change to frame-wise vectors. Same length for stimulus and joystick %%%
 
         if iState == length(stim.rdp_dir{iCyc})
             state.boundaries(state_cnt,:)   = [stim.rdp_dir{iCyc}(iState) stim.cpr_cyle(iCyc,2)];
@@ -82,7 +92,7 @@ for iCyc = 1:length(stim.rdp_dir)
             state.dur_s(state_cnt)          = double(stim.rdp_dir_ts{iCyc}(iState+1) - stim.rdp_dir_ts{iCyc}(iState)) /1e6;
         end
         
-        %%% Extract target sample ID and outcome here %%%
+        % Extract target sample ID and outcome
         if iState == length(stim.rdp_dir{iCyc})
             trg_idx         = stim.feedback_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & stim.feedback_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
         else
@@ -93,9 +103,10 @@ for iCyc = 1:length(stim.rdp_dir)
         state.feedback_state_smple{state_cnt}	= ceil( ((stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState)) ./1e3) ./ (1000/120)); % Target sample in state
         state.outcome{state_cnt}                = stim.outcome{iCyc}(trg_idx);
         state.reward_cum{state_cnt}             = stim.reward_cum{iCyc}(trg_idx);
-        %         state.reward_ind      = stim.reward_ind{iCyc}(trg_idx); % no entries here?!
+        % state.reward_ind{state_cnt}             = stim.reward_ind{iCyc}(trg_idx); % .h5 has to include 'IO_rewardA'
+        state.score_cum{state_cnt}              = stim.score_cum{iCyc}(trg_idx);
 
-        % Joystick
+        % Joystick responses
         if iState == length(stim.rdp_dir{iCyc})
             js_monk_idx     = joy.js_monk_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_monk_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
             js_hum_idx      = joy.js_hum_ts{iCyc} > stim.rdp_dir_ts{iCyc}(iState) & joy.js_hum_ts{iCyc} < double(stim.cpr_cyle(iCyc,2));
@@ -139,12 +150,21 @@ for iCyc = 1:length(stim.rdp_dir)
                     spk_idx = dat{iCyc} > stim.rdp_dir_ts{iCyc}(iState)-double(stim.cpr_cyle(iCyc,1)) & dat{iCyc} < stim.rdp_dir_ts{iCyc}(iState+1)-double(stim.cpr_cyle(iCyc,1));
                 end
 
-                unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
-                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - (stim.rdp_dir_ts{iCyc}(iState) - double(stim.cpr_cyle(iCyc,1)));
-                state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx));
                 state.cIdx(state_cnt)               = iCyc;
-                % add baseline
+                unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
+                state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx)); % Number of spikes
+                state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - (stim.rdp_dir_ts{iCyc}(iState) - double(stim.cpr_cyle(iCyc,1))); % State-aligned spike timestamps
+                
+                % Spike density function of state
+                time = 0:.001:state.dur_s(state_cnt);
+                if ~isempty(state.spk_ts.(unit_id){state_cnt})
+                    alpha_kern                       = fit_alpha(state.spk_ts.(unit_id){state_cnt}./1e6, time);
+                    state.sdf.(unit_id){state_cnt}   = sum(alpha_kern,1);
+                else
+                    state.sdf.(unit_id){state_cnt}   = zeros(1,length(time));
+                end
 
+                % Inclusion flag based on 'PHY_quality_assessment'
                 if in.brain.CPR.spks.include.cyc_id{unit_idx}(iCyc) == 0
                     state.include.(unit_id)(state_cnt)  = false;
                 else
@@ -154,6 +174,46 @@ for iCyc = 1:length(stim.rdp_dir)
         end
     end
 end
+end
+
+function out = PHY_sort_spikes_by_coherence(in)
+
+bcnt = 0; % block counter
+snr = unique(in.rdp_coh);
+
+% Initialise
+out.coh             = [];
+out.js_monk_dir     = [];
+out.js_monk_tlt     = [];
+out.js_hum_dir      = [];
+out.js_hum_tlt      = [];
+out.reward_cum      = [];
+out.outcome         = [];
+
+for iCyc = 1:in.cIdx(end)
+    % Find coherence boundary
+    cIdx = in.cIdx == iCyc;
+    cbound = [find(cIdx,1,'first') find(cIdx,1,'first')+find(diff(in.rdp_coh(cIdx))) find(cIdx,1,'last')+1]; % Coherence boundaries
+   
+    % Concatenate coherence blocks for each variable
+    out.coh             = [out.coh concat_coh_blocks(in.rdp_coh, cbound)];
+    out.js_monk_dir     = [out.js_monk_dir concat_coh_blocks(in.js_monk_dir, cbound)];
+    out.js_monk_tlt     = [out.js_monk_tlt concat_coh_blocks(in.js_monk_tlt, cbound)];
+    out.js_hum_dir      = [out.js_hum_dir concat_coh_blocks(in.js_hum_dir, cbound)];
+    out.js_hum_tlt      = [out.js_hum_tlt concat_coh_blocks(in.js_hum_tlt, cbound)];
+    out.reward_cum      = [out.reward_cum concat_coh_blocks(in.reward_cum, cbound)];
+    % add resultant vector of stimulus
+end
+end
+
+function out = concat_coh_blocks(var_in, cbound)
+    for iBlock = 1:length(cbound)-1 
+        if iscell(var_in)
+            out{iBlock} = cell2mat(var_in(cbound(iBlock):(cbound(iBlock+1)-1)));
+        else
+            out(iBlock) = unique(var_in(cbound(iBlock):(cbound(iBlock+1)-1)));
+        end
+    end
 end
 
 function gauss = fit_gaussian(spks, time)
@@ -224,7 +284,7 @@ for iTrial = 1:length(spike_times)
 
         % Fit function to spikes
         gauss_kern      = fit_gaussian(spks, time); % problem --> backward smearing
-        alpha_kern      = fit_alpha(spks, time); % problem: values too small - fix bug!
+        alpha_kern      = fit_alpha(spks, time);
 
         % Sum over all distributions to get spike density function
         sdf_g(iTrial,:)	= sum(gauss_kern,1);
