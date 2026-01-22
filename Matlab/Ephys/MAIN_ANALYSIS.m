@@ -6,7 +6,6 @@ cd /Users/fschneider/Desktop/sfn_h5/
 addpath /Users/fschneider/Documents/GitLab/matlab4mworks/
 addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Helper_functions
 addpath /Users/fschneider/Documents/MATLAB/CircStat2012a/
-addpath /Users/fschneider/Documents/MATLAB/Violinplot-Matlab/
 addpath /Users/fschneider/Documents/GitHub/Violinplot-Matlab/
 
 % List relevant sessions with interleaved trials
@@ -221,11 +220,13 @@ end
 plot_js_correlation(mat,snr,'js_corr_combined',cmap)
 
 %% Wagering? Smaller joystick error with higher tilt
-plot_js_wagering(perf,snr)
+plot_js_wagering(perf,snr,6)
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Neuronal tuning %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% different 'state' variable used here - see preprocessing %%%%%%%%%%%%%%
+close all
+clear all
 
 rec_lst = {'20250924_nil_CPR_block1_phy4_rec059_fxs',...
     '20250925_nil_CPR_block1_phy4_rec060_fxs',...
@@ -237,25 +238,22 @@ bin_width           = 90;
 for iRec = 1:length(rec_lst)
     clear phy lst state solo_idx FR
 
-    load(['/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/data/summary_' rec_lst{iRec} '.mat'])
-    load(['/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/data/state_responses_' rec_lst{iRec} '.mat'])
+    load(['/Users/fschneider/ownCloud/Documents/Experiments/data/summary_' rec_lst{iRec} '.mat'])
+    load(['/Users/fschneider/ownCloud/Documents/Experiments/data/state_responses_' rec_lst{iRec} '.mat'])
 
+    % List of stimulus-driven units
     lst                 = phy.brain.CPR.spks.include.unit_ID(phy.brain.CPR.spks.include.inclusion_flag);
     lst(contains(lst, 'unit0')) = [];
 
     for iUnit = 1:length(lst)
 
-        cnt                 = cnt+1;
         solo_idx            = state.cpr_solo;
-        trg_idx             = state.trg_shown;
+        trg_idx             = ~cellfun(@isempty,state.outcome);
         incl                = state.include.(lst(iUnit));
-        unit_id{cnt}        = lst(iUnit);
-        chan_num(cnt)       = str2double(regexp(lst(iUnit), '\d+', 'match', 'once'));
-        
+
         %%% Firing rate estimation %%%
         % Full state
         FR                  = state.spk_n.(lst(iUnit)) ./ state.dur_s; % entire state duration!
-        
         % First second
         % tmp_spk_tw          = cellfun(@(x) x<1e6, state.spk_ts.(lst(iUnit)), 'UniformOutput', false); % FIRST SECOND
         % FR                  = cellfun(@sum,tmp_spk_tw);
@@ -264,6 +262,14 @@ for iRec = 1:length(rec_lst)
         %     FR(iState)      = sum(state.spk_ts.(lst(iUnit)){iState} >(state.dur_s(iState)-1).*1e6); % LAST SECOND
         % end
 
+        if mean(FR(incl)) < 10
+            continue
+        end
+
+        cnt                 = cnt+1;
+        unit_id{cnt}        = lst(iUnit);
+        chan_num(cnt)       = str2double(regexp(lst(iUnit), '\d+', 'match', 'once'));
+        
         [PD(cnt),~,VS(cnt)] = preferredDirection(state.rdp_dir, FR);
         roi                 = mod([PD(cnt)-(bin_width/2) PD(cnt)+(bin_width/2)],360);
 
@@ -275,7 +281,7 @@ for iRec = 1:length(rec_lst)
 
         %%% Plot cycle onset
         % plot_solo_vs_dyad_cycle_onset(phy, unit_id{cnt})
-        % 
+        
         % %%% Plot state-onset
         % plot_solo_vs_dyad_state_onset(state, unit_id{cnt}, PD_bin)
 
@@ -284,9 +290,10 @@ for iRec = 1:length(rec_lst)
 
         %%% Test difference between social condition %%%
         [p(cnt),~,stats] = ranksum(FR(PD_bin & solo_idx & ~trg_idx & incl), FR(PD_bin & ~solo_idx & ~trg_idx & incl));  % Mann–Whitney–U-Test (nichtparametrisch)
+        % [p(cnt),~,stats] = ranksum(FR(PD_bin & solo_idx & incl), FR(PD_bin & ~solo_idx & incl));  % Mann–Whitney–U-Test (nichtparametrisch)
         z(cnt) = stats.zval;
 
-        %%% Joy-Spk correlation %%%
+        %%% Joy-Spk correlation % %%
         out = calc_spkjoy_correlation(state,lst(iUnit));
         r_corr(cnt,:,1) = out.r_tlt;
         r_corr(cnt,:,2) = out.r_acc;
@@ -661,15 +668,15 @@ else
 end
 
 solo_idx            = state.cpr_solo;
-trg_idx             = state.trg_shown;
+trg_idx             = cellfun(@isempty,state.outcome);
 incl                = state.include.(unit_id);
 
 %%% time window average %%%
 nSamples            = 59;
 for iState = 1:length(state.dur_s)
     if length(state.js_monk_dir{iState}) < 100
-        js_acc{iState}  = single(nan);
-        js_tilt{iState} = single(nan);
+        js_acc{iState}  = double(nan);
+        js_tilt{iState} = double(nan);
     else
         js_dev          = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}(end-nSamples:end)),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
         js_acc{iState}  = abs(1 - abs(js_dev / 180));                               % Calculate accuracy
@@ -684,14 +691,20 @@ for iCoh = 1:length(snr)
     coh_idx = state.rdp_coh == snr(iCoh);
     all_idx = coh_idx & ~trg_idx & incl & PD_bin;
     % all_idx = coh_idx & solo_idx & ~trg_idx & incl & PD_bin;
+    if sum(all_idx) >= 10
+        [r,p] = corrcoef(tlt(all_idx & ~isnan(tlt)),FR(all_idx & ~isnan(tlt)));
+        out.r_tlt(iCoh) = r(2);
+        out.p_tlt(iCoh) = p(2);
 
-    [r,p] = corrcoef(tlt(all_idx & ~isnan(tlt)),FR(all_idx & ~isnan(tlt)));
-    out.r_tlt(iCoh) = r(2);
-    out.p_tlt(iCoh) = p(2);
-
-    [r,p] = corrcoef(acc(all_idx & ~isnan(acc)),FR(all_idx & ~isnan(acc)));
-    out.r_acc(iCoh) = r(2);
-    out.p_acc(iCoh) = p(2);
+        [r,p] = corrcoef(acc(all_idx & ~isnan(acc)),FR(all_idx & ~isnan(acc)));
+        out.r_acc(iCoh) = r(2);
+        out.p_acc(iCoh) = p(2);
+    else
+        out.r_tlt(iCoh) = nan;
+        out.p_tlt(iCoh) = nan;
+        out.r_acc(iCoh) = nan;
+        out.p_acc(iCoh) = nan;
+    end
 end
 end
 
@@ -1107,13 +1120,13 @@ dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/
 print(f, [dest_dir '/' str], '-r500', '-dsvg');
 end
 
-function plot_js_wagering(perf,snr)
+function plot_js_wagering(perf,snr,iSession)
 col = cool(4);
 f = figure; hold on
 for iCoh = 1:4
-    cIdx = perf{3}.coh_sorted.coh == snr(iCoh); % coherence index
-    sc = scatter(perf{3}.coh_sorted.tlt_monk(cIdx),perf{3}.coh_sorted.err_monk(cIdx), 'MarkerFaceColor', col(iCoh,:), 'MarkerEdgeColor', 'none');
-    [pfit] = polyfit(perf{3}.coh_sorted.tlt_monk(cIdx),perf{3}.coh_sorted.err_monk(cIdx),1);
+    cIdx = perf{iSession}.coh_sorted.coh == snr(iCoh); % coherence index
+    sc = scatter(perf{iSession}.coh_sorted.tlt_monk(cIdx),perf{iSession}.coh_sorted.err_monk(cIdx), 'MarkerFaceColor', col(iCoh,:), 'MarkerEdgeColor', 'none');
+    [pfit] = polyfit(perf{iSession}.coh_sorted.tlt_monk(cIdx),perf{iSession}.coh_sorted.err_monk(cIdx),1);
     yfit = polyval(pfit,[0:.1:1]);
     plot([0:.1:1],yfit,'Color', col(iCoh,:),'LineWidth',2);
 end
@@ -1126,33 +1139,28 @@ set(gca,'FontSize',24)
 axis square
 dest_dir = '/Users/fschneider/ownCloud/Documents/Conferences/Kyoto_meeting_2025/figures/';
 print(f, [dest_dir 'js_wager'], '-r500', '-dsvg', '-painters');
-
 end
 
-function plot_solo_vs_dyad_cycle_onset(phy,unit_id)
-
-tmp = split(unit_id, '_');
-str_chan = [tmp{1} '_' tmp{2}];
-str_unit = tmp{3};
-
+function plot_solo_vs_dyad_cycle_onset(phy,unit_str)
 % Extract 1st second of cycle
 cpr_spk_times       = [];
 for iCyc = 1:length(phy.stim.cpr_cyle)
-    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(unit_str{1}(1:9)).(unit_str{1}(11:15)){iCyc});
     cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
 end
 
 % Indizes
-cyc_idx             = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
+cyc_idx             = false(1,length(cpr_spk_times));
+cyc_idx(phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == unit_str}) = true;
 solo_idx            = cell2mat(phy.stim.cpr_solo);
 
 % Response stimation
 tstep               = .001;
 time                = [0:tstep:1];
-[~,~,sdf_solo]       = FR_estimation(cpr_spk_times(cyc_idx' & solo_idx), time, false);
-[~,~,sdf_dyad]       = FR_estimation(cpr_spk_times(cyc_idx' & ~solo_idx), time, false);
+[~,~,sdf_solo]      = FR_estimation(cpr_spk_times(cyc_idx & solo_idx), time, false);
+[~,~,sdf_dyad]      = FR_estimation(cpr_spk_times(cyc_idx & ~solo_idx), time, false);
 
-% Plot
+% Plot average SDF
 f                   = figure; hold on
 pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
 pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
@@ -1162,7 +1170,7 @@ ax.XLabel.String    = 'time [ms]';
 ax.YLabel.String    = 'FR [Hz]';
 ax.Box              = 'off';
 ax.FontSize         = 16;
-ax.Title.String     = ['Cycle onset. Example unit: ' strrep(unit_id, '_', '.')];
+ax.Title.String     = ['Cycle onset. Example unit: ' strrep(unit_str, '_', '.')];
 lg                  = legend([pls pld], 'solo', 'dyad');
 end
 
@@ -1185,10 +1193,10 @@ tstep               = .001;
 time                = [0:tstep:1];
 
 % Firing rate estimation
-figure; hold on
-[~,~,sdf_solo]       = FR_estimation(state.spk_ts.(unit_id)(state_idx & solo_idx & PD_bin), time, true);
-figure; hold on
-[~,~,sdf_dyad]       = FR_estimation(state.spk_ts.(unit_id)(state_idx & ~solo_idx & PD_bin), time, true);
+% figure; hold on
+[~,~,sdf_solo]       = FR_estimation(state.spk_ts.(unit_id)(state_idx & solo_idx & PD_bin), time, false);
+% figure; hold on
+[~,~,sdf_dyad]       = FR_estimation(state.spk_ts.(unit_id)(state_idx & ~solo_idx & PD_bin), time, false);
 
 % Plot
 f                   = figure; hold on
@@ -1202,4 +1210,35 @@ ax.Box              = 'off';
 ax.FontSize         = 16;
 ax.Title.String     = 'Example unit: State onset';
 lg                  = legend([pls pld], 'solo', 'dyad');
+
+% Extract first two seconds of cycle
+tmp             = split(unit_id, '_');
+str_chan        = [tmp{1} '_' tmp{2}];
+str_unit        = tmp{3};
+cpr_spk_times   = [];
+for iCyc = 1:length(phy.stim.cpr_cyle)
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});
+    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 2e6) = [];
+end
+
+% Plost raster
+f0          = figure; hold on
+tstep       = .001;
+time        = [0:tstep:2];
+[~,~,~]     = FR_estimation(cpr_spk_times, time, true);
+
+% Manual input
+nClus       = input('How many clusters? ');
+range       = zeros(nClus, 2);
+N           = length(cpr_spk_times);
+mask        = false(N,nClus);
+
+% Create logical mask
+for i = 1:nClus
+    range(i,:) = input(sprintf('Enter range %d as [start end]: ', i));
+    mask(range(i,1):range(i,2),i) = true;
+end
+
+% Save mask to drive
+
 end
