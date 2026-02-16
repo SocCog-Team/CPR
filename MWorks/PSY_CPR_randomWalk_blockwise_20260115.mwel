@@ -260,6 +260,9 @@ group CTRL {
 
     var CTRL_js_calibration_flag            = (bool) false
     var CTRL_js2_calibration_flag           = (bool) false
+
+    var CTRL_feedback_str                   = (string) "A"
+    var CTRL_feedback2_str                  = (string) "B"
 }
 
 group TRIAL {
@@ -640,7 +643,7 @@ group Import {
 }
 
 group Paths {
-    var fname_rdp_dir                       = '/Users/cnl/Desktop/Felix/CPR/RDP_direction.txt'
+   var fname_rdp_dir                       = '/Users/cnl/Desktop/Felix/CPR/RDP_direction.txt'
     var fname_rdp_coh                       = '/Users/cnl/Desktop/Felix/CPR/RDP_coherence.txt'
     var fname_feedback_ts                   = '/Users/cnl/Desktop/Felix/CPR/feedback_ts.txt'
     var fname_counter                       = '/Users/cnl/Desktop/Felix/CPR/counter.txt'
@@ -893,16 +896,6 @@ stimulus/advstimulus arc_agnt (
     autoplay                                = YES
     )
 
-stimulus/rectangle cum_rew_bar_frame (
-    x_size                                  = (CTRL_feedback_bar_width*CTRL_feedback_nBar) + (CTRL_feedback_frame_width*CTRL_feedback_nBar)
-    y_size                                  = CTRL_feedback_frame_height + CTRL_feedback_frame_width
-    x_position                              = 0
-    y_position                              = 0
-    color                                   = 1,1,1
-    rotation                                = 0
-    alpha_multiplier                        = 1
-    )
-
 stimulus/text calib_instruction (
     text                                    = "Rotate the joystick at maximum displacement"
     font_name                               = Helvetica
@@ -918,28 +911,28 @@ stimulus/text calib_instruction (
     )
 
 stimulus/text performance_feedback (
-    text                                    = "$INFO_TrialScore"
+    text                                    = CTRL_feedback_str
     font_name                               = Helvetica
     font_size                               = 62
     text_alignment                          = center
     x_size                                  = 10  
     y_size                                  = 10
     x_position                              = 0  
-    y_position                              = 0  
+    y_position                              = -3
     color                                   = COL_arc_r,COL_arc_g,COL_arc_b
     //rotation                                = 0
     //alpha_multiplier                        = 1
     )
 
 stimulus/text performance_feedback2 (
-    text                                    = "$INFO_TrialScore2"
+    text                                    = CTRL_feedback2_str
     font_name                               = Helvetica
     font_size                               = 62
     text_alignment                          = center
     x_size                                  = 10  
     y_size                                  = 10
     x_position                              = 0  
-    y_position                              = 0  
+    y_position                              = -4.5
     color                                   = COL_arc2_r,COL_arc2_g,COL_arc2_b
     //rotation                                = 0
     //alpha_multiplier                        = 1
@@ -1346,6 +1339,7 @@ protocol 'CPR_solo' {
     INFO_FeedbackScore                          = 0
 
     // Set TMP variables for online processing
+    TRIAL_start                                 = TRIAL_start
     TMP_cycle_duration_ms                       = CTRL_cycle_duration_ms
     TMP_coh_block_duration_ms                   = CTRL_coh_block_duration_ms
     TMP_feedback_probability                    = CTRL_feedback_probability
@@ -1366,6 +1360,12 @@ protocol 'CPR_solo' {
         fname_feedback_ts                       = fname_feedback_ts
         fname_counter                           = fname_counter
         }
+
+    // Update trial parameters
+    fname_rdp_dir                           = fname_rdp_dir 
+    fname_rdp_coh                           = fname_rdp_coh
+    fname_feedback_ts                       = fname_feedback_ts
+    fname_counter                           = fname_counter
 
     // Initialise timer
     start_timer (
@@ -1443,6 +1443,7 @@ protocol 'CPR_solo' {
                 TMP_feedback_ITI_ms             = CTRL_feedback_ITI_ms
                 TMP_snr_list                    = CTRL_snr_list
                 ML_sync                         = 0 // Stop sync
+
 
                 report ('===== STIMULUS CYCLE $TRIAL_start START =====')
                 goto ('Show Stimuli')
@@ -1597,7 +1598,7 @@ protocol 'CPR_solo' {
                 COL_fix_r                       = 1
                 COL_fix_b                       = 1
                 COL_fix_g                       = 1
-                CTRL_arc_alpha                  = .1
+                CTRL_arc_alpha                  = .8
                 CTRL_fixation_break_flag        = false
                 CTRL_fixation_penalty_flag 		= false
 
@@ -1625,52 +1626,7 @@ protocol 'CPR_solo' {
                 INFO_Score                      += INFO_FeedbackScore
                 INFO_TrialScore                 += INFO_FeedbackScore
                 INFO_bonus_ply1_cents           += INFO_FeedbackScore * CTRL_cents_per_feedback
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialFeedbackCounter)
-
-                // PRESENT BOTH SPEAKERS - SETUP INDEPENDENT
-                if (INFO_FeedbackScore > .875) {
-                    play_sound (Reward8R_sound)
-                    play_sound (Reward8L_sound)
-                }
-
-                if (INFO_FeedbackScore > .75 && INFO_FeedbackScore <= .875) {
-                    play_sound (Reward7R_sound)
-                    play_sound (Reward7L_sound)
-                }
-
-                if (INFO_FeedbackScore > .625 && INFO_FeedbackScore <= .75) {
-                    play_sound (Reward6R_sound)
-                    play_sound (Reward6L_sound)
-                }
-
-                if (INFO_FeedbackScore > .5 && INFO_FeedbackScore <= .625) {
-                    play_sound (Reward5R_sound)
-                    play_sound (Reward5L_sound)
-                }
-
-                if (INFO_FeedbackScore > .375 && INFO_FeedbackScore <= .5) {
-                    play_sound (Reward4R_sound)
-                    play_sound (Reward4L_sound)
-                }
-
-                if (INFO_FeedbackScore > .25 && INFO_FeedbackScore <= .375) {
-                    play_sound (Reward3R_sound)
-                    play_sound (Reward3L_sound)
-                }
-
-                if (INFO_FeedbackScore > .125 && INFO_FeedbackScore <= .25) {
-                    play_sound (Reward2R_sound)
-                    play_sound (Reward2L_sound)
-                }
-
-                if (INFO_FeedbackScore <= .125) {
-                    play_sound (Reward1R_sound)
-                    play_sound (Reward1L_sound)
-                }
-
-                // Visual feedback
-                live_queue_stimulus (fixationCross)
-                update_stimulus_display ()
+                CTRL_feedback_str               = '$(round((INFO_TrialScore/INFO_TrialFeedbackCounter)*100)) %'
 
                 start_timer (
                     timer                       = FeedbackTimer
@@ -1678,9 +1634,7 @@ protocol 'CPR_solo' {
                     duration_units              = ms
                     )
 
-                report ('--- OUTCOME: Hit ---')
-                report ('Score: $INFO_FeedbackScore')
-
+                report ('Feedback Score: $INFO_FeedbackScore')
                 goto ('Update Stimuli')
             }
     
@@ -1725,6 +1679,12 @@ protocol 'CPR_solo' {
                     fname_counter                           = fname_counter
                     }
 
+                // Update trial parameters
+                fname_rdp_dir                           = fname_rdp_dir 
+                fname_rdp_coh                           = fname_rdp_coh
+                fname_feedback_ts                       = fname_feedback_ts
+                fname_counter                           = fname_counter
+                
                 goto (
                     target                      = 'End paradigm'
                     when                        = INFO_FeedbackCounter >= CTRL_NumFeedback && timer_expired(ITI_Timer)
@@ -1747,7 +1707,7 @@ protocol 'CPR_solo' {
     stop_device_io (Eyelink)
 }
 
-protocol 'CPR_dyadic_agnt' {
+protocol 'CPR_dyadic_replay' {
 
     report ('Hello human end user! Starting Experiment...')
     start_device_io (Eyelink)
@@ -1773,7 +1733,7 @@ protocol 'CPR_dyadic_agnt' {
     CTRL_feedback_ms                            = (1000/120) * 18 // 18 frames - 150ms
     CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
     CTRL_show_agent                             = true 
-    CTRL_show_replay                            = false 
+    CTRL_show_replay                            = true 
     IO_arc_width                                = 3
     AGNT_arc_width                              = IO_arc_width
 
@@ -1809,6 +1769,7 @@ protocol 'CPR_dyadic_agnt' {
     INFO_FeedbackScore2                           = 0
 
     // Set TMP variables for online processing
+    TRIAL_start                                 = TRIAL_start
     TMP_cycle_duration_ms                       = CTRL_cycle_duration_ms
     TMP_coh_block_duration_ms                   = CTRL_coh_block_duration_ms
     TMP_feedback_probability                    = CTRL_feedback_probability
@@ -1833,6 +1794,27 @@ protocol 'CPR_dyadic_agnt' {
         fname_agnt_direction                    = fname_agnt_direction
         fname_agnt_strength                     = fname_agnt_strength
         }
+
+    // Set TMP variables for online processing
+    ML_sync                                     = 1
+    TRIAL_start                                 = TRIAL_start
+    TMP_cycle_duration_ms                       = CTRL_cycle_duration_ms
+    TMP_coh_block_duration_ms                   = CTRL_coh_block_duration_ms
+    TMP_feedback_probability                    = CTRL_feedback_probability
+    TMP_feedback_ITI_ms                         = CTRL_feedback_ITI_ms
+    TMP_snr_list                                = CTRL_snr_list
+    TMP_show_agent                              = CTRL_show_agent
+    TMP_show_replay                             = CTRL_show_replay
+    ML_sync                                     = 0
+
+
+    // Update trial parameters
+    fname_rdp_dir                           = fname_rdp_dir 
+    fname_rdp_coh                           = fname_rdp_coh
+    fname_feedback_ts                       = fname_feedback_ts
+    fname_counter                           = fname_counter
+    fname_agnt_direction                    = fname_agnt_direction
+    fname_agnt_strength                     = fname_agnt_strength
 
     // Initialise timer
     start_timer (
@@ -2125,14 +2107,14 @@ protocol 'CPR_dyadic_agnt' {
             state 'Fixation restored' (interruptible = NO) {
                 if (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) {
                     report ('FIX RESTORED A')
-                    CTRL_arc_alpha                  = .1
+                    CTRL_arc_alpha                  = .8
                     CTRL_fixation_break_flag        = 0
                     CTRL_fixation_penalty_flag      = 0
                 }
 
                 if (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag) {
                     report ('FIX RESTORED B')
-                    CTRL_arc2_alpha                 = .1
+                    CTRL_arc2_alpha                 = .8
                     CTRL_fixation2_break_flag       = 0
                     CTRL_fixation2_penalty_flag     = 0
                 }
@@ -2159,7 +2141,7 @@ protocol 'CPR_dyadic_agnt' {
                 INFO_Score                      += INFO_FeedbackScore
                 INFO_TrialScore                 += INFO_FeedbackScore
                 INFO_bonus_ply1_cents           += INFO_FeedbackScore * CTRL_cents_per_feedback
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialFeedbackCounter)
+                CTRL_feedback_str               = '$(round((INFO_TrialScore/INFO_TrialFeedbackCounter)*100)) %'
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
@@ -2169,84 +2151,11 @@ protocol 'CPR_dyadic_agnt' {
                 INFO_Score2                     += INFO_FeedbackScore2
                 INFO_TrialScore2                += INFO_FeedbackScore2
                 INFO_bonus_ply2_cents           += INFO_FeedbackScore2 * CTRL_cents_per_feedback
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialFeedbackCounter)
-                
+                CTRL_feedback2_str               = '$(round((INFO_TrialScore2/INFO_TrialFeedbackCounter)*100)) %'
+
                 CTRL_feedback_flag              = true
 
-                // PRESENT AT SPEAKER R ONLY
-                if (INFO_FeedbackScore > .875) {
-                    play_sound (Reward8R_sound)
-                }
-
-                if (INFO_FeedbackScore > .75 && INFO_FeedbackScore <= .875) {
-                    play_sound (Reward7R_sound)
-                }
-
-                if (INFO_FeedbackScore > .625 && INFO_FeedbackScore <= .75) {
-                    play_sound (Reward6R_sound)
-                }
-
-                if (INFO_FeedbackScore > .5 && INFO_FeedbackScore <= .625) {
-                    play_sound (Reward5R_sound)
-                }
-
-                if (INFO_FeedbackScore > .375 && INFO_FeedbackScore <= .5) {
-                    play_sound (Reward4R_sound)
-                }
-
-                if (INFO_FeedbackScore > .25 && INFO_FeedbackScore <= .375) {
-                    play_sound (Reward3R_sound)
-                }
-
-                if (INFO_FeedbackScore > .125 && INFO_FeedbackScore <= .25) {
-                    play_sound (Reward2R_sound)
-                }
-
-                if (INFO_FeedbackScore <= .125) {
-                    play_sound (Reward1R_sound)
-                }
-
-                // PRESENT AT SPEAKER L ONLY
-                if (INFO_FeedbackScore2 > .875) {
-                    play_sound (Reward8L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .75 && INFO_FeedbackScore2 <= .875) {
-                    play_sound (Reward7L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .625 && INFO_FeedbackScore2 <= .75) {
-                    play_sound (Reward6L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .5 && INFO_FeedbackScore2 <= .625) {
-                    play_sound (Reward5L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .375 && INFO_FeedbackScore2 <= .5) {
-                    play_sound (Reward4L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .25 && INFO_FeedbackScore2 <= .375) {
-                    play_sound (Reward3L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .125 && INFO_FeedbackScore2 <= .25) {
-                    play_sound (Reward2L_sound)
-                }
-
-                if (INFO_FeedbackScore2 <= .125) {
-                    play_sound (Reward1L_sound)
-                }
-
-                //Visual feedback
-                live_queue_stimulus (fixationCross)
-                live_queue_stimulus (fixationCross2)
-                update_stimulus_display ()
-                
-                report ('--- OUTCOME: Dyadic Hit ---')
-                report ('Score_A: $INFO_FeedbackScore || Score_B: $INFO_FeedbackScore2')
-
+                report ('Feedback Score_A: $INFO_FeedbackScore || Score_B: $INFO_FeedbackScore2')
                 goto ('Start Feedback Timer')
             }  
 
@@ -2303,6 +2212,549 @@ protocol 'CPR_dyadic_agnt' {
                     fname_agnt_strength                     = fname_agnt_strength
                     }
 
+                // Update trial parameters
+                fname_rdp_dir                           = fname_rdp_dir 
+                fname_rdp_coh                           = fname_rdp_coh
+                fname_feedback_ts                       = fname_feedback_ts
+                fname_counter                           = fname_counter
+                fname_agnt_direction                    = fname_agnt_direction
+                fname_agnt_strength                     = fname_agnt_strength
+
+                goto (
+                    target                      = 'End paradigm'
+                    when                        = INFO_FeedbackCounter >= CTRL_NumFeedback && timer_expired(ITI_Timer)
+                    )
+                timer_expired (
+                    target                      = 'Wait for Joystick Reset'
+                    timer                       = ITI_Timer
+                    )
+            }
+            state 'End paradigm' (interruptible = NO) {
+                update_stimulus_display ()
+                report ('==== SUMMARY_PLY1: $INFO_HitCounter / $INFO_FeedbackCounter COINS COLLECTED ====')
+                report ('==== SUMMARY_PLY2: $INFO_HitCounter2 / $INFO_FeedbackCounter COINS COLLECTED ====')
+                report ('==== ENDING PARADIGM ====')
+                play_sound (End_sound)
+                cancelTrigger                   = true
+                yield ()
+            }
+        }
+    }
+    stop_device_io (Eyelink)
+} 
+
+protocol 'CPR_dyadic_agnt' {
+
+    report ('Hello human end user! Starting Experiment...')
+    start_device_io (Eyelink)
+    start_device_io (mIO)
+    live_queue_stimulus (Background)
+    update_stimulus_display ()
+
+    // Set desired parameters
+    ML_sync                                     = 1
+    CTRL_NumFeedback                            = 300
+    CTRL_cycle_duration_ms                      = (1000/120) * 7200 // 7200 frames - 60000ms       
+    CTRL_coh_block_duration_ms                  = (1000/120) * 10000 // no changes if > CTRL_cycle_duration_ms 
+    CTRL_feedback_probability                   = 0.0025
+    CTRL_feedback_ITI_ms                        = (1000/120) * 100 // 100 frames - 833ms
+    CTRL_cpr_treshold                           = .2
+    CTRL_arc_alpha                              = .8
+    CTRL_arc2_alpha                             = .8
+    CTRL_arc_size                               = 4
+    CTRL_arc2_size                              = 4 
+    CTRL_start_area_size                        = 4
+    CTRL_start_area_alpha                       = 1
+    CTRL_fixationWidth_dva                      = CTRL_start_area_size+.5
+    CTRL_feedback_ms                            = (1000/120) * 18 // 18 frames - 150ms
+    CTRL_ITI_ms                                 = (1000/120) * 240 // 240 frames - 2000ms
+    CTRL_show_agent                             = true 
+    CTRL_show_replay                            = false 
+    IO_arc_width                                = 3
+    AGNT_arc_width                              = IO_arc_width
+
+    // Check and double-check luminance!
+    COL_player1_r                               = .6275 // Player1 - purple: RGB [0.6275 0.1255 0.9412]
+    COL_player1_g                               = .1255
+    COL_player1_b                               = .9412
+    COL_player2_r                               = 0 //Player2 - green: [0 .4 0]
+    COL_player2_g                               = .4
+    COL_player2_b                               = 0
+    COL_arc_r                                   = COL_player1_r
+    COL_arc_g                                   = COL_player1_g
+    COL_arc_b                                   = COL_player1_b
+    COL_arc2_r                                  = COL_player2_r
+    COL_arc2_g                                  = COL_player2_g
+    COL_arc2_b                                  = COL_player2_b
+
+    // Reset counters
+    TRIAL_start                                 = 0
+    TRIAL_end                                   = 0
+    INFO_CoherenceStateCounter                  = 0
+    INFO_FeedbackCounter                        = 0
+    INFO_TrialFeedbackCounter                   = 0
+    INFO_HitCounter                             = 0
+    INFO_ErrorCounter                           = 0
+    INFO_Score                                  = 0
+    INFO_TrialScore                             = 0
+    INFO_FeedbackScore                          = 0
+    INFO_HitCounter2                            = 0
+    INFO_ErrorCounter2                          = 0
+    INFO_Score2                                 = 0
+    INFO_TrialScore2                            = 0
+    INFO_FeedbackScore2                           = 0
+
+    // Set TMP variables for online processing
+    TRIAL_start                                 = TRIAL_start
+    TMP_cycle_duration_ms                       = CTRL_cycle_duration_ms
+    TMP_coh_block_duration_ms                   = CTRL_coh_block_duration_ms
+    TMP_feedback_probability                    = CTRL_feedback_probability
+    TMP_feedback_ITI_ms                         = CTRL_feedback_ITI_ms
+    TMP_snr_list                                = CTRL_snr_list
+    TMP_show_agent                              = CTRL_show_agent
+    TMP_show_replay                             = CTRL_show_replay
+    ML_sync                                     = 0
+
+    // Wait for update to be finished                
+    while (CTRL_counter[0] != TRIAL_start) {
+        wait (
+            duration                            = 100
+            duration_units                      = ms
+            )
+        
+        // Update trial parameters
+        fname_rdp_dir                           = fname_rdp_dir 
+        fname_rdp_coh                           = fname_rdp_coh
+        fname_feedback_ts                       = fname_feedback_ts
+        fname_counter                           = fname_counter
+        fname_agnt_direction                    = fname_agnt_direction
+        fname_agnt_strength                     = fname_agnt_strength
+        }
+
+    // Set TMP variables for online processing
+    ML_sync                                     = 1
+    TRIAL_start                                 = TRIAL_start
+    TMP_cycle_duration_ms                       = CTRL_cycle_duration_ms
+    TMP_coh_block_duration_ms                   = CTRL_coh_block_duration_ms
+    TMP_feedback_probability                    = CTRL_feedback_probability
+    TMP_feedback_ITI_ms                         = CTRL_feedback_ITI_ms
+    TMP_snr_list                                = CTRL_snr_list
+    TMP_show_agent                              = CTRL_show_agent
+    TMP_show_replay                             = CTRL_show_replay
+    ML_sync                                     = 0
+
+    // Update trial parameters
+    fname_rdp_dir                           = fname_rdp_dir 
+    fname_rdp_coh                           = fname_rdp_coh
+    fname_feedback_ts                       = fname_feedback_ts
+    fname_counter                           = fname_counter
+    fname_agnt_direction                    = fname_agnt_direction
+    fname_agnt_strength                     = fname_agnt_strength
+
+    // Initialise timer
+    start_timer (
+        timer                                   = FeedbackTimer
+        duration                                = 1
+        duration_units                          = ms
+    )
+
+    start_timer (
+        timer                                   = CoherenceTimer
+        duration                                = 1
+        duration_units                          = ms
+    )
+
+
+    cancelTrigger                               = false
+    schedule (
+        delay                                   = 0 
+        duration                                = 10000
+        repeats                                 = -999
+        cancel                                  = cancelTrigger
+        ) {
+            IO_joystickTrigger                  = true
+            IO_joystickTrigger2                 = true
+    }
+
+    trial 'Trial Structure' (interruptible = YES) {
+        task LOOP {
+
+            state 'Wait for Joystick Reset' (interruptible = YES)  {
+                goto (
+                    target                      = 'Wait for Joystick Movement'
+                    when                        = (IO_joystickStrength <= CTRL_cpr_treshold) 
+                    )
+            }
+            
+            state 'Wait for Joystick Movement' (interruptible = YES) {
+                INFO_frame_rate                 = refresh_rate()
+                report('Screen refresh rate [Hz]: $INFO_frame_rate')
+
+                live_queue_stimulus (start_area)
+                live_queue_stimulus (fixationCross)
+                dequeue_stimulus (performance_feedback)
+                dequeue_stimulus (performance_feedback2)
+                update_stimulus_display ()
+
+                COL_start_area_r                = 1
+                COL_start_area_g                = 1
+                COL_start_area_b                = 1
+                
+                goto (
+                    target                      = 'New Trial'
+                    when                        = (IO_joystickStrength > CTRL_cpr_treshold) 
+                    )
+            }
+
+
+            state 'New Trial' (interruptible = NO) { 
+                update_stimulus_display ()
+
+                ML_sync                         = 1 // Matlab sync event
+                TRIAL_start                     += 1 // Count trial number
+                TRIAL_align                     = 1 // Trial align event
+                INFO_task                       = "CPR_dyadic_random_walk_neutral"
+                TRIAL_type                      = "CPR_dyadic_neutral_agnt"
+                INFO_FrameCounter               = 0
+                INFO_CoherenceStateCounter      = 0  
+                INFO_TrialFeedbackCounter       = 0
+                INFO_TrialScore                 = 0
+                INFO_TrialScore2                = 0
+                COL_start_area_r                = 0 
+                COL_start_area_g                = 0
+                COL_start_area_b                = 0
+                RDP_direction                   = RDP_direction_lst[0] // Set to initial stimulus direction
+                CTRL_arc_position               = TRIAL_start % 2
+
+                TMP_cycle_duration_ms           = CTRL_cycle_duration_ms
+                TMP_coh_block_duration_ms       = CTRL_coh_block_duration_ms
+                TMP_feedback_probability        = CTRL_feedback_probability
+                TMP_feedback_ITI_ms             = CTRL_feedback_ITI_ms
+                TMP_snr_list                    = CTRL_snr_list
+                TMP_show_agent                  = CTRL_show_agent
+                TMP_show_replay                 = CTRL_show_replay
+
+                ML_sync                         = 0 // Stop sync
+
+                report ('===== STIMULUS CYCLE $TRIAL_start START =====')
+                goto ('Show Stimuli')
+            }
+
+            state 'Show Stimuli' (interruptible = NO) {
+                //report ('Show Stimuli')
+                
+                start_timer (
+                    timer                       = CycleDurationTimer
+                    duration                    = CTRL_cycle_duration_ms
+                    duration_units              = ms
+                    )
+
+                CTRL_cancel_action_flag         = false
+
+                // Update stimulus parameters
+                schedule (
+                    delay                       = next_frame_time() - now()
+                    duration                    = 1000000 / refresh_rate()
+                    repeats                     = -999
+                    cancel                      = CTRL_cancel_action_flag
+                    ) {
+                    INFO_FrameCounter           += 1 // use this variable to determine the onset of the actual signal
+                    RDP_direction               = RDP_direction_lst[INFO_FrameCounter] // Stimulus direction of state
+                    
+                    if (INFO_FrameCounter == CTRL_feedback_ts_lst[INFO_TrialFeedbackCounter]) {
+                        CTRL_feedback_trigger_flag = true
+                    }
+
+                    if (CTRL_show_agent == true) {
+                        AGNT_direction          = AGNT_direction_lst[INFO_FrameCounter]
+                        AGNT_strength           = AGNT_strength_lst[INFO_FrameCounter]
+
+                        /*// Fix minimum arc size
+                        if (AGNT_arc_width < CTRL_cursor_cap_deg) {
+                            AGNT_arc_width          = CTRL_cursor_cap_deg
+                        } */
+                    }
+                }
+
+                schedule (
+                    delay                       = next_frame_time() - now()
+                    duration                    = CTRL_coh_block_duration_ms * 1000
+                    repeats                     = -999
+                    cancel                      = CTRL_cancel_action_flag
+                    ) {
+                    RDP_coherence               = RDP_coherence_lst[INFO_CoherenceStateCounter] // Stimulus coherence of state
+                    TRIAL_type                  = format("Coh%d", (float)RDP_coherence)
+                    INFO_CoherenceStateCounter  += 1
+                    }
+                
+                TRIAL_reactionEvent = true
+
+                live_queue_stimulus (RDP)
+                live_queue_stimulus (start_area)
+                
+                // Alternative layers
+                if (CTRL_arc_position == 1) {
+                    live_queue_stimulus (arc)
+                    live_queue_stimulus (arc_agnt)
+                }
+
+                if (CTRL_arc_position == 0) {
+                    live_queue_stimulus (arc_agnt)
+                    live_queue_stimulus (arc)
+                }
+
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()
+
+                goto ('Reset flags')
+            }
+
+            state 'Reset flags' (interruptible = NO) {
+                // Reset flag
+                TRIAL_reactionTrigger           = false
+                CTRL_feedback_trigger_flag      = false //reset
+                CTRL_feedback_flag              = false //reset
+                CTRL_hit_flag                   = false
+                CTRL_miss_flag                  = false
+                CTRL_hit_flag2                  = false
+                CTRL_miss_flag2                 = false
+
+                goto ('Check exit')
+            }
+
+            state 'Check exit' (interruptible = NO) {
+                //report ('Check exit')
+
+                goto (
+                    target                      = 'End Trial'
+                    when                        = (timer_expired(CycleDurationTimer)) || (INFO_FeedbackCounter >= CTRL_NumFeedback)
+                    )
+                goto (
+                    target                      = 'Update Stimuli'
+                    when                        =  timer_expired(CycleDurationTimer) == 0
+                    )
+            }
+
+            state 'Update Stimuli' (interruptible = YES) { 
+                goto (                    
+                    target                      = 'Fixation break detected'
+                    when                        = (IO_fixation_flag == false && CTRL_fixation_break_flag == false) || (IO_fixation2_flag == false && CTRL_fixation2_break_flag == false) 
+                    )
+                goto (                    
+                    target                      = 'Reset CTRL_fixation_break_flag'
+                    when                        = (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer) == false) || (IO_fixation2_flag && CTRL_fixation2_break_flag && timer_expired(MinFixationBreakTimer2) == false) 
+                    )                
+                goto (                    
+                    target                      = 'Fixation break penalty'
+                    when                        = (IO_fixation_flag == false && timer_expired(MinFixationBreakTimer) && CTRL_fixation_break_flag && CTRL_fixation_penalty_flag == false) || (IO_fixation2_flag == false && timer_expired(MinFixationBreakTimer2) && CTRL_fixation2_break_flag && CTRL_fixation2_penalty_flag == false)
+                    )
+                goto (                    
+                    target                      = 'Fixation restored'
+                    when                        = (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) || (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag) 
+                    )
+                goto (
+                    target                      = 'Reset flags'
+                    when                        = CTRL_feedback_flag && timer_expired(FeedbackTimer) 
+                    )
+                goto (
+                    target                      = 'Trigger Feedback'
+                    when                        = CTRL_feedback_trigger_flag && TRIAL_reactionTrigger == false
+                    ) 
+                goto (
+                    target                      = 'Feedback'
+                    when                        = (CTRL_arc_flag && CTRL_fixation_penalty_flag == false) && (AGNT_arc_flag && CTRL_fixation2_penalty_flag == false) && TRIAL_reactionTrigger && (CTRL_hit_flag + CTRL_hit_flag2 + CTRL_miss_flag + CTRL_miss_flag2) == false
+                    )               
+                goto (
+                    target                      = 'Check exit'
+                    when                        = timer_expired(CycleDurationTimer) && TRIAL_reactionTrigger == false
+                    )
+            }
+           
+            state 'Fixation break detected' (interruptible = NO) {
+                
+                if (IO_fixation_flag == false && CTRL_fixation_break_flag == false) {
+                    //report ('FIX BREAK A')
+                    CTRL_fixation_break_flag    = 1
+
+                    start_timer (
+                        timer                   = MinFixationBreakTimer
+                        duration                = CTRL_minFixBreak_duration_ms
+                        duration_units          = ms
+                        )  
+                }
+
+                if (IO_fixation2_flag == false && CTRL_fixation2_break_flag == false) {
+                    //report ('FIX BREAK B')
+                    CTRL_fixation2_break_flag       = 1
+
+                    start_timer (
+                        timer                       = MinFixationBreakTimer2
+                        duration                    = CTRL_minFixBreak_duration_ms
+                        duration_units              = ms
+                        )  
+                }
+                                    
+                goto ('Update Stimuli')
+            }
+
+            state 'Reset CTRL_fixation_break_flag' (interruptible = NO) {
+                if (IO_fixation_flag && CTRL_fixation_break_flag && timer_expired(MinFixationBreakTimer)) {
+                    //report ('FIX BREAK RESET A')
+                    CTRL_fixation_break_flag        = 0
+                }
+
+                if (IO_fixation2_flag && CTRL_fixation2_break_flag && timer_expired(MinFixationBreakTimer2)) {
+                    //report ('FIX BREAK RESET B')
+                    CTRL_fixation2_break_flag       = 0
+                }
+                    goto ('Update Stimuli')
+            }
+
+            state 'Fixation break penalty' (interruptible = NO) {
+
+                if (IO_fixation_flag == false && CTRL_fixation_break_flag) {
+                    report ('FIX BREAK PENALTY A')
+                    CTRL_arc_alpha                  = 0
+                    CTRL_fixation_penalty_flag      = 1
+
+                    start_timer (
+                        timer                       = FixBreakPenaltyTimer
+                        duration                    = CTRL_fixBreak_penalty_duration_ms
+                        duration_units              = ms
+                        )  
+                }
+
+                if (IO_fixation2_flag == false && CTRL_fixation2_break_flag) {
+                    report ('FIX BREAK PENALTY B')
+                    CTRL_arc2_alpha                 = 0
+                    CTRL_fixation2_penalty_flag     = 1
+
+                    start_timer (
+                        timer                       = FixBreakPenaltyTimer2
+                        duration                    = CTRL_fixBreak_penalty_duration_ms
+                        duration_units              = ms
+                        )  
+                }
+                
+                goto ('Update Stimuli')
+            }
+
+            state 'Fixation restored' (interruptible = NO) {
+                if (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) {
+                    report ('FIX RESTORED A')
+                    CTRL_arc_alpha                  = .8
+                    CTRL_fixation_break_flag        = 0
+                    CTRL_fixation_penalty_flag      = 0
+                }
+
+                if (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag) {
+                    report ('FIX RESTORED B')
+                    CTRL_arc2_alpha                 = .8
+                    CTRL_fixation2_break_flag       = 0
+                    CTRL_fixation2_penalty_flag     = 0
+                }
+
+                goto ('Update Stimuli')
+            }
+
+            state 'Trigger Feedback' (interruptible = NO) {
+                TRIAL_reactionTrigger           = true
+                INFO_FeedbackCounter            += 1
+                INFO_TrialFeedbackCounter       += 1
+
+                report ('--- SHOW Feedback $INFO_FeedbackCounter ---')
+                goto ('Update Stimuli')
+            }
+
+            state 'Feedback' {
+                // Set flags and add to counters
+                TRIAL_outcome                   = "hit"
+                CTRL_hit_flag                   = true
+                CTRL_miss_flag                  = false
+                INFO_HitCounter                 += 1
+                INFO_FeedbackScore              = TMP_score
+                INFO_Score                      += INFO_FeedbackScore
+                INFO_TrialScore                 += INFO_FeedbackScore
+                INFO_bonus_ply1_cents           += INFO_FeedbackScore * CTRL_cents_per_feedback
+                CTRL_feedback_str               = '$(round((INFO_TrialScore/INFO_TrialFeedbackCounter)*100)) %'
+
+                TRIAL_outcome2                  = "hit"
+                CTRL_hit_flag2                  = true
+                CTRL_miss_flag2                 = false
+                INFO_HitCounter2                += 1
+                INFO_FeedbackScore2             = TMP_score3
+                INFO_Score2                     += INFO_FeedbackScore2
+                INFO_TrialScore2                += INFO_FeedbackScore2
+                INFO_bonus_ply2_cents           += INFO_FeedbackScore2 * CTRL_cents_per_feedback
+                CTRL_feedback2_str               = '$(round((INFO_TrialScore2/INFO_TrialFeedbackCounter)*100)) %'
+
+                CTRL_feedback_flag              = true
+
+                report ('Feedback Score_A: $INFO_FeedbackScore || Score_B: $INFO_FeedbackScore2')
+                goto ('Start Feedback Timer')
+            }  
+
+            state 'Start Feedback Timer'{
+                start_timer (
+                    timer                       = FeedbackTimer
+                    duration                    = CTRL_feedback_ms
+                    duration_units              = ms
+                    )
+                goto ('Update Stimuli')
+            }
+
+            state 'End Trial' (interruptible = NO) {
+                dequeue_stimulus (RDP)
+                dequeue_stimulus (start_area)
+                dequeue_stimulus (arc_agnt)
+                dequeue_stimulus (arc)
+                dequeue_stimulus (fixationCross)
+                dequeue_stimulus (fixationCross2)
+
+                TRIAL_align                     = false
+                TRIAL_end                       = TRIAL_start
+                CTRL_cancel_action_flag         = true 
+
+                start_timer (
+                    timer                       = ITI_Timer
+                    duration                    = CTRL_ITI_ms
+                    duration_units              = ms
+                    )
+
+                update_stimulus_display ()
+                report ('===== STIMULUS CYCLE $TRIAL_end END =====')
+                goto (ITI)
+            }
+
+            state 'ITI' (interruptible = YES) {
+                live_queue_stimulus (performance_feedback)
+                live_queue_stimulus (performance_feedback2)
+                update_stimulus_display ()  
+
+                // Wait for update to be finished                
+                while (CTRL_counter[0] != TRIAL_start) {
+                    wait (
+                        duration                = 100
+                        duration_units          = ms
+                        )
+                    
+                    // Update trial parameters
+                    fname_rdp_dir                           = fname_rdp_dir 
+                    fname_rdp_coh                           = fname_rdp_coh
+                    fname_feedback_ts                       = fname_feedback_ts
+                    fname_counter                           = fname_counter
+                    fname_agnt_direction                    = fname_agnt_direction
+                    fname_agnt_strength                     = fname_agnt_strength
+                    }
+
+                // Update trial parameters
+                fname_rdp_dir                           = fname_rdp_dir 
+                fname_rdp_coh                           = fname_rdp_coh
+                fname_feedback_ts                       = fname_feedback_ts
+                fname_counter                           = fname_counter
+                fname_agnt_direction                    = fname_agnt_direction
+                fname_agnt_strength                     = fname_agnt_strength
+        
                 goto (
                     target                      = 'End paradigm'
                     when                        = INFO_FeedbackCounter >= CTRL_NumFeedback && timer_expired(ITI_Timer)
@@ -2334,6 +2786,8 @@ protocol 'CPR_dyadic' {
     live_queue_stimulus (Background)
     start_device_io (getStream)
     update_stimulus_display ()
+ 
+    report('aaaaargh')
 
     // Set desired parameters
     ML_sync                                     = 1
@@ -2398,6 +2852,8 @@ protocol 'CPR_dyadic' {
     TMP_show_replay                             = CTRL_show_replay
     ML_sync                                     = 0
 
+    report('A')
+
     // Wait for update to be finished                
     while (CTRL_counter[0] != TRIAL_start) {
         wait (
@@ -2411,6 +2867,8 @@ protocol 'CPR_dyadic' {
         fname_feedback_ts                       = fname_feedback_ts
         fname_counter                           = fname_counter
         }
+ 
+    report('B')
 
     // Initialise timer
     start_timer (
@@ -2425,6 +2883,7 @@ protocol 'CPR_dyadic' {
         duration_units                          = ms
     )
 
+    report('C')
 
     cancelTrigger                               = false
     schedule (
@@ -2441,6 +2900,8 @@ protocol 'CPR_dyadic' {
         task LOOP {
 
             state 'Wait for Joystick Reset' (interruptible = YES)  {
+                report('D')
+
                 goto (
                     target                      = 'Wait for Joystick Movement'
                     when                        = (IO_joystickStrength <= CTRL_cpr_treshold) 
@@ -2693,14 +3154,14 @@ protocol 'CPR_dyadic' {
             state 'Fixation restored' (interruptible = NO) {
                 if (IO_fixation_flag && timer_expired(FixBreakPenaltyTimer) && CTRL_fixation_break_flag) {
                     report ('FIX RESTORED A')
-                    CTRL_arc_alpha                  = .1
+                    CTRL_arc_alpha                  = .8
                     CTRL_fixation_break_flag        = 0
                     CTRL_fixation_penalty_flag      = 0
                 }
 
                 if (IO_fixation2_flag && timer_expired(FixBreakPenaltyTimer2) && CTRL_fixation2_break_flag) {
                     report ('FIX RESTORED B')
-                    CTRL_arc2_alpha                 = .1
+                    CTRL_arc2_alpha                 = .8
                     CTRL_fixation2_break_flag       = 0
                     CTRL_fixation2_penalty_flag     = 0
                 }
@@ -2727,7 +3188,7 @@ protocol 'CPR_dyadic' {
                 INFO_Score                      += INFO_FeedbackScore
                 INFO_TrialScore                 += INFO_FeedbackScore
                 INFO_bonus_ply1_cents           += INFO_FeedbackScore * CTRL_cents_per_feedback
-                CTRL_scoreBar_width             = 360 * (INFO_TrialScore/INFO_TrialFeedbackCounter)
+                CTRL_feedback_str               = '$(round((INFO_TrialScore/INFO_TrialFeedbackCounter)*100)) %'
 
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = true
@@ -2737,84 +3198,11 @@ protocol 'CPR_dyadic' {
                 INFO_Score2                     += INFO_FeedbackScore2
                 INFO_TrialScore2                += INFO_FeedbackScore2
                 INFO_bonus_ply2_cents           += INFO_FeedbackScore2 * CTRL_cents_per_feedback
-                CTRL_scoreBar2_width            = 360 * (INFO_TrialScore2/INFO_TrialFeedbackCounter)
-                
+                CTRL_feedback_str               = '$(round((INFO_TrialScore2/INFO_TrialFeedbackCounter)*100)) %'
+   
                 CTRL_feedback_flag              = true
 
-                // PRESENT AT SPEAKER R ONLY
-                if (INFO_FeedbackScore > .875) {
-                    play_sound (Reward8R_sound)
-                }
-
-                if (INFO_FeedbackScore > .75 && INFO_FeedbackScore <= .875) {
-                    play_sound (Reward7R_sound)
-                }
-
-                if (INFO_FeedbackScore > .625 && INFO_FeedbackScore <= .75) {
-                    play_sound (Reward6R_sound)
-                }
-
-                if (INFO_FeedbackScore > .5 && INFO_FeedbackScore <= .625) {
-                    play_sound (Reward5R_sound)
-                }
-
-                if (INFO_FeedbackScore > .375 && INFO_FeedbackScore <= .5) {
-                    play_sound (Reward4R_sound)
-                }
-
-                if (INFO_FeedbackScore > .25 && INFO_FeedbackScore <= .375) {
-                    play_sound (Reward3R_sound)
-                }
-
-                if (INFO_FeedbackScore > .125 && INFO_FeedbackScore <= .25) {
-                    play_sound (Reward2R_sound)
-                }
-
-                if (INFO_FeedbackScore <= .125) {
-                    play_sound (Reward1R_sound)
-                }
-
-                // PRESENT AT SPEAKER L ONLY
-                if (INFO_FeedbackScore2 > .875) {
-                    play_sound (Reward8L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .75 && INFO_FeedbackScore2 <= .875) {
-                    play_sound (Reward7L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .625 && INFO_FeedbackScore2 <= .75) {
-                    play_sound (Reward6L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .5 && INFO_FeedbackScore2 <= .625) {
-                    play_sound (Reward5L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .375 && INFO_FeedbackScore2 <= .5) {
-                    play_sound (Reward4L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .25 && INFO_FeedbackScore2 <= .375) {
-                    play_sound (Reward3L_sound)
-                }
-
-                if (INFO_FeedbackScore2 > .125 && INFO_FeedbackScore2 <= .25) {
-                    play_sound (Reward2L_sound)
-                }
-
-                if (INFO_FeedbackScore2 <= .125) {
-                    play_sound (Reward1L_sound)
-                }
-
-                //Visual feedback
-                live_queue_stimulus (fixationCross)
-                live_queue_stimulus (fixationCross2)
-                update_stimulus_display ()
-                
-                report ('--- OUTCOME: Dyadic Hit ---')
-                report ('Score_A: $INFO_FeedbackScore || Score_B: $INFO_FeedbackScore2')
-
+                report ('Feedback Score_A: $INFO_FeedbackScore || Score_B: $INFO_FeedbackScore2')
                 goto ('Start Feedback Timer')
             }  
 
@@ -2851,10 +3239,6 @@ protocol 'CPR_dyadic' {
             }
 
             state 'ITI' (interruptible = YES) {
-                CTRL_feedback_bar_height        = INFO_Score*(CTRL_feedback_frame_height/CTRL_NumFeedback)
-                CTRL_feedback2_bar_height       = INFO_Score2*(CTRL_feedback_frame_height/CTRL_NumFeedback)
-                CTRL_feedback_target_bar_height = INFO_FeedbackCounter*(CTRL_feedback_frame_height/CTRL_NumFeedback)
-
                 live_queue_stimulus (performance_feedback)
                 live_queue_stimulus (performance_feedback2)
                 update_stimulus_display ()  

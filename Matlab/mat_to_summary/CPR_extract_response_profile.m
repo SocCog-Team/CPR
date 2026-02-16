@@ -1,12 +1,12 @@
 function [out_p1, out_p2] = CPR_extract_response_profile(d,idx,exp_info)
 
 out_p1                  = extract_response(d, idx, exp_info, 1);
-out_p1                  = get_outcome_summary(d, idx,1,out_p1);
+% out_p1                  = get_outcome_summary(d, idx,1,out_p1);
 out_p1                  = sort_coherence_blocks(out_p1);
 
 if ~strcmp(exp_info{3}, 'CPRsolo')
     out_p2            	= extract_response(d, idx, exp_info, 2);
-    out_p2            	= get_outcome_summary(d, idx,2,out_p2);
+    % out_p2            	= get_outcome_summary(d, idx,2,out_p2);
     out_p2            	= sort_coherence_blocks(out_p2);
 else
     out_p2              = [];
