@@ -13,22 +13,22 @@ cd /Users/cnl/Documents/DATA/Nilan/pl2/
 
 % Compile list of all data files
 pl2_files = dir(fullfile('/Users/cnl/Documents/DATA/Nilan/pl2/', '*.pl2'));
-pl2_files = pl2_files(end) % tmp fix - add option to process specific file here
 
 cd /Users/cnl/Documents/DATA/Nilan/spike_sorting/
 
-%%% File-Loop %%%
-for iFile = 1:length(pl2_files)
+%% File-Loop %%%
+for iFile = [26 27 29 32:39]
+% for iFile = length(pl2_files)
     disp(['Processing: ' pl2_files(iFile).name])
     [pl2]                       = PL2GetFileIndex([pl2_files(iFile).folder '/' pl2_files(iFile).name]);
     wideband_data               = struct();
     exp_info                    = split(pl2_files(iFile).name,'_');
-    dest_dir                    = [exp_info{1} '_' exp_info{6}];
+    dest_dir                    = [exp_info{1} '_' exp_info{6} '_' exp_info{4}];
     
     if ~isfolder(dest_dir)
         mkdir(dest_dir);
     else 
-        continue
+        % continue
     end
     
     %%% Channel-Loop %%%

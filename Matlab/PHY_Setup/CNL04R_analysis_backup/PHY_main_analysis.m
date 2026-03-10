@@ -14,6 +14,14 @@
 % ---> Add Drift analysis to check is FR remains stable over time
 % (2) Add optional spike readout, otherwise behavior only
 
+%%%% Routine:
+% 1) Write wideband data
+% 2) Check clipping info
+% 3) Ultrasort preprocessing - no denoising
+% 4) UltraSort spike sorting - neg channels only for now
+% 5) Start main analysis inkl. preprocessing, pre-selection amd manually curation of spiking
+% 6) Find interesting scientific results
+
 clear all
 close all
 
@@ -21,13 +29,14 @@ addpath /Users/cnl/Desktop/CPR/code
 
 cfg_pth             = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
 source_dir          = '/Users/cnl/Documents/DATA/Nilan/';
-preproc_flag        = false;
+preproc_flag        = true;
 import_flag         = false;
 
 rec_lst             = {%'20250807_nil_CPR_block1_phy4_rec045_ann';  % Onset transients before 0?
                     '20250924_nil_CPR_block1_phy4_rec059_fxs',...
                     '20250925_nil_CPR_block1_phy4_rec060_fxs',...
-                    '20250926_nil_CPR_block1_phy4_rec061_fxs'};
+                    '20250926_nil_CPR_block1_phy4_rec061_fxs',...
+                    '20251204_nil_CPR_block1_phy4_rec068_fxs'};
 
 for iRec = 1:length(rec_lst)
 

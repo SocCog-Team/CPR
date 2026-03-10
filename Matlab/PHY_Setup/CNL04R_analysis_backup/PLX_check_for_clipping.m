@@ -23,9 +23,13 @@ for iChan = 1:length(pl2.SpikeChannels)
     gain(iChan,:)           = pl2.AnalogChannels{iChan}.TotalGain;
     raw_minmax(iChan,:)     = [min(ad.Values) max(ad.Values)];
     clipping_cnt(iChan,:)   = [sum(ad.Values == min(ad.Values)) sum(ad.Values == max(ad.Values))];
-    if sum(clipping_cnt(iChan,:)) > 10
+    if sum(clipping_cnt(iChan,:)) > 40e3 % 1 second
         warning("you are SCREWED")
     end
+end
+
+if ~isfolder(dest_dir)
+    mkdir(dest_dir);
 end
 
 save([dest_dir '/INFO_clipping_' pl2_name(1:end-4) '.mat'], 'gain','raw_minmax','clipping_cnt', '-v7.3')
