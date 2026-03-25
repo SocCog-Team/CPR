@@ -14,6 +14,14 @@
 % ---> Add Drift analysis to check is FR remains stable over time
 % (2) Add optional spike readout, otherwise behavior only
 
+%%%% Routine:
+% 1) Write wideband data
+% 2) Check clipping info
+% 3) Ultrasort preprocessing - no denoising
+% 4) UltraSort spike sorting - neg channels only for now
+% 5) Start main analysis inkl. preprocessing, pre-selection amd manually curation of spiking
+% 6) Find interesting scientific results
+
 clear all
 close all
 
@@ -21,12 +29,14 @@ addpath /Users/cnl/Desktop/CPR/code
 
 cfg_pth             = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
 source_dir          = '/Users/cnl/Documents/DATA/Nilan/';
-import_flag         = true;
+preproc_flag        = true;
+import_flag         = false;
 
 rec_lst             = {%'20250807_nil_CPR_block1_phy4_rec045_ann';  % Onset transients before 0?
                     '20250924_nil_CPR_block1_phy4_rec059_fxs',...
                     '20250925_nil_CPR_block1_phy4_rec060_fxs',...
-                    '20250926_nil_CPR_block1_phy4_rec061_fxs'};
+                    '20250926_nil_CPR_block1_phy4_rec061_fxs',...
+                    '20251204_nil_CPR_block1_phy4_rec068_fxs'};
 
 for iRec = 1:length(rec_lst)
 
@@ -34,8 +44,11 @@ for iRec = 1:length(rec_lst)
     dest_dir        = ['/Users/cnl/Documents/DATA/Nilan/spike_sorting/' rec_info{1} '_'  rec_info{6} '_'  rec_info{4} '/'];
 
     %% Import stimulus parameters and neural responses for stimulus cycles
-    phy             = PHY_preprocessing(rec_lst{iRec},source_dir,dest_dir,cfg_pth,import_flag);
-
+    if preproc_flag
+        phy         = PHY_preprocessing(rec_lst{iRec},source_dir,dest_dir,cfg_pth,import_flag);
+    else
+        load([dest_dir '/summary_' rec_lst{iRec} '.mat'])
+    end
     %% Do quality checks here...
     phy             = PHY_quality_assessment(phy);
 
@@ -121,28 +134,30 @@ for iCyc = 1:length(stim.rdp_dir)
         state.js_hum_tlt{state_cnt}     = joy.js_hum_dir{iCyc}(js_hum_idx);
 
         % Brain
-        chan = fieldnames(in.brain.CPR.spks);
-        chan(strcmp(chan, 'include')) = [];
+        % chan = fieldnames(in.brain.CPR.spks);
+        % chan(strcmp(chan, 'include')) = [];
+        % 
+        % for iChan = 1:length(chan)
+        %     unit_label = fieldnames(in.brain.CPR.spks.(chan{iChan}));
+        % 
+        %     for iUnit = 1:length(unit_label)
+        %         % Skip unsorted spikes
+        %         if strcmp(unit_label{iUnit}, 'unit0')
+        %             continue
+        %         end
 
-        for iChan = 1:length(chan)
-            unit_label = fieldnames(in.brain.CPR.spks.(chan{iChan}));
+        for iUnit = 1:length(in.brain.CPR.spks.include.unit_ID)
+                % % Unit included based on onset response?
+                % tmp_id = [chan{iChan} '_' unit_label{iUnit}];
+                % unit_idx = in.brain.CPR.spks.include.unit_ID == tmp_id;
 
-            for iUnit = 1:length(unit_label)
-                % Skip unsorted spikes
-                if strcmp(unit_label{iUnit}, 'unit0')
-                    continue
-                end
-
-                % Unit included based on onset response?
-                tmp_id = [chan{iChan} '_' unit_label{iUnit}];
-                unit_idx = in.brain.CPR.spks.include.unit_ID == tmp_id;
-
-                if ~in.brain.CPR.spks.include.inclusion_flag(unit_idx)
+                if ~in.brain.CPR.spks.include.inclusion_flag(iUnit)
                     continue
                 end
 
                 clear dat
-                dat = in.brain.CPR.spks.(chan{iChan}).(unit_label{iUnit});
+                unit_str = in.brain.CPR.spks.include.unit_ID(iUnit);
+                dat = in.brain.CPR.spks.(unit_str{1}(1:9)).(unit_str{1}(11:15));
 
                 if iState == length(stim.rdp_dir{iCyc})
                     spk_idx = dat{iCyc} > stim.rdp_dir_ts{iCyc}(iState)-double(stim.cpr_cyle(iCyc,1)) & dat{iCyc} < double(stim.cpr_cyle(iCyc,2))-double(stim.cpr_cyle(iCyc,1));
@@ -151,7 +166,7 @@ for iCyc = 1:length(stim.rdp_dir)
                 end
 
                 state.cIdx(state_cnt)               = iCyc;
-                unit_id                             = [chan{iChan} '_' unit_label{iUnit}];
+                unit_id                             = unit_str;
                 state.spk_n.(unit_id)(state_cnt)    = length(dat{iCyc}(spk_idx)); % Number of spikes
                 state.spk_ts.(unit_id){state_cnt}   = dat{iCyc}(spk_idx) - (stim.rdp_dir_ts{iCyc}(iState) - double(stim.cpr_cyle(iCyc,1))); % State-aligned spike timestamps
                 
@@ -165,15 +180,14 @@ for iCyc = 1:length(stim.rdp_dir)
                 end
 
                 % Inclusion flag based on 'PHY_quality_assessment'
-                if in.brain.CPR.spks.include.cyc_id{unit_idx}(iCyc) == 0
-                    state.include.(unit_id)(state_cnt)  = false;
-                else
+                if ismember(iCyc,in.brain.CPR.spks.include.cyc_id{iUnit})
                     state.include.(unit_id)(state_cnt)  = true;
+                else
+                    state.include.(unit_id)(state_cnt)  = false;
                 end
             end
         end
     end
-end
 end
 
 function out = PHY_sort_spikes_by_coherence(in)
@@ -397,44 +411,53 @@ for iChan = 1:length(chan_lst)
 
     for iUnit = 1:length(unit_lst)
         clear spk_times_cycle spk_times_cycle_filt test_struct cyc_duration_sec avg_fr_cycle
+        
+        % Skip unsorted spikes
+        if strcmp(unit_lst{iUnit}, 'unit0')
+            continue
+        end
+        
         spk_times_cycle         = phy.brain.CPR.spks.(chan_lst{iChan}).(unit_lst{iUnit});
 
         % Remove cycles with a low firing rate and shorter than 1 second.
         cyc_duration_sec        = (phy.stim.cpr_cyle(:,2) - phy.stim.cpr_cyle(:,1)) ./1e6;
         avg_fr_cycle            = cellfun(@length, spk_times_cycle)' ./ cyc_duration_sec;
-        cyc_lst                 = avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec;
-        spk_times_cycle_filt    = spk_times_cycle(avg_fr_cycle > min_fr & cyc_duration_sec > min_cycle_dur_sec);
+    
+        % Refine the clustered range based on spike pattern
+        mask                    = manually_assign_analysis_range(phy,(chan_lst{iChan}),(unit_lst{iUnit}));
 
-        % Test onset response of units with sufficient repetitions
-        cc                      = cc+1;
-        t.unit_ID(cc)           = [(chan_lst{iChan}) '_' (unit_lst{iUnit})];
+        for iRange = 1:size(mask,2)
+            % Test onset response of units with sufficient repetitions
+            cc                      = cc+1;
+            t.unit_ID(cc)           = [(chan_lst{iChan}) '_' (unit_lst{iUnit})  '_range' num2str(iRange)];
 
-        if length(spk_times_cycle_filt) >= min_num_cycles
-            % Test onset response against baseline activity
-            test_struct             = test_onset_response(spk_times_cycle_filt);
+            if length(spk_times_cycle(mask(:,iRange))) >= min_num_cycles
+                % Test onset response against baseline activity
+                test_struct             = test_onset_response(spk_times_cycle(mask(:,iRange)));
 
-            % Save results to table
-            t.n_Cycles(cc)          = length(spk_times_cycle_filt); % Number of remaining stimulus cycles for analysis
-            t.cyc_id{cc}            = cyc_lst; % Cycle numbers
-            t.mean_FR(cc)           = test_struct.mean_fr; % Avg. firing rate
-            t.signrank_p(cc)        = test_struct.p; % P-value baseline vs onset response
-            t.signrank_z(cc)        = test_struct.stats.zval; % Z-value baseline vs onset response
-            t.thresh_latency_ms(cc) = test_struct.lat; % Latency of threshold crossing
+                % Save results to table
+                t.n_Cycles(cc)          = sum(mask(:,iRange)); % Number of remaining stimulus cycles for analysis
+                t.cyc_id{cc}            = find(mask(:,iRange)); % Cycle numbers
+                t.mean_FR(cc)           = test_struct.mean_fr; % Avg. firing rate
+                t.signrank_p(cc)        = test_struct.p; % P-value baseline vs onset response
+                t.signrank_z(cc)        = test_struct.stats.zval; % Z-value baseline vs onset response
+                t.thresh_latency_ms(cc) = test_struct.lat; % Latency of threshold crossing
 
-            % Include if stable, above threshold response with expected latency
-            if (test_struct.lat > min_lat_ms && test_struct.lat < max_lat_ms) && test_struct.p < p_thresh && test_struct.mean_fr > min_fr && length(spk_times_cycle_filt) > min_num_cycles
-                t.inclusion_flag(cc) = true;
+                % Include if stable, above threshold response with expected latency
+                if (test_struct.lat > min_lat_ms && test_struct.lat < max_lat_ms) && test_struct.p < p_thresh && test_struct.mean_fr > min_fr && sum(mask(:,iRange)) > min_num_cycles
+                    t.inclusion_flag(cc) = true;
+                else
+                    t.inclusion_flag(cc) = false;
+                end
             else
-                t.inclusion_flag(cc) = false;
+                t.n_Cycles(cc)          = nan;
+                t.cyc_id{cc}            = nan;
+                t.mean_FR(cc)           = nan;
+                t.signrank_p(cc)        = nan;
+                t.signrank_z(cc)        = nan;
+                t.thresh_latency_ms(cc) = nan;
+                t.inclusion_flag(cc)    = false;
             end
-        else
-            t.n_Cycles(cc)          = nan;
-            t.cyc_id{cc}            = nan;
-            t.mean_FR(cc)           = nan;
-            t.signrank_p(cc)        = nan;
-            t.signrank_z(cc)        = nan;
-            t.thresh_latency_ms(cc) = nan;
-            t.inclusion_flag(cc)    = false;
         end
     end
 end
@@ -524,4 +547,62 @@ end
 existingUnitCols = intersect(unitNames, T.Properties.VariableNames);
 T = movevars(T, existingUnitCols, 'After', width(T));
 
+end
+
+function mask = manually_assign_analysis_range(phy,chan,clus)
+close all
+
+% if strcmp(clus, 'unit0')
+%     return
+% end
+
+dest_dir = ['/Users/cnl/Documents/DATA/Nilan/spike_sorting/' phy.exp.date '_' phy.exp.rec_num '_' phy.exp.block '/inclusion_mask/'];
+if ~isfolder(dest_dir)
+    mkdir(dest_dir)
+end
+
+% Load existing file if possible
+disp([chan '_' clus])
+if isfile([dest_dir chan '_' clus '.mat'])
+    load([dest_dir chan '_' clus '.mat'])
+    return
+end
+
+% Extract first two seconds of cycle
+cpr_spk_times   = [];
+for iCyc = 1:length(phy.stim.cpr_cyle)
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(chan).(clus){iCyc});
+    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 2e6) = [];
+end
+
+N           = length(cpr_spk_times);
+tstep       = .001;
+time        = [0:tstep:2];
+
+if (N - sum(cellfun(@isempty,cpr_spk_times))) < 30
+    nClus   = 0;
+else
+    % Plost raster
+    f0          = figure; hold on
+    [~,~,~]     = FR_estimation(cpr_spk_times, time, true);
+    grid on
+
+    % Manual input
+    disp(['nCycles: ' num2str(length(cpr_spk_times))])
+    nClus       = input('How many clusters? ');
+    range       = zeros(nClus, 2);
+end
+
+if nClus == 0
+    mask        = false(N,1);
+else
+    mask        = false(N,nClus);
+    for i = 1:nClus
+        range(i,:) = input(sprintf('Enter range %d as [start end]: ', i));
+        mask(range(i,1):range(i,2),i) = true;
+    end
+end
+
+% Save mask to drive
+save([dest_dir chan '_' clus],'mask')
 end

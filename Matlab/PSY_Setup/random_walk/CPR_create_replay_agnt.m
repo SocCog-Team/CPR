@@ -18,31 +18,26 @@ replay.rdp_coh = nan([n 1]);
 replay.js_dir = nan([n 1]);
 replay.js_tlt = nan([n 1]);
 
+
 % Extract stimulus and response
 % RDP direction
 replay.rdp_dir(1:length(out.raw.js_dir{iCyc}),1) = out.raw.rdp_dir{iCyc};
 replay.rdp_dir(:,1) = replace_nan_zero(replay.rdp_dir);
 
 % RDP coherence
-coh_vec = ((iCyc * 6)-5):1:(iCyc * 6);
-replay.coherence_lst = out.coherence(coh_vec);
+replay.coherence_lst = unique(out.raw.rdp_coh{iCyc}(25:end));
 
 % Joystick direction
 replay.js_dir(1:length(out.raw.js_dir{iCyc}),1) = out.raw.js_dir{iCyc};
 replay.js_dir(:,1) = replace_nan_zero(replay.js_dir);
 
 %  Joystick tilt
-replay.js_tlt(1:length(out.raw.js_dir{iCyc}),1) = out.raw.js_ecc{iCyc};
+replay.js_tlt(1:length(out.raw.js_dir{iCyc}),1) = out.raw.js_tlt{iCyc};
 replay.js_tlt(:,1) = replace_nan_zero(replay.js_tlt);
 
 % Feedback timestamps
-replay.feedback_ts = out.raw.trg_smple{iCyc};
+replay.feedback_ts = out.raw.fbk_on_smpl{iCyc};
 replay.feedback_ts(replay.feedback_ts > 7200) = 7150;
-
-% Add 3 missing targets manually here to show 300 targets in total
-if iCyc == 2
-    replay.feedback_ts = [replay.feedback_ts 1000 2000 5000]; 
-end
 replay.feedback_ts = sort(replay.feedback_ts);
 
 % tmp_coh = [];

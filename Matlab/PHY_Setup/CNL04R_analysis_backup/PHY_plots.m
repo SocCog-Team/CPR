@@ -1,225 +1,114 @@
 %% Load file
+clear all
 close all
 
-load('/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250903_rec050/summary_20250903_nil_CPR_block1_phy4_rec050_ann.mat')
+% source_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250924_rec059_block1/';
+% load([source_dir '/state_responses_20250924_nil_CPR_block1_phy4_rec059_fxs.mat'])
+% load([source_dir '/summary_20250924_nil_CPR_block1_phy4_rec059_fxs.mat'])
 
-%%
-tstep               = .001;
-time                = [0:tstep:1];
-figure;hold on
-[all, sdf]          = FR_estimation(phy.brain.RF.raw.ch002_neg.spks_ts, time, true);
+% source_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250926_rec061_block1/';
+% load([source_dir '/state_responses_20250926_nil_CPR_block1_phy4_rec061_fxs.mat'])
+% load([source_dir '/summary_20250926_nil_CPR_block1_phy4_rec061_fxs.mat'])
+% 
+dest_dir        = '/Users/cnl/Documents/DATA/Nilan/spike_sorting/20250925_rec060_block1/';
+load([dest_dir '/state_responses_20250925_nil_CPR_block1_phy4_rec060_fxs.mat'])
+load([dest_dir '/summary_20250925_nil_CPR_block1_phy4_rec060_fxs.mat'])
 
+dest_dir        = '/Users/cnl/Documents/DATA/Nilan/plots/20250925_rec060_block1/';
+if exist(dest_dir,'dir') ~= 7
+    mkdir(dest_dir)
+end
+
+%% Solo vs dyadic behavior
+
+addpath /Users/cnl/Desktop/CPR/CircStat2012a/
+addpath /Users/cnl/Desktop/CPR/Violinplot-Matlab/
+
+% Avg response: tilt and error
+tlt_state = cellfun(@(x) mean(x),state.js_monk_tlt);
+for iState = 1:length(state.js_monk_dir)
+    clear js_dev
+    js_dev = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}), deg2rad(state.rdp_dir(iState))));
+    err_state(iState) = mean(abs(js_dev));
+end
+
+snr = unique(state.rdp_coh);
+solo_idx = cellfun(@(x) contains(x,'CPR_solo_stepfunction_neutral'), state.task);
+dyad_idx = cellfun(@(x) contains(x,'CPR_dyadic_stepfunction_neutral'), state.task);
+
+for iCoh = 1:length(snr)
+    coh_idx = state.rdp_coh == snr(iCoh);
+    
+    [p_tlt,h_tlt,stats_tlt] = ranksum(tlt_state(coh_idx & solo_idx), tlt_state(coh_idx & dyad_idx))
+    [p_err,h_err,stats_err] = ranksum(err_state(coh_idx & solo_idx), err_state(coh_idx & dyad_idx))
+
+    tlt(1,iCoh) = median(tlt_state(coh_idx & solo_idx));
+    tlt(2,iCoh) = median(tlt_state(coh_idx & dyad_idx));
+
+    err(1,iCoh) = median(err_state(coh_idx & solo_idx));
+    err(2,iCoh) = median(err_state(coh_idx & dyad_idx));
+end
+
+x = round(snr.*100);
 figure
-plot(mean(sdf))
+subplot(1,2,1); hold on
+plot(x,tlt(1,:),'r', 'LineWidth',2)
+plot(x,tlt(2,:),'k', 'LineWidth',2)
+title('tilt')
+ylabel('joystick tilt [norm]')
+xlabel('coherence')
+set(gca, 'XTick', x)
+set(gca, 'fontsize', 20)
+
+subplot(1,2,2); hold on
+plot(x,err(1,:),'r', 'LineWidth',2)
+plot(x,err(2,:),'k', 'LineWidth',2)
+title('error')
+ylabel('joystick error [deg]')
+xlabel('coherence')
+set(gca, 'XTick', x)
+legend('solo', 'dyad')
+set(gca, 'fontsize', 20)
+
+print([dest_dir '/avg_behavior'],'-dpng')
+print([dest_dir '/avg_behavior'],'-dsvg')
+
+
+% clear clus_idx clus_ts
+% clus = unique(phy.brain.RF.raw.ch008_neg.spks_id{1});
+% clus_idx = cellfun(@(x) x == clus(1), phy.brain.RF.raw.ch015_neg.spks_id, 'UniformOutput', false);
+% 
+% for iCyc = 1:length(clus_idx)
+%     if sum(clus_idx{iCyc}) > 0
+%         clus_ts{iCyc} = phy.brain.RF.raw.ch015_neg.spks_ts{iCyc}(clus_idx{iCyc});
+%     else
+%         clus_ts{iCyc} = [];
+%     end
+% end
+
+%% List of good units
+phy.brain.CPR.spks.include(phy.brain.CPR.spks.include.inclusion_flag,:)
+sum(phy.brain.CPR.spks.include.inclusion_flag) / size(phy.brain.CPR.spks.include,1)
 
 %% RF map
-plot_RF_map(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch012_neg.nSpikes)
+plot_RF_map(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch046_neg.nSpikes)
 
 %% RF raster
-plot_RF_raster(phy.brain.RF.raw.ch012_neg.spks_ts,100);
+plot_RF_raster(phy.brain.RF.raw.ch046_neg.spks_ts,100);
 
-%% CPR tuning
-close all
-
-str_chan            = 'ch012_neg';
-str_unit            = 'unit1';
-incl                = state.include.([str_chan '_' str_unit]);
-FR                  = state.spk_n.([str_chan '_' str_unit])(incl) ./ state.dur_s(incl);
-stim_dir            = deg2rad(state.rdp_dir(incl));
-stim_dir(FR==0)     = [];
-FR(FR==0)           = [];
-
-figure;
-h = polaraxes; hold on
-plot_CPRtuning(h,FR,stim_dir, true,[])
-
-% Coherence-based tuning
-FR                  = state.spk_n.([str_chan '_' str_unit]) ./ state.dur_s;
+%% Unit plots
+addpath /Users/cnl/Desktop/CPR/CircStat2012a
+lst                 = phy.brain.CPR.spks.include.unit_ID(phy.brain.CPR.spks.include.inclusion_flag);
+lst(contains(lst, 'unit0')) = [];
 snr                 = unique(state.rdp_coh);
-snr(snr==0)         = [];
 stim_coh            = state.rdp_coh;
-stim_dir            = deg2rad(state.rdp_dir);
-col                 = cool(3);
 
-f                   = figure;
-h                   = polaraxes;
-for iCoh = 1:length(snr)
-    coh_idx         = stim_coh == snr(iCoh);
-    plot_CPRtuning(h,FR(coh_idx & FR~=0),stim_dir(coh_idx & FR~=0),false,col(iCoh,:));
+for iUnit = 1:length(lst)
+    close all
+    plot_onset_raster(phy,char(lst(iUnit)), dest_dir)
+    plot_cpr_tuning(state, char(lst(iUnit)), dest_dir)
+    plot_spkjoy_correlation(state,char(lst(iUnit)), dest_dir)
 end
-lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3)},'UniformOutput',false));
-
-%% CPR tuning curve based on state-wise firing rate
-
-incl                = state.include.('ch012_neg_unit2');
-nSpks               = cellfun(@(x) x< 1e6, state.spk_ts.('ch012_neg_unit2'), 'UniformOutput', false);
-FR                  = cellfun(@sum,nSpks);
-stim_dir            = deg2rad(state.rdp_dir);
-
-f = figure;
-h = polaraxes; hold on
-plot_CPRtuning(h,FR(incl),stim_dir(incl), true,[0 0 0])
-
-%% CPR tuning: coherence-wise and context-wise
-plot_cpr_tuning(state, 'ch012_neg_unit2', [])
-
-%% CPR cycle onset raster.
-
-str_chan            = 'ch012_neg';
-str_unit            = 'unit1';
-cpr_spk_times       = [];
-for iCyc = 1:length(phy.stim.cpr_cyle)
-    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});% ./1e6;
-    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
-end
-
-cycidx = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
-
-f                   = figure;
-ax                  = subplot(3,3,1:6); hold on
-tstep               = .001;
-time                = [0:tstep:1];
-[all, sdf]          = FR_estimation(cpr_spk_times(cycidx), time, true);
-ax.XLim             = [0 1];
-% ax.XLabel.String    = 'time [s]';
-ax.YLabel.String    = 'CPR cycle [#]';
-ax.FontSize         = 16;
-
-ax                  = subplot(3,3,7:9);
-pl                  = plot(mean(sdf),'k', 'LineWidth', 1.5);
-ax.XLim             = [0 1000];
-ax.XLabel.String    = 'time [ms]';
-ax.YLabel.String    = 'FR [Hz]';
-ax.Box              = 'off';
-ax.FontSize         = 16;
-
-% State-wise CPR raster
-% f                   = figure;hold on
-% [all, sdf]          = FR_estimation(state.spk_ts.([str_chan '_' str_unit]), time, true);
-
-%% Solo vs dyadic SDF - cycle onset
-phy.brain.CPR.spks.include(phy.brain.CPR.spks.include.inclusion_flag,:)
-
-str_chan            = 'ch043_neg';
-str_unit            = 'unit3';
-cpr_spk_times       = [];
-for iCyc = 1:length(phy.stim.cpr_cyle)
-    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});% ./1e6;
-    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
-end
-
-cyc_idx             = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
-solo_idx            = cell2mat(phy.stim.cpr_solo);
-tstep               = .001;
-time                = [0:tstep:1];
-[~, sdf_solo]       = FR_estimation(cpr_spk_times(cyc_idx' & solo_idx), time, false);
-[~, sdf_dyad]       = FR_estimation(cpr_spk_times(cyc_idx' & ~solo_idx), time, false);
-
-f                   = figure; hold on
-pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
-pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
-ax                	= gca;
-ax.XLim             = [0 1000];
-ax.XLabel.String    = 'time [ms]';
-ax.YLabel.String    = 'FR [Hz]';
-ax.Box              = 'off';
-ax.FontSize         = 16;
-ax.Title.String     = 'Example unit: Cycle onset';
-lg                  = legend([pls pld], 'solo', 'dyad');
-
-%% Solo vs dyadic SDF - state onset
-close all
-str_chan            = 'ch015_neg';
-str_unit            = 'unit2';
-
-state_idx           = state.include.([str_chan '_' str_unit]);
-solo_idx            = state.cpr_solo;
-
-bin_width           = 90;
-[PD, ~,VS]          = preferredDirection(state.rdp_dir(state_idx), FR(state_idx));
-roi                 = mod([PD-(bin_width/2) PD+(bin_width/2)],360);
-
-if roi(1) > roi(2)
-    PD_bin          = state.rdp_dir > roi(1) | state.rdp_dir < roi(2);
-else
-    PD_bin          = state.rdp_dir > roi(1) & state.rdp_dir < roi(2);
-end
-
-% Exclude cycle onset states
-excl_cycOn              = [1 (find(diff(state.cIdx)))+1];
-state_idx(excl_cycOn)   = 0;
-solo_idx(excl_cycOn)    = 0;
-% Exclude short states
-excl_dur                = state.dur_s < 1.5;
-state_idx(excl_dur)     = 0;
-solo_idx(excl_dur)      = 0;
-
-tstep               = .001;
-time                = [0:tstep:1.5];
-
-figure; hold on
-[~, sdf_solo]       = FR_estimation(state.spk_ts.([str_chan '_' str_unit])(state_idx & solo_idx & PD_bin), time, true);
-figure; hold on
-[~, sdf_dyad]       = FR_estimation(state.spk_ts.([str_chan '_' str_unit])(state_idx & ~solo_idx & PD_bin), time, true);
-
-f                   = figure; hold on
-pls                 = plot(mean(sdf_solo),'k', 'LineWidth', 1.5);
-pld                 = plot(mean(sdf_dyad),'r', 'LineWidth', 1.5);
-ax                	= gca;
-ax.XLim             = [0 1500];
-ax.XLabel.String    = 'time [ms]';
-ax.YLabel.String    = 'FR [Hz]';
-ax.Box              = 'off';
-ax.FontSize         = 16;
-ax.Title.String     = 'Example unit: State onset';
-lg                  = legend([pls pld], 'solo', 'dyad');
-
-%% CPR spike - joystick correlation
-% addpath /Users/cnl/Desktop/CPR/CircStat2012a
-% 
-% str_chan            = 'ch012_neg';
-% str_unit            = 'unit2';
-% snr                 = unique(state.rdp_coh);
-% stim_coh            = state.rdp_coh;
-% snr(snr==0)         = [];
-% col                 = cool(3);
-% FR                  = state.spk_n.([str_chan '_' str_unit]) ./ state.dur_s;
-% tlt                 = cellfun(@mean,state.js_monk_tlt);
-% 
-% for iState = 1:length(state.dur_s)
-%     js_dev              = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
-%     state.js_acc{iState}= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
-% end
-% acc                 = cellfun(@mean,state.js_acc);
-% 
-% figure; hold on
-% sc = scatter(tlt(FR~=0),FR(FR~=0),'k.');
-% % sc = scatter(acc(FR~=0),FR(FR~=0),'k.');
-% sc.SizeData = 50;
-% [r,p] = corrcoef(tlt(FR~=0),FR(FR~=0))
-% % [r,p] = corrcoef(acc(FR~=0),FR(FR~=0))
-% lsl = lsline;
-% lsl.Color = 'r';
-% lsl.LineWidth = 2;
-% 
-% % for iCoh = 1:length(snr)
-% %     coh_idx         = stim_coh == snr(iCoh);
-% %     sc = scatter(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0));
-% %     sc.Marker = '.';
-% %     sc.SizeData = 50;
-% %     sc.MarkerEdgeColor = col(iCoh,:);
-% %     [r,p] = corrcoef(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0))
-% %     lsl = lsline;
-% % end
-% %
-% % for iCoh = 1:length(snr)
-% %     lsl(iCoh).Color = col(iCoh,:);
-% %     lsl(iCoh).LineWidth = 2;
-% % end
-% 
-% xlabel('JS tilt [norm]')
-% ylabel('FR [Hz]')
-% title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -343,61 +232,6 @@ ln                  = line([200 200],[0 ceil(max(mean(sdf)))],'LineStyle',':','C
 
 end
 
-function [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
-% preferredDirection computes the resultant vector and tuning strength from polar data.
-%
-%   [prefDir, prefMag, vecStrength] = preferredDirection(angles, rates)
-%
-%   INPUTS:
-%       angles - vector of stimulus directions (in degrees or radians)
-%       rates  - vector of corresponding firing rates
-%
-%   OUTPUTS:
-%       prefDir     - preferred direction (same unit as input angle)
-%       prefMag     - magnitude of the resultant vector
-%       vecStrength - normalized vector magnitude (0–1), i.e. direction selectivity
-%
-%   Example:
-%       angles = 0:45:315;
-%       rates  = [5 8 12 9 4 3 2 6];
-%       [dir, mag, vs] = preferredDirection(angles, rates)
-%
-%   See also: atan2, deg2rad, rad2deg
-
-% Check input size
-if numel(angles) ~= numel(rates)
-    error('angles and rates must have the same length.');
-end
-
-% Detect whether angles are in degrees or radians
-if max(abs(angles)) > 2*pi
-    angRad = deg2rad(angles);
-    useDegrees = true;
-else
-    angRad = angles;
-    useDegrees = false;
-end
-
-% Compute resultant vector components
-x = sum(rates .* cos(angRad));
-y = sum(rates .* sin(angRad));
-
-% Resultant vector magnitude
-prefMag = sqrt(x^2 + y^2);
-
-% Preferred direction (angle of resultant)
-prefDir = atan2(y, x);
-
-% Convert to degrees if needed
-if useDegrees
-    prefDir = rad2deg(prefDir);
-    prefDir = mod(prefDir, 360);
-end
-
-% Normalized vector strength (0–1)
-vecStrength = prefMag / sum(rates);
-end
-
 function plot_CPRtuning(ax,r, theta, data_flag, col)
 hold on
 if data_flag
@@ -430,31 +264,116 @@ else
 end
 
 set(gca, 'FontSize', 16)
-set(gca, 'GridAlpha', .2)
+end
+
+function plot_spkjoy_correlation(state,unit_id,dest_dir)
+
+FR                  = state.spk_n.(unit_id) ./ state.dur_s;
+FR_idx              = FR > 0;
+tlt                 = cellfun(@mean,state.js_monk_tlt);
+snr                 = unique(state.rdp_coh);
+col                 = cool(length(snr));
+
+for iState = 1:length(state.dur_s)
+    js_dev              = rad2deg(circ_dist(deg2rad(state.js_monk_dir{iState}),deg2rad(state.rdp_dir(iState)))); % Get circular distance to RDP direction
+    state.js_acc{iState}= abs(1 - abs(js_dev / 180));                               % Calculate accuracy
+end
+acc                 = cellfun(@mean,state.js_acc);
+
+figure; hold on
+subplot(2,1,1); hold on
+% sc = scatter(tlt(FR~=0),FR(FR~=0),'k.');
+for iCoh = 1:length(snr)
+    coh_idx = state.rdp_coh == snr(iCoh);
+    sc = scatter(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0));
+    sc.Marker = '.';
+    sc.SizeData = 50;
+    sc.MarkerEdgeColor = col(iCoh,:);
+    sc.SizeData = 50;
+
+    [pfit] = polyfit(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0),1);
+    yfit = polyval(pfit,[0:.1:1]);
+    plot([0:.1:1],yfit,'Color', col(iCoh,:),'LineWidth',2);
+    % [r,p] = corrcoef(tlt(coh_idx & FR~=0),FR(coh_idx & FR~=0))
+end
+
+[r,p] = corrcoef(tlt(FR~=0),FR(FR~=0));
+xlabel('JS tilt [norm]')
+ylabel('FR [Hz]')
+title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+set(gca,'fontsize',20)
+
+subplot(2,1,2); hold on 
+% sc = scatter(acc(FR~=0),FR(FR~=0),'k.');
+for iCoh = 1:length(snr)
+    coh_idx =  state.rdp_coh == snr(iCoh);
+    sc = scatter(acc(coh_idx & FR~=0),FR(coh_idx & FR~=0));
+    sc.Marker = '.';
+    sc.SizeData = 50;
+    sc.MarkerEdgeColor = col(iCoh,:);
+    sc.SizeData = 50;
+    [pfit] = polyfit(acc(coh_idx & FR~=0),FR(coh_idx & FR~=0),1);
+    yfit = polyval(pfit,[0:.1:1]);
+    plot([0:.1:1],yfit,'Color', col(iCoh,:),'LineWidth',2);
+end
+
+[r,p] = corrcoef(acc(FR~=0),FR(FR~=0));
+xlabel('JS accuracy [norm]')
+ylabel('FR [Hz]')
+title(['r: ' num2str(r(2)) ' | p: ' num2str(p(2))])
+set(gca,'fontsize',20)
+
+% for iCoh = 1:length(snr)
+%     lsl(iCoh).Color = col(iCoh,:);
+%     lsl(iCoh).LineWidth = 2;
+% end
+
+print([dest_dir '/corr_spk_joy_' char(unit_id)],'-dpng')
+print([dest_dir '/corr_spk_joy_' char(unit_id)],'-dsvg')
+end
+
+function plot_onset_raster(phy, unit_id, dest_dir)
+
+str_chan = unit_id(1:end-6);
+str_unit = unit_id(end-4:end);
+cpr_spk_times       = [];
+for iCyc = 1:length(phy.stim.cpr_cyle)
+    cpr_spk_times{iCyc} = double(phy.brain.CPR.spks.(str_chan).(str_unit){iCyc});% ./1e6;
+    cpr_spk_times{iCyc}(cpr_spk_times{iCyc} > 1e6) = [];
+end
+
+cycidx = phy.brain.CPR.spks.include.cyc_id{phy.brain.CPR.spks.include.unit_ID == [str_chan '_' str_unit]};
+
+f                   = figure;
+ax                  = subplot(3,3,1:6); hold on
+tstep               = .001;
+time                = [0:tstep:1];
+[all, sdf]          = FR_estimation(cpr_spk_times(cycidx), time, true);
+ax.XLim             = [0 1];
+% ax.XLabel.String    = 'time [s]';
+ax.YLabel.String    = 'CPR cycle [#]';
+ax.FontSize         = 20;
+
+ax                  = subplot(3,3,7:9);
+pl                  = plot(mean(sdf),'k', 'LineWidth', 1.5);
+ax.XLim             = [0 1000];
+ax.XLabel.String    = 'time [ms]';
+ax.YLabel.String    = 'FR [Hz]';
+ax.Box              = 'off';
+ax.FontSize         = 20;
+
+print([dest_dir '/cpr_onset_' unit_id],'-dpng')
+print([dest_dir '/cpr_onset_' unit_id],'-dsvg')
 end
 
 function plot_cpr_tuning(state, unit_id, dest_dir)
 
-solo_idx            = state.cpr_solo;
+
+dyad_idx            = contains(state.task,'dyad');
+solo_idx            = contains(state.task,'solo');
 incl                = state.include.(unit_id);
 
-%%% full state %%%
 FR                  = state.spk_n.(unit_id) ./ state.dur_s;
-%%% first 500 ms %%%
-% nSpks               = cellfun(@(x) x<500e3, state.spk_ts.(unit_id), 'UniformOutput', false);
-% FR                  = cellfun(@sum,nSpks)./0.5;
-
-%%% last 500ms %%%
-% thresh = (state.dur_s-0.5).*1e6;
-% for iS = 1:length(state.spk_ts.(unit_id))
-%     if isempty(state.spk_ts.(unit_id){iS})
-%         nSpikes(iS) = 0;
-%     else
-%         nSpks(iS) = sum(state.spk_ts.(unit_id){iS} > thresh(iS));
-%     end
-% end
-% FR                  = nSpks./0.5;
-
 snr                 = unique(state.rdp_coh);
 stim_coh            = state.rdp_coh;
 stim_dir            = deg2rad(state.rdp_dir);
@@ -463,9 +382,10 @@ col                 = cool(length(snr));
 f1 = figure;
 h = polaraxes; hold on
 plot_CPRtuning(h,FR(solo_idx & incl),stim_dir(solo_idx & incl), false,[1 0 0])
-plot_CPRtuning(h,FR(~solo_idx & incl),stim_dir(~solo_idx & incl), false,[0 0 1])
+plot_CPRtuning(h,FR(dyad_idx & incl),stim_dir(dyad_idx & incl), false,[0 0 1])
 legend('solo','dyad')
-% print([dest_dir '/cpr_tuning_' unit_id],'-dsvg')
+print([dest_dir '/cpr_tuning_' unit_id],'-dpng')
+print([dest_dir '/cpr_tuning_' unit_id],'-dsvg')
 
 % Coherence-based tuning
 f2                  = figure('Units','normalized','Position',[.2 .2 .6 .6]);
@@ -480,19 +400,73 @@ for iCoh = 1:length(snr)
 
     coh_idx         = stim_coh == snr(iCoh);
     plot_CPRtuning(pax,FR(coh_idx & solo_idx & incl),stim_dir(coh_idx & solo_idx & incl),true,col(iCoh,:));
-    plot_CPRtuning(pax,FR(coh_idx & ~solo_idx & incl),stim_dir(coh_idx & ~solo_idx & incl),true,col(iCoh,:)./2);
+    plot_CPRtuning(pax,FR(coh_idx & dyad_idx & incl),stim_dir(coh_idx & dyad_idx & incl),true,col(iCoh,:)./2);
     lg = legend('','solo','','dyad');
 
 end
-lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3) snr(4)},'UniformOutput',false));
-% print([dest_dir '/cpr_coh_tuning_' unit_id],'-dsvg')
+% lg = legend(cellfun(@num2str,{snr(1) snr(2) snr(3) snr(4)},'UniformOutput',false));
 
-f3                  = figure('Units','normalized','Position',[.2 .2 .6 .6]);
-h = polaraxes; hold on
-for iCoh = 1:length(snr)
-    coh_idx         = stim_coh == snr(iCoh);
-    plot_CPRtuning(gca,FR(coh_idx & incl),stim_dir(coh_idx & incl),false,col(iCoh,:));
+print([dest_dir '/cpr_coh_tuning_' unit_id],'-dpng')
+print([dest_dir '/cpr_coh_tuning_' unit_id],'-dsvg')
+
 end
-% print([dest_dir '/cpr_coh_tuning__comb' unit_id],'-dsvg')
 
+function rho_smooth = circRunningMean(theta, rho, winWidth, isDegrees)
+% CIRCRUNNINGMEAN  Circular running mean (Gaussian) for polar data.
+%
+%   rho_smooth = circRunningMean(theta, rho, winWidth)
+%   rho_smooth = circRunningMean(theta, rho, winWidth, isDegrees)
+%
+%   Inputs:
+%       theta      - angle values (radians or degrees)
+%       rho        - corresponding data values
+%       winWidth   - window width (same units as theta)
+%       isDegrees  - optional, true if theta is in degrees (default: false)
+%
+%   Output:
+%       rho_smooth - circularly smoothed rho (same size as input)
+%
+%   Example:
+%       theta = linspace(0, 2*pi, 200);
+%       rho = 1 + 0.3*sin(3*theta) + 0.1*randn(size(theta));
+%       rho_smooth = circRunningMean(theta, rho, deg2rad(20));
+%       polarplot(theta, rho, ':k'); hold on
+%       polarplot(theta, rho_smooth, 'r', 'LineWidth', 1.5);
+
+    if nargin < 4
+        isDegrees = false;
+    end
+
+    % Convert degrees to radians if needed
+    if isDegrees
+        theta = deg2rad(theta);
+        winWidth = deg2rad(winWidth);
+    end
+
+    % Ensure column vectors
+    theta = theta(:);
+    rho = rho(:);
+
+    % Sort by theta just in case
+    [theta, idx] = sort(theta);
+    rho = rho(idx);
+
+    % Estimate angular step
+    dtheta = mean(diff(theta));
+
+    % Create Gaussian kernel (±3σ range)
+    sigma = (winWidth / 2.355) / dtheta; % FWHM to sigma in samples
+    x = -3*sigma : 3*sigma;
+    kernel = exp(-x.^2 / (2*sigma^2));
+    kernel = kernel / sum(kernel);
+
+    % Circular convolution using data wrapping
+    rho_ext = [rho; rho; rho];  % triple to wrap
+    rho_conv = conv(rho_ext, kernel, 'same');
+    n = numel(rho);
+    rho_smooth = rho_conv(n+1 : 2*n);  % extract central part
+
+    % Restore original order
+    [~, invIdx] = sort(idx);
+    rho_smooth = rho_smooth(invIdx);
 end

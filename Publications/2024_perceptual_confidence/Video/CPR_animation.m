@@ -13,8 +13,8 @@ dt_y        = [];
 
 % Create a VideoWriter object
 writerObj                   = VideoWriter('CPR_animation_paper.mp4', 'MPEG-4');
-writerObj.Quality        	= 20; % Adjust quality (default is 75)
-writerObj.FrameRate         = 100; % Set the frame rate [Hz]
+writerObj.Quality        	= 75; % Adjust quality (default is 75)
+writerObj.FrameRate         = 120; % Set the frame rate [Hz]
 open(writerObj);
 
 % Create a figure
