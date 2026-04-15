@@ -327,6 +327,9 @@ f = figure;
 h = polaraxes; hold on
 plot_CPRtuning(h,FR(incl),stim_dir(incl), true,[0 0 0])
 
+%% RF
+results = check_RF_cursor_overlap(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch006_neg.nSpikes);
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1240,5 +1243,373 @@ for i = 1:nClus
 end
 
 % Save mask to drive
+
+end
+
+
+function results = check_RF_cursor_overlap(stim_id, stim_pos, spk)
+% CHECK_RF_CURSOR_OVERLAP  Map receptive fields and test spatial overlap
+%                          with the cursor aperture around the fixation spot.
+%
+% Each pixel in the map represents the baseline-corrected spike count
+% summed across all trials in which a 2 dva-radius RDP was centred at
+% that grid location.  Two overlap criteria are computed per unit:
+%
+%   STRICT  – the Gaussian RF centre falls inside the cursor aperture
+%   EDGE    – the 1-sigma RF boundary reaches into the cursor aperture
+%
+% INPUT
+%   stim_id   [nRows x nCols]  matrix mapping grid position (row, col) to
+%                              a unique stimulus ID (1 … nStim)
+%   stim_pos  [1 x nTrials]   stimulus ID presented on each trial
+%   spk       [nUnits x nTrials] baseline-corrected spike counts
+%
+% OUTPUT
+%   Figures are shown interactively (press any key to advance).
+%   A results table is printed to the Command Window after the last unit.
+
+% =========================================================================
+% 1.  EXPERIMENTAL GEOMETRY
+% =========================================================================
+
+% Stimulus grid:  10 columns (x) × 9 rows (y), spaced 3 dva apart.
+% x increases left→right;  y is stored top→bottom so row 1 = most positive y.
+x_dva          = [-24 -21 -18 -15 -12 -9 -6 -3 0 3];   % dva, 1×10
+y_dva          = fliplr([-12 -9 -6 -3 0 3 6 9 12]);     % dva, 1×9  (row 1 = +12)
+
+grid_spacing   = 3;          % dva between adjacent grid positions
+n_x            = numel(x_dva);
+n_y            = numel(y_dva);
+n_units        = size(spk, 1);
+n_stim         = stim_id(end, end);   % total number of unique stimulus positions
+
+% Fixation and aperture sizes
+fix_dva        = [0, 0];     % fixation spot location, [x y] in dva
+fixwin_radius  = 1.50;       % dva  (fixation window diameter = 3 dva)
+cursor_radius  = 1.75;       % dva  (cursor aperture radius)
+
+
+% =========================================================================
+% 2.  COORDINATE CONVERSIONS  (dva  ↔  imagesc pixel index)
+% =========================================================================
+% imagesc numbers pixels 1…n_x (columns) and 1…n_y (rows).
+% Because the y-axis is flipped (row 1 = most positive y), the conversion is:
+%
+%   col_px = (x_dva - x_dva(1)) / grid_spacing + 1
+%   row_px = (y_dva(1) - y_dva) / grid_spacing + 1
+%
+% For the fixation spot this gives col = 9, row = 5.
+
+fix_col_px  = (fix_dva(1) - x_dva(1)) / grid_spacing + 1;   % column index
+fix_row_px  = (y_dva(1)  - fix_dva(2)) / grid_spacing + 1;  % row    index
+
+% Aperture radii converted from dva to pixel-index units
+fixwin_radius_px = fixwin_radius / grid_spacing;
+cursor_radius_px = cursor_radius / grid_spacing;
+
+% Fine angular grid for drawing circles
+angle_vec = linspace(0, 2*pi, 360);
+
+
+% =========================================================================
+% 3.  DVA COORDINATE GRIDS  (used for the cursor mask and Gaussian fit)
+% =========================================================================
+% X and Y are 9×10 matrices.  X(r,c) and Y(r,c) are the dva coordinates of
+% the stimulus centre corresponding to imagesc pixel (r, c).
+
+[X_dva_grid, Y_dva_grid] = meshgrid(x_dva, y_dva);
+
+% Euclidean distance (dva) of every grid location from the fixation spot
+dist_from_fix_dva = sqrt(X_dva_grid.^2 + Y_dva_grid.^2);
+
+% Logical mask: TRUE for every grid location inside the cursor aperture
+cursor_mask = dist_from_fix_dva <= cursor_radius;   % 9×10 logical
+
+
+% =========================================================================
+% 4.  2-D GAUSSIAN MODEL
+% =========================================================================
+% Parametric form:  f(x,y) = amp · exp(−[(x−x0)²/(2σx²) + (y−y0)²/(2σy²)]) + offset
+%
+% Parameter vector p = [amp, x0, y0, sigma_x, sigma_y, offset]
+%   amp      – peak spike count above baseline
+%   x0, y0   – RF centre in dva
+%   sigma_x/y– RF spread (1 standard deviation) in dva along each axis
+%   offset   – residual DC offset (should be near 0 for BL-corrected data)
+
+gauss2d_fn = @(p, xy) ...
+    p(1) .* exp( -( (xy(:,1) - p(2)).^2 ./ (2 .* p(4).^2) + ...
+                    (xy(:,2) - p(3)).^2 ./ (2 .* p(5).^2) ) ) + p(6);
+
+% Flatten the 9×10 dva grids into an N×2 matrix for lsqcurvefit
+xy_flat    = [X_dva_grid(:), Y_dva_grid(:)];   % N×2, dva
+
+% Fit bounds: amplitude ≥ 0; centre within the mapped region; σ 0.5–20 dva
+p0_gauss   = [5,  0,  0,  6,  6,  0];          % initial guess
+lb_gauss   = [0, -24, -12, 0.5, 0.5, -Inf];    % lower bounds
+ub_gauss   = [Inf,  3,  12,  20,  20,  Inf];   % upper bounds
+
+fit_options = optimoptions('lsqcurvefit', 'Display', 'off');
+
+
+% =========================================================================
+% 5.  FIGURE STYLE  (publication-ready defaults)
+% =========================================================================
+% All styling is defined once here so it is trivial to update globally.
+
+style.fig_bg         = 'w';             % figure background
+style.ax_bg          = [.97 .97 .97];   % light grey axes background
+style.font_name      = 'Arial';         % sans-serif for all text
+style.font_sz_tick   = 11;              % axis tick labels
+style.font_sz_label  = 13;             % axis titles and colorbar label
+style.font_sz_title  = 12;             % axes title
+style.font_sz_legend = 10;
+
+style.fix_color      = [0   0   0  ];  % black   – fixation marker
+style.fixwin_color   = [0.2 0.2 0.2];  % dark grey – fixation window circle
+style.cursor_color   = [0.85 0.1 0.1]; % red       – cursor aperture circle
+style.rfctr_color    = [0.9  0.5 0  ]; % orange    – fitted RF centre
+style.rfell_color    = [0.9  0.5 0  ]; % orange    – RF 1-sigma ellipse
+
+style.fixwin_linestyle = '--';
+style.cursor_linestyle = '-';
+style.rfell_linestyle  = ':';
+style.line_width       = 1.4;
+
+
+% =========================================================================
+% 6.  RESULTS TABLE  (one row per unit, filled inside the loop)
+% =========================================================================
+results = table( ...
+    'Size',          [n_units 7], ...
+    'VariableTypes', {'double','double','double','double','double','logical','logical'}, ...
+    'VariableNames', {'RF_x_dva', 'RF_y_dva', 'RF_sigma_mean_dva', ...
+                      'dist_to_fix_dva', 'mean_act_in_cursor', ...
+                      'overlap_strict', 'overlap_edge'});
+
+
+% =========================================================================
+% 7.  PER-UNIT LOOP
+% =========================================================================
+spike_map = nan(size(stim_id));   % 9×10 map, reused every iteration
+
+for iUnit = 1:n_units
+
+    % -----------------------------------------------------------------
+    % 7a.  Build spike map
+    %      For each unique stimulus position, sum the spike counts across
+    %      all trials that showed that position, then insert the sum into
+    %      the corresponding grid cell.
+    % -----------------------------------------------------------------
+    for iPos = 1:n_stim
+        spike_map(stim_id == iPos) = mean(spk(iUnit, stim_pos == iPos));
+    end
+
+    % -----------------------------------------------------------------
+    % 7b.  Cursor-mask analysis
+    %      Extract the spike counts at grid locations inside the cursor
+    %      aperture and compute the mean.  Positive mean → the cursor
+    %      region is driving the neuron above baseline.
+    % -----------------------------------------------------------------
+    spikes_in_cursor   = spike_map(cursor_mask);
+    mean_act_in_cursor = mean(spikes_in_cursor, 'omitnan');
+
+    % -----------------------------------------------------------------
+    % 7c.  2-D Gaussian fit
+    %      Fit a 2-D Gaussian to the spike map to estimate RF centre and
+    %      size.  A try/catch prevents a failed fit (e.g., flat maps with
+    %      no activity) from crashing the entire loop.
+    % -----------------------------------------------------------------
+    z_flat = spike_map(:);        % N×1 response vector, matching xy_flat
+    valid  = ~isnan(z_flat);      % exclude NaN entries (unfilled positions)
+
+    fit_ok = false;
+    rf_centre_dva   = [NaN NaN];
+    rf_sigma_dva    = [NaN NaN];
+
+    if sum(valid) >= 6   % need at least as many points as free parameters
+        try
+            p_fit = lsqcurvefit( ...
+                gauss2d_fn, p0_gauss, ...
+                xy_flat(valid,:), z_flat(valid), ...
+                lb_gauss, ub_gauss, fit_options);
+
+            rf_centre_dva = p_fit(2:3);   % [x0, y0] in dva
+            rf_sigma_dva  = p_fit(4:5);   % [sigma_x, sigma_y] in dva
+            fit_ok        = true;
+        catch ME
+            warning('Unit %d: Gaussian fit failed (%s).', iUnit, ME.message);
+        end
+    else
+        warning('Unit %d: too few valid data points for Gaussian fit.', iUnit);
+    end
+
+    % Derived metrics (set to NaN if fit failed)
+    dist_to_fix  = sqrt(rf_centre_dva(1)^2 + rf_centre_dva(2)^2);   % dva
+    sigma_mean   = mean(rf_sigma_dva);   % mean of the two axis sigmas, dva
+
+    % Overlap criteria
+    overlap_strict = dist_to_fix  <  cursor_radius;                  % centre inside cursor
+    overlap_edge   = dist_to_fix  < (cursor_radius + sigma_mean);    % 1σ edge reaches cursor
+
+    % -----------------------------------------------------------------
+    % 7d.  Store results
+    % -----------------------------------------------------------------
+    results.RF_x_dva(iUnit)           = rf_centre_dva(1);
+    results.RF_y_dva(iUnit)           = rf_centre_dva(2);
+    results.RF_sigma_mean_dva(iUnit)  = sigma_mean;
+    results.dist_to_fix_dva(iUnit)    = dist_to_fix;
+    results.mean_act_in_cursor(iUnit) = mean_act_in_cursor;
+    results.overlap_strict(iUnit)     = overlap_strict;
+    results.overlap_edge(iUnit)       = overlap_edge;
+
+    % =================================================================
+    % 7e.  PLOT
+    % =================================================================
+
+    % --- Figure & axes setup -----------------------------------------
+    fig = gcf;
+    clf(fig);
+    set(fig, 'Color', style.fig_bg, ...
+             'Units', 'centimeters', ...
+             'Position', [2 2 28 26]);   % ~single-column figure width
+
+    ax = axes('Parent', fig);
+    set(ax, 'FontName',  style.font_name, ...
+            'FontSize',  style.font_sz_tick, ...
+            'Color',     style.ax_bg, ...
+            'Box',       'on', ...
+            'TickDir',   'out', ...
+            'LineWidth', 0.8, ...
+            'Layer',     'top');   % keep axes on top of the image
+    hold(ax, 'on');
+
+    % --- Spike-count image -------------------------------------------
+    imagesc(ax, spike_map);
+
+    % Colormap: single black entry for NaN / below-baseline, then
+    % perceptually uniform 'turbo' ramp for positive values.
+    cmap_data = [0 0 0; turbo(255)];
+    colormap(ax, cmap_data);
+
+    % Symmetric colour axis centred on zero so zero maps to the first
+    % jet colour above black, and the full range is visible.
+    clim_max = max(abs(spike_map(:)), [], 'omitnan');
+    if clim_max == 0 || isnan(clim_max), clim_max = 1; end
+    clim(ax, [-clim_max, clim_max]);
+
+    % --- Colorbar ----------------------------------------------------
+    cb              = colorbar(ax, 'northoutside');
+    cb.Label.String = 'Baseline-corrected spike count';
+    cb.Label.FontSize  = style.font_sz_label;
+    cb.Label.FontName  = style.font_name;
+    cb.FontSize        = style.font_sz_tick;
+    cb.FontName        = style.font_name;
+    cb.TickDirection   = 'out';
+    cb.LineWidth       = 0.8;
+
+    % --- Fixation spot ('+' marker) ----------------------------------
+    plot(ax, fix_col_px, fix_row_px, '+', ...
+        'Color',      style.fix_color, ...
+        'MarkerSize', 10, ...
+        'LineWidth',  1.8);
+
+    % --- Fixation window circle (dashed) -----------------------------
+    plot(ax, fix_col_px + fixwin_radius_px .* cos(angle_vec), ...
+             fix_row_px + fixwin_radius_px .* sin(angle_vec), ...
+        'LineStyle', style.fixwin_linestyle, ...
+        'Color',     style.fixwin_color, ...
+        'LineWidth', style.line_width, ...
+        'DisplayName', sprintf('Fix. window (r = %.2g dva)', fixwin_radius));
+
+    % --- Cursor aperture circle (solid) ------------------------------
+    plot(ax, fix_col_px + cursor_radius_px .* cos(angle_vec), ...
+             fix_row_px + cursor_radius_px .* sin(angle_vec), ...
+        'LineStyle', style.cursor_linestyle, ...
+        'Color',     style.cursor_color, ...
+        'LineWidth', style.line_width, ...
+        'DisplayName', sprintf('Cursor aperture (r = %.2g dva)', cursor_radius));
+
+    % --- Gaussian RF overlays (only when fit converged) --------------
+    if fit_ok
+
+        % RF centre: convert dva → pixel-index
+        rf_col_px = (rf_centre_dva(1) - x_dva(1)) / grid_spacing + 1;
+        rf_row_px = (y_dva(1) - rf_centre_dva(2)) / grid_spacing + 1;
+
+        % RF centre marker
+        plot(ax, rf_col_px, rf_row_px, 'x', ...
+            'Color',      style.rfctr_color, ...
+            'MarkerSize', 10, ...
+            'LineWidth',  2.0, ...
+            'DisplayName', sprintf('RF centre (%.1f, %.1f) dva', ...
+                                   rf_centre_dva(1), rf_centre_dva(2)));
+
+        % 1-sigma RF ellipse (also converted to pixel-index units)
+        sigma_x_px = rf_sigma_dva(1) / grid_spacing;
+        sigma_y_px = rf_sigma_dva(2) / grid_spacing;
+
+        plot(ax, rf_col_px + sigma_x_px .* cos(angle_vec), ...
+                 rf_row_px + sigma_y_px .* sin(angle_vec), ...
+            'LineStyle', style.rfell_linestyle, ...
+            'Color',     style.rfell_color, ...
+            'LineWidth', style.line_width, ...
+            'DisplayName', sprintf('1\\sigma RF extent (\\sigma = %.1f dva)', sigma_mean));
+    end
+
+    % --- Axis ticks & labels -----------------------------------------
+    % Map three evenly spaced pixel indices to their dva equivalents:
+    % column 1 → x_dva(1), column 5 → x_dva(5), column 9 → x_dva(9)
+    % row    1 → y_dva(1), row    5 → y_dva(5), row    9 → y_dva(9)
+    set(ax, 'XTick',      [1, 5, 9], ...
+            'XTickLabel', {num2str(x_dva(1)), num2str(x_dva(5)), num2str(x_dva(9))}, ...
+            'YTick',      [1, 5, 9], ...
+            'YTickLabel', {num2str(y_dva(1)), num2str(y_dva(5)), num2str(y_dva(9))});
+
+    xlabel(ax, sprintf('Horizontal position  (dva)  —  channel %d', iUnit), ...
+           'FontSize', style.font_sz_label, 'FontName', style.font_name);
+    ylabel(ax, 'Vertical position  (dva)', ...
+           'FontSize', style.font_sz_label, 'FontName', style.font_name);
+
+    % --- Title -------------------------------------------------------
+    if fit_ok
+        title_str = sprintf( ...
+            'Unit %d  |  RF centre (%.1f, %.1f) dva  |  dist = %.1f dva  |  \\muCursor = %.2f  |  overlap\\rm_{edge} = %d', ...
+            iUnit, rf_centre_dva(1), rf_centre_dva(2), dist_to_fix, mean_act_in_cursor, overlap_edge);
+    else
+        title_str = sprintf( ...
+            'Unit %d  |  Fit failed  |  \\muCursor = %.2f', ...
+            iUnit, mean_act_in_cursor);
+    end
+    title(ax, title_str, ...
+          'FontSize', style.font_sz_title, ...
+          'FontName', style.font_name, ...
+          'FontWeight', 'normal');
+
+    % --- Legend ------------------------------------------------------
+    leg = legend(ax, 'Location', 'southoutside', 'Orientation', 'horizontal');
+    leg.FontSize  = style.font_sz_legend;
+    leg.FontName  = style.font_name;
+    leg.Box       = 'off';
+
+    hold(ax, 'off');
+    drawnow;
+    pause;   % press any key to advance to the next unit
+
+end % iUnit
+
+
+% =========================================================================
+% 8.  SUMMARY OUTPUT
+% =========================================================================
+fprintf('\n%s\n', repmat('=', 1, 60));
+fprintf('  RF – cursor overlap summary  (%d units)\n', n_units);
+fprintf('%s\n', repmat('=', 1, 60));
+disp(results);
+fprintf('RF centre inside cursor (strict) : %2d / %d units\n', ...
+        sum(results.overlap_strict), n_units);
+fprintf('RF edge reaches cursor  (edge)   : %2d / %d units\n', ...
+        sum(results.overlap_edge),   n_units);
+fprintf('%s\n\n', repmat('=', 1, 60));
 
 end
