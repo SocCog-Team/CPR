@@ -330,6 +330,8 @@ plot_CPRtuning(h,FR(incl),stim_dir(incl), true,[0 0 0])
 %% RF
 results = check_RF_cursor_overlap(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch006_neg.nSpikes);
 
+%% [0 0] response
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% FUNCTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1246,7 +1248,6 @@ end
 
 end
 
-
 function results = check_RF_cursor_overlap(stim_id, stim_pos, spk)
 % CHECK_RF_CURSOR_OVERLAP  Map receptive fields and test spatial overlap
 %                          with the cursor aperture around the fixation spot.
@@ -1402,7 +1403,7 @@ for iUnit = 1:n_units
     %      the corresponding grid cell.
     % -----------------------------------------------------------------
     for iPos = 1:n_stim
-        spike_map(stim_id == iPos) = mean(spk(iUnit, stim_pos == iPos));
+        spike_map(stim_id == iPos) = sum(spk(iUnit, stim_pos == iPos));
     end
 
     % -----------------------------------------------------------------
