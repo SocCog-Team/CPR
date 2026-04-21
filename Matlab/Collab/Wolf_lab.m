@@ -2,20 +2,20 @@
 
 close all
 clear all
+clc
+
+addpath /Users/fschneider/Documents/GitHub/CPR/Matlab/Collab
 
 % Import preprocessed example data
 load('/Users/fschneider/Desktop/summary_20251204_nil_CPR_block1_phy4_rec068_fxs.mat')
-
 %% Export experimental cycle header
 
-output_dir = '/Users/fschneider/Desktop/rec068/';
-file_prefix = sprintf('%s_%s_%s_%s', ...
-    phy.exp.date, phy.exp.monkey, phy.exp.rec_num, phy.exp.block);
+root = fullfile('export', phy.exp.rec_num);
 
-write_experiment_headers(phy, file_prefix, output_dir)
+cpr_write_session_header(phy, root);          % README + cycle JSONs
 
-for iCycle = 1:length(phy.stim.rdp_dir)
-    write_cycle_csv(phy, iCycle, file_prefix, output_dir)
+for iCycle = 1:size(phy.stim.cpr_cyle, 1)
+    cpr_write_cycle_frames(phy, iCycle, root);
 end
 
-write_unit_spikes(phy, file_prefix, output_dir)
+cpr_write_unit_spikes(phy, root);
