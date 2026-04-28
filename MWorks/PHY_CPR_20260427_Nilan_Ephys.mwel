@@ -2924,6 +2924,15 @@ protocol 'CPR_dyadic_solo_interleaved' {
             }
 
             state 'Determine trial type' { 
+                // Reset fixation cross
+                COL_fix_r                       = 1
+                COL_fix_g                       = 1
+                COL_fix_b                       = 1
+                CTRL_fixation_size              = .35
+
+                live_queue_stimulus (fixationCross)
+                update_stimulus_display ()   
+
                 // Roll dice to determine trial type
                 CTRL_trial_dice = disc_rand(0,99)
 
@@ -3015,10 +3024,10 @@ protocol 'CPR_dyadic_solo_interleaved' {
                 CTRL_arc_alpha                  = .5
                 CTRL_arc2_alpha                 = CTRL_arc_alpha     
 
-                COL_fix_r                       = 1
-                COL_fix_g                       = 1
-                COL_fix_b                       = 1
-                CTRL_fixation_size              = .35
+                TRIAL_reactionTrigger           = 0
+                CTRL_hit_flag                   = 0
+                CTRL_miss_flag                  = 0
+
                 CTRL_fixationWidth_dva          = TMP_dva_trial
                 ML_sync                         = 1 // Matlab sync event
 
@@ -3030,6 +3039,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
                     )
 
                 INFO_task                       = "Catch_trial"
+
                 INFO_CatchCounter               += 1
                 ML_sync                         = 0 // Stop sync
                 
@@ -3066,6 +3076,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
                     if (CTRL_catch_nCursor == 1) {
                         live_queue_stimulus (catch_arc2)
                     }
+                    TRIAL_type                  = format("Catch%d__Cursor12", (int)CTRL_catch_nCursor)
                 }
 
                 if ((TRIAL_start % 2) == 1) {
@@ -3073,6 +3084,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
                     if (CTRL_catch_nCursor == 1) {
                         live_queue_stimulus (catch_arc)   
                     }
+                    TRIAL_type                  = format("Catch%d_Cursor21", (int)CTRL_catch_nCursor)
                 }
 
                 live_queue_stimulus (fixationCross)
@@ -3107,6 +3119,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
                     update_stimulus_display ()   
 
 
+                    // doesn't work: next_frame() doesn't exist, delay = 0 breaks down
                 /*schedule (
                     //delay                       = next_frame() - now()
                     delay                       = 0
