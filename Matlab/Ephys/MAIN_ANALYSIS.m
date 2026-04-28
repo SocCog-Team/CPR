@@ -241,7 +241,7 @@ for iRec = 1:length(rec_lst)
     load(['/Users/fschneider/ownCloud/Documents/Experiments/data/summary_' rec_lst{iRec} '.mat'])
     load(['/Users/fschneider/ownCloud/Documents/Experiments/data/state_responses_' rec_lst{iRec} '.mat'])
 
-    % List of stimulus-driven units
+    %% List of stimulus-driven units
     lst                 = phy.brain.CPR.spks.include.unit_ID(phy.brain.CPR.spks.include.inclusion_flag);
     lst(contains(lst, 'unit0')) = [];
 
@@ -293,12 +293,15 @@ for iRec = 1:length(rec_lst)
         % [p(cnt),~,stats] = ranksum(FR(PD_bin & solo_idx & incl), FR(PD_bin & ~solo_idx & incl));  % Mann–Whitney–U-Test (nichtparametrisch)
         z(cnt) = stats.zval;
 
+        tmp_id = char(unit_id{cnt});
+        rf00_act(cnt) = sum(phy.brain.RF.(tmp_id(1:end-13)).RF00.stats.significant) > 0;
+
         %%% Joy-Spk correlation % %%
-        out = calc_spkjoy_correlation(state,lst(iUnit));
-        r_corr(cnt,:,1) = out.r_tlt;
-        r_corr(cnt,:,2) = out.r_acc;
-        p_corr(cnt,:,1) = out.p_tlt;
-        p_corr(cnt,:,2) = out.p_acc;
+        % out = calc_spkjoy_correlation(state,lst(iUnit));
+        % r_corr(cnt,:,1) = out.r_tlt;
+        % r_corr(cnt,:,2) = out.r_acc;
+        % p_corr(cnt,:,1) = out.p_tlt;
+        % p_corr(cnt,:,2) = out.p_acc;
 
     end
 end
@@ -328,7 +331,7 @@ h = polaraxes; hold on
 plot_CPRtuning(h,FR(incl),stim_dir(incl), true,[0 0 0])
 
 %% RF
-results = check_RF_cursor_overlap(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch006_neg.nSpikes);
+results = check_RF_cursor_overlap(phy.brain.RF.stim_id, phy.brain.RF.stim_pos, phy.brain.RF.ch030_neg.nSpikes);
 
 %% [0 0] response
 
