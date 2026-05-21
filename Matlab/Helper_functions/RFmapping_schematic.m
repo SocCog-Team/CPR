@@ -148,7 +148,7 @@ ax.GridColor  = [0.8 0.8 0.8];
 ax.GridAlpha  = 0.6;
 ax.GridLineStyle = ':';
 
-leg = legend(ax, 'Location', 'northeastoutside');
+% leg = legend(ax, 'Location', 'northeastoutside');
 leg.FontSize  = 10;
 leg.FontName  = 'Arial';
 leg.Box       = 'off';

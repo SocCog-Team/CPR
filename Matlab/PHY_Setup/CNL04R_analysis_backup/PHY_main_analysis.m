@@ -123,6 +123,7 @@ for iCyc = 1:length(stim.rdp_dir)
         end
 
         state.feedback_state_ts_raw{state_cnt}  = stim.feedback_ts{iCyc}(trg_idx);
+        state.feedback_state_ms{state_cnt}	    = (stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState)) ./1e3; % Target position in ms
         state.feedback_state_smple{state_cnt}	= ceil( ((stim.feedback_ts{iCyc}(trg_idx) - stim.rdp_dir_ts{iCyc}(iState)) ./1e3) ./ (1000/120)); % Target sample in state
         state.outcome{state_cnt}                = stim.outcome{iCyc}(trg_idx);
         state.reward_cum{state_cnt}             = stim.reward_cum{iCyc}(trg_idx);
