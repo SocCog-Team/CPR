@@ -89,7 +89,7 @@ for iRec = 1:numel(rec_lst)
     % -----------------------------------------------------------------
     if preproc_flag
         fprintf('  [1/3]  Preprocessing...\n');
-        phy = PHY_preprocessing(rec_name, source_dir, dest_dir, cfg_pth, import_flag);
+        phy = PHY_preprocessing_v2(rec_name, source_dir, dest_dir, cfg_pth, import_flag);
     else
         fprintf('  [1/3]  Loading saved summary...\n');
         load(summary_file, 'phy');
@@ -202,7 +202,7 @@ for iCyc = 1:numel(stim.rdp_dir)
 
             unit_str  = in.brain.CPR.spks.include.unit_ID{iUnit};
             chan_part = unit_str(1:9);    % e.g. 'ch001_neg'
-            unit_part = unit_str(11:15); % e.g. 'unit2'
+            unit_part = unit_str(11:end); % e.g. 'unit2'
 
             dat = in.brain.CPR.spks.(chan_part).(unit_part);
 

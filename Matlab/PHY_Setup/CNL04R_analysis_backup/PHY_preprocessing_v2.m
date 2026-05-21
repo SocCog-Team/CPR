@@ -1,4 +1,4 @@
-function [out] = PHY_preprocessing(fname, source_dir, dest_dir, cfg_pth, import_flag)
+function [out] = PHY_preprocessing_v2(fname, source_dir, dest_dir, cfg_pth, import_flag)
 %
 % Preprocessing pipeline: imports MWorks and Plexon data, computes
 % stimulus-aligned spike counts, and characterises receptive fields.
@@ -215,7 +215,7 @@ for iChan = 1:numel(spk_files)
     units = unique(spks(:,1));
 
     for iUnit = 1:numel(units)
-        unit_str = sprintf('unit%03d', units(iUnit));
+        unit_str = sprintf('unit%d', units(iUnit));
         disp(['  RF characterisation — unit ' unit_str])
 
         brain.RF.(chan_str).(unit_str) = RF_characterisation( ...
