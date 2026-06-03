@@ -4007,6 +4007,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
     }
 }
 
+
 protocol 'CPR_dyatic_computer' {
     list 'Startup procedures' {
         start_device_io (Eyelink)
@@ -4045,18 +4046,18 @@ protocol 'CPR_dyatic_computer' {
 
     // Set desired parameters
     ML_sync                                     = 1
-    INFO_task                                   = "CPR_dyadic_computer_stepfunction_neutral"
+    INFO_task                                   = "CPR_dyadic_solo_interleaved_computer_player"
     INFO_date                                   = "fill_me"
     INFO_block                                  = "fill_me"
-    INFO_setup                                  = "fill_me"
-    INFO_subject                                = "fill_me"
+    INFO_setup                                  = "phy4"
+    INFO_subject                                = "nil"
     
     CTRL_reward_cycle_ml                        = .2 // Post-cycle reward
-    CTRL_reward_target_max_ml                   = .5 // Max reward volume
-    CTRL_reward_target_min_ml                   = .05 // Min reward volume
+    CTRL_reward_target_max_ml                   = .6 // Max reward volume
+    CTRL_reward_target_min_ml                   = .15 // Min reward volume
     CTRL_reward_power                           = 1 // Exponential scaling
 
-    CTRL_NoTargets                              = 500
+    CTRL_NoTargets                              = 1000000
     CTRL_NoStates                               = 15
     CTRL_NoCoherenceStates                      = 5 
     CTRL_state_min_ms                           = 1500 
@@ -4102,6 +4103,7 @@ protocol 'CPR_dyatic_computer' {
     INFO_StateCounter                           = 0
     INFO_CoherenceStateCounter                  = 0
     INFO_TargetCounter                          = 0
+    INFO_DyadTargetCounter                      = 0
     INFO_HitCounter                             = 0
     INFO_ErrorCounter                           = 0
     INFO_HitCounter2                            = 0
@@ -4111,9 +4113,6 @@ protocol 'CPR_dyatic_computer' {
     INFO_FixBreak_Counter                       = 0
     INFO_Juice_ml                               = 0
     INFO_Juice2_ml                              = 0
-    
-    COL_arc_r 									= .6
-
 
     // Set TMP variables for online processing
     TMP_NoStates                                = CTRL_NoStates
@@ -4177,6 +4176,7 @@ protocol 'CPR_dyatic_computer' {
         cancel                                  = cancelTrigger
         ) {
             IO_joystickTrigger                  = true
+            IO_joystickTrigger2                 = true
     }
 
 
@@ -4523,11 +4523,15 @@ protocol 'CPR_dyatic_computer' {
                 COL_fix_g                       = 1
                 COL_fix_b                       = 1
                 CTRL_fixation_size              = .35
-                CTRL_fixationWidth_dva          = TMP_dva_pre        
+                CTRL_fixationWidth_dva          = TMP_dva_pre         
 
                 goto (
                     target                      = 'Pre-Trial Fixation'
-                    when                        = (IO_joystickStrength > CTRL_cpr_treshold) && IO_fixation_flag
+                    when                        = CTRL_trial_ID == 0 && ((IO_joystickStrength > CTRL_cpr_treshold) && IO_fixation_flag) && (IO_joystickStrength2 > CTRL_cpr_treshold) 
+                    )
+                goto (
+                    target                      = 'Pre-Trial Fixation'
+                    when                        = CTRL_trial_ID == 1 && ((IO_joystickStrength > CTRL_cpr_treshold) && IO_fixation_flag)
                     )
             }
 
@@ -4802,6 +4806,10 @@ protocol 'CPR_dyatic_computer' {
                 TRIAL_reactionTrigger           = 1
                 INFO_TargetCounter              += 1
 
+                if (CTRL_trial_ID == 0) {
+                    INFO_DyadTargetCounter      += 1
+                }
+                
                 start_timer (
                     timer                       = TargetDurationTimer
                     duration                    = CTRL_target_duration_ms
