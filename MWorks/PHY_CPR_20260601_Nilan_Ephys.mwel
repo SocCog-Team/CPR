@@ -4926,9 +4926,6 @@ protocol 'CPR_dyatic_computer' {
                     CTRL_reward_target_ml           = (pow(1,CTRL_reward_power) * (CTRL_reward_target_max_ml - CTRL_reward_target_min_ml)) + CTRL_reward_target_min_ml
                 } 
 
-                INFO_Juice_ml                  += CTRL_reward_target_ml
-                INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
-
                 TRIAL_outcome2                  = "hit"
                 CTRL_hit_flag2                  = 1
                 INFO_HitCounter2                += 1
@@ -4940,9 +4937,6 @@ protocol 'CPR_dyatic_computer' {
                 if (AGNT_arc_width < CTRL_target_deg) {
                     CTRL_reward2_target_ml      = (pow(1,CTRL_reward_power) * (CTRL_reward_target_max_ml - CTRL_reward_target_min_ml)) + CTRL_reward_target_min_ml
                 } 
-
-                INFO_Juice2_ml                  += CTRL_reward2_target_ml
-                INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
 
                 // Auditory feedback
                 // Monkey feedback: PRESENT AT SPEAKER L ONLY
@@ -5032,9 +5026,6 @@ protocol 'CPR_dyatic_computer' {
                     CTRL_reward_target_ml           = (pow(1,CTRL_reward_power) * (CTRL_reward_target_max_ml - CTRL_reward_target_min_ml)) + CTRL_reward_target_min_ml
                 } 
                 
-                INFO_Juice_ml                  += CTRL_reward_target_ml
-                INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
-
 
                 // PRESENT AT SPEAKER L ONLY
                 if (IO_joystickStrength > .875) {
@@ -5074,8 +5065,6 @@ protocol 'CPR_dyatic_computer' {
                 CTRL_hit_flag2                  = 0
                 INFO_ErrorCounter2              += 1
                 CTRL_reward2_target_ml          = 0
-                INFO_Juice2_ml                  += CTRL_reward2_target_ml
-                INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
 
                 play_sound (Failure_R_sound)
 
@@ -5095,9 +5084,7 @@ protocol 'CPR_dyatic_computer' {
                 CTRL_hit_flag                   = 0
                 INFO_ErrorCounter               += 1
                 CTRL_reward_target_ml           = 0
-                INFO_Juice_ml                  += CTRL_reward_target_ml
-                INFO_score                     = INFO_Juice_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
-                
+
                 play_sound (Failure_L_sound)
 
                 TRIAL_outcome2                  = "hit"
@@ -5111,8 +5098,6 @@ protocol 'CPR_dyatic_computer' {
                 if (AGNT_arc_width < CTRL_target_deg) {
                     CTRL_reward2_target_ml      = (pow(1,CTRL_reward_power) * (CTRL_reward_target_max_ml - CTRL_reward_target_min_ml)) + CTRL_reward_target_min_ml
                 } 
-                INFO_Juice2_ml                  += CTRL_reward2_target_ml
-                INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
 
 
                 // COMPUTER PLAYER feedback: PRESENT AT SPEAKER R ONLY
@@ -5171,7 +5156,7 @@ protocol 'CPR_dyatic_computer' {
                 INFO_ErrorCounter2              += 1
                 CTRL_reward2_target_ml          = 0
                 INFO_Juice2_ml                  += CTRL_reward2_target_ml
-                INFO_score2                     = INFO_Juice2_ml / (INFO_TargetCounter * CTRL_reward_target_max_ml)
+                INFO_score2                     = INFO_Juice2_ml / (INFO_DyadTargetCounter * CTRL_reward_target_max_ml)
 
                 report ('--- OUTCOME: Double Miss ---')
 
