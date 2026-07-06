@@ -21,7 +21,8 @@ function [out] = PHY_preprocessing_v3(fname, source_dir, dest_dir, cfg_pth, impo
 %                    .brain.CPR.spks.(chXXX_mua).muat0    MUAt hash   (if 'muat')
 %                    .brain.CPR.muae.(chXXX_mua)          MUAe env    (if 'muae')
 %
-% Requires for MUA:  fn_compute_MUA.m, datafilt_ch*.mat, syncParam_<fname>.mat
+% Requires for MUA:  fn_compute_MUA.m, *_ch*_wb.mat (broadband; or datafilt_ch*.mat),
+%                    syncParam_<fname>.mat.  Caches per channel -> mua_ch###.mat.
 %
 % Felix Schneider, CNL
 %
@@ -29,6 +30,7 @@ function [out] = PHY_preprocessing_v3(fname, source_dir, dest_dir, cfg_pth, impo
 %   1.0  (fxs 2025-09-05)  Initial version.
 %   1.1  (fxs 2026-05-21)  Integrated RF_characterisation.
 %   2.0  (fxs 2026-07-03)  Added MUAe/MUAt multi-unit path (Stark & Abeles 2007).
+%   2.1  (fxs 2026-07-03)  MUA from broadband (*_wb) by default + per-channel cache.
 
 
 % =========================================================================
@@ -49,7 +51,8 @@ want_muae   = any(strcmpi(signal_source, 'muae'));
 %% Adjust paths
 % =========================================================================
 
-addpath(genpath('/Users/cnl/Documents/GitLab/matlab4mworks/'));
+% addpath(genpath('/Users/cnl/Documents/GitLab/matlab4mworks/'));
+addpath(genpath('/Users/fschneider/Documents/GitLab/matlab4mworks/'));
 
 mkw2Filename = [source_dir 'mwk2/' fname '.mwk2'];
 h5Filename   = [source_dir 'h5/'   fname '.h5'];
@@ -305,28 +308,96 @@ if want_muat || want_muae
             end
         end
     end
-    n_cyc      = size(stim.cpr_cyle, 1);
-    mua_offset = 300e3;   % µs — pre-stimulus baseline window (matches spikes)
+    n_cyc       = size(stim.cpr_cyle, 1);
+    mua_offset  = 300e3;   % µs — pre-stimulus baseline window (matches spikes)
+    muae_rf_thr = 5;       % min peak % modulation to attempt an MUAe RF fit
 
-    mua_files = dir([dest_dir 'datafilt_ch*.mat']);
-    if isempty(mua_files)
-        warning('PHY_preprocessing:noDatafilt', ...
-            'signal_source requests MUA but no datafilt_ch*.mat found in %s — skipping MUA.', dest_dir);
+    % --- MUA input source & caching ------------------------------------
+    %  'wb'       broadband — extracted on demand from the PL2 (PLX_writeWideband
+    %             logic in fn_ensure_wideband) if the *_ch##_wb.mat file is
+    %             missing; fn_compute_MUA band-passes it (rebandpass=true).
+    %             No datafilt needed for a MUAe-only workflow.
+    %  'datafilt' pre-filtered datafilt_ch*.mat (333-5000 Hz); use when comparing
+    %             MUAt against the sorter, which ran on datafilt.
+    % Caching, cheapest source first, per channel:
+    %   mua_ch###.mat  final MUA   -> skip wb read + filtering
+    %   *_ch##_wb.mat  broadband   -> skip PL2 extraction
+    mua_source    = 'wb';
+    use_mua_cache = true;
+
+    switch lower(mua_source)
+        case 'wb'
+            compute_args = [{'rebandpass', true}, mua_opts];
+            pl2_fqn      = [source_dir 'pl2/' fname '.pl2'];
+            pl2idx       = [];
+            if isfile(pl2_fqn)
+                addpath('/Users/cnl/Desktop/CPR/PlexonMatlabOfflineFilesSDK/');
+                pl2idx    = PL2GetFileIndex(pl2_fqn);
+                nA        = min(64, numel(pl2idx.AnalogChannels));
+                chan_nums = find(cellfun(@(c) c.Enabled, pl2idx.AnalogChannels(1:nA)));
+            else
+                % No PL2 — fall back to channels already present as wb/cache files.
+                chan_nums = [];
+                dd = [dir([dest_dir '*_ch*_wb.mat']); dir([dest_dir 'mua_ch*.mat'])];
+                for k = 1:numel(dd)
+                    t = regexp(dd(k).name, 'ch(\d+)', 'tokens', 'once');
+                    if ~isempty(t); chan_nums(end+1) = str2double(t{1}); end %#ok<AGROW>
+                end
+            end
+        case 'datafilt'
+            compute_args = mua_opts;
+            pl2_fqn = ''; pl2idx = [];
+            chan_nums = [];
+            dd = dir([dest_dir 'datafilt_ch*.mat']);
+            for k = 1:numel(dd)
+                t = regexp(dd(k).name, 'ch(\d+)', 'tokens', 'once');
+                if ~isempty(t); chan_nums(end+1) = str2double(t{1}); end %#ok<AGROW>
+            end
+        otherwise
+            error('PHY_preprocessing:badSource', 'mua_source must be ''wb'' or ''datafilt''.');
+    end
+    chan_nums = unique(chan_nums);
+    if isempty(chan_nums)
+        warning('PHY_preprocessing:noMUAinput', ...
+            'signal_source requests MUA but no %s / PL2 input found for %s — skipping MUA.', mua_source, fname);
     end
 
-    for iM = 1:numel(mua_files)
-        disp(['  MUA — ' mua_files(iM).name])
+    % Recompute the cache if any of these change:
+    cache_key = struct('source', lower(mua_source), 'do_muat', want_muat, ...
+                       'compute_args', {compute_args});
 
-        % Channel number -> 9-char key 'chXXX_mua' (fits the uid(1:9) convention).
-        tok = regexp(mua_files(iM).name, 'ch(\d+)', 'tokens', 'once');
-        if isempty(tok); continue; end
-        chan_num     = str2double(tok{1});
-        chan_str_mua = sprintf('ch%03d_mua', chan_num);
+    for ci = 1:numel(chan_nums)
+        chan_num     = chan_nums(ci);
+        chan_str_mua = sprintf('ch%03d_mua', chan_num);   % 9-char key (fits uid(1:9))
+        disp(['  MUA — ch' num2str(chan_num, '%03d')])
 
-        % --- MUAe + MUAt on the full recording (Option A: continuous) ----
-        S = load([mua_files(iM).folder '/' mua_files(iM).name], 'data', 'par');
-        m = fn_compute_MUA(S.data, S.par.sr, 'do_muat', want_muat, mua_opts{:});
-        clear S
+        % --- MUAe + MUAt on the full recording (Option A), cached --------
+        cache_file = fullfile(dest_dir, sprintf('mua_ch%03d.mat', chan_num));
+        m = [];
+        if use_mua_cache && isfile(cache_file)
+            C = load(cache_file, 'm', 'cache_key');
+            if isfield(C, 'cache_key') && isequaln(C.cache_key, cache_key)
+                m = C.m;   % valid cache -> skip read + filtering (and PL2)
+            end
+            clear C
+        end
+        if isempty(m)
+            switch lower(mua_source)
+                case 'wb'
+                    raw = fn_ensure_wideband(dest_dir, exp_info, chan_num, pl2_fqn, pl2idx);
+                    if isempty(raw); continue; end   % channel not recorded
+                    sig = raw.ad_raw_mv;   fs = raw.Fs;   clear raw
+                case 'datafilt'
+                    S   = load(fullfile(dest_dir, sprintf('datafilt_ch%03d.mat', chan_num)), 'data', 'par');
+                    sig = S.data;          fs = S.par.sr;   clear S
+            end
+            m     = fn_compute_MUA(sig, fs, 'do_muat', want_muat, compute_args{:});
+            m.env = single(m.env);   % ample for an envelope; halves cache + memory
+            clear sig
+            if use_mua_cache
+                save(cache_file, 'm', 'cache_key', '-v7.3');
+            end
+        end
 
         % --- local data clock -> MWorks µs (same affine as the spikes) ---
         env_t_us   = (m.env_t_s  * 1e6) * sync_gain + sync_offset;
@@ -360,6 +431,17 @@ if want_muat || want_muae
                 brain.CPR.muae.(chan_str_mua).baseline(iCyc) = mean(m.env(bl_sel), 'omitnan');
                 brain.CPR.muae.(chan_str_mua).env{iCyc}      = single(m.env(seg_sel));
                 brain.CPR.muae.(chan_str_mua).t_us{iCyc}     = env_t_us(seg_sel) - c_on;
+            end
+
+            % Receptive field from the MUAe envelope (RF-mapping trials).
+            [rf_pos, rf_resp, rf_base, rf_tgt, rf_sid, rf_x, rf_y] = ...
+                fn_RF_responses_muae(d, env_t_us, m.env);
+            if ~isempty(rf_pos)
+                brain.RF.(chan_str_mua) = fn_characterise_RF(rf_pos, rf_resp, rf_base, ...
+                    rf_tgt, rf_sid, rf_x, rf_y, ...
+                    struct('response_mode','percent', 'min_response_thr', muae_rf_thr, ...
+                           'signal_label','muae'));
+                brain.RF.(chan_str_mua).chan_num = chan_num;
             end
         end
 

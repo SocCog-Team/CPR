@@ -34,7 +34,8 @@ addpath('/Users/cnl/Desktop/CPR/code');
 % =========================================================================
 
 cfg_pth      = '/Users/cnl/Desktop/CPR/code/felix_nhp_solo.cfg';
-source_dir   = '/Users/cnl/Documents/DATA/Nilan/';
+% source_dir   = '/Users/cnl/Documents/DATA/Nilan/';
+source_dir   = '/Users/fschneider/Desktop/';
 preproc_flag = true;    % true  = run full preprocessing pipeline
                         % false = load previously saved summary file
 import_flag  = false;   % true  = import from .mwk2 and write .h5
@@ -55,12 +56,12 @@ signal_source = {'muae'};
 % Recordings excluded from the list are documented below with the reason.
 
 rec_lst = {
-    '20250924_nil_CPR_block1_phy4_rec059_fxs', ...
-    '20250925_nil_CPR_block1_phy4_rec060_fxs', ...
-    '20250926_nil_CPR_block1_phy4_rec061_fxs', ...
-    '20251204_nil_CPR_block1_phy4_rec068_fxs', ...
-    '20260128_nil_CPR_block1_phy4_rec074_ann', ...
-    '20260123_nil_CPR_block2_phy4_rec073_ann'};
+    '20250924_nil_CPR_block1_phy4_rec059_fxs'}; ...
+    %'20250925_nil_CPR_block1_phy4_rec060_fxs', ...
+    %'20250926_nil_CPR_block1_phy4_rec061_fxs', ...
+    %'20251204_nil_CPR_block1_phy4_rec068_fxs', ...
+    %'20260128_nil_CPR_block1_phy4_rec074_ann', ...
+    %'20260123_nil_CPR_block2_phy4_rec073_ann'};
 
 % Excluded recordings:
 %   20250807_nil_..._rec045  onset transients before t=0
@@ -81,11 +82,17 @@ for iRec = 1:numel(rec_lst)
     rec_info = split(rec_name, '_');
 
     % Build destination directory from date, recording number, and block
-    dest_dir = fullfile('/Users/cnl/Documents/DATA/Nilan/spike_sorting/', ...
+    % dest_dir = fullfile('/Users/cnl/Documents/DATA/Nilan/spike_sorting/', ...
+    %                     sprintf('%s_%s_%s', rec_info{1}, rec_info{6}, rec_info{4}), '/');
+
+    dest_dir = fullfile('/Users/fschneider/Desktop/data_filt/', ...
                         sprintf('%s_%s_%s', rec_info{1}, rec_info{6}, rec_info{4}), '/');
 
-    summary_file = fullfile(dest_dir, ['summary_' rec_name '.mat']);
-    state_file   = fullfile(dest_dir, ['state_responses_' rec_name '.mat']);
+    % Tag output by signal source so a control re-run (e.g. 'sorted') never
+    % overwrites the primary MUAe result.  e.g. '..._muae.mat', '..._sorted.mat'.
+    src_tag      = strjoin(sort(signal_source), '-');
+    summary_file = fullfile(dest_dir, ['summary_' rec_name '_' src_tag '.mat']);
+    state_file   = fullfile(dest_dir, ['state_responses_' rec_name '_' src_tag '.mat']);
 
     fprintf('\n%s\n', repmat('=', 1, 70));
     fprintf('  Recording %d / %d:  %s\n', iRec, numel(rec_lst), rec_name);
