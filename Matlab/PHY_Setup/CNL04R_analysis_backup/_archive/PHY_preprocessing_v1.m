@@ -130,6 +130,7 @@ for iCyc = 1:length(stim.cEnd)
     
         stim.cpr_solo{ccnt}     = contains(stim.task{iCyc},'solo');
         stim.cpr_dyad{ccnt}     = contains(stim.task{iCyc},'dyad');
+        stim.cpr_catch{ccnt}    = contains(stim.task{iCyc},'Catch');
 
         % Stimulus cycle parameters
         x_pos                   = cell2mat(d.value(cycIdx & d.event == 'STIM_RDP_posX'));
@@ -183,7 +184,8 @@ for iChan = 1:length(spk_files)
     %%% 200ms after trial onset without stimulus! %%%
     clear RF
     [brain.RF.(chan_str).nSpikes, brain.RF.stim_id, brain.RF.stim_pos, brain.RF.trl_num,brain.RF.raw.(chan_str)] = RF_mapping(d,idx,spks);
-
+    brain.RF.(chan_str).RF00 = RF_mapping_fixpos(d, idx, spks);
+    
     %%% CPR analysis %%%
     %%% 300ms pre-trial fixation, then trial start with RDP onset
     units               = unique(spks(:,1));
@@ -194,7 +196,7 @@ for iChan = 1:length(spk_files)
 
         ccnt            = 0; % Reset cycle counter
         for iCyc = 1:length(stim.cEnd)
-            if contains(stim.task{iCyc}, 'CPR')
+            if contains(stim.task{iCyc}, 'CPR') || contains(stim.task{iCyc}, 'Catch')
                 ccnt                    = ccnt+1; % stimulus cycle count
 
                 % Cycle-wise spiking for each cluster
@@ -275,7 +277,7 @@ units                       = unique(spks(:,1));
 
 x_position                  = [-24 -21 -18 -15 -12 -9 -6 -3 0 3];
 y_position                  = fliplr([-12 -9 -6 -3 0 3 6 9 12]);
-win_offset                  = [50e3 100e3];
+win_offset                  = [50e3 150e3];
 stim_id                     = reshape(1:(length(x_position)*length(y_position)),[length(y_position),length(x_position)]);
 stim_cnt                    = 0;
 
@@ -316,14 +318,13 @@ for iTrl = 1:length(trl.start)
     bl_spike_time               = spks(blIdx,2);
 
     % Stimulus position loop
-    for iStim = 2:nStim
+    for iStim = 1:nStim
 
         % Stimulus index - offset by certain lag
         sIdx                    = [];
-        %%% last stim missing %%%
-        sIdx                    = spks(:,2) >= rdp_time(iStim-1)+win_offset(1) & spks(:,2) <= rdp_time(iStim)+win_offset(2);
+        sIdx                    = spks(:,2) >= rdp_time(iStim)+win_offset(1) & spks(:,2) <= rdp_time(iStim)+win_offset(2);
         % Stimulus position
-        pos                     = split(ttype{iStim-1},'_');
+        pos                     = split(ttype{iStim},'_');
         rdp_x                   = str2num(pos{1}(2:end));
         rdp_y                   = str2num(pos{2}(2:end));
         stim_cnt                = stim_cnt+1;
@@ -344,4 +345,323 @@ for iTrl = 1:length(trl.start)
         end
     end
 end
+end
+
+function out = RF_mapping_fixpos(d, idx, spks)
+% RF_MAPPING_FIXPOS  Extract spiking at position [0,0] and test whether
+%                    the onset response differs significantly from baseline.
+%
+% For every presentation of the stimulus at position [0,0] (ttype == 'X0_Y0')
+% the function:
+%
+%   1. Counts spikes in the pre-stimulus baseline window (trial start →
+%      first RDP onset of that trial), matching the original RF_mapping
+%      baseline definition exactly.
+%   2. Counts spikes in the per-stimulus response window (same win_offset
+%      logic as RF_mapping: rdp_time(iStim-1)+50ms to rdp_time(iStim)+100ms).
+%   3. Converts both to firing rates in Hz.
+%   4. Tests per-unit significance with a Wilcoxon signed-rank test on the
+%      paired (baseline, response) spike counts across presentations.
+%   5. Returns all trial-level and summary data in a struct.
+%
+% All timestamps are in MICROSECONDS (matching the input spks matrix).
+%
+% INPUT
+%   d     struct   event/time/value data struct
+%   idx   struct   pre-built event index struct
+%   spks  [N×2]   col 1 = unit ID, col 2 = absolute timestamp in µs
+%
+% OUTPUT
+%   out   struct   see field descriptions in section 8
+
+
+% =========================================================================
+% 1.  EVENT INDICES  (identical to RF_mapping)
+% =========================================================================
+
+idx.task    = d.event == 'INFO_task';
+idx.tStart  = d.event == 'TRIAL_start';
+idx.tEnd    = d.event == 'TRIAL_end';
+idx.outcome = d.event == 'TRIAL_outcome';
+idx.type    = d.event == 'TRIAL_type';
+
+trl.start   = d.time(idx.tStart);
+trl.end     = d.time(idx.tEnd);
+
+% Assign task label to every trial from the most recent INFO_task event
+tmp_task    = d.value(idx.task);
+tmp_task_ts = d.time(idx.task);
+for iTrl = 1:numel(trl.start)
+    trl.task{iTrl} = tmp_task{ find(tmp_task_ts > trl.start(iTrl), 1, 'first') };
+end
+
+
+% =========================================================================
+% 2.  ANALYSIS PARAMETERS
+% =========================================================================
+% Time values in MICROSECONDS to match the spks timestamps.
+
+target_pos  = 'X0_Y0';          % ttype string for position [0, 0]
+win_offset  = [50e3, 150e3];     % µs — response window offsets, matching RF_mapping:
+                                 %   window starts at rdp_time(iStim-1) + 50 ms
+                                 %   window ends   at rdp_time(iStim)   + 150 ms
+
+% Significance threshold for Wilcoxon signed-rank test
+alpha       = 0.05;
+
+% Grid geometry (identical to RF_mapping)
+x_position  = [-24 -21 -18 -15 -12 -9 -6 -3 0 3];
+y_position  = fliplr([-12 -9 -6 -3 0 3 6 9 12]);
+
+% Unit list
+units   = unique(spks(:,1));
+n_units = numel(units);
+
+
+% =========================================================================
+% 3.  PRE-ALLOCATE COLLECTION ARRAYS
+%     One column per [0,0] presentation found across all trials.
+%     Arrays are trimmed to actual size after the loop.
+% =========================================================================
+
+max_pres = 5000;   % safe upper bound
+
+% Per-unit spike counts (nUnits × nPresentations)
+bl_counts_raw   = nan(n_units, max_pres);
+resp_counts_raw = nan(n_units, max_pres);
+
+% Per-presentation metadata (1 × nPresentations)
+pres_trial_num   = nan(1, max_pres);   % trial ID of this presentation
+pres_stim_onset  = nan(1, max_pres);   % absolute µs timestamp of stim onset
+pres_outcome     = cell(1, max_pres);  % trial outcome string
+pres_bl_dur_us   = nan(1, max_pres);   % baseline window duration (µs) — varies per trial
+
+pres_cnt = 0;   % running presentation counter
+
+
+% =========================================================================
+% 4.  TRIAL LOOP
+% =========================================================================
+
+for iTrl = 1:numel(trl.start)
+
+    % Skip non-RF-mapping trials
+    if ~strcmp(trl.task{iTrl}, 'RF_mapping')
+        continue
+    end
+
+    % --- Trial-level event data ----------------------------------------
+    trlIdx   = d.time >= trl.start(iTrl) & d.time <= trl.end(iTrl);
+    outcome  = getTrialData(d.value, trlIdx, idx.outcome);
+    ttype    = getTrialData(d.value, trlIdx, idx.type);
+    trl_ID   = getTrialData(d.value, trlIdx, idx.tStart);
+    rdp_time = getTrialData(d.time,  trlIdx, idx.type);
+
+    if ~iscell(ttype)
+        continue
+    end
+
+    % Exclude last stimulus if fixation was broken mid-trial
+    if strcmp(outcome, 'fixation break')
+        n_stim = numel(ttype) - 1;
+    else
+        n_stim = numel(ttype);
+    end
+
+    % --- Baseline window for this trial ----------------------------------
+    % One baseline per trial: from trial start to the first RDP onset.
+    % No stimulus is on screen during this period.
+    % Duration varies across trials but is always stimulus-free.
+    bl_t_start  = trl.start(iTrl);   % µs
+    bl_t_end    = rdp_time(1);        % µs — first RDP onset this trial
+    bl_dur_us   = bl_t_end - bl_t_start;
+
+    bl_mask     = spks(:,2) >= bl_t_start & spks(:,2) < bl_t_end;
+    bl_unit_ids = spks(bl_mask, 1);
+
+    % --- Stimulus loop ---------------------------------------------------
+    for iStim = 1:n_stim
+
+        % Only process [0,0] presentations
+        if ~strcmp(ttype{iStim}, target_pos)
+            continue
+        end
+
+        % --- Response window for this stimulus presentation --------------
+        resp_t_start = rdp_time(iStim) + win_offset(1);   % µs
+        resp_t_end   = rdp_time(iStim) + win_offset(2);   % µs
+
+        resp_mask     = spks(:,2) >= resp_t_start & spks(:,2) <= resp_t_end;
+        resp_unit_ids = spks(resp_mask, 1);
+
+        resp_dur_us   = resp_t_end - resp_t_start;   % µs — for rate conversion
+
+        % --- Per-unit spike counts ---------------------------------------
+        pres_cnt = pres_cnt + 1;
+
+        for iUnit = 1:n_units
+            u = units(iUnit);
+            bl_counts_raw(iUnit,   pres_cnt) = sum(bl_unit_ids   == u);
+            resp_counts_raw(iUnit, pres_cnt) = sum(resp_unit_ids == u);
+        end
+
+        % --- Presentation metadata ---------------------------------------
+        pres_trial_num(pres_cnt)  = trl_ID;
+        pres_stim_onset(pres_cnt) = rdp_time(iStim);
+        pres_outcome{pres_cnt}    = outcome;
+        pres_bl_dur_us(pres_cnt)  = bl_dur_us;
+        pres_resp_dur_us(pres_cnt)= resp_dur_us;
+
+    end % iStim
+end % iTrl
+
+
+% =========================================================================
+% 5.  TRIM TO ACTUAL NUMBER OF PRESENTATIONS
+% =========================================================================
+
+if pres_cnt == 0
+    warning('RF_mapping_fixpos: no presentations of ''%s'' found.', target_pos);
+    out = struct();
+    return
+end
+
+bl_counts     = bl_counts_raw(:,   1:pres_cnt);   % nUnits × nPres
+resp_counts   = resp_counts_raw(:, 1:pres_cnt);   % nUnits × nPres
+trial_nums    = pres_trial_num(1:pres_cnt);
+stim_onsets   = pres_stim_onset(1:pres_cnt);
+outcomes      = pres_outcome(1:pres_cnt);
+bl_durs_us    = pres_bl_dur_us(1:pres_cnt);
+resp_durs_us  = pres_resp_dur_us(1:pres_cnt);
+
+
+% =========================================================================
+% 6.  FIRING RATES
+% =========================================================================
+
+bl_dur_s_vec   = double(bl_durs_us)   / 1e6;   % 1 × nPres, seconds
+resp_dur_s_vec = double(resp_durs_us) / 1e6;   % 1 × nPres, seconds
+
+baseline_Hz  = bsxfun(@rdivide, double(bl_counts),   bl_dur_s_vec);
+response_Hz  = bsxfun(@rdivide, double(resp_counts), resp_dur_s_vec);
+
+% =========================================================================
+% 7.  PER-UNIT STATISTICS
+%     Wilcoxon signed-rank test on paired (baseline, response) spike counts.
+%     Raw counts (not rates) are used so the test operates on integer-valued
+%     observations without the distortion introduced by dividing by different
+%     window durations.
+% =========================================================================
+
+p_val        = nan(n_units, 1);
+h_sig        = false(n_units, 1);
+w_stat       = nan(n_units, 1);
+mean_bl_Hz   = nan(n_units, 1);
+sem_bl_Hz    = nan(n_units, 1);
+mean_resp_Hz = nan(n_units, 1);
+sem_resp_Hz  = nan(n_units, 1);
+delta_Hz     = nan(n_units, 1);
+
+for iUnit = 1:n_units
+
+    bl_vec   = bl_counts(iUnit, :)';    % nPres × 1
+    resp_vec = resp_counts(iUnit, :)';
+
+    % Wilcoxon signed-rank test: tests whether the median of (resp − bl)
+    % differs from zero across presentations
+    if any(bl_vec ~= resp_vec)
+        [p_val(iUnit), h_sig(iUnit), wstats] = signrank( ...
+            bl_vec, resp_vec, 'alpha', alpha);
+        w_stat(iUnit) = wstats.signedrank;
+    else
+        % All pairs identical → no detectable difference
+        p_val(iUnit)  = 1;
+        h_sig(iUnit)  = false;
+        w_stat(iUnit) = 0;
+    end
+
+    mean_bl_Hz(iUnit)   = mean(baseline_Hz(iUnit, :));
+    sem_bl_Hz(iUnit)    = std(baseline_Hz(iUnit, :))  / sqrt(pres_cnt);
+    mean_resp_Hz(iUnit) = mean(response_Hz(iUnit, :));
+    sem_resp_Hz(iUnit)  = std(response_Hz(iUnit, :))  / sqrt(pres_cnt);
+    delta_Hz(iUnit)     = mean_resp_Hz(iUnit) - mean_bl_Hz(iUnit);
+
+end
+
+
+% =========================================================================
+% 8.  ASSEMBLE OUTPUT STRUCT
+% =========================================================================
+
+% Per-unit summary statistics table
+out.stats = table( ...
+    units,          ...
+    mean_bl_Hz,     ...
+    sem_bl_Hz,      ...
+    mean_resp_Hz,   ...
+    sem_resp_Hz,    ...
+    delta_Hz,       ...
+    w_stat,         ...
+    p_val,          ...
+    h_sig,          ...
+    'VariableNames', {'unit_id', ...
+                      'mean_baseline_Hz', 'sem_baseline_Hz', ...
+                      'mean_response_Hz', 'sem_response_Hz', ...
+                      'delta_Hz', ...
+                      'wilcoxon_W', 'p_value', 'significant'});
+
+% Trial-level spike counts (raw, for downstream analysis)
+out.baseline_counts  = bl_counts;     % nUnits × nPresentations
+out.response_counts  = resp_counts;   % nUnits × nPresentations
+
+% Trial-level firing rates
+out.baseline_Hz      = baseline_Hz;   % nUnits × nPresentations
+out.response_Hz      = response_Hz;   % nUnits × nPresentations
+
+% Presentation metadata
+out.trial_numbers    = trial_nums;    % 1 × nPresentations
+out.stim_onset_us    = stim_onsets;   % 1 × nPresentations, absolute µs
+out.outcomes         = outcomes;      % 1 × nPresentations
+out.n_presentations  = pres_cnt;
+
+% Window durations (useful for auditing rate conversions)
+out.baseline_dur_us  = bl_durs_us;    % 1 × nPresentations — varies per trial
+out.response_dur_us  = resp_durs_us;  % 1 × nPresentations — varies per trial
+
+% Analysis parameters
+out.params.target_position = target_pos;
+out.params.win_offset_us   = win_offset;
+out.params.alpha           = alpha;
+out.params.units           = units;
+out.params.n_units         = n_units;
+
+
+% =========================================================================
+% 9.  COMMAND WINDOW SUMMARY
+% =========================================================================
+
+fprintf('\n%s\n', repmat('=', 1, 65));
+fprintf('  RF_mapping_fixpos — position [0,0]  |  %d presentations\n', pres_cnt);
+fprintf('%s\n', repmat('=', 1, 65));
+fprintf('  %-8s  %-12s  %-12s  %-10s  %-8s  %s\n', ...
+        'Unit', 'BL (Hz)', 'Resp (Hz)', 'Delta (Hz)', 'p', 'Sig');
+fprintf('  %s\n', repmat('-', 1, 60));
+for iUnit = 1:n_units
+    fprintf('  %-8d  %-12.2f  %-12.2f  %-10.2f  %-8.4f  %s\n', ...
+            units(iUnit), ...
+            mean_bl_Hz(iUnit), ...
+            mean_resp_Hz(iUnit), ...
+            delta_Hz(iUnit), ...
+            p_val(iUnit), ...
+            ternary_str(h_sig(iUnit), '***', 'n.s.'));
+end
+fprintf('%s\n\n', repmat('=', 1, 65));
+
+end
+
+% =========================================================================
+% LOCAL HELPER
+% =========================================================================
+function s = ternary_str(condition, str_true, str_false)
+    if condition, s = str_true; else, s = str_false; end
 end
