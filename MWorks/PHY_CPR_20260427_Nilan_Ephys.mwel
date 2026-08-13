@@ -3051,7 +3051,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
 
                 start_timer (
                     timer                       = StateDurationTimer
-                    duration                    = disc_rand(7500,10000)
+                    duration                    = disc_rand(1000,1500)
                     duration_units              = ms
                 )
 
@@ -3076,7 +3076,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
                     if (CTRL_catch_nCursor == 1) {
                         live_queue_stimulus (catch_arc2)
                     }
-                    TRIAL_type                  = format("Catch%d__Cursor12", (int)CTRL_catch_nCursor)
+                    TRIAL_type                  = format("Catch%d__CursorOrder12", (int)CTRL_catch_nCursor)
                 }
 
                 if ((TRIAL_start % 2) == 1) {
@@ -3084,7 +3084,7 @@ protocol 'CPR_dyadic_solo_interleaved' {
                     if (CTRL_catch_nCursor == 1) {
                         live_queue_stimulus (catch_arc)   
                     }
-                    TRIAL_type                  = format("Catch%d_Cursor21", (int)CTRL_catch_nCursor)
+                    TRIAL_type                  = format("Catch%d_CursorOrder21", (int)CTRL_catch_nCursor)
                 }
 
                 live_queue_stimulus (fixationCross)
