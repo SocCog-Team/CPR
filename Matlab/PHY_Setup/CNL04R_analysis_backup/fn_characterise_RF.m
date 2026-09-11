@@ -85,7 +85,7 @@ out.fixpos.baseline_vals    = [];
 out.fixpos.response_vals    = [];
 out.fixpos.mean_baseline    = NaN;
 out.fixpos.mean_response    = NaN;
-out.fixpos.delta            = NaN;
+out.fixpos.delta_Hz            = NaN;
 out.fixpos.wilcoxon_W       = NaN;
 out.fixpos.p_value          = NaN;
 out.fixpos.significant      = false;
@@ -106,6 +106,17 @@ out.rf.overlap_flag          = false;
 out.rf.overlap_area_dva2     = NaN;
 out.rf.overlap_pct_of_RF     = NaN;
 out.rf.overlap_pct_of_cursor = NaN;
+
+% --- Fit-quality metrics (stored, NOT gated here) — filter downstream ------
+% These let RF inclusion criteria change without reprocessing. Suggested gate:
+% fit_ok & responsive & fit_r2>=0.5 & ~sigma_at_bound & center_in_grid.
+out.rf.RF_amplitude          = NaN;    % fitted Gaussian amplitude (peak above offset)
+out.rf.RF_offset             = NaN;    % fitted baseline offset
+out.rf.fit_r2                = NaN;    % R^2 of the 2-D Gaussian fit to the response map
+out.rf.peak_snr              = NaN;    % peak map value / robust noise (MAD-based)
+out.rf.n_grid_valid          = 0;      % # grid positions with data used in the fit
+out.rf.sigma_at_bound        = false;  % sigma hit the fit bound (degenerate, huge RF)
+out.rf.center_in_grid        = false;  % fitted centre inside the sampled grid (not extrapolated)
 
 out.params = params;
 
@@ -130,7 +141,7 @@ if any(is_target)
     out.fixpos.response_vals   = rp;
     out.fixpos.mean_baseline   = mean(bl, 'omitnan');
     out.fixpos.mean_response   = mean(rp, 'omitnan');
-    out.fixpos.delta           = mean(rp, 'omitnan') - mean(bl, 'omitnan');
+    out.fixpos.delta_Hz           = mean(rp, 'omitnan') - mean(bl, 'omitnan');
     out.fixpos.wilcoxon_W      = wstat;
     out.fixpos.p_value         = pval;
     out.fixpos.significant     = logical(hsig);
@@ -171,12 +182,32 @@ ub  = [Inf, max(x_dva), max(y_dva), 20, 20, Inf];
 opt = optimoptions('lsqcurvefit', 'Display', 'off');
 
 z = act_map(:);  valid = ~isnan(z);
+out.rf.n_grid_valid = sum(valid);
+% Peak SNR of the response map: peak / robust noise (1.4826*MAD ~ sigma).
+noise = 1.4826 * median(abs(z(valid) - median(z(valid),'omitnan')), 'omitnan');
+if isfinite(noise) && noise > 0
+    out.rf.peak_snr = max(z(valid),[],'omitnan') / noise;
+end
 if sum(valid) >= 6
     try
         pf = lsqcurvefit(gauss2d, p0, xy_flat(valid,:), z(valid), lb, ub, opt);
         out.rf.RF_x_dva = pf(2); out.rf.RF_y_dva = pf(3);
         out.rf.RF_sigma_x_dva = pf(4); out.rf.RF_sigma_y_dva = pf(5);
+        out.rf.RF_amplitude = pf(1); out.rf.RF_offset = pf(6);
         out.rf.fit_ok = true;
+
+        % --- fit-quality metrics (stored for downstream filtering) --------
+        zhat   = gauss2d(pf, xy_flat(valid,:));
+        ss_res = sum((z(valid) - zhat).^2);
+        ss_tot = sum((z(valid) - mean(z(valid))).^2);
+        out.rf.fit_r2 = 1 - ss_res / (ss_tot + eps);
+        tol = 1e-3;
+        out.rf.sigma_at_bound = (pf(4) <= lb(4)+tol) || (pf(4) >= ub(4)-tol) || ...
+                                (pf(5) <= lb(5)+tol) || (pf(5) >= ub(5)-tol);
+        % x0/y0 are BOUNDED to the grid (lb/ub), so a centre pinned to a grid
+        % edge means the unconstrained optimum lies outside the mapped area.
+        out.rf.center_in_grid = pf(2) > min(x_dva)+tol && pf(2) < max(x_dva)-tol && ...
+                                pf(3) > min(y_dva)+tol && pf(3) < max(y_dva)-tol;
     catch ME
         warning('fn_characterise_RF: fit failed (%s).', ME.message);
     end

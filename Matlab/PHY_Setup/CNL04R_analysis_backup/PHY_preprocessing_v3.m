@@ -8,15 +8,21 @@ function [out] = PHY_preprocessing_v3(fname, source_dir, dest_dir, cfg_pth, impo
 %   fname         String   file name (used to construct all paths)
 %   source_dir    String   path to data source directory
 %   dest_dir      String   path to file destination directory
-%   cfg_pth       String   path to configuration .cfg file
-%   import_flag   Logical  true = import from .mwk2, false = load .h5
+%   cfg_pth       String   path to configuration .cfg file (h5 variable list)
+%   import_flag   Logical  true = import from .mwk2 (and rewrite the .h5),
+%                          false = load the .h5. The .h5 keeps only variables
+%                          listed in MW_readFile.cfg / cfg_pth and stores floats
+%                          as single; h5 files written before 2026-09-11 lack
+%                          the CTRL_ variables -> re-import them once (true).
 %   signal_source (opt)    cellstr/char, subset of {'sorted','muat','muae'};
 %                          which neural signals to produce. Default {'sorted'}.
+%                          {'behaviour'} = no neural signal: no sync, no PL2.
 %   mua_opts      (opt)    cell of name-value pairs forwarded to fn_compute_MUA,
 %                          e.g. {'thr_factor',3.5,'env_lp_Hz',250}. Default {}.
 %
 % OUTPUT
 %   out   struct   experiment, stimulus, joystick, and neural data
+%                    .stim.cpr_cyle [nCyc x 2]            CPR cycle onset/end (µs)
 %                    .brain.CPR.spks.(chXXX_neg).(unitN)  sorted units
 %                    .brain.CPR.spks.(chXXX_mua).muat0    MUAt hash   (if 'muat')
 %                    .brain.CPR.muae.(chXXX_mua)          MUAe env    (if 'muae')
@@ -31,6 +37,22 @@ function [out] = PHY_preprocessing_v3(fname, source_dir, dest_dir, cfg_pth, impo
 %   1.1  (fxs 2026-05-21)  Integrated RF_characterisation.
 %   2.0  (fxs 2026-07-03)  Added MUAe/MUAt multi-unit path (Stark & Abeles 2007).
 %   2.1  (fxs 2026-07-03)  MUA from broadband (*_wb) by default + per-channel cache.
+%   2.2  (fxs 2026-09-10)  Partner outcome/reward, reward scale per cycle,
+%                          behaviour-only mode ({'behaviour'}), mwk2 name
+%                          fallback, time-based per-target outcome / juice /
+%                          arc overlap (target_events; replaces index-paired
+%                          INFO_Juice_ml, kept as *_counter).
+%   2.3  (fxs 2026-09-11)  Speed: per-variable event series + binary search in
+%                          the cycle loop (no whole-table masks per cycle),
+%                          MUAe cycle slices by binary search, RF-mapping
+%                          trials parsed once per session (~25x faster per
+%                          MUAe channel; output identical to 2.2). cpr_cyle
+%                          built once in the cycle loop. Joystick direction
+%                          taken at the strength samples' indices (a pair split
+%                          at a cycle edge misaligned direction by one sample;
+%                          rec077 crashed in sort_states). IO_rewardA also
+%                          matched under its h5 name IO_rewardA_ml; a failed
+%                          .h5 write no longer stops the run.
 
 
 % =========================================================================
@@ -45,18 +67,35 @@ end
 want_sorted = any(strcmpi(signal_source, 'sorted'));
 want_muat   = any(strcmpi(signal_source, 'muat'));
 want_muae   = any(strcmpi(signal_source, 'muae'));
+% signal_source = {'behaviour'} (no neural signal) -> BEHAVIOUR-ONLY: the
+% MWorks-Plexon sync and every PL2 read are skipped, so sessions with an
+% unusable PL2 still yield the behavioural summary (exp/stim/joy; brain empty).
+want_neural = want_sorted || want_muat || want_muae;
 
 
 % =========================================================================
 %% Adjust paths
 % =========================================================================
 
-% addpath(genpath('/Users/cnl/Documents/GitLab/matlab4mworks/'));
-addpath(genpath('/Users/fschneider/Documents/GitLab/matlab4mworks/'));
+% matlab4mworks: the driver (PHY_main_analysis_v4) puts it on the path; add the
+% laptop copy only when it is missing (genpath on every call is slow).
+if ~exist('MW_readData', 'file')
+    addpath(genpath('/Users/fschneider/Documents/GitLab/matlab4mworks/'));
+end
 
 mkw2Filename = [source_dir 'mwk2/' fname '.mwk2'];
 h5Filename   = [source_dir 'h5/'   fname '.h5'];
 pl2Filename  = [source_dir 'pl2/'  fname '.pl2'];
+if ~isfile(mkw2Filename)
+    % Tolerate stray characters before the extension (rec081 was saved as
+    % '..._rec081_ann .mwk2') instead of renaming raw data.
+    cand = dir([source_dir 'mwk2/' fname '*.mwk2']);
+    if numel(cand) == 1
+        warning('PHY_preprocessing_v3:mwk2name', 'Using MWorks file "%s".', cand.name);
+        mkw2Filename = fullfile(cand.folder, cand.name);
+    end
+end
+if ~isfolder(dest_dir); mkdir(dest_dir); end   % ensure the session output folder exists
 
 
 % =========================================================================
@@ -76,13 +115,29 @@ var_import = {
     'IO_sync_16bit', ...
     'IO_syncWord', ...
     'IO_rewardA', ...
+    'AGNT_', ...
+    'CTRL_reward_target_', ...   % reward scale min/max (+ per-hit target volume)
+    'CTRL_reward2_target_ml', ...% partner's reward-equivalent computed at its hit
+    'CTRL_reward_power', ...     % hit reward = min + (max-min)*strength^power
+    'CTRL_arc', ...              % CTRL_arc_flag / CTRL_arc2_flag: target inside the arc (hit rule)
     'EYE_x_dva', ...
     'EYE_y_dva', ...
     '#stimDisplayUpdate'};
 
+% The .h5 is a cache for later import_flag=false runs (seconds instead of
+% ~20 min). MW_writeH5 writes only variables defined in MW_readFile.cfg or
+% cfg_pth (floats as single) and renames IO_rewardA -> IO_rewardA_ml, so every
+% variable used below must be listed in cfg_pth (CTRL_/AGNT_arc added
+% 2026-09-11). A failed write must not stop the run: d comes from the .mwk2.
 if import_flag
     d = MW_readData(mkw2Filename, 'include', var_import, '~typeOutcomeCheck');
-    MW_writeH5(d, h5Filename, 'replace', 'privateCFG', cfg_pth);
+    try
+        MW_writeH5(d, h5Filename, 'replace', 'privateCFG', cfg_pth);
+    catch ME
+        warning('PHY_preprocessing_v3:h5write', ...
+            'Writing %s failed (%s) - continuing without the .h5 cache.', h5Filename, ME.message);
+        if isfile(h5Filename); movefile(h5Filename, [h5Filename '.failed']); end   % never leave a partial cache
+    end
 else
     d = MW_readData(h5Filename, 'include', var_import, '~typeOutcomeCheck');
 end
@@ -92,12 +147,14 @@ end
 %% Sync MWorks and Plexon files
 % =========================================================================
 
-if isfile([dest_dir 'syncParam_' fname '.mat'])
-    load([dest_dir '/syncParam_' fname])
+if ~want_neural
+    sync_gain = NaN;   sync_offset = NaN;          % behaviour-only: no PL2 needed
+elseif isfile([dest_dir 'syncParam_' fname '.mat'])
+    load([dest_dir 'syncParam_' fname '.mat'], 'sync_gain', 'sync_offset')
 else
     [sync_gain, sync_offset] = MW_getSyncParam(mkw2Filename, pl2Filename, ...
         'precision', 4000, 'syncVarName', 'IO_sync_16bit');
-    save([dest_dir '/syncParam_' fname], 'sync_gain', 'sync_offset', '-v7.3')
+    save([dest_dir 'syncParam_' fname '.mat'], 'sync_gain', 'sync_offset', '-v7.3')
 end
 
 sync_gain   = double(sync_gain);
@@ -124,6 +181,8 @@ idx.JS_dir   = d.event == 'IO_joystickDirection';
 idx.JS_str   = d.event == 'IO_joystickStrength';
 idx.JS2_dir  = d.event == 'IO_joystickDirection2';
 idx.JS2_str  = d.event == 'IO_joystickStrength2';
+idx.AGNT_dir = d.event == 'AGNT_direction';    % computer-agent partner: direction (arc centre)
+idx.AGNT_str = d.event == 'AGNT_strength';      %                         strength 0-1 (=1-arc_width/180)
 idx.fixation = d.event == 'IO_fixation_flag';
 idx.ttype    = d.event == 'TRIAL_type';
 idx.outcome  = d.event == 'TRIAL_outcome';
@@ -131,14 +190,116 @@ idx.trg      = d.event == 'TRIAL_reactionTrigger';
 idx.eye_x    = d.event == 'EYE_x_dva';
 idx.eye_y    = d.event == 'EYE_y_dva';
 idx.reward   = d.event == 'INFO_Juice_ml';
-idx.pump     = d.event == 'IO_rewardA';
+idx.pump     = d.event == 'IO_rewardA' | ...     % reward-board command (mL): raw name (.mwk2)
+               d.event == 'IO_rewardA_ml';       % ... renamed by MW_writeH5 (.h5)
 idx.score    = d.event == 'INFO_score';
 idx.task     = d.event == 'INFO_task';
+% --- Player 2 (human / computer-agent partner) + reward scale -------------
+% TRIAL_outcome2 / CTRL_reward2_target_ml give the partner's per-target outcome
+% and reward-EQUIVALENT (mL; the agent/human receive no juice) — extracted per
+% target by time in the EV block below (INFO_Juice2_ml is kept only as a raw log:
+% it does not log one entry per target in every task version).
+% CTRL_reward_target_min/max_ml are the reward scale; they were changed between
+% experiments, so they are stored per cycle to allow normalising reward to
+% [min max] downstream (and to detect any within-session change).
+idx.outcome2 = d.event == 'TRIAL_outcome2';
+idx.reward2  = d.event == 'INFO_Juice2_ml';
+idx.rew_min  = d.event == 'CTRL_reward_target_min_ml';
+idx.rew_max  = d.event == 'CTRL_reward_target_max_ml';
+
+% --- Per-target outcome, juice and cursor-target overlap: TIME-BASED ----------
+% (2026-09-10) The cumulative counters INFO_Juice_ml / INFO_Juice2_ml do NOT log
+% one entry per target in every task version: PHY_CPR_20260601 'a' (rec088) logs
+% two per dyadic target, PHY_CPR_20260601 'b' (rec089-094) none for a player's
+% miss when only the other player hit. Pairing the k-th counter value with the
+% k-th outcome (the old reward_ind) therefore misassigned 13-30% of the
+% per-target rewards in rec088-094 (session_audit.csv, target_truth). Validated
+% on every target of 19 sessions against the task's own 'TARGET REWARD [ml]'
+% reports in the raw .mwk2, the per-target truth is:
+%   onset   = INFO_TargetCounter increment (state 'Target presentation'); the
+%             displayed onset (STIM_target_onset) follows 8-12 ms later
+%   outcome = first TRIAL_outcome / TRIAL_outcome2 'hit'|'miss' after the onset
+%   juice   = IO_rewardA pulses (the reward-board command, mL) after a monkey
+%             hit and before the next target whose value equals the
+%             CTRL_reward_target_ml computed at that hit. 2 pulses = the task
+%             re-sends the reward when a fixation break follows the hit (trial
+%             aborted with CTRL_hit_flag still set); a hit whose command was 0
+%             gets 0. Cycle-bonus / catch / fixation pulses never match.
+%   partner = CTRL_reward2_target_ml at the partner's hit (reward-equivalent;
+%             no juice is given to the partner)
+%   overlap = the task's own arc flag (CTRL_arc_flag; partner CTRL_arc2_flag,
+%             AGNT_arc_flag for the agent) at the onset or turning 1 within the
+%             50 ms target window. Solo: overlap == hit. Dyad: whoever covers the
+%             target FIRST ends it, so a 'miss' can hide a later overlap.
+idx.tcount   = d.event == 'INFO_TargetCounter';
+idx.crew     = d.event == 'CTRL_reward_target_ml';
+idx.crew2    = d.event == 'CTRL_reward2_target_ml';
+idx.arcflag  = d.event == 'CTRL_arc_flag';
+idx.arcflag2 = d.event == 'CTRL_arc2_flag';
+idx.agntarc  = d.event == 'AGNT_arc_flag';
+EV       = struct();
+EV.tc    = ev_series(d, idx.tcount,  'num');
+EV.out   = ev_series(d, idx.outcome, 'str');
+EV.out2  = ev_series(d, idx.outcome2, 'str');
+EV.crew  = ev_series(d, idx.crew,    'num');
+EV.crew2 = ev_series(d, idx.crew2,   'num');
+EV.pump  = ev_series(d, idx.pump,    'num');
+EV.arc   = ev_series(d, idx.arcflag, 'num');
+EV.arc2  = ev_series(d, idx.arcflag2,'num');
+EV.aarc  = ev_series(d, idx.agntarc, 'num');
+if isempty(EV.tc.t)
+    EV.on_t = zeros(0, 1);
+else
+    tc_inc  = [true; diff(EV.tc.v) > 0];        % target-counter increments = onsets
+    EV.on_t = EV.tc.t(tc_inc);
+end
+if isempty(EV.pump.t) || isempty(EV.crew.t)
+    warning('PHY_preprocessing_v3:targets', ...
+        'IO_rewardA / CTRL_reward_target_ml not imported - per-target juice will be NaN (re-import with import_flag=true).');
+end
+
+% --- Per-variable event series for the cycle loop ---------------------------
+% Each variable is extracted from the event table ONCE; a cycle's events are
+% then one contiguous index range found by binary search (win_slice), instead
+% of ~20 whole-table masks (10^7 events) per cycle. Values keep d.value's
+% orientation, so every stim/joy field is identical to d.value(cycIdx & idx.X).
+V.task     = var_series(d, idx.task);
+V.posX     = var_series(d, d.event == 'STIM_RDP_posX');
+V.posY     = var_series(d, d.event == 'STIM_RDP_posY');
+V.rdp_dir  = var_series(d, idx.RDP_dir);
+V.rdp_coh  = var_series(d, idx.RDP_coh);
+V.frame    = var_series(d, idx.frame);
+V.trg_on   = var_series(d, idx.trg_on);
+V.outcome  = var_series(d, idx.outcome);
+V.outcome2 = var_series(d, idx.outcome2);
+V.reward   = var_series(d, idx.reward);
+V.reward2  = var_series(d, idx.reward2);
+V.score    = var_series(d, idx.score);
+V.rew_min  = var_series(d, idx.rew_min);
+V.rew_max  = var_series(d, idx.rew_max);
+V.js_dir   = var_series(d, idx.JS_dir);
+V.js_str   = var_series(d, idx.JS_str);
+V.js2_dir  = var_series(d, idx.JS2_dir);
+V.js2_str  = var_series(d, idx.JS2_str);
+V.agnt_dir = var_series(d, idx.AGNT_dir);
+V.agnt_str = var_series(d, idx.AGNT_str);
+% Joystick samples come in pairs: IO_joystickStrength(2), then its Direction
+% 0-0.4 ms later. Windowing both by time can split a pair at a cycle boundary
+% (direction one sample short/long -> misaligned; rec077 crashed in
+% sort_states). When the pairs are intact, direction is therefore taken at the
+% strength samples' indices; else it is windowed by time (with a warning).
+js_paired  = is_paired(V.js_dir,  V.js_str);
+js2_paired = is_paired(V.js2_dir, V.js2_str);
+if ~(js_paired && js2_paired)
+    warning('PHY_preprocessing_v3:joystick', ...
+        'Joystick direction/strength not logged in pairs - direction windowed by time (may be 1 sample off at cycle edges).');
+end
 
 % Trial timestamps
-stim.cOn  = double(d.time(idx.cOn));
-stim.cEnd = double(d.time(idx.cEnd));
-ccnt      = 0;
+stim.cOn      = double(d.time(idx.cOn));
+stim.cEnd     = double(d.time(idx.cEnd));
+stim.cpr_cyle = zeros(0, 2);   % CPR cycle table [onset end] (µs), one row per ccnt
+ccnt          = 0;
 
 % Experiment metadata from filename
 exp_info         = split(fname, '_');
@@ -151,46 +312,151 @@ exp.experimenter = exp_info{7};
 
 % Stimulus cycle loop — CPR trials only
 for iCyc = 1:numel(stim.cEnd)
-    disp(['Processing cycle: ' num2str(iCyc)])
+    c_on  = stim.cOn(iCyc);
+    c_end = stim.cEnd(iCyc);
 
-    cycIdx         = d.time >= stim.cOn(iCyc) & d.time <= stim.cEnd(iCyc);
-    stim.task{iCyc}= d.value(cycIdx & idx.task);
+    stim.task{iCyc} = win_slice(V.task, c_on, c_end);
 
     if isempty(stim.task{iCyc}) || ~contains(stim.task{iCyc}, 'CPR')
         continue
     end
 
     ccnt = ccnt + 1;
+    stim.cpr_cyle(ccnt, :) = [c_on c_end];
 
     stim.cpr_solo{ccnt}  = contains(stim.task{iCyc}, 'solo');
     stim.cpr_dyad{ccnt}  = contains(stim.task{iCyc}, 'dyad');
     stim.cpr_catch{ccnt} = contains(stim.task{iCyc}, 'Catch');
+    stim.cpr_agent{ccnt} = contains(stim.task{iCyc}, 'computer');   % computer-agent dyad partner
 
-    x_pos = cell2mat(d.value(cycIdx & d.event == 'STIM_RDP_posX'));
-    y_pos = cell2mat(d.value(cycIdx & d.event == 'STIM_RDP_posY'));
+    x_pos = cell2mat(win_slice(V.posX, c_on, c_end));
+    y_pos = cell2mat(win_slice(V.posY, c_on, c_end));
     stim.rdp_center_xy{ccnt} = [x_pos y_pos];
 
-    stim.rdp_dir{ccnt}    = cell2mat(d.value(cycIdx & idx.RDP_dir));
-    stim.rdp_coh{ccnt}    = cell2mat(d.value(cycIdx & idx.RDP_coh));
-    stim.frme_ts{ccnt}    = double(d.time(cycIdx & idx.frame));
-    stim.rdp_dir_ts{ccnt} = double(d.time(cycIdx & idx.RDP_dir));
-    stim.rdp_coh_ts{ccnt} = double(d.time(cycIdx & idx.RDP_coh));
+    [v, t] = win_slice(V.rdp_dir, c_on, c_end);
+    stim.rdp_dir{ccnt}    = cell2mat(v);
+    stim.rdp_dir_ts{ccnt} = t;
+    [v, t] = win_slice(V.rdp_coh, c_on, c_end);
+    stim.rdp_coh{ccnt}    = cell2mat(v);
+    stim.rdp_coh_ts{ccnt} = t;
+    [~, t] = win_slice(V.frame, c_on, c_end);
+    stim.frme_ts{ccnt}    = t;
 
-    tmp_trg_val             = cell2mat(d.value(cycIdx & idx.trg_on));
-    tmp_trg_ts              = double(d.time(cycIdx & idx.trg_on));
+    [v, tmp_trg_ts]         = win_slice(V.trg_on, c_on, c_end);
+    tmp_trg_val             = cell2mat(v);
     stim.feedback_ts{ccnt}  = tmp_trg_ts(tmp_trg_val == 1);
-    stim.outcome{ccnt}      = d.value(cycIdx & idx.outcome);
-    stim.reward_ind{ccnt}   = cell2mat(d.value(cycIdx & idx.pump));
-    stim.reward_cum{ccnt}   = cellfun(@double, d.value(cycIdx & idx.reward));
-    stim.score_cum{ccnt}    = cell2mat(d.value(cycIdx & idx.score));
+    stim.outcome{ccnt}      = win_slice(V.outcome, c_on, c_end);
+    stim.reward_cum{ccnt}   = cellfun(@double, win_slice(V.reward, c_on, c_end));
+    stim.score_cum{ccnt}    = cell2mat(win_slice(V.score, c_on, c_end));
+    stim.outcome2{ccnt}     = win_slice(V.outcome2, c_on, c_end);   % partner per-target outcome
 
-    joy.js_monk_dir{ccnt} = cell2mat(d.value(cycIdx & idx.JS_dir));
-    joy.js_monk_tlt{ccnt} = cell2mat(d.value(cycIdx & idx.JS_str));
-    joy.js_monk_ts{ccnt}  = double(d.time(cycIdx & idx.JS_str));
-    joy.js_hum_dir{ccnt}  = cell2mat(d.value(cycIdx & idx.JS2_dir));
-    joy.js_hum_tlt{ccnt}  = cell2mat(d.value(cycIdx & idx.JS2_str));
-    joy.js_hum_ts{ccnt}   = double(d.time(cycIdx & idx.JS2_str));
+    % Reward scale in force for this cycle (last value at or before cycle end;
+    % falls back to the first logged value). Used to normalise reward to
+    % [min max] downstream, since the scale changed between experiments.
+    stim.reward_min_ml{ccnt} = last_val_before(V.rew_min, c_end);
+    stim.reward_max_ml{ccnt} = last_val_before(V.rew_max, c_end);
+
+    % --- Per-target reward from the cumulative counter (diagnostic only) --
+    % The old reconstruction, kept as reward_ind_counter / reward2_ind_counter;
+    % reward_ind / reward2_ind are replaced by the time-based extraction below.
+    %  * reward_cyc_start = the last INFO_Juice_ml value BEFORE cycle onset (cOn).
+    %    Catch-trial rewards and the cycle-completion bonus are dispensed in the
+    %    inter-cycle gap, so they sit inside this baseline and are excluded.
+    %  * a HIT earns the rise in the counter since the previous hit; a MISS earns
+    %    0 and does NOT advance the baseline. Pairs the k-th counter value with
+    %    the k-th outcome, which fails from PHY_CPR_20260601 on (see EV block).
+    k = bs_lt(V.reward.t, c_on);                    % counter values before cycle onset ...
+    if k == 0; base = 0; else; base = double(V.reward.v{k}); end   % ... keep the last
+    stim.reward_cyc_start{ccnt} = base;
+
+    rc = stim.reward_cum{ccnt}(:);   oc = stim.outcome{ccnt};   last_hit = base;
+    ri = zeros(numel(rc), 1);
+    for e = 1:numel(rc)
+        if e <= numel(oc) && strcmp(oc{e}, 'hit') && isfinite(rc(e))
+            ri(e)    = max(rc(e) - last_hit, 0);   % target juice = rise since last hit
+            last_hit = rc(e);
+        end                                        % miss / non-hit -> 0, baseline unchanged
+    end
+    stim.reward_ind{ccnt} = ri;
+
+    % --- Partner (player 2) per-target reward-equivalent (mL), counter -----
+    % Same reconstruction from the cumulative partner reward INFO_Juice2_ml
+    % (+= CTRL_reward2_target_ml per target) aligned to TRIAL_outcome2; kept as
+    % reward2_ind_counter. The computer agent receives no juice, but the reward
+    % its performance earned is logged, so this is comparable across partners.
+    stim.reward2_cum{ccnt} = cellfun(@double, win_slice(V.reward2, c_on, c_end));
+    k = bs_lt(V.reward2.t, c_on);
+    if k == 0; base2 = 0; else; base2 = double(V.reward2.v{k}); end
+    stim.reward2_cyc_start{ccnt} = base2;
+
+    rc2 = stim.reward2_cum{ccnt}(:);   oc2 = stim.outcome2{ccnt};   last_hit2 = base2;
+    ri2 = zeros(numel(rc2), 1);
+    for e = 1:numel(rc2)
+        if e <= numel(oc2) && strcmp(oc2{e}, 'hit') && isfinite(rc2(e))
+            ri2(e)    = max(rc2(e) - last_hit2, 0);
+            last_hit2 = rc2(e);
+        end
+    end
+    stim.reward2_ind{ccnt} = ri2;
+
+    % --- Per-target truth (time-based; see the EV block above) ---------------
+    % Replaces the index-paired counter reconstruction above, which is kept as
+    % *_counter for diagnostics only. All arrays are aligned to feedback_ts.
+    stim.reward_ind_counter{ccnt}  = stim.reward_ind{ccnt};
+    stim.reward2_ind_counter{ccnt} = stim.reward2_ind{ccnt};
+    tg = target_events(EV, stim.feedback_ts{ccnt});
+    stim.outcome{ccnt}         = tg.outcome;    % 'hit' | 'miss' | '' per displayed target
+    stim.outcome2{ccnt}        = tg.outcome2;
+    stim.reward_ind{ccnt}      = tg.juice;      % juice COMMANDED for this target (mL; miss 0)
+    stim.reward_npulse{ccnt}   = tg.npulse;     % reward pulses for this target (2 = re-reward)
+    stim.reward_ctrl{ccnt}     = tg.ctrl;       % CTRL_reward_target_ml computed at the hit
+    stim.reward2_ind{ccnt}     = tg.rew2;       % partner reward-equivalent (mL; miss 0)
+    stim.arc_hit{ccnt}         = tg.arc;        % monkey arc covered the target in the window
+    stim.arc_ms{ccnt}          = tg.arc_ms;     % ... first time it did (ms from logic onset)
+    stim.arc2_hit{ccnt}        = tg.arc2;       % same for the partner
+    stim.arc2_ms{ccnt}         = tg.arc2_ms;
+    stim.target_logic_ts{ccnt} = tg.t_on;       % logic onset (MWorks us)
+
+    [v, t, i0, i1] = win_slice(V.js_str, c_on, c_end);
+    joy.js_monk_tlt{ccnt} = cell2mat(v);
+    joy.js_monk_ts{ccnt}  = t;
+    if js_paired
+        joy.js_monk_dir{ccnt} = cell2mat(V.js_dir.v(i0:i1));   % direction of each strength sample
+    else
+        joy.js_monk_dir{ccnt} = cell2mat(win_slice(V.js_dir, c_on, c_end));
+    end
+    % 2nd-player trajectory. For a HUMAN partner this is IO_joystickDirection2 /
+    % Strength2. For a COMPUTER-AGENT partner (stim.cpr_agent) the partner is the
+    % pre-generated agent (AGNT_direction / AGNT_strength, ~245k events each); map
+    % to the js_hum convention as direction = AGNT_direction and tilt =
+    % AGNT_strength (0-1, the agent's confidence; = 1 - AGNT_arc_width/180).
+    % Resample step-hold onto the 2nd-joystick ~100 Hz grid so downstream
+    % sample->ms timing holds. (Requires the AGNT_ vars in the import list; the
+    % agent sessions must be re-imported with import_flag=true.)
+    [v, ts, i0, i1] = win_slice(V.js2_str, c_on, c_end);
+    if stim.cpr_agent{ccnt}
+        [ad, at] = win_slice(V.agnt_dir, c_on, c_end);   ad = cell2mat(ad);
+        [as, st] = win_slice(V.agnt_str, c_on, c_end);   as = cell2mat(as);
+        try
+            [atu, ia] = unique(at(:));   [stu, iss] = unique(st(:));
+            joy.js_hum_dir{ccnt} = interp1(atu, ad(ia),  ts(:), 'previous', 'extrap');
+            joy.js_hum_tlt{ccnt} = interp1(stu, as(iss), ts(:), 'previous', 'extrap');
+            joy.js_hum_ts{ccnt}  = ts(:);
+        catch
+            joy.js_hum_dir{ccnt} = ad(:);   joy.js_hum_tlt{ccnt} = as(:);   joy.js_hum_ts{ccnt} = at(:);
+        end
+    else
+        if js2_paired
+            joy.js_hum_dir{ccnt} = cell2mat(V.js2_dir.v(i0:i1));
+        else
+            joy.js_hum_dir{ccnt} = cell2mat(win_slice(V.js2_dir, c_on, c_end));
+        end
+        joy.js_hum_tlt{ccnt}  = cell2mat(v);
+        joy.js_hum_ts{ccnt}   = ts;
+    end
 end
+fprintf('  Behaviour: %d CPR cycles of %d trials.\n', ccnt, numel(stim.cEnd));
+clear V
 
 
 % =========================================================================
@@ -255,29 +521,21 @@ for iChan = 1:numel(spk_files)
 
     % -----------------------------------------------------------------
     % CPR analysis — collect spike trains aligned to cycle onset for
-    % every unit, including a 300 ms pre-trial baseline period.
+    % every unit, including a 300 ms pre-trial baseline period. Cycles =
+    % rows of stim.cpr_cyle (CPR trials only, index-aligned with rdp_dir).
     % -----------------------------------------------------------------
-    ccnt = 0;
-
+    offset = 300e3;   % µs — pre-stimulus baseline window
     for iUnit = 1:numel(units)
         disp(['  CPR — unit ' num2str(iUnit)])
         unit_str = ['unit' num2str(units(iUnit))];
-        ccnt     = 0;
+        unitIdx  = spks(:,1) == units(iUnit);
 
-        for iCyc = 1:numel(stim.cEnd)
-            if contains(stim.task{iCyc}, 'CPR') || contains(stim.task{iCyc}, 'Catch')
-                ccnt = ccnt + 1;
+        for iCyc = 1:size(stim.cpr_cyle, 1)
+            c_on     = stim.cpr_cyle(iCyc, 1);
+            cycleIdx = spks(:,2) >= c_on - offset & spks(:,2) <= stim.cpr_cyle(iCyc, 2);
 
-                stim.cpr_cyle(ccnt,:) = [stim.cOn(iCyc) stim.cEnd(iCyc)];
-                offset    = 300e3;   % µs — pre-stimulus baseline window
-                unitIdx   = spks(:,1) == units(iUnit);
-                cycleIdx  = spks(:,2) >= stim.cOn(iCyc) - offset & ...
-                             spks(:,2) <= stim.cEnd(iCyc);
-
-                % Spike timestamps relative to cycle onset
-                brain.CPR.spks.(chan_str).(unit_str){ccnt} = ...
-                    spks(unitIdx & cycleIdx, 2) - stim.cOn(iCyc);
-            end
+            % Spike timestamps relative to cycle onset
+            brain.CPR.spks.(chan_str).(unit_str){iCyc} = spks(unitIdx & cycleIdx, 2) - c_on;
         end
     end
 
@@ -289,28 +547,26 @@ end % if want_sorted
 % =========================================================================
 %% Multi-unit activity — MUAe (brain.CPR.muae) + MUAt (spks pseudo-units)
 % =========================================================================
-% Computed on the CONTINUOUS datafilt (already 333-5000 Hz), then sliced into
+% Computed on the CONTINUOUS signal of each channel (broadband from the PL2,
+% band-passed in fn_compute_MUA; or datafilt, see mua_source), then sliced into
 % cycles — the same "process continuous, then bin" logic as the sorted spikes,
 % so MUAe/MUAt share the sorted-spike/behaviour time base. See fn_compute_MUA
 % (Stark & Abeles 2007). Drift-robust: no unit isolation required.
+% The envelope time base assumes one continuous PL2 recording from t = 0
+% (env_t = (0:M-1)/env_fs, synced with the MWorks affine).
+% Channels: taken from the local caches (mua_ch###.mat) when any exist, else
+% from the PL2's enabled channels — an interrupted extraction therefore needs
+% its missing caches recomputed (delete the session's mua_ch*.mat to force).
 
 if want_muat || want_muae
 
     if ~exist('brain', 'var'); brain = struct(); end
 
-    % CPR cycle table (built above in the spike loop; rebuild if no sorted units).
-    if ~isfield(stim, 'cpr_cyle') || isempty(stim.cpr_cyle)
-        ccnt = 0;
-        for iCyc = 1:numel(stim.cEnd)
-            if contains(stim.task{iCyc}, 'CPR') || contains(stim.task{iCyc}, 'Catch')
-                ccnt = ccnt + 1;
-                stim.cpr_cyle(ccnt,:) = [stim.cOn(iCyc) stim.cEnd(iCyc)];
-            end
-        end
-    end
-    n_cyc       = size(stim.cpr_cyle, 1);
+    n_cyc       = size(stim.cpr_cyle, 1);   % CPR cycles (built in the cycle loop)
     mua_offset  = 300e3;   % µs — pre-stimulus baseline window (matches spikes)
     muae_rf_thr = 5;       % min peak % modulation to attempt an MUAe RF fit
+    rf_P        = [];      % RF-mapping presentation table: parsed on the first
+                           % channel by fn_RF_responses_muae, reused on the rest
 
     % --- MUA input source & caching ------------------------------------
     %  'wb'       broadband — extracted on demand from the PL2 (PLX_writeWideband
@@ -330,19 +586,23 @@ if want_muat || want_muae
             compute_args = [{'rebandpass', true}, mua_opts];
             pl2_fqn      = [source_dir 'pl2/' fname '.pl2'];
             pl2idx       = [];
-            if isfile(pl2_fqn)
-                addpath('/Users/cnl/Desktop/CPR/PlexonMatlabOfflineFilesSDK/');
-                pl2idx    = PL2GetFileIndex(pl2_fqn);
-                nA        = min(64, numel(pl2idx.AnalogChannels));
-                chan_nums = find(cellfun(@(c) c.Enabled, pl2idx.AnalogChannels(1:nA)));
-            else
-                % No PL2 — fall back to channels already present as wb/cache files.
+            % Prefer channels already available locally (MUA cache or wb), so a
+            % cached run needs neither the PL2 nor the Plexon SDK. Only open the
+            % PL2 to enumerate channels when nothing local exists.
+            dd = [dir([dest_dir 'mua_ch*.mat']); dir([dest_dir '*_ch*_wb.mat'])];
+            if ~isempty(dd)
                 chan_nums = [];
-                dd = [dir([dest_dir '*_ch*_wb.mat']); dir([dest_dir 'mua_ch*.mat'])];
                 for k = 1:numel(dd)
                     t = regexp(dd(k).name, 'ch(\d+)', 'tokens', 'once');
                     if ~isempty(t); chan_nums(end+1) = str2double(t{1}); end %#ok<AGROW>
                 end
+            elseif isfile(pl2_fqn)
+                fn_addpath_plexon();   % adds whichever SDK location exists (no warning)
+                pl2idx    = PL2GetFileIndex(pl2_fqn);
+                nA        = min(64, numel(pl2idx.AnalogChannels));
+                chan_nums = find(cellfun(@(c) c.Enabled, pl2idx.AnalogChannels(1:nA)));
+            else
+                chan_nums = [];
             end
         case 'datafilt'
             compute_args = mua_opts;
@@ -375,16 +635,24 @@ if want_muat || want_muae
         cache_file = fullfile(dest_dir, sprintf('mua_ch%03d.mat', chan_num));
         m = [];
         if use_mua_cache && isfile(cache_file)
-            C = load(cache_file, 'm', 'cache_key');
-            if isfield(C, 'cache_key') && isequaln(C.cache_key, cache_key)
-                m = C.m;   % valid cache -> skip read + filtering (and PL2)
+            C = load(cache_file);   % loads m (+ cache_key if present); no warning
+            if isfield(C, 'm')
+                % Accept a matching cache_key, OR a file that carries none — e.g.
+                % MUAe extracted offline by run_muae_extract — provided it holds
+                % what this run needs (MUAt crossings, if requested).
+                key_ok  = ~isfield(C, 'cache_key') || isequaln(C.cache_key, cache_key);
+                muat_ok = ~want_muat || (isfield(C.m, 'params') && ...
+                          isfield(C.m.params, 'do_muat') && C.m.params.do_muat);
+                if key_ok && muat_ok
+                    m = C.m;   % reuse -> skip read + filtering (and PL2)
+                end
             end
             clear C
         end
         if isempty(m)
             switch lower(mua_source)
                 case 'wb'
-                    raw = fn_ensure_wideband(dest_dir, exp_info, chan_num, pl2_fqn, pl2idx);
+                    raw = fn_ensure_wideband(dest_dir, exp_info, chan_num, pl2_fqn, pl2idx, false);   % persist_wb=false (mua cache is the real cache; wb would be 142 GB/session)
                     if isempty(raw); continue; end   % channel not recorded
                     sig = raw.ad_raw_mv;   fs = raw.Fs;   clear raw
                 case 'datafilt'
@@ -400,8 +668,10 @@ if want_muat || want_muae
         end
 
         % --- local data clock -> MWorks µs (same affine as the spikes) ---
-        env_t_us   = (m.env_t_s  * 1e6) * sync_gain + sync_offset;
-        muat_ts_us = (m.muat_t_s * 1e6) * sync_gain + sync_offset;
+        % env sample-time vector is uniform and not stored -> reconstruct it.
+        env_t_s    = (0:numel(m.env)-1) / m.env_fs;
+        env_t_us   = (env_t_s      * 1e6) * sync_gain + sync_offset;
+        muat_ts_us = (m.muat_t_s   * 1e6) * sync_gain + sync_offset;
 
         % --- MUAt: bin crossings into cycles as pseudo-unit 'muat0' -------
         if want_muat
@@ -421,21 +691,25 @@ if want_muat || want_muae
             brain.CPR.muae.(chan_str_mua).t_us     = cell(1, n_cyc);
             brain.CPR.muae.(chan_str_mua).baseline = nan(1, n_cyc);
 
+            % env_t_us increases monotonically, so each window is one index
+            % range (binary search): baseline [c_on-offset, c_on), segment
+            % [c_on-offset, c_end] — the same samples as the logical masks.
             for iCyc = 1:n_cyc
                 c_on  = stim.cpr_cyle(iCyc, 1);
                 c_end = stim.cpr_cyle(iCyc, 2);
 
-                bl_sel  = env_t_us >= (c_on - mua_offset) & env_t_us < c_on;
-                seg_sel = env_t_us >= (c_on - mua_offset) & env_t_us <= c_end;
+                i0 = bs_lt(env_t_us, c_on - mua_offset) + 1;   % first sample >= c_on - offset
+                ib = bs_lt(env_t_us, c_on);                    % last sample  <  c_on
+                i1 = bs_last(env_t_us, c_end);                 % last sample  <= c_end
 
-                brain.CPR.muae.(chan_str_mua).baseline(iCyc) = mean(m.env(bl_sel), 'omitnan');
-                brain.CPR.muae.(chan_str_mua).env{iCyc}      = single(m.env(seg_sel));
-                brain.CPR.muae.(chan_str_mua).t_us{iCyc}     = env_t_us(seg_sel) - c_on;
+                brain.CPR.muae.(chan_str_mua).baseline(iCyc) = mean(m.env(i0:ib), 'omitnan');
+                brain.CPR.muae.(chan_str_mua).env{iCyc}      = single(m.env(i0:i1));
+                brain.CPR.muae.(chan_str_mua).t_us{iCyc}     = env_t_us(i0:i1) - c_on;
             end
 
             % Receptive field from the MUAe envelope (RF-mapping trials).
-            [rf_pos, rf_resp, rf_base, rf_tgt, rf_sid, rf_x, rf_y] = ...
-                fn_RF_responses_muae(d, env_t_us, m.env);
+            [rf_pos, rf_resp, rf_base, rf_tgt, rf_sid, rf_x, rf_y, rf_P] = ...
+                fn_RF_responses_muae(d, env_t_us, m.env, [], [], rf_P);
             if ~isempty(rf_pos)
                 brain.RF.(chan_str_mua) = fn_characterise_RF(rf_pos, rf_resp, rf_base, ...
                     rf_tgt, rf_sid, rf_x, rf_y, ...
@@ -908,3 +1182,185 @@ if out.rf.fit_ok
 end
 
 end % RF_characterisation
+
+
+% NB: all helpers below are TOP-LEVEL local functions (each after the previous
+% function's closing 'end'). A function placed before 'end % RF_characterisation'
+% would be NESTED in it and invisible to the main body (crashed every session
+% on 2026-09-10).
+
+function S = var_series(d, sel)
+% Events of one MWorks variable for the cycle loop: S.t (double µs, sorted) and
+% S.v (raw values, same orientation as d.value). MW_readData returns d sorted
+% by time, so the order is d's own and a time window is one index range.
+S.t = double(d.time(sel));
+S.v = d.value(sel);
+if ~issorted(S.t)
+    [S.t, o] = sort(S.t);   % stable: simultaneous events keep their order
+    S.v      = S.v(o);
+end
+end % var_series
+
+
+function [v, t, i0, i1] = win_slice(S, a, b)
+% Values and times of series S with A <= t <= B — the same elements, order and
+% shape (also when empty) as d.value / d.time(d.time >= A & d.time <= B & sel).
+% I0:I1 = their indices in S (empty range if none).
+i0 = bs_lt(S.t, a) + 1;
+i1 = bs_last(S.t, b);
+v  = S.v(i0:i1);
+t  = S.t(i0:i1);
+end % win_slice
+
+
+function ok = is_paired(A, B)
+% True if series A and B are logged in pairs: equal counts and the k-th events
+% of both within 2 ms (joystick: one strength/direction pair per ~10 ms sample).
+ok = numel(A.t) == numel(B.t) && (isempty(A.t) || max(abs(A.t - B.t)) < 2e3);
+end % is_paired
+
+
+function v = last_val_before(S, t_us)
+% Last logged value of series S at/before time T_US; the first logged value if
+% none yet; NaN if never logged. For settings that are set once (or rarely) per
+% session, e.g. the reward scale CTRL_reward_target_min/max_ml.
+v = NaN;
+if isempty(S.t); return; end                     % variable never logged -> NaN
+k = bs_last(S.t, t_us);                          % last setting at/before t_us
+if k == 0; k = 1; end                            % none yet -> first logged setting
+try
+    v = double(S.v{k});                          % non-numeric value -> stays NaN
+catch
+end
+end % last_val_before
+
+
+function S = ev_series(d, sel, kind)
+% Time-sorted series of one MWorks variable: S.t (us, column) and S.v (double
+% column for KIND='num' — non-numeric/empty values -> NaN; cellstr for 'str').
+t = double(d.time(sel));   t = t(:);
+v = d.value(sel);          v = v(:);
+[t, o] = sort(t);          v = v(o);
+if strcmp(kind, 'str')
+    S.v = repmat({''}, numel(v), 1);
+    for k = 1:numel(v)
+        if ischar(v{k}) || isstring(v{k}); S.v{k} = char(v{k}); end
+    end
+else
+    S.v = nan(numel(v), 1);
+    for k = 1:numel(v)
+        x = v{k};
+        if (isnumeric(x) || islogical(x)) && ~isempty(x); S.v(k) = double(x(1)); end
+    end
+end
+S.t = t;
+end % ev_series
+
+
+function tg = target_events(EV, fb_ts)
+% Per DISPLAYED target (FB_TS = STIM_target_onset times, us) of one cycle: the
+% logic onset, both players' outcomes, the juice commanded for a monkey hit,
+% the partner's reward-equivalent, and cursor-target overlap from the task's
+% arc flags. See the EV block in the behavioural section for the rules.
+TGT_US = 50e3;    % target presentation (CTRL_target_duration_ms)
+WIN_US = 400e3;   % outcome search window after the onset
+LAG_US = 60e3;    % max display-after-logic lag (observed 8-12 ms)
+n = numel(fb_ts);
+tg.t_on     = nan(n, 1);
+tg.outcome  = repmat({''}, n, 1);   tg.outcome2 = repmat({''}, n, 1);
+tg.juice    = nan(n, 1);   tg.npulse = zeros(n, 1);   tg.ctrl = nan(n, 1);
+tg.rew2     = nan(n, 1);
+tg.arc      = nan(n, 1);   tg.arc_ms  = nan(n, 1);
+tg.arc2     = nan(n, 1);   tg.arc2_ms = nan(n, 1);
+for k = 1:n
+    i = bs_last(EV.on_t, fb_ts(k));                  % last logic onset <= display onset
+    if i < 1 || fb_ts(k) - EV.on_t(i) > LAG_US; continue; end
+    t  = EV.on_t(i);
+    nx = t + 30e6;   if i < numel(EV.on_t); nx = EV.on_t(i + 1); end
+    w  = min(t + WIN_US, nx);
+    tg.t_on(k) = t;
+    % monkey: outcome, reward computed at the hit, juice pulses for it
+    [o, t_o] = first_str(EV.out, t, w);
+    tg.outcome{k} = o;
+    t_ref = w;   if ~isnan(t_o); t_ref = t_o; end
+    tg.ctrl(k) = last_num(EV.crew, t, t_ref + 5e3);
+    if strcmp(o, 'hit') && ~isnan(tg.ctrl(k))
+        sel = EV.pump.t > t_o & EV.pump.t < nx & EV.pump.v > 0 & ...
+              abs(EV.pump.v - tg.ctrl(k)) < 1e-6;
+        tg.juice(k) = sum(EV.pump.v(sel));   tg.npulse(k) = nnz(sel);   % 0 = command was 0
+    elseif strcmp(o, 'miss')
+        tg.juice(k) = 0;
+    end
+    % partner: outcome and reward-equivalent
+    [o2, t_o2] = first_str(EV.out2, t, w);
+    tg.outcome2{k} = o2;
+    if strcmp(o2, 'hit')
+        tg.rew2(k) = last_num(EV.crew2, t, t_o2 + 5e3);
+    elseif strcmp(o2, 'miss')
+        tg.rew2(k) = 0;
+    end
+    % cursor-target overlap (task's own arc flags)
+    [tg.arc(k),  tg.arc_ms(k)]  = arc_first(EV.arc,  t, TGT_US);
+    [tg.arc2(k), tg.arc2_ms(k)] = arc_first(EV.arc2, t, TGT_US);
+    if ~isempty(o2) && ~(tg.arc2(k) == 1) && ~isempty(EV.aarc.t)   % computer agent
+        [a, am] = arc_first(EV.aarc, t, TGT_US);
+        if a == 1; tg.arc2(k) = a; tg.arc2_ms(k) = am; end
+    end
+end
+end % target_events
+
+
+function [s, ts] = first_str(S, a, b)
+% First 'hit'/'miss' value of S within [a, b] (us); '' / NaN if none.
+s = '';   ts = NaN;
+i = bs_last(S.t, a - 1) + 1;                         % first event at/after a
+while i <= numel(S.t) && S.t(i) <= b
+    if any(strcmp(S.v{i}, {'hit', 'miss'})); s = S.v{i}; ts = S.t(i); return; end
+    i = i + 1;
+end
+end % first_str
+
+
+function v = last_num(S, a, b)
+% Last value of S within [a, b] (us); NaN if none.
+v = NaN;
+i = bs_last(S.t, b);
+if i >= 1 && S.t(i) >= a; v = S.v(i); end
+end % last_num
+
+
+function [hit, ms] = arc_first(S, t, dur_us)
+% Did the arc flag S cover the target in [t, t + dur_us]? HIT = 1/0 (NaN if the
+% flag was never logged), MS = first time it did (ms from t; 0 = at onset).
+hit = NaN;   ms = NaN;
+if isempty(S.t); return; end
+i = bs_last(S.t, t);
+if i >= 1 && S.v(i) == 1; hit = 1; ms = 0; return; end
+hit = 0;
+j = i + 1;
+while j <= numel(S.t) && S.t(j) <= t + dur_us
+    if S.v(j) == 1; hit = 1; ms = (S.t(j) - t) / 1e3; return; end
+    j = j + 1;
+end
+end % arc_first
+
+
+function i = bs_last(t, x)
+% Index of the last element of sorted T with T <= X (0 if none), i.e. the
+% number of elements <= X. Binary search.
+lo = 1;   hi = numel(t);   i = 0;
+while lo <= hi
+    mid = floor((lo + hi) / 2);
+    if t(mid) <= x; i = mid; lo = mid + 1; else; hi = mid - 1; end
+end
+end % bs_last
+
+
+function i = bs_lt(t, x)
+% Number of elements of sorted T with T < X (the last one's index; 0 if none).
+lo = 1;   hi = numel(t);   i = 0;
+while lo <= hi
+    mid = floor((lo + hi) / 2);
+    if t(mid) < x; i = mid; lo = mid + 1; else; hi = mid - 1; end
+end
+end % bs_lt

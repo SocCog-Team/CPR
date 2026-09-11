@@ -1,18 +1,17 @@
 function state = fn_sort_MUAe_by_state(state, brain, stim, varargin)
 % FN_SORT_MUAE_BY_STATE  Add per-state MUAe segments to an existing state struct.
 %
-% Companion to PHY_sort_spikes_by_state: it reuses the state boundaries that
-% function already computed (state.boundaries, state.cIdx, state.dur_s) and
-% slices the per-cycle MUAe envelope (brain.CPR.muae, from PHY_add_MUA) into the
-% same states, applying the per-cycle baseline normalisation.
-%
-% Call it AFTER PHY_sort_spikes_by_state so `state` already carries the
-% direction-change segmentation.
+% Companion to the state segmentation (sort_states in PHY_main_analysis_v4, or
+% PHY_sort_spikes_by_state): it reuses the state boundaries already computed
+% (state.boundaries, state.cIdx, state.dur_s) and slices the per-cycle MUAe
+% envelope (brain.CPR.muae, from PHY_preprocessing_v3) into the same states,
+% applying the per-cycle baseline normalisation.
 %
 % INPUT
-%   state   struct   output of PHY_sort_spikes_by_state; needs .boundaries
-%                    [nState x 2] (onset/offset, MWorks µs), .cIdx, .dur_s
-%   brain   struct   with brain.CPR.muae.(chXXX_mua) from PHY_add_MUA
+%   state   struct   state segmentation; needs .boundaries [nState x 2]
+%                    (onset/offset, MWorks µs), .cIdx, .dur_s
+%   brain   struct   with brain.CPR.muae.(chXXX_mua) from PHY_preprocessing_v3
+%                    (per-cycle .env / .t_us with t_us increasing, .baseline)
 %   stim    struct   with stim.cpr_cyle [nCyc x 2] (cycle onset/end, MWorks µs)
 %
 % OPTIONAL NAME-VALUE PAIRS
@@ -34,6 +33,9 @@ function state = fn_sort_MUAe_by_state(state, brain, stim, varargin)
 %
 % Version history
 %   1.0  (2026-07-03)  Initial version.
+%   1.1  (2026-09-11)  State window found by binary search on the (increasing)
+%                      cycle time vector; only the state's samples are cast to
+%                      double. Output unchanged.
 
 p = inputParser;
 p.addParameter('norm', 'percent', @(x) any(strcmpi(x, {'percent','subtract','divide','none'})));
@@ -47,13 +49,14 @@ if ~isfield(brain, 'CPR') || ~isfield(brain.CPR, 'muae')
 end
 
 cyc      = double(stim.cpr_cyle);
-chans    = fieldnames(brain.CPR.muae);
+chans    = setdiff(fieldnames(brain.CPR.muae), {'include'});
 n_state  = size(state.boundaries, 1);
 
 for iCh = 1:numel(chans)
     ch = chans{iCh};
+    M  = brain.CPR.muae.(ch);
 
-    state.muae_fs.(ch)   = brain.CPR.muae.(ch).env_fs;
+    state.muae_fs.(ch)   = M.env_fs;
     state.muae.(ch)      = cell(1, n_state);
     state.muae_t.(ch)    = cell(1, n_state);
     state.muae_mean.(ch) = nan(1, n_state);
@@ -62,21 +65,21 @@ for iCh = 1:numel(chans)
         iCyc = state.cIdx(s);
 
         % Skip states whose cycle has no stored MUAe (defensive).
-        if iCyc > numel(brain.CPR.muae.(ch).env) || isempty(brain.CPR.muae.(ch).env{iCyc})
+        if iCyc > numel(M.env) || isempty(M.env{iCyc})
             continue
         end
 
         c_on     = cyc(iCyc, 1);
-        env_cyc  = double(brain.CPR.muae.(ch).env{iCyc});     % amplitude, per cycle
-        t_cyc    = brain.CPR.muae.(ch).t_us{iCyc};            % µs rel to cycle onset
-        baseline = brain.CPR.muae.(ch).baseline(iCyc);
+        t_cyc    = M.t_us{iCyc};            % µs rel to cycle onset (increasing)
+        baseline = M.baseline(iCyc);
 
-        % State window expressed relative to cycle onset (same frame as t_cyc).
+        % State window expressed relative to cycle onset (same frame as t_cyc):
+        % samples with st_onset_rel <= t <= st_end_rel form one index range.
         st_onset_rel = state.boundaries(s, 1) - c_on;
         st_end_rel   = state.boundaries(s, 2) - c_on;
-
-        sel = t_cyc >= st_onset_rel & t_cyc <= st_end_rel;
-        seg = env_cyc(sel);
+        i0  = count_lt(t_cyc, st_onset_rel) + 1;
+        i1  = count_le(t_cyc, st_end_rel);
+        seg = double(M.env{iCyc}(i0:i1));   % amplitude
 
         % Per-cycle baseline normalisation.
         switch norm_mode
@@ -91,9 +94,29 @@ for iCh = 1:numel(chans)
         end
 
         state.muae.(ch){s}      = single(seg);
-        state.muae_t.(ch){s}    = t_cyc(sel) - st_onset_rel;   % µs rel to state onset
+        state.muae_t.(ch){s}    = t_cyc(i0:i1) - st_onset_rel;   % µs rel to state onset
         state.muae_mean.(ch)(s) = mean(seg, 'omitnan');
     end
 end
 
 end % fn_sort_MUAe_by_state
+
+
+function c = count_le(t, x)
+% Number of elements of increasing T that are <= X (binary search).
+lo = 1;   hi = numel(t);   c = 0;
+while lo <= hi
+    mid = floor((lo + hi) / 2);
+    if t(mid) <= x; c = mid; lo = mid + 1; else; hi = mid - 1; end
+end
+end % count_le
+
+
+function c = count_lt(t, x)
+% Number of elements of increasing T that are < X (binary search).
+lo = 1;   hi = numel(t);   c = 0;
+while lo <= hi
+    mid = floor((lo + hi) / 2);
+    if t(mid) < x; c = mid; lo = mid + 1; else; hi = mid - 1; end
+end
+end % count_lt

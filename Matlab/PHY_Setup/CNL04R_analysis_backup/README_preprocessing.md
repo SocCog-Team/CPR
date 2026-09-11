@@ -1,0 +1,87 @@
+# CPR MUAe preprocessing on cnl04r
+
+*Updated 2026-09-11. Code is in `/Users/cnl/Desktop/CPR/code`. The previous versions are in `_backup_2026-09-10_pre_speedup/`.*
+
+## How to run
+
+1. Start MATLAB on cnl04r and run `PHY_main_analysis_v4`. The settings at the top of the file are ready:
+   - `import_flag = true`
+   - `reprocess = true`
+   - `preproc_flag = true`
+2. Follow progress in `/Users/cnl/Documents/DATA/Nilan/muae/preprocessing_progress.log`. There is one line per recording start and end, with minutes. `preprocessing_errors.log` in the same folder holds the full MATLAB error report of any failure.
+3. Expected time: reading the `.mwk2` dominates at about 15–20 min per session. The MUAe slicing and RF step used to take about 6 min per 64-channel session and now takes about 15 s. Loading the channel caches and saving the summary and state files add a few minutes.
+4. Afterwards, the laptop watcher copies the state and summary files to `~/Desktop/muae/` and validates the per-target fields against `~/Desktop/muae/target_truth`. Then rebuild the v11 shards (`run_build = true`).
+
+`import_flag = true` is needed **once**. The `.h5` files written before 2026-09-11 lack the `CTRL_` variables: the reward scale, the per-target reward, and the arc flags. With the extended `felix_nhp_solo.cfg`, the new `.h5` files keep them. Later re-runs can therefore use `import_flag = false`, which loads a session in seconds instead of about 20 min.
+
+## What runs
+
+`PHY_main_analysis_v4` processes each recording in `rec_lst` in one of two modes.
+
+**Full mode (MUAe)**
+1. `PHY_preprocessing_v3(rec, …, {'muae'})`
+2. `fn_muae_quality`, then save `summary_<rec>_muae.mat`
+3. `sort_states`
+4. `fn_sort_MUAe_by_state`, then save `state_responses_<rec>_muae.mat`
+
+**Behaviour-only mode** is used for the sessions in `rec_behav_only`. It is also the automatic fallback when any session fails.
+1. `PHY_preprocessing_v3(rec, …, {'behaviour'})`. This does no MWorks–Plexon sync and never reads the PL2.
+2. `sort_states`. The resulting state has no `muae*` fields, which is how the v11 analysis recognises a behaviour-only session.
+
+`PHY_preprocessing_v3` works in stages:
+
+| Stage | What it does |
+|---|---|
+| Import | `.mwk2` → event struct `d` (variables in `var_import`), and the `.h5` cache is rewritten. With `import_flag = false`, it reads the `.h5` instead. A failed `.h5` write only warns. |
+| Sync | `syncParam_<rec>.mat`, or `MW_getSyncParam` on the PL2. Skipped for behaviour-only. |
+| Behaviour | Cycle loop over CPR trials. Produces `stim.*` and `joy.*` per cycle and `stim.cpr_cyle` (cycle onset and end). Per-target outcome, juice and overlap are extracted by time (`target_events`). |
+| MUAe | Per channel, the cached envelope (`mua_ch###.mat`, otherwise computed from the PL2 wideband) is sliced per cycle with a 300 ms baseline. The RF is estimated from the RF-mapping trials of the envelope (`fn_RF_responses_muae` → `fn_characterise_RF`). |
+
+## Per-target fields in `state`
+
+All fields are aligned to the state's displayed targets (`feedback_state_ts_raw`).
+
+| Field | Meaning |
+|---|---|
+| `outcome`, `outcome2` | Monkey and partner `hit` / `miss`: the first `TRIAL_outcome(2)` after the target onset |
+| `reward_ind` | Juice commanded for the target, in mL. These are the `IO_rewardA` pulses after the hit that match `CTRL_reward_target_ml`. A miss is 0. |
+| `reward_npulse` | Pulses per hit. 2 means a re-reward after a fixation break (a task bug). |
+| `reward_ctrl` | `CTRL_reward_target_ml` at the hit |
+| `reward2_ind` | Partner reward-equivalent (`CTRL_reward2_target_ml`). The partner receives no juice. |
+| `arc_hit`, `arc_ms`, `arc2_hit`, `arc2_ms` | Whether the cursor arc covered the target within its 50 ms, and when (task arc flags) |
+| `target_logic_ts` | Logic onset of the target (`INFO_TargetCounter` increment). The display follows 8–12 ms later. |
+| `reward_ind_counter` | Old reconstruction from the `INFO_Juice_ml` counter. Kept for diagnostics only; it is wrong for 13–30 % of targets in rec088–094. |
+| `reward_min_ml`, `reward_max_ml` | Reward scale per state |
+| `state.reward_src = 'IO_rewardA'` | Marks the time-based extraction |
+
+The validation against the raw `.mwk2` is described in `~/Desktop/muae/target_truth/README.md` on the laptop.
+
+## Data caveats
+
+- **`.h5` cache.** `MW_writeH5` keeps only variables defined in `MW_readFile.cfg` or `felix_nhp_solo.cfg`. It stores floats as single precision and renames `IO_rewardA` to `IO_rewardA_ml`; the preprocessing accepts both names. Any variable newly added to `var_import` must also be added to `felix_nhp_solo.cfg`. Lines in that file must be of the form `"NAME"  0  type  ""`; comment lines are not allowed.
+- **Truncated PL2 copies.** The copies of rec069, 070, 076, 078, 079, 084, 086 and 087 are truncated, and so is rec085's (not in `rec_lst`). These sessions run behaviour-only. The originals on the recording PC may be intact; see the IT report. Move a session out of `rec_behav_only` once its PL2 has been replaced.
+- **33-channel sessions.** rec077, rec089, rec090, rec091 and rec096 block 2 were recorded with 33 wideband channels (checked in the PL2 data blocks). Their 33 caches are complete.
+- **Channel list.** The channel list is taken from the local `mua_ch###.mat` files when any exist; otherwise it comes from the PL2. After an interrupted extraction, delete that session's `mua_ch*.mat` files to force a full recompute.
+- **Time base.** The envelope time base assumes one continuous PL2 recording that starts at t = 0.
+- **Juice volume.** The juice is the *commanded* volume. The pump calibration is not logged.
+
+## Changes 2026-09-10/11
+
+| File | Change |
+|---|---|
+| `PHY_preprocessing_v3` 2.2 | Partner outcome and reward, reward scale, behaviour-only mode, `.mwk2` name fallback (rec081), time-based per-target outcome, juice and overlap |
+| `PHY_preprocessing_v3` 2.3 | **Speed.** Each variable is extracted from the event table once; cycle windows are found by binary search instead of about 20 whole-table masks per cycle. MUAe cycle slices also use binary search. RF-mapping trials are parsed once per session instead of once per channel. `cpr_cyle` is built in one place. **Fixes.** Joystick direction is taken at the strength sample indices. A split direction/strength pair at a cycle edge had made direction one sample short and crashed rec077 in `sort_states`. The pump variable is found under both names, and a failed `.h5` write no longer stops the run. |
+| `fn_RF_responses_muae` 1.1 | Returns and reuses the parsed presentation table across channels |
+| `fn_sort_MUAe_by_state` 1.1 | State windows found by binary search |
+| `PHY_main_analysis_v4` 4.2 / 4.3 | 29 sessions, `rec_behav_only` list, behaviour-only fallback, logs with minutes per recording, new state fields. `sort_states` tolerates the joystick length mismatch in older summaries. |
+| `felix_nhp_solo.cfg` | Adds `CTRL_reward_target_ml`, `CTRL_reward_target_min_ml`, `CTRL_reward_target_max_ml`, `CTRL_reward2_target_ml`, `CTRL_reward_power`, `CTRL_arc_flag`, `CTRL_arc2_flag` and `AGNT_arc_flag`, so that the `.h5` keeps them |
+
+### Tests
+
+The tests ran in local MATLAB R2021a on rec058, rec077 and rec094. Old (2.2) and new (2.3) output were compared with `isequaln`.
+
+- **Behaviour-only.** Identical on rec058 and rec094.
+- **Sorted + MUAe with synthetic neural inputs.** These were sync parameters, a spike channel and 2–8 cached envelope channels. Output was identical, including the RF fits, `sort_states` and `fn_sort_MUAe_by_state`.
+- **rec077.** Output was identical except for the one split joystick pair in cycle 75. The old `sort_states` reproduces the crash of 2026-09-10; the new one runs on both the old and the new output (1,422 states).
+- **`.h5` round trip.** With the extended config, all 8 `CTRL_` / `AGNT_arc` variables survive `MW_writeH5` → `MW_readData`. The old config drops them.
+- **Speed.** Per MUAe channel, 5.6 s → 0.22 s (64 channels: 6 min → 15 s per session). Behaviour stage: 14 s → 2 s for rec094.

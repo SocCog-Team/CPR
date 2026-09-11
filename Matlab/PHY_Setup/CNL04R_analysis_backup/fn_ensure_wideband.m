@@ -1,4 +1,4 @@
-function raw = fn_ensure_wideband(dest_dir, exp_info, chan_idx, pl2_fqn, pl2)
+function raw = fn_ensure_wideband(dest_dir, exp_info, chan_idx, pl2_fqn, pl2, persist_wb)
 % FN_ENSURE_WIDEBAND  Return one channel's wideband, extracting it on demand.
 %
 % Lazy wrapper around the PLX_writeWideband logic:
@@ -25,6 +25,7 @@ function raw = fn_ensure_wideband(dest_dir, exp_info, chan_idx, pl2_fqn, pl2)
 % Version history
 %   1.0  (2026-07-03)  Initial version — PLX_writeWideband as a lazy function.
 
+if nargin < 6 || isempty(persist_wb); persist_wb = false; end   % default: do NOT keep wb
 wb_name = sprintf('%s_%s_%s_%s_ch%02d_wb', ...
                   exp_info{1}, exp_info{2}, exp_info{6}, exp_info{4}, chan_idx);
 wb_file = fullfile(dest_dir, [wb_name '.mat']);
@@ -42,7 +43,7 @@ if isempty(pl2) || isempty(pl2_fqn) || ~isfile(pl2_fqn)
           'wb file %s.mat missing and no PL2 available to extract it.', wb_name);
 end
 
-addpath('/Users/cnl/Desktop/CPR/PlexonMatlabOfflineFilesSDK/');
+fn_addpath_plexon();
 
 ad = PL2Ad(pl2_fqn, pl2.AnalogChannels{chan_idx}.Name);
 if isempty(ad.Values)
@@ -70,6 +71,8 @@ if ~isfile(ts_file)
     save(ts_file, 'timestamps', '-v7.3');
 end
 
-save(wb_file, 'raw', '-v7.3');
+if persist_wb
+    save(wb_file, 'raw', '-v7.3');   % ~142 GB/session — only if explicitly requested
+end
 
 end % fn_ensure_wideband

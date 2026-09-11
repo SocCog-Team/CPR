@@ -18,7 +18,7 @@ function mua = fn_compute_MUA(sig, fs, varargin)
 % This function is deliberately I/O-free and works on a single channel so
 % it can be unit-tested in isolation.  Time base of all returned times is
 % the LOCAL data clock (t = 0 at sig(1), seconds).  Synchronisation to
-% MWorks/behaviour is applied by the caller (see fn_extract_MUA_session).
+% MWorks/behaviour is applied by the caller (PHY_preprocessing_v3 / run_muae_extract).
 %
 % INPUT
 %   sig   [1xN] or [Nx1]   one channel of continuous data (int16/single/double)
@@ -49,8 +49,7 @@ function mua = fn_compute_MUA(sig, fs, varargin)
 % OUTPUT  mua  struct
 %   .env          [1xM]   MUAe envelope at fs_out (same units as sig; sqrt-ed
 %                         back to amplitude when rect='square')
-%   .env_fs       scalar  fs_out
-%   .env_t_s      [1xM]   envelope sample times, local clock (s), t0 = sig(1)
+%   .env_fs       scalar  fs_out (envelope times = (0:M-1)/env_fs, not stored)
 %   .muat_idx     [1xK]   MUAt crossing sample indices into sig (at fs)
 %   .muat_t_s     [1xK]   MUAt crossing times, local clock (s)
 %   .sigma        scalar or [1xK]  robust noise estimate used for thresholding
@@ -163,8 +162,13 @@ if o.do_muat
 end
 
 % =========================================================================
-%% 3. MUAe — rectify, low-pass, downsample  (Stark & Abeles 2007)
+%% 3. MUAe — rectify, downsample, low-pass  (Stark & Abeles 2007)
 % =========================================================================
+% Ordering for speed: rectify at full rate, DOWNSAMPLE first (resample's
+% anti-alias FIR runs once over the ~1e8-sample input), THEN low-pass at the
+% output rate. The envelope LP is then env_lp_Hz/(fs_out/2) — well conditioned
+% — instead of env_lp_Hz/(fs/2) ~ 0.01 at 40 kHz. Validated equivalent to
+% LP-then-resample (corr 0.99995, <0.7% RMS) at ~2x the speed.
 
 switch lower(o.rect)
     case 'square'
@@ -173,31 +177,31 @@ switch lower(o.rect)
         r = abs(x);
 end
 
-% Envelope low-pass (zero-phase).
-[b_lp, a_lp] = butter(o.filt_order, o.env_lp_Hz / nyq, 'low');
-env = filtfilt(b_lp, a_lp, r);
-
-% Downsample to fs_out. env is already band-limited to env_lp_Hz << fs_out/2,
-% so resampling introduces no aliasing.
-[pp, qq] = rat(o.fs_out / fs);
-env = resample(env, pp, qq);
+% Downsample the rectified signal to fs_out.
+[pp, qq]      = rat(o.fs_out / fs);
+env           = resample(r, pp, qq);
 fs_out_actual = fs * pp / qq;
+
+% Envelope low-pass at the output rate (zero-phase).
+[b_lp, a_lp]  = butter(o.filt_order, o.env_lp_Hz / (fs_out_actual/2), 'low');
+env           = filtfilt(b_lp, a_lp, env);
 
 % Undo the squaring to return to amplitude units (RMS-like envelope).
 if strcmpi(o.rect, 'square')
-    env(env < 0) = 0;      % clamp tiny negative ripples from resampling
+    env(env < 0) = 0;      % clamp tiny negative ripples
     env = sqrt(env);
 end
 
-mua.env      = env;
-mua.env_fs   = fs_out_actual;
-mua.env_t_s  = (0 : numel(env) - 1) / fs_out_actual;   % local clock
+mua.env    = single(env);
+mua.env_fs = fs_out_actual;
+% NB: the uniform sample-time vector is intentionally NOT stored (it would be
+% the largest field, and float64). Reconstruct as (0:numel(env)-1)/env_fs.
 
 % =========================================================================
 %% 4. Provenance
 % =========================================================================
 
-mua.params            = o;
+mua.params            = rmfield(o, 'sig');   % never store the raw broadband input
 mua.params.fs_in      = fs;
 mua.params.n_samples  = N;
 mua.params.fs_out     = fs_out_actual;
