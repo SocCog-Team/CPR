@@ -23,12 +23,20 @@ function [out] = PHY_preprocessing_v3(fname, source_dir, dest_dir, cfg_pth, impo
 % OUTPUT
 %   out   struct   experiment, stimulus, joystick, and neural data
 %                    .stim.cpr_cyle [nCyc x 2]            CPR cycle onset/end (µs)
+%                    .stim.catch_trl [nCatch x 2]         catch trials with cursor: start/end (µs)
+%                    .stim.catch_cursor/_ncur/_type       cursor onset (µs), arcs shown, TRIAL_type
 %                    .brain.CPR.spks.(chXXX_neg).(unitN)  sorted units
 %                    .brain.CPR.spks.(chXXX_mua).muat0    MUAt hash   (if 'muat')
-%                    .brain.CPR.muae.(chXXX_mua)          MUAe env    (if 'muae')
+%                    .brain.CPR.muae.(chXXX_mua)          MUAe env    (if 'muae'):
+%                       .env / .t_us / .baseline          per CPR cycle; baseline = mean env
+%                                                         [onset-300, onset) ms (raw, mV)
+%                       .catch_env/_t_us/_baseline        the same per catch trial (cursor onset)
+%                       .baseline_ref                     pooled running reference per cycle
+%                       .catch_baseline_ref, .ref_k       ... and per catch trial (fn_muae_reference)
 %
-% Requires for MUA:  fn_compute_MUA.m, *_ch*_wb.mat (broadband; or datafilt_ch*.mat),
-%                    syncParam_<fname>.mat.  Caches per channel -> mua_ch###.mat.
+% Requires for MUA:  fn_compute_MUA.m, fn_muae_reference.m, *_ch*_wb.mat (broadband;
+%                    or datafilt_ch*.mat), syncParam_<fname>.mat.  Caches per
+%                    channel -> mua_ch###.mat.
 %
 % Felix Schneider, CNL
 %
@@ -53,6 +61,16 @@ function [out] = PHY_preprocessing_v3(fname, source_dir, dest_dir, cfg_pth, impo
 %                          rec077 crashed in sort_states). IO_rewardA also
 %                          matched under its h5 name IO_rewardA_ml; a failed
 %                          .h5 write no longer stops the run.
+%   2.4  (fxs 2026-09-15)  Catch trials (INFO_task 'Catch_trial'): stim.catch_*
+%                          table (cursor onset = first STIM_catcharc(2)_onset
+%                          == 1 in the trial; trials without cursor skipped)
+%                          and, per MUAe channel, the catch envelope with its
+%                          pre-cursor baseline window. Pooled running MUAe
+%                          reference per CPR cycle and catch trial
+%                          (fn_muae_reference: mean of the 10 nearest valid
+%                          baseline windows before + 10 after, CPR and catch
+%                          pooled, own window left out) -> baseline_ref,
+%                          catch_baseline_ref, ref_k. Existing fields unchanged.
 
 
 % =========================================================================
@@ -455,7 +473,39 @@ for iCyc = 1:numel(stim.cEnd)
         joy.js_hum_ts{ccnt}   = ts;
     end
 end
-fprintf('  Behaviour: %d CPR cycles of %d trials.\n', ccnt, numel(stim.cEnd));
+
+% --- Catch trials (INFO_task 'Catch_trial', from rec079) ----------------------
+% No random-dot pattern, only the cursor arc(s) centred on fixation: one arc
+% (TRIAL_type Catch0_*: STIM_catcharc or STIM_catcharc2) or both (Catch1_*).
+% Cursor onset = first STIM_catcharc(2)_onset == 1 within the trial; trials
+% aborted before it are skipped (as calc_muae_catch). The 300 ms before cursor
+% onset are a baseline window like the 300 ms before a CPR cycle onset; both
+% feed the pooled MUAe reference (MUAe block, fn_muae_reference).
+EVc   = {ev_series(d, d.event == 'STIM_catcharc_onset',  'num'), ...
+         ev_series(d, d.event == 'STIM_catcharc2_onset', 'num')};
+EVtyp = ev_series(d, idx.ttype, 'str');
+stim.catch_trl    = zeros(0, 2);   % [TRIAL_start TRIAL_end] (µs), one row per catch trial with cursor
+stim.catch_cursor = zeros(0, 1);   % cursor onset (µs)
+stim.catch_ncur   = zeros(0, 1);   % arcs shown (1 | 2)
+stim.catch_type   = cell(0, 1);    % TRIAL_type logged between trial start and cursor onset ('' if none)
+for iCat = 1:numel(stim.cEnd)
+    if ~any(strcmp(stim.task{iCat}, 'Catch_trial')); continue; end
+    trl_on  = stim.cOn(iCat);
+    trl_end = stim.cEnd(iCat);
+    t_arc   = [first_one(EVc{1}, trl_on, trl_end), first_one(EVc{2}, trl_on, trl_end)];
+    if all(isnan(t_arc)); continue; end              % aborted before cursor onset
+    t_cur   = min(t_arc);                            % min ignores NaN
+    k_typ   = bs_last(EVtyp.t, t_cur);               % last TRIAL_type at/before cursor onset
+    stim.catch_trl(end+1, :)    = [trl_on trl_end];
+    stim.catch_cursor(end+1, 1) = t_cur;
+    stim.catch_ncur(end+1, 1)   = nnz(~isnan(t_arc));
+    stim.catch_type{end+1, 1}   = '';
+    if k_typ >= 1 && EVtyp.t(k_typ) >= trl_on        % ... logged within this trial
+        stim.catch_type{end, 1} = EVtyp.v{k_typ};
+    end
+end
+fprintf('  Behaviour: %d CPR cycles, %d catch trials with cursor (of %d trials).\n', ...
+        ccnt, size(stim.catch_trl, 1), numel(stim.cEnd));
 clear V
 
 
@@ -563,7 +613,9 @@ if want_muat || want_muae
     if ~exist('brain', 'var'); brain = struct(); end
 
     n_cyc       = size(stim.cpr_cyle, 1);   % CPR cycles (built in the cycle loop)
+    n_catch     = size(stim.catch_trl, 1);  % catch trials with cursor (behaviour block)
     mua_offset  = 300e3;   % µs — pre-stimulus baseline window (matches spikes)
+    muae_ref_k  = 10;      % pooled MUAe reference: valid baseline windows on each side (fn_muae_reference)
     muae_rf_thr = 5;       % min peak % modulation to attempt an MUAe RF fit
     rf_P        = [];      % RF-mapping presentation table: parsed on the first
                            % channel by fn_RF_responses_muae, reused on the rest
@@ -683,7 +735,7 @@ if want_muat || want_muae
             end
         end
 
-        % --- MUAe: store per-cycle envelope + per-cycle baseline ----------
+        % --- MUAe: per-cycle / per-catch-trial envelope, baselines, reference
         if want_muae
             brain.CPR.muae.(chan_str_mua).env_fs   = m.env_fs;
             brain.CPR.muae.(chan_str_mua).chan_num = chan_num;
@@ -706,6 +758,38 @@ if want_muat || want_muae
                 brain.CPR.muae.(chan_str_mua).env{iCyc}      = single(m.env(i0:i1));
                 brain.CPR.muae.(chan_str_mua).t_us{iCyc}     = env_t_us(i0:i1) - c_on;
             end
+
+            % Catch trials: the same windows around cursor onset — baseline
+            % [cursor-offset, cursor), segment [cursor-offset, trial end].
+            brain.CPR.muae.(chan_str_mua).catch_env      = cell(1, n_catch);
+            brain.CPR.muae.(chan_str_mua).catch_t_us     = cell(1, n_catch);
+            brain.CPR.muae.(chan_str_mua).catch_baseline = nan(1, n_catch);
+            for iCat = 1:n_catch
+                c_cur = stim.catch_cursor(iCat);
+                c_end = stim.catch_trl(iCat, 2);
+
+                i0 = bs_lt(env_t_us, c_cur - mua_offset) + 1;  % first sample >= cursor - offset
+                ib = bs_lt(env_t_us, c_cur);                   % last sample  <  cursor
+                i1 = bs_last(env_t_us, c_end);                 % last sample  <= trial end
+
+                brain.CPR.muae.(chan_str_mua).catch_baseline(iCat) = mean(m.env(i0:ib), 'omitnan');
+                brain.CPR.muae.(chan_str_mua).catch_env{iCat}      = single(m.env(i0:i1));
+                brain.CPR.muae.(chan_str_mua).catch_t_us{iCat}     = env_t_us(i0:i1) - c_cur;
+            end
+
+            % Pooled running reference (fn_muae_reference): for every CPR cycle
+            % and catch trial, the mean of the muae_ref_k nearest valid baseline
+            % windows before and after it (CPR and catch windows pooled,
+            % regardless of trial type and text cue), its own window left out.
+            % fn_sort_MUAe_by_state normalises by it; the per-trial baselines
+            % above stay as raw values.
+            muae_ref = fn_muae_reference( ...
+                [stim.cpr_cyle(:, 1); stim.catch_cursor], ...
+                [brain.CPR.muae.(chan_str_mua).baseline(:); brain.CPR.muae.(chan_str_mua).catch_baseline(:)], ...
+                muae_ref_k);
+            brain.CPR.muae.(chan_str_mua).baseline_ref       = muae_ref(1:n_cyc).';
+            brain.CPR.muae.(chan_str_mua).catch_baseline_ref = muae_ref(n_cyc+1:end).';
+            brain.CPR.muae.(chan_str_mua).ref_k              = muae_ref_k;
 
             % Receptive field from the MUAe envelope (RF-mapping trials).
             [rf_pos, rf_resp, rf_base, rf_tgt, rf_sid, rf_x, rf_y, rf_P] = ...
@@ -1364,3 +1448,15 @@ while lo <= hi
     if t(mid) < x; i = mid; lo = mid + 1; else; hi = mid - 1; end
 end
 end % bs_lt
+
+
+function t1 = first_one(S, a, b)
+% Time of the first value == 1 of series S (ev_series 'num') within [a, b] (us);
+% NaN if none. Catch trials: cursor onset from STIM_catcharc(2)_onset.
+t1 = NaN;
+i  = bs_lt(S.t, a) + 1;                              % first event at/after a
+while i <= numel(S.t) && S.t(i) <= b
+    if S.v(i) == 1; t1 = S.t(i); return; end
+    i = i + 1;
+end
+end % first_one
