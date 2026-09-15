@@ -125,7 +125,12 @@ The validation against the raw `.mwk2` is described in `~/Desktop/muae/target_tr
 
 ### Tests
 
-The code could not be run in MATLAB on the laptop on 2026-09-15, because the licence server was unreachable. The Python comparison that chose K used the same definition. `preflight_pooled_baseline` is the MATLAB test.
+- **Full run, 2026-09-15** (`import_flag = false`, about 1 min per session; rec095 failed because it has no `.h5`). Every output was compared with its 2026-09-11 version (`validate_pooled_run.py`, in the SfN handover folder):
+  - **MUAe (21 neural sessions):** cycle baselines and envelopes are identical. `baseline_ref` matches an independent recomputation exactly. The pooled `state.muae_mean` equals the exact re-expression of the 2026-09-11 per-cycle values (≤ 2e-13 pp).
+  - **Catch trials:** the catch tables of rec081–083 and rec088–094 match the 2026-09-14 catch analysis trial by trial, and the catch baselines agree within 3e-7.
+  - **Behaviour:** identical except for single-precision rounding from the `.h5` (reward ≤ 1.4e-5 mL, agent joystick direction ≤ 1.5e-5°). `stim.rdp_center_xy` was empty when read from the `.mwk2` and is now filled; no code uses it.
+  - **Per-target truth:** `validate_state.py` reports ALL AGREE for all 29 sessions.
+- **`preflight_pooled_baseline`:** checks 3 and 4 passed on rec094. Run it before a full run: once the run has rewritten rec094's files, checks 1 and 2 compare against the new files, and check 2 then reads CHECK.
 
 ## Changes 2026-09-10/11
 

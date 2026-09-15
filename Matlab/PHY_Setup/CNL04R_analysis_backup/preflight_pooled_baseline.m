@@ -134,9 +134,12 @@ function [nd, nr] = compare(a, b, path, tol, nd, nr)
 % TOL (relative) only.
 if isstruct(a) && isstruct(b)
     fa = fieldnames(a);   fb = fieldnames(b);
-    for f = setdiff(fb, fa)'; fprintf('    new field   %s.%s\n', path, f{1}); end
-    for f = setdiff(fa, fb)'
-        if nd < 40; fprintf('  ! missing     %s.%s\n', path, f{1}); end
+    % Loop over indices: for a one-field struct setdiff returns a 1x0 cell,
+    % and a for loop over its transpose (0x1) runs once with an empty value.
+    added = setdiff(fb, fa);   lost = setdiff(fa, fb);   both = intersect(fa, fb);
+    for k = 1:numel(added); fprintf('    new field   %s.%s\n', path, added{k}); end
+    for k = 1:numel(lost)
+        if nd < 40; fprintf('  ! missing     %s.%s\n', path, lost{k}); end
         nd = nd + 1;
     end
     if numel(a) ~= numel(b)
@@ -144,10 +147,10 @@ if isstruct(a) && isstruct(b)
         nd = nd + 1;   return
     end
     for i = 1:numel(a)
-        for f = intersect(fa, fb)'
-            p = sprintf('%s.%s', path, f{1});
-            if numel(a) > 1; p = sprintf('%s(%d).%s', path, i, f{1}); end
-            [nd, nr] = compare(a(i).(f{1}), b(i).(f{1}), p, tol, nd, nr);
+        for k = 1:numel(both)
+            p = sprintf('%s.%s', path, both{k});
+            if numel(a) > 1; p = sprintf('%s(%d).%s', path, i, both{k}); end
+            [nd, nr] = compare(a(i).(both{k}), b(i).(both{k}), p, tol, nd, nr);
         end
     end
 elseif iscell(a) && iscell(b)
